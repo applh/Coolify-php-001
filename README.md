@@ -28,10 +28,11 @@ ACTIVE_SITE_OVERRIDE="site2.com"
 To persist the `content/` folder (allowing live updates via SFTP without Git pushes), add a persistent volume in Coolify pointing to `/var/www/html/content` (mapped to `repo-php/content` in your repository).
 
 ## Project Structure
-- `repo-php/`: The main PHP application directory.
+- `repo-php/`: The main PHP application directory (Base Directory for Coolify).
 - `repo-php/public/index.php`: The main entry point (Document Root).
-- `nginx.conf`: Nginx server configuration for the `web` container.
-- `Dockerfile`: PHP-FPM container configuration.
-- `Dockerfile.web`: Nginx container configuration.
-- `docker-compose.yml`: Local and remote orchestration config.
+- `repo-php/nginx.conf`: Nginx server configuration for the `web` container.
+- `repo-php/Dockerfile`: PHP-FPM container configuration.
+- `repo-php/Dockerfile.web`: Nginx container configuration.
+- `repo-php/docker-compose.yml`: Local and remote orchestration config.
 - `metadata.json`: Internal configuration for Google AI Studio.
+- `package.json`: AI Studio build configuration.
