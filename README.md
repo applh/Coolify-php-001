@@ -24,7 +24,19 @@ A modern, polished plain PHP boilerplate ready for deployment on [Coolify](https
 
 ## Environment Variables
 
-You can add environment variables in the Coolify UI under the `Environment Variables` tab. They will be available in your PHP code via `$_ENV` or `getenv()`.
+You can add environment variables in the Coolify UI under the **Environment Variables** tab of your service. 
+
+1. **APP_ENV**: Set to `production` or `staging`.
+2. **COOLIFY_APP_SECRET**: Set any sensitive key.
+
+In your PHP code, access them like this:
+```php
+$secret = getenv('COOLIFY_APP_SECRET');
+// or
+$env = $_ENV['APP_ENV'];
+```
+
+These variables are automatically passed to the PHP-FPM container by Docker Compose.
 
 ## Project Structure
 

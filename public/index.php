@@ -6,8 +6,17 @@
 
 // Simple routing or logic can go here
 $projectName = "PHP Coolify Starter";
-$version = "1.2.0";
+$version = "1.3.0";
 $deploymentStatus = "Nginx + PHP 8.5 FPM Ready";
+
+/**
+ * Handle Environment Variables
+ * In Coolify, these are set in the 'Environment Variables' tab.
+ * They are passed to the container and accessible via getenv() or $_ENV.
+ */
+$coolifySecret = getenv('COOLIFY_APP_SECRET') ?: 'SECRET_NOT_SET';
+$appEnv = getenv('APP_ENV') ?: 'local';
+$serverTime = date('Y-m-d H:i:s');
 
 ?>
 <!DOCTYPE html>
@@ -59,6 +68,14 @@ $deploymentStatus = "Nginx + PHP 8.5 FPM Ready";
                         <span class="text-gray-500 text-sm italic">Engine</span>
                         <span class="mono text-white text-sm">Nginx + FPM</span>
                     </li>
+                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
+                        <span class="text-gray-500 text-sm italic">App Env</span>
+                        <span class="mono text-orange-500 text-sm font-bold capitalize"><?php echo $appEnv; ?></span>
+                    </li>
+                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
+                        <span class="text-gray-500 text-sm italic">Coolify Secret</span>
+                        <span class="mono text-zinc-400 text-[10px] break-all ml-4"><?php echo $coolifySecret; ?></span>
+                    </li>
                 </ul>
             </section>
 
@@ -75,8 +92,14 @@ $deploymentStatus = "Nginx + PHP 8.5 FPM Ready";
         </main>
 
         <footer class="mt-12 text-center">
+            <div class="inline-block px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full mb-4">
+                <p class="text-orange-500 text-xs mono">
+                    <span class="animate-pulse mr-2 inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                    DYNAMIC TIMESTAMP: <?php echo $serverTime; ?>
+                </p>
+            </div>
             <p class="text-zinc-600 text-[10px] uppercase tracking-[0.2em] mono">
-                Rendered at <?php echo date('Y-m-d H:i:s'); ?> | Powered by AI Studio & Coolify
+                Powered by AI Studio & Coolify
             </p>
         </footer>
     </div>
