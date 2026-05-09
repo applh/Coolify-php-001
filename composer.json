@@ -1,0 +1,12 @@
+{
+    "name": "php-coolify-starter",
+    "description": "PHP Coolify Starter with Nginx and FPM",
+    "require": {
+        "php": ">=8.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true
+        }
+    }
+}

@@ -1,0 +1,11 @@
+[variables]
+    NIXPACKS_PHP_ROOT = "/public"
+
+[phases.setup]
+    nixPkgs = ["php85", "nginx"]
+
+[phases.install]
+    cmds = ["composer install --no-dev --optimize-autoloader"]
+
+[start]
+    cmd = "nginx -g 'daemon off;' & php-fpm"
