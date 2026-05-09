@@ -14,7 +14,7 @@ $activeSite = getenv('ACTIVE_SITE_OVERRIDE');
 $httpHost = $_SERVER['HTTP_HOST'] ?? 'site1.com';
 
 if (!$activeSite) {
-    $configFile = $rootPath . '/config.php';
+    $configFile = $contentPath . '/config.php';
     if (file_exists($configFile)) {
         $domainMap = require $configFile;
         if (is_array($domainMap) && isset($domainMap[$httpHost])) {

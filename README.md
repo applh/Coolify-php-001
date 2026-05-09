@@ -49,11 +49,11 @@ ACTIVE_SITE_OVERRIDE="sambazen.net"
 ```
 
 ## Custom Domain Mapping
-To explicitly map custom domain names (or multiple domains/subdomains) to a single site folder inside `content/`, create a `config.php` file in the root `repo-php/` directory (you can copy from `config.php.example`).
+To explicitly map custom domain names (or multiple domains/subdomains) to a single site folder inside `content/`, create a `config.php` file in the `repo-php/content/` directory (you can copy from `repo-php/content/config.php.example`).
 
 ```php
 <?php
-// repo-php/config.php
+// repo-php/content/config.php
 return [
     'www.example.com' => 'site1.com',
     'sales.example.com' => 'site1.com',
@@ -72,10 +72,10 @@ To persist the `content/` folder (allowing live updates via SFTP without having 
 .
 ├── repo-php/
 │   ├── content/                # All your sites live here (e.g., site1.com/, sambazen.net/)
+│   │   └── config.php.example  # Example domain routing config
 │   ├── public/                 # Document Root for Nginx
 │   │   ├── css/, js/           # Shared static assets 
 │   │   └── index.php           # Master routing script
-│   ├── config.php.example      # Example domain routing config
 │   ├── nginx.conf              # Nginx server configuration for the web container
 │   ├── Dockerfile              # PHP-FPM container configuration
 │   ├── Dockerfile.web          # Nginx container configuration
