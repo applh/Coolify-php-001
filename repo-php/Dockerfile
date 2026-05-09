@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install minimal extensions
-RUN docker-php-ext-install opcache
+# Install and enable extensions. Opcache is usually built-in, so enable it.
+RUN docker-php-ext-enable opcache || docker-php-ext-install opcache
 
 # Set PHP timezone
 RUN printf '[Date]\ndate.timezone = "Europe/Paris"\n' > /usr/local/etc/php/conf.d/timezone.ini
