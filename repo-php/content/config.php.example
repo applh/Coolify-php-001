@@ -9,5 +9,5 @@
 return [
     'www.example.com' => 'site1.com',
     'landing.example.com' => 'site2.com',
-    'sambazen.test' => 'sambazen.net',
+    'test.sambazen.net' => 'test.com',
 ];
