@@ -6,7 +6,9 @@ $title = "Site One - Welcome";
 <head>
     <meta charset="UTF-8">
     <title><?php echo $title; ?></title>
+    <link rel="stylesheet" href="/css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/script.js" defer></script>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center">
     <div class="max-w-xl w-full p-8 border border-zinc-800 rounded-2xl bg-zinc-900/50">
