@@ -51,6 +51,7 @@ These variables are automatically passed to the PHP-FPM container by Docker Comp
 ## Project Structure
 
 - `public/index.php`: The main entry point (Document Root).
+- `index.php`: Root entry point (for environments that don't support custom document roots).
 - `nginx.conf`: Nginx server configuration.
 - `Dockerfile`: PHP-FPM container configuration.
 - `Dockerfile.web`: Nginx container configuration (bakes config into image to avoid mount errors).

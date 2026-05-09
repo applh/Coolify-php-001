@@ -3,27 +3,34 @@
  * CMS Multi-site Entry Point
  */
 
-// Attempt to load composer autoloader if it exists
-if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-} else {
-    // Manual fallback for classes if composer isn't run
-    spl_autoload_register(function ($class) {
+// Initialize CMS components
+$currentDir = __DIR__;
+// Check if we are in public/ or root
+$rootPath = file_exists($currentDir . '/src') ? $currentDir : dirname($currentDir);
+// Fallback if dirname doesn't reveal src (e.g. nested deeper or root is wrong)
+if (!file_exists($rootPath . '/src')) {
+    $rootPath = realpath($currentDir . '/..') ?: $currentDir;
+}
+
+// Manual fallback for classes if composer isn't run
+if (!file_exists($rootPath . '/vendor/autoload.php')) {
+    spl_autoload_register(function ($class) use ($rootPath) {
         $prefix = 'CMS\\';
-        $base_dir = __DIR__ . '/../src/';
+        $base_dir = $rootPath . '/src/';
         $len = strlen($prefix);
         if (strncmp($prefix, $class, $len) !== 0) return;
         $relative_class = substr($class, $len);
         $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-        if (file_exists($file)) require $file;
+        if (file_exists($file)) require_once $file;
     });
+} else {
+    require_once $rootPath . '/vendor/autoload.php';
 }
 
 use CMS\SiteManager;
 use CMS\Router;
 
-// Initialize CMS components
-$contentPath = __DIR__ . '/../content';
+$contentPath = $rootPath . '/content';
 $siteManager = new SiteManager($contentPath);
 
 // Check if site exists
