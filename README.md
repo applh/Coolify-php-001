@@ -6,6 +6,7 @@ A modern, polished plain PHP boilerplate ready for deployment on [Coolify](https
 
 - **PHP 8.5-FPM**: Modern, high-performance PHP engine.
 - **Nginx**: High-performance web server.
+- **Timezone**: Configured to `Europe/Paris` by default.
 - **Public Directory**: Document root moved to `/public` for enhanced security.
 - **Docker & Nixpacks Ready**: Includes `Dockerfile`, `docker-compose.yml`, and `nixpacks.toml` for maximum compatibility with Coolify.
 - **Modern UI**: Polished landing page using Tailwind CSS.
