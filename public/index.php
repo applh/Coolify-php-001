@@ -1,108 +1,97 @@
 <?php
 /**
- * PHP Coolify Starter
- * A modern, minimal PHP boilerplate ready for Coolify deployment.
+ * CMS Multi-site Entry Point
  */
 
-// Simple routing or logic can go here
-$projectName = "PHP Coolify Starter";
-$version = "1.3.0";
-$deploymentStatus = "Nginx + PHP 8.5 FPM Ready";
+// Attempt to load composer autoloader if it exists
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+} else {
+    // Manual fallback for classes if composer isn't run
+    spl_autoload_register(function ($class) {
+        $prefix = 'CMS\\';
+        $base_dir = __DIR__ . '/../src/';
+        $len = strlen($prefix);
+        if (strncmp($prefix, $class, $len) !== 0) return;
+        $relative_class = substr($class, $len);
+        $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+        if (file_exists($file)) require $file;
+    });
+}
 
-/**
- * Handle Environment Variables
- * In Coolify, these are set in the 'Environment Variables' tab.
- * They are passed to the container and accessible via getenv() or $_ENV.
- */
-$coolifySecret = getenv('COOLIFY_APP_SECRET') ?: 'SECRET_NOT_SET';
-$appEnv = getenv('APP_ENV') ?: 'local';
-$serverTime = date('Y-m-d H:i:s');
+use CMS\SiteManager;
+use CMS\Router;
 
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $projectName; ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a0a;
-            color: #e0e0e0;
+// Initialize CMS components
+$contentPath = __DIR__ . '/../content';
+$siteManager = new SiteManager($contentPath);
+
+// Check if site exists
+if (!$siteManager->siteExists()) {
+    // Default fallback site if none matches
+    putenv("ACTIVE_SITE_OVERRIDE=site1.com");
+    $siteManager = new SiteManager($contentPath);
+}
+
+$router = new Router($siteManager->getSitePath());
+$markdownFile = $router->resolvePage();
+
+if (!$markdownFile) {
+    http_response_code(404);
+    die("Page not found");
+}
+
+// Parse Content
+$rawContent = file_get_contents($markdownFile);
+$patterns = [
+    '/^---\s*\n(.*?)\n---\s*\n(.*)$/s', // Standard format
+    '/^---\s*\r\n(.*?)\r\n---\s*\r\n(.*)$/s' // Windows format
+];
+
+$frontMatter = [];
+$content = $rawContent;
+
+foreach ($patterns as $pattern) {
+    if (preg_match($pattern, $rawContent, $matches)) {
+        $yaml = $matches[1];
+        $content = $matches[2];
+        
+        // Simple YAML parser
+        $lines = explode("\n", $yaml);
+        foreach ($lines as $line) {
+            $parts = explode(":", $line, 2);
+            if (count($parts) === 2) {
+                $frontMatter[trim($parts[0])] = trim($parts[1]);
+            }
         }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .grid-bg {
-            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
-            background-size: 40px 40px;
-        }
-    </style>
-</head>
-<body class="grid-bg min-h-screen flex flex-col items-center justify-center p-6">
-    
-    <div class="max-w-3xl w-full">
-        <header class="mb-12 border-l-2 border-orange-500 pl-6 py-2">
-            <h1 class="text-5xl font-light tracking-tight text-white mb-2">
-                <?php echo $projectName; ?>
-            </h1>
-            <p class="text-gray-400 uppercase tracking-widest text-xs mono">
-                v<?php echo $version; ?> • <?php echo $deploymentStatus; ?>
-            </p>
-        </header>
+        break;
+    }
+}
 
-        <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <section class="bg-zinc-900/50 border border-zinc-800 p-8 rounded-2xl backdrop-blur-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-orange-500 mb-4 mono">Environment</h2>
-                <ul class="space-y-4">
-                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
-                        <span class="text-gray-500 text-sm italic">PHP Version</span>
-                        <span class="mono text-white text-sm"><?php echo PHP_VERSION; ?></span>
-                    </li>
-                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
-                        <span class="text-gray-500 text-sm italic">Server IP</span>
-                        <span class="mono text-white text-sm"><?php echo $_SERVER['SERVER_ADDR'] ?? '127.0.0.1'; ?></span>
-                    </li>
-                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
-                        <span class="text-gray-500 text-sm italic">Engine</span>
-                        <span class="mono text-white text-sm">Nginx + FPM</span>
-                    </li>
-                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
-                        <span class="text-gray-500 text-sm italic">App Env</span>
-                        <span class="mono text-orange-500 text-sm font-bold capitalize"><?php echo $appEnv; ?></span>
-                    </li>
-                    <li class="flex justify-between items-center border-b border-zinc-800 pb-2 leading-relaxed">
-                        <span class="text-gray-500 text-sm italic">Coolify Secret</span>
-                        <span class="mono text-zinc-400 text-[10px] break-all ml-4"><?php echo $coolifySecret; ?></span>
-                    </li>
-                </ul>
-            </section>
+// Markdown to HTML
+if (class_exists('Parsedown')) {
+    $parsedown = new Parsedown();
+    $htmlContent = $parsedown->text($content);
+} else {
+    // Basic fallback parser for preview if Parsedown is missing
+    $htmlContent = nl2br(htmlspecialchars($content));
+    $htmlContent = preg_replace('/^# (.*)$/m', '<h1>$1</h1>', $htmlContent);
+    $htmlContent = preg_replace('/^## (.*)$/m', '<h2>$1</h2>', $htmlContent);
+    $htmlContent = preg_replace('/\*\*(.*)\*\*/U', '<strong>$1</strong>', $htmlContent);
+}
 
-            <section class="bg-zinc-900/50 border border-zinc-800 p-8 rounded-2xl backdrop-blur-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-orange-500 mb-4 mono">Architecture</h2>
-                <p class="text-gray-400 text-sm mb-6 leading-relaxed">
-                    Now using a modern <strong>/public</strong> document root with an <strong>Nginx + PHP-FPM</strong> stack for better performance and security.
-                </p>
-                <div class="flex items-center gap-4">
-                    <span class="px-3 py-1 bg-zinc-800 rounded text-[10px] mono text-gray-400">NGINX_FPM</span>
-                    <span class="px-3 py-1 bg-zinc-800 rounded text-[10px] mono text-gray-400">PUBLIC_ROOT</span>
-                </div>
-            </section>
-        </main>
+// Site Details
+$siteName = $siteManager->getConfig('title', $siteManager->getActiveSite());
+$siteDescription = $siteManager->getConfig('description', 'A flat-file powered website.');
+$title = $frontMatter['title'] ?? $siteName;
 
-        <footer class="mt-12 text-center">
-            <div class="inline-block px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full mb-4">
-                <p class="text-orange-500 text-xs mono">
-                    <span class="animate-pulse mr-2 inline-block w-2 h-2 rounded-full bg-orange-500"></span>
-                    DYNAMIC TIMESTAMP: <?php echo $serverTime; ?>
-                </p>
-            </div>
-            <p class="text-zinc-600 text-[10px] uppercase tracking-[0.2em] mono">
-                Powered by AI Studio & Coolify
-            </p>
-        </footer>
-    </div>
+// Theme Layout
+$theme = $siteManager->getConfig('theme', 'default');
+$layoutFile = __DIR__ . "/../themes/{$theme}/layout.php";
 
-</body>
-</html>
+if (file_exists($layoutFile)) {
+    $content = $htmlContent; // Map to layout variable
+    include $layoutFile;
+} else {
+    echo $htmlContent;
+}

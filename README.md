@@ -55,6 +55,10 @@ These variables are automatically passed to the PHP-FPM container by Docker Comp
 - `Dockerfile`: PHP-FPM container configuration.
 - `Dockerfile.web`: Nginx container configuration (bakes config into image to avoid mount errors).
 - `docker-compose.yml`: Local and remote orchestration config.
+- `nixpacks.toml`: Nixpacks build configuration.
+- `docs/architecture.md`: Detailed system architecture.
+- `docs/deployment.md`: Guide on Coolify deployment and persistence.
+- `docs/implementation_plan.md`: Future roadmap for a multi-site Flat-File Markdown CMS.
 - `metadata.json`: Internal configuration for Google AI Studio (safe to delete after exporting).
 
 ## Development vs Production Files

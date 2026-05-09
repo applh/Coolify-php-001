@@ -2,7 +2,13 @@
     "name": "php-coolify-starter",
     "description": "PHP Coolify Starter with Nginx and FPM",
     "require": {
-        "php": ">=8.5"
+        "php": ">=8.5",
+        "erusev/parsedown": "^1.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "CMS\\": "src/"
+        }
     },
     "config": {
         "allow-plugins": {
