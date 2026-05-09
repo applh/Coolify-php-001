@@ -12,6 +12,9 @@ if (!$activeSite) {
     $activeSite = $_SERVER['HTTP_HOST'] ?? 'site1.com';
 }
 
+// Sanitize the site name (allow alphanumeric, dots, and dashes)
+$activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
+
 $siteDir = $contentPath . '/' . $activeSite;
 
 // 2. Fallback to site1.com if resolved site doesn't exist
@@ -24,7 +27,9 @@ if (!is_dir($siteDir)) {
 $siteIndex = $siteDir . '/index.php';
 
 if (file_exists($siteIndex)) {
-    require_once $siteIndex;
+    // Change directory to the site folder to support relative includes within site templates
+    chdir($siteDir);
+    require_once 'index.php';
 } else {
     http_response_code(404);
     echo "<h1>404 - Site Not Configured</h1>";
