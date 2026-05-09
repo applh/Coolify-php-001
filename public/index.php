@@ -3,7 +3,7 @@
  * Simplified Multi-site Router
  */
 
-$rootPath = dirname(__DIR__);
+$rootPath = realpath(__DIR__ . '/..');
 $contentPath = $rootPath . '/content';
 
 // 1. Resolve Site
