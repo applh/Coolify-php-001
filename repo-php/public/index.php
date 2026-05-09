@@ -11,8 +11,20 @@ $contentPath = $rootPath . '/content';
 
 // 1. Resolve Site
 $activeSite = getenv('ACTIVE_SITE_OVERRIDE');
+$httpHost = $_SERVER['HTTP_HOST'] ?? 'site1.com';
+
 if (!$activeSite) {
-    $activeSite = $_SERVER['HTTP_HOST'] ?? 'site1.com';
+    $configFile = $rootPath . '/config.php';
+    if (file_exists($configFile)) {
+        $domainMap = require $configFile;
+        if (is_array($domainMap) && isset($domainMap[$httpHost])) {
+            $activeSite = $domainMap[$httpHost];
+        }
+    }
+}
+
+if (!$activeSite) {
+    $activeSite = $httpHost;
 }
 
 // Sanitize the site name (allow alphanumeric, dots, and dashes)
