@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
+    vim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set PHP timezone
