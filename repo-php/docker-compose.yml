@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
+    volumes:
+      - content_data:/var/www/html/content
 
   web:
     build:
@@ -16,15 +18,8 @@ services:
     depends_on:
       - app
     restart: always
+    volumes:
+      - content_data:/var/www/html/content
 
-# Persistence Example:
-# To persist content across deployments and allow live editing via SFTP:
-# 1. Map the content folder to a persistent volume
-#
-# volumes:
-#   content_data:
-#     driver: local
-#
-# Then add this to BOTH services:
-#   volumes:
-#     - content_data:/var/www/html/content
+volumes:
+  content_data:
