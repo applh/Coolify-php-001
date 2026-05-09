@@ -1,7 +1,0 @@
-{
-    "name": "php-coolify-starter",
-    "description": "Simplified PHP Multi-site Starter",
-    "require": {
-        "php": ">=8.4"
-    }
-}

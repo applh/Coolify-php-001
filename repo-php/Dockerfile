@@ -14,17 +14,11 @@ RUN docker-php-ext-install opcache
 # Set PHP timezone
 RUN printf '[Date]\ndate.timezone = "Europe/Paris"\n' > /usr/local/etc/php/conf.d/timezone.ini
 
-# Install composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Set working directory
 WORKDIR /var/www/html
 
 # Copy application files
 COPY . .
-
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
 
 # Adjust permissions
 RUN chown -R www-data:www-data /var/www/html
