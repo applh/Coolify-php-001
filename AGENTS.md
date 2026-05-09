@@ -1,0 +1,28 @@
+# AI Agent Rules for Creating Sites
+
+When generating or modifying sites within the `content/` directory, the AI agent must adhere to the following core principles:
+
+## 1. Page Speed Score Optimal
+- Minimize blocking scripts and CSS. Use `defer` or `async` for scripts where possible.
+- Optimize images by relying on modern formats (e.g., WebP) and always include `loading="lazy"` on below-the-fold images.
+- Keep DOM sizes reasonable and utilize semantic HTML to ensure lightweight rendering.
+- Avoid bulky libraries when native browser features (like vanilla JS or CSS grids) suffice.
+
+## 2. SEO (Search Engine Optimization)
+- Output proper `<title>` and `<meta name="description">` tags on every page dynamically.
+- Use a clear, semantic heading structure (`<h1>` to `<h6>`) without skipping levels.
+- Always include descriptive `alt` text for images.
+- Ensure the viewport is configured for mobile devices (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`).
+
+## 3. UX (User Experience)
+- Implement mobile-first, responsive modern designs.
+- Tailwind CSS is preferred for clean, consistent styling.
+- Provide clear Call-To-Action (CTA) elements.
+- Maintain sufficient color contrast (WCAG compliance) to ensure readability for everyone.
+- Add subtle, purposeful animations or hover states for interactive feedback.
+
+## 4. Security
+- Sanitize and validate all user inputs (if form handling or query params are used).
+- Use `htmlspecialchars($var, ENT_QUOTES, 'UTF-8')` when outputting any variable to prevent XSS attacks.
+- Ensure error reporting does not expose sensitive server paths or configurations in production (handled via `.env` or global PHP config).
+- Do not expose configuration secrets in public client-side code.

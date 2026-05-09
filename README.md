@@ -43,6 +43,7 @@ To persist the `content/` folder (allowing live updates via SFTP without Git pus
 - `repo-php/Dockerfile.web`: Nginx container configuration.
 - `repo-php/docker-compose.yml`: Local and remote orchestration config.
 - `metadata.json`: Internal configuration for Google AI Studio.
+- `AGENTS.md`: AI Agent rules to follow when generating or modifying websites inside this project.
 - `package.json`: AI Studio build configuration.
 
 ## Troubleshooting
