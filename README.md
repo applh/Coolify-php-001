@@ -51,6 +51,7 @@ These variables are automatically passed to the PHP-FPM container by Docker Comp
 - `public/index.php`: The main entry point (Document Root).
 - `nginx.conf`: Nginx server configuration.
 - `Dockerfile`: PHP-FPM container configuration.
+- `Dockerfile.web`: Nginx container configuration (bakes config into image to avoid mount errors).
 - `docker-compose.yml`: Local and remote orchestration config.
 - `metadata.json`: Internal configuration for Google AI Studio (safe to delete after exporting).
 
