@@ -21,7 +21,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy application files
-COPY . .
+COPY repo-php/ .
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader

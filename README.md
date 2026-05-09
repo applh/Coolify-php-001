@@ -9,8 +9,8 @@ A minimalist, high-performance PHP boilerplate optimized for **Coolify**.
 - **Developer Friendly**: Use `ACTIVE_SITE_OVERRIDE` environment variable to test sites locally.
 
 ## Architecture
-- `public/index.php`: The main router. It detects the domain and loads the corresponding `index.php` from `/content/{domain}/`.
-- `content/`: Contains subdirectories for each site. Each must have an `index.php`.
+- `repo-php/public/index.php`: The main router. It detects the domain and loads the corresponding `index.php` from `/content/{domain}/`.
+- `repo-php/content/`: Contains subdirectories for each site. Each must have an `index.php`.
 
 ## Deployment to Coolify
 1. Create a new **Application**.
@@ -25,4 +25,13 @@ ACTIVE_SITE_OVERRIDE="site2.com"
 ```
 
 ## Persistence
-To persist the `content/` folder (allowing live updates via SFTP without Git pushes), add a persistent volume in Coolify pointing to `/var/www/html/content`.
+To persist the `content/` folder (allowing live updates via SFTP without Git pushes), add a persistent volume in Coolify pointing to `/var/www/html/content` (mapped to `repo-php/content` in your repository).
+
+## Project Structure
+- `repo-php/`: The main PHP application directory.
+- `repo-php/public/index.php`: The main entry point (Document Root).
+- `nginx.conf`: Nginx server configuration for the `web` container.
+- `Dockerfile`: PHP-FPM container configuration.
+- `Dockerfile.web`: Nginx container configuration.
+- `docker-compose.yml`: Local and remote orchestration config.
+- `metadata.json`: Internal configuration for Google AI Studio.

@@ -1,6 +1,6 @@
 {
   "name": "PHP Coolify Starter",
-  "description": "Minimal PHP 8.5 + Nginx + FPM boilerplate. Document root is strictly /public.",
+  "description": "Minimal PHP 8.5 + Nginx + FPM. App located in repo-php/.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
