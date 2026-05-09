@@ -13,16 +13,22 @@ A modern, polished plain PHP boilerplate ready for deployment on [Coolify](https
 
 ## Deployment to Coolify
 
-### Option A: Using Docker Compose (Recommended)
-1. **New Resource**: Click `+ New` -> `Service`.
-2. **Select Repository**: Select this repo.
-3. Coolify will automatically use the `docker-compose.yml`.
+1. **Push to GitHub/GitLab/Bitbucket**: Export this project from AI Studio and push it to a git repository.
+2. **Open Coolify Dashboard**: Go to your Coolify instance.
+3. **New Resource**: Click on `+ New` -> **Application**.
+4. **Select Repository**: Connect your git account and select this repository.
 
-### Option B: Using Nixpacks (Auto-detection)
-If you created an **Application** instead of a **Service**:
-1. Coolify will detect the `composer.json` and `nixpacks.toml`.
-2. The `nixpacks.toml` explicitly tells Coolify to use **PHP 8.5** and set the document root to `/public`.
-3. **Environment Variable**: Ensure you add `NIXPACKS_PHP_ROOT` as `/public` in the Coolify UI if you didn't use the provided config.
+### Build Configuration Path
+
+Depending on how you want to build the application:
+
+#### Option A: Docker Compose (Advanced / Preferred)
+In the application settings, set the **Build Pack** to `Docker Compose`. Coolify will handle the multi-container setup (Nginx + PHP-FPM) defined in the repository.
+
+#### Option B: Nixpacks (Simplified)
+If you leave the **Build Pack** as `Nixpacks` (the default):
+- Coolify will detect the `composer.json` and `nixpacks.toml`.
+- The `nixpacks.toml` explicitly forces **PHP 8.5** and sets the root to `/public`.
 
 ## Environment Variables
 
