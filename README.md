@@ -22,13 +22,14 @@ A modern, polished plain PHP boilerplate ready for deployment on [Coolify](https
 
 Depending on how you want to build the application:
 
-#### Option A: Docker Compose (Advanced / Preferred)
-In the application settings, set the **Build Pack** to `Docker Compose`. Coolify will handle the multi-container setup (Nginx + PHP-FPM) defined in the repository.
+#### Option A: Docker Compose (Highly Recommended for PHP 8.5+)
+In the application settings, set the **Build Pack** to `Docker Compose`. This is the **most reliable** way to ensure you are using **PHP 8.5**, as it uses the official Docker images which are updated as soon as new PHP versions are released.
 
 #### Option B: Nixpacks (Simplified)
 If you leave the **Build Pack** as `Nixpacks` (the default):
 - Coolify will detect the `composer.json` and `nixpacks.toml`.
-- The `nixpacks.toml` explicitly forces **PHP 8.5** and sets the root to `/public`.
+- The `nixpacks.toml` attempts to force **PHP 8.5**.
+- **Note**: Nixpacks depends on the underlying Nixpkgs repository. If `php85` is not yet available in the Nix channel used by your Coolify version, it might fall back to the default (like 8.3). **Always use Option A (Docker Compose) if you need a specific, bleeding-edge PHP version.**
 
 ## Environment Variables
 

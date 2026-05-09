@@ -1,5 +1,6 @@
 [variables]
     NIXPACKS_PHP_ROOT = "/public"
+    NIXPACKS_PHP_VERSION = "8.5"
 
 [phases.setup]
     nixPkgs = ["php85", "nginx", "composer"]
