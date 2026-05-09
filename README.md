@@ -4,7 +4,7 @@ A minimalist, high-performance PHP boilerplate optimized for **Coolify**.
 
 ## Features
 - **Multi-domain Support**: Serve different sites from the `content/` folder based on the domain name.
-- **PHP 8.5-FPM**: Uses the latest PHP version in a Docker container.
+- **PHP 8.4-FPM**: Uses a stable, high-performance PHP 8.4 version in a Docker container.
 - **Nginx**: Pre-configured reverse proxy.
 - **Developer Friendly**: Use `ACTIVE_SITE_OVERRIDE` environment variable to test sites locally.
 
