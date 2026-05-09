@@ -1,11 +1,41 @@
-<div align="center">
+# PHP Coolify Starter
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A modern, polished plain PHP boilerplate ready for deployment on [Coolify](https://coolify.io/).
 
-  <h1>Built with AI Studio</h2>
+## Features
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **PHP 8.5-FPM**: Modern, high-performance PHP engine.
+- **Nginx**: High-performance web server.
+- **Public Directory**: Document root moved to `/public` for enhanced security.
+- **Dockerized**: Includes a production-ready `Dockerfile` and `docker-compose.yml`.
+- **Modern UI**: Polished landing page using Tailwind CSS.
+- **Coolify Optimized**: Configured for seamless git-based deployment as a Service.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Deployment to Coolify
 
-</div>
+1. **Push to GitHub/GitLab/Bitbucket**: Export this project from AI Studio and push it to a git repository.
+2. **Open Coolify Dashboard**: Go to your Coolify instance.
+3. **New Resource**: Click on `+ New` -> `Service`. (Or Use Docker Compose empty template).
+4. **Select Repository**: Connect your git account and select this repository.
+5. **Configuration**:
+   - Coolify will detect the `docker-compose.yml`.
+   - **Port**: The destination port is usually automatically detected from the `web` service mapping.
+6. **Deploy**: Click `Deploy` and you're live!
+
+## Environment Variables
+
+You can add environment variables in the Coolify UI under the `Environment Variables` tab. They will be available in your PHP code via `$_ENV` or `getenv()`.
+
+## Project Structure
+
+- `public/index.php`: The main entry point (Document Root).
+- `nginx.conf`: Nginx server configuration.
+- `Dockerfile`: PHP-FPM container configuration.
+- `docker-compose.yml`: Local and remote orchestration config.
+- `metadata.json`: Internal configuration for Google AI Studio (safe to delete after exporting).
+
+## Why is metadata.json here?
+
+The `metadata.json` file is a configuration file used by **Google AI Studio** to manage the application's name, description, and required permissions within the AI Studio preview environment. 
+
+When you export this repository to GitHub or download it for production use on **Coolify**, you can safely delete this file as it is not used by PHP, Docker, or Nginx.

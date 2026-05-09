@@ -1,0 +1,6 @@
+{
+  "name": "PHP Coolify Starter",
+  "description": "A polished, modern plain PHP application ready for deployment on Coolify with Docker support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
