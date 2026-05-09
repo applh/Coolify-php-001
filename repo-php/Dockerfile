@@ -1,5 +1,5 @@
 # Use the official PHP image with FPM
-FROM php:8.4-fpm
+FROM php:8.5-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -7,9 +7,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install and enable opcache extension
-RUN docker-php-ext-install opcache
 
 # Set PHP timezone
 RUN printf '[Date]\ndate.timezone = "Europe/Paris"\n' > /usr/local/etc/php/conf.d/timezone.ini
