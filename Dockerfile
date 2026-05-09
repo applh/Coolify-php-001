@@ -3,17 +3,13 @@ FROM php:8.5-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
     zip \
-    unzip
+    unzip \
+    git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install mbstring opcache
+# Install minimal extensions
+RUN docker-php-ext-install opcache
 
 # Set PHP timezone
 RUN printf '[Date]\ndate.timezone = "Europe/Paris"\n' > /usr/local/etc/php/conf.d/timezone.ini
