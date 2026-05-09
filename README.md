@@ -34,6 +34,16 @@ You can add environment variables in the Coolify UI under the `Environment Varia
 - `docker-compose.yml`: Local and remote orchestration config.
 - `metadata.json`: Internal configuration for Google AI Studio (safe to delete after exporting).
 
+## Development vs Production Files
+
+When deploying to **Coolify**, the following files are **not necessary** and can be safely deleted after exporting the project:
+
+- `metadata.json`: Used by Google AI Studio for environment configuration.
+- `.env.example`: Should be used as a template to create your `.env` in Coolify, but the example file itself isn't needed by the running app.
+- `package.json` & `package-lock.json`: Only present if you used Node.js tools during development in AI Studio. A pure PHP app doesn't require them.
+
+The core production files are inside `public/`, `Dockerfile`, `nginx.conf`, and `docker-compose.yml`.
+
 ## Why is metadata.json here?
 
 The `metadata.json` file is a configuration file used by **Google AI Studio** to manage the application's name, description, and required permissions within the AI Studio preview environment. 
