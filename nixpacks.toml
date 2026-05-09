@@ -2,7 +2,7 @@
     NIXPACKS_PHP_ROOT = "/public"
 
 [phases.setup]
-    nixPkgs = ["php85", "nginx"]
+    nixPkgs = ["php85", "nginx", "composer"]
 
 [phases.install]
     cmds = ["composer install --no-dev --optimize-autoloader"]

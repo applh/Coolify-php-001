@@ -1,6 +1,6 @@
 {
   "name": "PHP Coolify Starter",
-  "description": "A polished, modern plain PHP application ready for deployment on Coolify with Docker support.",
+  "description": "Minimal PHP 8.5 + Nginx + FPM boilerplate. Document root is strictly /public.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
