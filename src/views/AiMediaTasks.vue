@@ -64,6 +64,17 @@
         <table class="w-full text-left border-collapse text-sm">
           <thead>
             <tr class="border-b border-[#2A2A2A] bg-[#202020] text-gray-400">
+              <th class="p-3 font-medium w-10 text-center">
+                <input
+                  type="checkbox"
+                  class="cursor-pointer bg-[#181818] border-[#2A2A2A]"
+                  :checked="selectAllPending"
+                  @change="toggleSelectAll"
+                >
+              </th>
+              <th class="p-3 font-medium">
+                Image
+              </th>
               <th class="p-3 font-medium">
                 ID
               </th>
@@ -87,6 +98,24 @@
               :key="task.id"
               class="border-b border-[#2A2A2A] hover:bg-[#202020]/50 transition-colors"
             >
+              <td class="p-3 text-center">
+                <input
+                  v-if="task.status === 'pending' || task.status === 'failed'"
+                  v-model="selectedTaskIds"
+                  :value="task.id"
+                  type="checkbox"
+                  class="cursor-pointer bg-[#181818] border-[#2A2A2A]"
+                >
+              </td>
+              <td class="p-3">
+                <img
+                  v-if="task.status === 'completed'"
+                  :src="'/api/media-files?path=' + task.target_path + '&t=' + Date.now()"
+                  class="w-16 h-16 object-cover rounded bg-[#2A2A2A]"
+                  alt="Generated Image"
+                  loading="lazy"
+                >
+              </td>
               <td class="p-3 font-mono text-gray-500">
                 #{{ task.id }}
               </td>
@@ -122,7 +151,7 @@
             </tr>
             <tr v-if="allTasks.length === 0">
               <td
-                colspan="5"
+                colspan="7"
                 class="p-6 text-center text-gray-500"
               >
                 No tasks found.
@@ -142,6 +171,22 @@ import { GoogleGenAI } from '@google/genai';
 const apiKey = ref('');
 const isProcessing = ref(false);
 const allTasks = ref([]);
+const selectedTaskIds = ref([]);
+
+const toggleSelectAll = (e) => {
+    if (e.target.checked) {
+        selectedTaskIds.value = allTasks.value
+            .filter(t => t.status === 'pending' || t.status === 'failed')
+            .map(t => t.id);
+    } else {
+        selectedTaskIds.value = [];
+    }
+};
+
+const selectAllPending = computed(() => {
+    const processable = allTasks.value.filter(t => t.status === 'pending' || t.status === 'failed');
+    return processable.length > 0 && selectedTaskIds.value.length === processable.length;
+});
 
 const pendingTasks = computed(() => allTasks.value.filter(t => t.status === 'pending'));
 const completedCount = computed(() => allTasks.value.filter(t => t.status === 'completed').length);
@@ -152,6 +197,10 @@ const fetchTasks = async () => {
         const res = await fetch('/api/media-tasks');
         if (!res.ok) throw new Error('Failed to fetch');
         allTasks.value = await res.json();
+        // Select all pending initially
+        selectedTaskIds.value = allTasks.value
+            .filter(t => t.status === 'pending' || t.status === 'failed')
+            .map(t => t.id);
     } catch (err) {
         console.error('Failed to load tasks', err);
     }
@@ -170,6 +219,13 @@ const updateTaskStatus = async (id, status, error_message = null) => {
 };
 
 const processQueue = async () => {
+    const tasksToProcess = allTasks.value.filter(t => selectedTaskIds.value.includes(t.id) && (t.status === 'pending' || t.status === 'failed'));
+    
+    if (tasksToProcess.length === 0) {
+        alert('Please select at least one pending or failed task to run.');
+        return;
+    }
+
     if (!apiKey.value) {
         alert('API Key required');
         return;
@@ -180,9 +236,7 @@ const processQueue = async () => {
 
     // Iterate through current pending tasks
     // We update the table dynamically
-    for (let task of allTasks.value) {
-        if (task.status !== 'pending' && task.status !== 'failed') continue;
-        
+    for (const task of tasksToProcess) {
         task.status = 'processing';
         task.error_message = null;
 

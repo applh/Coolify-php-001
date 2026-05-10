@@ -142,6 +142,19 @@ async function createServer() {
   });
 
   // Media Tasks API
+  app.get('/api/media-files', (req, res) => {
+    try {
+      const targetPath = String(req.query.path || '');
+      const fullPath = path.join(repoPhpPath, targetPath);
+      if (!fullPath.startsWith(repoPhpPath)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      res.sendFile(fullPath);
+    } catch {
+      res.status(404).send('Not found');
+    }
+  });
+
   app.post('/api/media-tasks', (req, res) => {
     try {
       const { site_id, target_path, prompt } = req.body;
