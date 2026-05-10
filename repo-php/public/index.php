@@ -7,9 +7,26 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 $rootPath = realpath(__DIR__ . '/..');
+
+// Autoloader for classes
+spl_autoload_register(function ($class_name) use ($rootPath) {
+    // Basic autoloader looking in the /class directory
+    $file = $rootPath . '/class/' . str_replace('\\', '/', $class_name) . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
 $contentPath = $rootPath . '/my-data';
 if (!is_dir($contentPath)) {
     $contentPath = $rootPath . '/content';
+}
+
+// Optionally, one could call CMS::validateSetup($contentPath) if a debug param is set
+if (isset($_GET['cms_debug'])) {
+    header('Content-Type: application/json');
+    echo json_encode(CMS::validateSetup($contentPath));
+    exit;
 }
 
 // 1. Resolve Site
