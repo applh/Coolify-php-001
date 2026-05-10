@@ -22,6 +22,12 @@
         >
           Explorer
         </router-link>
+        <router-link
+          to="/ai-media"
+          class="hover:text-[#F27D26] transition-colors"
+        >
+          AI Media Queue
+        </router-link>
         <a
           href="https://ais-dev-b4sj5apyjy3qy5glsde24e-241950013583.europe-west1.run.app"
           target="_blank"

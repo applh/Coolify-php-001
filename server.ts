@@ -9,6 +9,18 @@ import db from './database.ts';
 try {
   db.prepare('CREATE TABLE IF NOT EXISTS logs (message TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
   db.prepare('INSERT INTO logs (message) VALUES (?)').run('Server starting...');
+  
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS media_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        site_id TEXT NOT NULL,
+        target_path TEXT NOT NULL,
+        prompt TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 } catch (err) {
   console.error('Database logging failed:', err);
 }
@@ -20,7 +32,7 @@ const isProd = process.env.NODE_ENV === 'production' || process.env.PROD === 'tr
 
 async function createServer() {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
   app.use(cors());
 
   app.use((req, res, next) => {
@@ -126,6 +138,77 @@ async function createServer() {
     } catch (error) {
       console.error(`API Error /explorer:`, error);
       res.status(500).json({ error: 'Failed to explore path' });
+    }
+  });
+
+  // Media Tasks API
+  app.post('/api/media-tasks', (req, res) => {
+    try {
+      const { site_id, target_path, prompt } = req.body;
+      const stmt = db.prepare(`
+          INSERT INTO media_tasks (site_id, target_path, prompt) 
+          VALUES (?, ?, ?)
+      `);
+      const info = stmt.run(site_id, target_path, prompt);
+      res.json({ success: true, taskId: info.lastInsertRowid });
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.get('/api/media-tasks', (req, res) => {
+    try {
+      const tasks = db.prepare("SELECT * FROM media_tasks ORDER BY created_at DESC").all();
+      res.json(tasks);
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.put('/api/media-tasks/:id', (req, res) => {
+    try {
+      const { status, error_message } = req.body;
+      const stmt = db.prepare("UPDATE media_tasks SET status = ?, error_message = ? WHERE id = ?");
+      stmt.run(status, error_message || null, req.params.id);
+      res.json({ success: true });
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  // Base64 Save endpoint
+  app.post('/api/media/save-base64', async (req, res) => {
+    try {
+      const { imageBase64, targetPath } = req.body;
+      
+      if (!imageBase64 || !targetPath) {
+         return res.status(400).json({ error: 'Missing image data or target path.' });
+      }
+
+      // Convert base64 back to binary data
+      const buffer = Buffer.from(imageBase64, 'base64');
+
+      const fullPath = path.join(repoPhpPath, targetPath);
+      
+      // Security check to avoid path traversal
+      if (!fullPath.startsWith(repoPhpPath)) {
+          return res.status(403).json({ error: 'Invalid save path' });
+      }
+
+      // Ensure directory exists
+      await fs.mkdir(path.dirname(fullPath), { recursive: true });
+
+      // Save to the filesystem
+      await fs.writeFile(fullPath, buffer);
+
+      res.json({ success: true, savedPath: targetPath });
+
+    } catch (error: unknown) {
+      console.error('File Save Error:', error);
+      res.status(500).json({ error: 'Failed to save generated image' });
     }
   });
 

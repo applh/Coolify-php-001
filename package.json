@@ -27,8 +27,8 @@
     "vue-eslint-parser": "^10.4.0"
   },
   "dependencies": {
-    "tsx": "^4.21.0",
     "@eslint/js": "^10.0.1",
+    "@google/genai": "^2.0.1",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -36,6 +36,7 @@
     "express": "^5.2.1",
     "globals": "^17.6.0",
     "lucide-vue-next": "^1.0.0",
+    "tsx": "^4.21.0",
     "typescript-eslint": "^8.59.2",
     "vue": "^3.5.34",
     "vue-router": "^5.0.6"
