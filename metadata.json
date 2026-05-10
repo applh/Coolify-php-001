@@ -1,6 +1,6 @@
 {
-  "name": "PHP Coolify Starter",
-  "description": "Minimal PHP 8.5 + Nginx + FPM. App located in repo-php/.",
+  "name": "PHP CMS Manager",
+  "description": "Full-stack Node.js (Express + Vue3) CMS for managing a Multi-Site PHP Application.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
