@@ -75,7 +75,7 @@ async function createServer() {
                 const files = await fs.readdir(b64Dir);
                 for (const file of files) {
                     if (file.endsWith('.txt')) {
-                        const relativeUri = Buffer.from(file.slice(0, -4), 'base64').toString('utf8');
+                        const relativeUri = Buffer.from(file.slice(0, -4), 'base64url').toString('utf8');
                         const outPath = path.join(sitesDir, site, relativeUri);
                         try {
                            await fs.access(outPath);
@@ -259,7 +259,7 @@ async function createServer() {
              const relativeUri = parts.slice(2).join('/');
              const b64Dir = path.join(repoPhpPath, 'content', siteName, 'b64');
              await fs.mkdir(b64Dir, { recursive: true });
-             const txtFileName = Buffer.from(relativeUri).toString('base64') + '.txt';
+             const txtFileName = Buffer.from(relativeUri).toString('base64url') + '.txt';
              await fs.writeFile(path.join(b64Dir, txtFileName), imageBase64);
           }
       } catch (err) {

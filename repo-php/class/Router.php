@@ -1,6 +1,14 @@
 <?php
 
 class Router {
+    private static function base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    private static function base64url_decode($data) {
+        return base64_decode(strtr($data, '-_', '+/'));
+    }
+
     /**
      * Dispatch the request statically
      */
@@ -50,10 +58,11 @@ class Router {
             } else {
                 // Check if base64 version exists
                 $relativeUri = ltrim(urldecode($requestUri), '/');
-                $b64File = $siteDir . '/b64/' . base64_encode($relativeUri) . '.txt';
+                $b64File = $siteDir . '/b64/' . self::base64url_encode($relativeUri) . '.txt';
                 
                 if (file_exists($b64File)) {
                     $base64Str = file_get_contents($b64File);
+                    // It was originally base64 encoded by node (or PHP). Actually, the content is just base64 image data.
                     $binary = base64_decode($base64Str);
                     
                     // Attempt to restore file for future requests
