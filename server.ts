@@ -61,6 +61,32 @@ async function createServer() {
     console.error('Failed to ensure directory exists:', contentPath, err);
   }
 
+  // Restore images from base64 txt files for Git tracking
+  try {
+    const mediaAssetsDir = path.join(process.cwd(), 'media-assets');
+    const dirExists = await fs.access(mediaAssetsDir).then(() => true).catch(() => false);
+    
+    if (dirExists) {
+        const files = await fs.readdir(mediaAssetsDir);
+        for (const file of files) {
+          if (file.endsWith('.txt')) {
+            const relativePath = decodeURIComponent(file.slice(0, -4));
+            const outPath = path.join(repoPhpPath, relativePath);
+            try {
+               await fs.access(outPath);
+            } catch {
+               const base64Str = await fs.readFile(path.join(mediaAssetsDir, file), 'utf8');
+               await fs.mkdir(path.dirname(outPath), { recursive: true });
+               await fs.writeFile(outPath, Buffer.from(base64Str, 'base64'));
+               console.log(`Restored missing image: ${relativePath}`);
+            }
+          }
+        }
+    }
+  } catch (err) {
+    console.error('Error restoring media assets:', err);
+  }
+
   // API Routes
   app.get('/api/sites', async (req, res) => {
     try {
@@ -216,6 +242,16 @@ async function createServer() {
 
       // Save to the filesystem
       await fs.writeFile(fullPath, buffer);
+
+      // Save to media-assets folder as .txt (base64) so it can be committed to a git repo
+      try {
+          const mediaAssetsDir = path.join(process.cwd(), 'media-assets');
+          await fs.mkdir(mediaAssetsDir, { recursive: true });
+          const txtFileName = encodeURIComponent(targetPath) + '.txt';
+          await fs.writeFile(path.join(mediaAssetsDir, txtFileName), imageBase64);
+      } catch (err) {
+          console.error('Failed to save base64 txt file', err);
+      }
 
       res.json({ success: true, savedPath: targetPath });
 
