@@ -78,7 +78,7 @@ class Router {
                 }
                 
                 if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
-                    self::serveDynamicPlaceholder($requestUri);
+                    self::serveDynamicPlaceholder($requestUri, $activeSite);
                     exit;
                 } else {
                     http_response_code(404);
@@ -118,7 +118,7 @@ class Router {
         return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
 
-    private static function serveDynamicPlaceholder($requestUri) {
+    private static function serveDynamicPlaceholder($requestUri, $activeSite) {
         header("Content-Type: image/svg+xml");
         $filename = basename($requestUri);
         $text = htmlspecialchars($filename);
@@ -130,7 +130,7 @@ class Router {
         Missing Media: ' . $text . '
     </text>
     <text x="50%" y="58%" font-family="sans-serif" font-size="16" fill="#ccc" text-anchor="middle" dominant-baseline="middle">
-        (Queue to generate via AI)
+        (Task added to AI generation queue)
     </text>
 </svg>';
         echo $svg;

@@ -184,6 +184,71 @@ async function createServer() {
     }
   });
 
+  app.post('/api/scan-media', async (req, res) => {
+    try {
+      const sitesDir = contentPath; // e.g. repo-php/content
+      const sites = await fs.readdir(sitesDir, { withFileTypes: true });
+      let addedTasks = 0;
+      
+      for (const dirent of sites) {
+        if (!dirent.isDirectory()) continue;
+        const site = dirent.name;
+        const sitePath = path.join(sitesDir, site);
+        const files = await fs.readdir(sitePath);
+        
+        for (const file of files) {
+          if (file.endsWith('.php') || file.endsWith('.css') || file.endsWith('.html')) {
+            const content = await fs.readFile(path.join(sitePath, file), 'utf-8');
+            const regex = /(?:src=["']|url\(['"]?)((?:\/)?(?:img|assets)\/[^"')]+)/ig;
+            let match;
+            while ((match = regex.exec(content)) !== null) {
+               let imagePath = match[1];
+               if (imagePath.startsWith('/')) imagePath = imagePath.substring(1);
+               const fullPath = path.join(sitePath, imagePath);
+               
+               let exists = false;
+               try {
+                 await fs.access(fullPath);
+                 exists = true;
+               } catch {
+                 exists = false;
+               }
+               
+               if (!exists) {
+                 try {
+                   await fs.access(fullPath + '.zip');
+                   exists = true;
+                 } catch {
+                   exists = false;
+                 }
+               }
+               
+               if (!exists) {
+                 const targetPath = 'content/' + site + '/' + imagePath;
+                 const filename = path.basename(imagePath);
+                 const prompt = "Create an image for " + filename;
+                 
+                 const stmtCheck = db.prepare("SELECT id FROM media_tasks WHERE target_path = ? AND status != 'failed'");
+                 const existing = stmtCheck.get(targetPath);
+                 
+                 if (!existing) {
+                   const stmtInsert = db.prepare("INSERT INTO media_tasks (site_id, target_path, prompt) VALUES (?, ?, ?)");
+                   stmtInsert.run(site, targetPath, prompt);
+                   addedTasks++;
+                 }
+               }
+            }
+          }
+        }
+      }
+      res.json({ success: true, addedTasks });
+    } catch (err: unknown) {
+      console.error('Scan Media Error:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
   // Media Tasks API
   app.get('/api/media-files', (req, res) => {
     try {
@@ -368,6 +433,9 @@ async function createServer() {
     
     // Fallback for SPA in dev mode if vite doesn't handle it
     app.use(async (req, res, next) => {
+      if (req.method !== 'GET' || req.originalUrl.startsWith('/api')) {
+        return next();
+      }
       const url = req.originalUrl;
       try {
         let template = await fs.readFile(path.resolve(process.cwd(), 'index.html'), 'utf-8');

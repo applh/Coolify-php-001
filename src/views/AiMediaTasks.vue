@@ -194,6 +194,7 @@ const failedCount = computed(() => allTasks.value.filter(t => t.status === 'fail
 
 const fetchTasks = async () => {
     try {
+        await fetch('/api/scan-media', { method: 'POST' });
         const res = await fetch('/api/media-tasks');
         if (!res.ok) throw new Error('Failed to fetch');
         allTasks.value = await res.json();
