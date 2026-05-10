@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import AdmZip from 'adm-zip';
+import multer from 'multer';
 import db from './database.ts';
 
 // Use DB for logging starts
@@ -268,6 +269,82 @@ async function createServer() {
     } catch (error: unknown) {
       console.error('File Save Error:', error);
       res.status(500).json({ error: 'Failed to save generated image' });
+    }
+  });
+
+  // Sync API
+  const upload = multer({ storage: multer.memoryStorage() });
+
+  app.get('/api/sync/export', async (req, res) => {
+    try {
+      const zip = new AdmZip();
+      
+      // Add cms.db
+      const dbPath = path.join(process.cwd(), 'cms.db');
+      zip.addLocalFile(dbPath);
+
+      // Add repo-php folder
+      zip.addLocalFolder(repoPhpPath, 'repo-php');
+
+      const buffer = zip.toBuffer();
+      res.set('Content-Type', 'application/zip');
+      res.set('Content-Disposition', 'attachment; filename=cms-sync-export.zip');
+      res.send(buffer);
+    } catch (error) {
+      console.error('Export Error:', error);
+      res.status(500).json({ error: 'Failed to create export' });
+    }
+  });
+
+  app.post('/api/sync/import', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const zip = new AdmZip(req.file.buffer);
+      const zipEntries = zip.getEntries();
+      
+      // Check if it's a valid export (contains repo-php and cms.db)
+      const hasRepo = zipEntries.some(e => e.entryName.startsWith('repo-php/'));
+      const hasDb = zipEntries.some(e => e.entryName === 'cms.db');
+
+      if (!hasRepo || !hasDb) {
+         // Try to handle case where repo-php might NOT be under a folder if it was zipped differently
+         // But our export puts it in 'repo-php/'
+      }
+
+      // Temporary extraction path
+      const tmpDir = path.join(process.cwd(), 'import-tmp-' + Date.now());
+      await fs.mkdir(tmpDir, { recursive: true });
+      zip.extractAllTo(tmpDir, true);
+
+      // Copy cms.db
+      const newDbPath = path.join(tmpDir, 'cms.db');
+      const currentDbPath = path.join(process.cwd(), 'cms.db');
+      
+      // We need to be careful with cms.db. 
+      // Close DB connection if possible? better-sqlite3 doesn't have a simple async close in this setup usually
+      // but we can try to overwrite it. SQLite usually handles it if no active transaction.
+      
+      await fs.copyFile(newDbPath, currentDbPath);
+
+      // Copy repo-php
+      const newRepoPath = path.join(tmpDir, 'repo-php');
+      // Remove old repo-php first to be clean
+      await fs.rm(repoPhpPath, { recursive: true, force: true });
+      await fs.cp(newRepoPath, repoPhpPath, { recursive: true });
+
+      // Cleanup tmp
+      await fs.rm(tmpDir, { recursive: true, force: true });
+
+      res.json({ success: true, message: 'Import successful. The server might need a restart if DB changes are not visible.' });
+      
+      // Force exit to trigger platform restart if needed? 
+      // Actually let's just tell the user.
+    } catch (error) {
+      console.error('Import Error:', error);
+      res.status(500).json({ error: 'Failed to import state' });
     }
   });
 

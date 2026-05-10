@@ -28,6 +28,12 @@
         >
           AI Media Queue
         </router-link>
+        <router-link
+          to="/sync"
+          class="hover:text-[#F27D26] transition-colors"
+        >
+          Sync
+        </router-link>
         <a
           href="https://ais-dev-b4sj5apyjy3qy5glsde24e-241950013583.europe-west1.run.app"
           target="_blank"
