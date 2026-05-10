@@ -70,7 +70,7 @@ async function createServer() {
         const files = await fs.readdir(mediaAssetsDir);
         for (const file of files) {
           if (file.endsWith('.txt')) {
-            const relativePath = decodeURIComponent(file.slice(0, -4));
+            const relativePath = Buffer.from(file.slice(0, -4), 'base64').toString('utf8');
             const outPath = path.join(repoPhpPath, relativePath);
             try {
                await fs.access(outPath);
@@ -247,7 +247,7 @@ async function createServer() {
       try {
           const mediaAssetsDir = path.join(process.cwd(), 'media-assets');
           await fs.mkdir(mediaAssetsDir, { recursive: true });
-          const txtFileName = encodeURIComponent(targetPath) + '.txt';
+          const txtFileName = Buffer.from(targetPath).toString('base64') + '.txt';
           await fs.writeFile(path.join(mediaAssetsDir, txtFileName), imageBase64);
       } catch (err) {
           console.error('Failed to save base64 txt file', err);
