@@ -59,45 +59,50 @@ async function createServer() {
   // Ensure resolved content path exists
   try {
     await fs.mkdir(contentPath, { recursive: true });
+    console.log('Content path ensured:', contentPath);
   } catch (err) {
     console.error('Failed to ensure directory exists:', contentPath, err);
   }
 
-  // Restore images from individual .zip files for Git tracking
-  try {
-    const sitesDir = path.join(repoPhpPath, 'content');
-    const sitesDirExists = await fs.access(sitesDir).then(() => true).catch(() => false);
-    
-    if (sitesDirExists) {
-        async function walkAndRestore(dir: string) {
-            const entries = await fs.readdir(dir, { withFileTypes: true });
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                    await walkAndRestore(fullPath);
-                } else if (entry.name.endsWith('.zip')) {
-                    const originalFile = fullPath.slice(0, -4);
-                    try {
-                        await fs.access(originalFile);
-                    } catch {
-                        // Original missing, restore from zip
-                        console.log(`Restoring ${originalFile} from zip...`);
-                        const zip = new AdmZip(fullPath);
-                        const zipEntries = zip.getEntries();
-                        if (zipEntries.length > 0) {
-                            const buffer = zipEntries[0].getData();
-                            await fs.writeFile(originalFile, buffer);
-                            console.log(`  Restored ${originalFile}`);
-                        }
-                    }
-                }
-            }
-        }
-        await walkAndRestore(sitesDir);
+  // Restore images from individual .zip files for Git tracking (non-blocking)
+  (async () => {
+    console.log('Restoring media from zips...');
+    try {
+      const sitesDir = path.join(repoPhpPath, 'content');
+      const sitesDirExists = await fs.access(sitesDir).then(() => true).catch(() => false);
+      
+      if (sitesDirExists) {
+          async function walkAndRestore(dir: string) {
+              const entries = await fs.readdir(dir, { withFileTypes: true });
+              for (const entry of entries) {
+                  const fullPath = path.join(dir, entry.name);
+                  if (entry.isDirectory()) {
+                      await walkAndRestore(fullPath);
+                  } else if (entry.name.endsWith('.zip')) {
+                      const originalFile = fullPath.slice(0, -4);
+                      try {
+                          await fs.access(originalFile);
+                      } catch {
+                          // Original missing, restore from zip
+                          console.log(`Restoring ${originalFile} from zip...`);
+                          const zip = new AdmZip(fullPath);
+                          const zipEntries = zip.getEntries();
+                          if (zipEntries.length > 0) {
+                              const buffer = zipEntries[0].getData();
+                              await fs.writeFile(originalFile, buffer);
+                              console.log(`  Restored ${originalFile}`);
+                          }
+                      }
+                  }
+              }
+          }
+          await walkAndRestore(sitesDir);
+          console.log('Media restoration complete.');
+      }
+    } catch (err) {
+      console.error('Error restoring media from individual zips:', err);
     }
-  } catch (err) {
-    console.error('Error restoring media from individual zips:', err);
-  }
+  })();
 
   // API Routes
   app.get('/api/sites', async (req, res) => {
@@ -349,7 +354,9 @@ async function createServer() {
   });
 
   // Frontend routes
+  console.log(`Starting frontend in ${isProd ? 'production' : 'development'} mode`);
   if (!isProd) {
+    console.log('Initializing Vite middleware...');
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -357,8 +364,23 @@ async function createServer() {
       root: process.cwd(),
     });
     app.use(vite.middlewares);
+    console.log('Vite middleware initialized.');
+    
+    // Fallback for SPA in dev mode if vite doesn't handle it
+    app.use(async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        let template = await fs.readFile(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
   } else {
     const distPath = path.resolve(rootDir, 'dist');
+    console.log(`Serving static files from ${distPath}`);
     app.use(express.static(distPath));
     app.get(/.*/, (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
