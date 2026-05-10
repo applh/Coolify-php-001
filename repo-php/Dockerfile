@@ -18,8 +18,14 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
+# Add entrypoint script
+RUN chmod +x /var/www/html/entrypoint.sh
+
 # Adjust permissions
 RUN chown -R www-data:www-data /var/www/html
 
 # PHP-FPM runs on port 9000 by default
 EXPOSE 9000
+
+ENTRYPOINT ["/var/www/html/entrypoint.sh"]
+CMD ["php-fpm"]

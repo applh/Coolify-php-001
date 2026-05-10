@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - content_data:/var/www/html/content
+      - my_data:/var/www/html/my-data
 
   web:
     build:
@@ -19,7 +19,7 @@ services:
       - app
     restart: always
     volumes:
-      - content_data:/var/www/html/content
+      - my_data:/var/www/html/my-data
 
 volumes:
-  content_data:
+  my_data:

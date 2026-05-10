@@ -7,7 +7,10 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 $rootPath = realpath(__DIR__ . '/..');
-$contentPath = $rootPath . '/content';
+$contentPath = $rootPath . '/my-data';
+if (!is_dir($contentPath)) {
+    $contentPath = $rootPath . '/content';
+}
 
 // 1. Resolve Site
 $activeSite = getenv('ACTIVE_SITE_OVERRIDE');
