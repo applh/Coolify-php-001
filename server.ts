@@ -61,26 +61,33 @@ async function createServer() {
     console.error('Failed to ensure directory exists:', contentPath, err);
   }
 
-  // Restore images from base64 txt files for Git tracking
+  // Restore images from site b64 folders for Git tracking
   try {
-    const mediaAssetsDir = path.join(process.cwd(), 'media-assets');
-    const dirExists = await fs.access(mediaAssetsDir).then(() => true).catch(() => false);
+    const sitesDir = path.join(repoPhpPath, 'content');
+    const sitesDirExists = await fs.access(sitesDir).then(() => true).catch(() => false);
     
-    if (dirExists) {
-        const files = await fs.readdir(mediaAssetsDir);
-        for (const file of files) {
-          if (file.endsWith('.txt')) {
-            const relativePath = Buffer.from(file.slice(0, -4), 'base64').toString('utf8');
-            const outPath = path.join(repoPhpPath, relativePath);
-            try {
-               await fs.access(outPath);
-            } catch {
-               const base64Str = await fs.readFile(path.join(mediaAssetsDir, file), 'utf8');
-               await fs.mkdir(path.dirname(outPath), { recursive: true });
-               await fs.writeFile(outPath, Buffer.from(base64Str, 'base64'));
-               console.log(`Restored missing image: ${relativePath}`);
+    if (sitesDirExists) {
+        const sites = await fs.readdir(sitesDir);
+        for (const site of sites) {
+            const b64Dir = path.join(sitesDir, site, 'b64');
+            const b64DirExists = await fs.access(b64Dir).then(() => true).catch(() => false);
+            if (b64DirExists) {
+                const files = await fs.readdir(b64Dir);
+                for (const file of files) {
+                    if (file.endsWith('.txt')) {
+                        const relativeUri = Buffer.from(file.slice(0, -4), 'base64').toString('utf8');
+                        const outPath = path.join(sitesDir, site, relativeUri);
+                        try {
+                           await fs.access(outPath);
+                        } catch {
+                           const base64Str = await fs.readFile(path.join(b64Dir, file), 'utf8');
+                           await fs.mkdir(path.dirname(outPath), { recursive: true });
+                           await fs.writeFile(outPath, Buffer.from(base64Str, 'base64'));
+                           console.log(`Restored missing image for site ${site}: ${relativeUri}`);
+                        }
+                    }
+                }
             }
-          }
         }
     }
   } catch (err) {
@@ -243,12 +250,18 @@ async function createServer() {
       // Save to the filesystem
       await fs.writeFile(fullPath, buffer);
 
-      // Save to media-assets folder as .txt (base64) so it can be committed to a git repo
+      // Save to site b64 folder as .txt (base64) so it can be committed to a git repo
       try {
-          const mediaAssetsDir = path.join(process.cwd(), 'media-assets');
-          await fs.mkdir(mediaAssetsDir, { recursive: true });
-          const txtFileName = Buffer.from(targetPath).toString('base64') + '.txt';
-          await fs.writeFile(path.join(mediaAssetsDir, txtFileName), imageBase64);
+          const parts = targetPath.split('/');
+          // targetPath is like "content/babiblog.fr/img/chambre-bebe.jpg"
+          if (parts[0] === 'content' && parts.length >= 3) {
+             const siteName = parts[1];
+             const relativeUri = parts.slice(2).join('/');
+             const b64Dir = path.join(repoPhpPath, 'content', siteName, 'b64');
+             await fs.mkdir(b64Dir, { recursive: true });
+             const txtFileName = Buffer.from(relativeUri).toString('base64') + '.txt';
+             await fs.writeFile(path.join(b64Dir, txtFileName), imageBase64);
+          }
       } catch (err) {
           console.error('Failed to save base64 txt file', err);
       }

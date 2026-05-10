@@ -47,13 +47,35 @@ class Router {
                 header("Content-Type: $mimeType");
                 readfile($mediaPath);
                 exit;
-            } elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
-                self::serveDynamicPlaceholder($requestUri);
-                exit;
             } else {
-                http_response_code(404);
-                echo "Media not found";
-                exit;
+                // Check if base64 version exists
+                $relativeUri = ltrim(urldecode($requestUri), '/');
+                $b64File = $siteDir . '/b64/' . base64_encode($relativeUri) . '.txt';
+                
+                if (file_exists($b64File)) {
+                    $base64Str = file_get_contents($b64File);
+                    $binary = base64_decode($base64Str);
+                    
+                    // Attempt to restore file for future requests
+                    $mediaPathToCreate = $siteDir . '/' . $relativeUri;
+                    $dirToCreate = dirname($mediaPathToCreate);
+                    if (!is_dir($dirToCreate)) {
+                        mkdir($dirToCreate, 0777, true);
+                    }
+                    file_put_contents($mediaPathToCreate, $binary);
+                    
+                    $mimeType = self::getMimeType($extension);
+                    header("Content-Type: $mimeType");
+                    echo $binary;
+                    exit;
+                } elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
+                    self::serveDynamicPlaceholder($requestUri);
+                    exit;
+                } else {
+                    http_response_code(404);
+                    echo "Media not found";
+                    exit;
+                }
             }
         }
 
