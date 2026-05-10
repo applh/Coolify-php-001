@@ -1,10 +1,17 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import db from './database.ts';
+
+// Use DB for logging starts
+try {
+  db.prepare('CREATE TABLE IF NOT EXISTS logs (message TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
+  db.prepare('INSERT INTO logs (message) VALUES (?)').run('Server starting...');
+} catch (err) {
+  console.error('Database logging failed:', err);
+}
 
 console.log('Server.ts: Initializing...');
 
@@ -21,7 +28,9 @@ async function createServer() {
     next();
   });
 
-  const repoPhpPath = path.join(__dirname, 'repo-php');
+  // Since we run server.ts with tsx, __dirname is always the project root
+  const rootDir = __dirname;
+  const repoPhpPath = path.join(rootDir, 'repo-php');
   let contentPath = path.join(repoPhpPath, 'my-data');
   
   // Check if my-data exists, fallback to content
@@ -49,6 +58,7 @@ async function createServer() {
         .map(dirent => dirent.name);
       res.json(sites);
     } catch (error) {
+      console.error('API Error /sites:', error);
       res.status(500).json({ error: 'Failed to read sites' });
     }
   });
@@ -60,6 +70,7 @@ async function createServer() {
       const files = await fs.readdir(sitePath);
       res.json(files);
     } catch (error) {
+       console.error(`API Error /sites/${site}/files:`, error);
        res.status(500).json({ error: 'Failed to read files' });
     }
   });
@@ -71,6 +82,7 @@ async function createServer() {
       const content = await fs.readFile(filePath, 'utf-8');
       res.json({ content });
     } catch (error) {
+       console.error(`API Error /sites/${site}/files/${file}:`, error);
        res.status(500).json({ error: 'Failed to read file' });
     }
   });
@@ -83,12 +95,14 @@ async function createServer() {
       await fs.writeFile(filePath, content, 'utf-8');
       res.json({ success: true });
     } catch (error) {
+       console.error(`API Error saving /sites/${site}/files/${file}:`, error);
        res.status(500).json({ error: 'Failed to save file' });
     }
   });
 
   // Frontend routes
   if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -96,9 +110,10 @@ async function createServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist/index.html'));
+    const distPath = path.resolve(rootDir, 'dist');
+    app.use(express.static(distPath));
+    app.get(/.*/, (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 

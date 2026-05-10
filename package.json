@@ -3,10 +3,13 @@
   "private": true,
   "version": "1.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build",
-    "start": "node server.ts",
+    "start": "tsx server.ts",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.ts,.vue"
   },
@@ -19,17 +22,21 @@
     "eslint": "^10.3.0",
     "eslint-plugin-vue": "^10.9.1",
     "tailwindcss": "^4.3.0",
-    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vite": "^6.2.3",
     "vue-eslint-parser": "^10.4.0"
   },
   "dependencies": {
+    "tsx": "^4.21.0",
+    "@eslint/js": "^10.0.1",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "esbuild": "^0.28.0",
     "express": "^5.2.1",
+    "globals": "^17.6.0",
     "lucide-vue-next": "^1.0.0",
+    "typescript-eslint": "^8.59.2",
     "vue": "^3.5.34",
     "vue-router": "^5.0.6"
   }

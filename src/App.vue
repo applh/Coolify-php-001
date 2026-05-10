@@ -3,7 +3,7 @@
     <header class="border-b border-[#2A2A2A] p-4 flex justify-between items-center bg-[#181818]">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 bg-[#F27D26] rounded flex items-center justify-center font-bold text-black text-xs">CMS</div>
-        <h1 class="font-serif italic text-lg tracking-tight">PHP CMS Manager (DEBUG)</h1>
+        <h1 class="font-serif italic text-lg tracking-tight">PHP CMS Manager</h1>
       </div>
       <nav class="flex gap-6 text-xs uppercase tracking-widest font-semibold opacity-70">
         <router-link to="/" class="hover:text-[#F27D26] transition-colors">Dashboard</router-link>

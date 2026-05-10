@@ -1,15 +1,15 @@
 import { createApp } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import App from './App.vue';
-import Dashboard from './views/Dashboard.vue';
-import Editor from './views/Editor.vue';
+import SiteDashboard from './views/SiteDashboard.vue';
+import SiteEditor from './views/SiteEditor.vue';
 import './style.css';
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: Dashboard },
-    { path: '/editor/:site', component: Editor },
+    { path: '/', component: SiteDashboard },
+    { path: '/editor/:site', component: SiteEditor },
   ],
 });
 
