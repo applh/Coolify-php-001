@@ -48,34 +48,8 @@ class Router {
                 readfile($mediaPath);
                 exit;
             } else {
-                // Check if individual zip version exists
-                $zipFile = $siteDir . urldecode($requestUri) . '.zip';
-                
-                if (file_exists($zipFile)) {
-                    $zip = new ZipArchive();
-                    if ($zip->open($zipFile) === TRUE) {
-                        // The file inside the zip is expected to have the same basename
-                        $entryName = basename(urldecode($requestUri));
-                        $binary = $zip->getFromName($entryName);
-                        
-                        if ($binary !== false) {
-                            // Attempt to restore file for future requests
-                            $mediaPathToCreate = $siteDir . urldecode($requestUri);
-                            $dirToCreate = dirname($mediaPathToCreate);
-                            if (!is_dir($dirToCreate)) {
-                                @mkdir($dirToCreate, 0777, true);
-                            }
-                            @file_put_contents($mediaPathToCreate, $binary);
-                            
-                            $mimeType = self::getMimeType($extension);
-                            header("Content-Type: $mimeType");
-                            echo $binary;
-                            $zip->close();
-                            exit;
-                        }
-                        $zip->close();
-                    }
-                }
+                // If the file doesn't exist, it might be in a .zip that hasn't been extracted yet.
+                // Since ZipArchive isn't available in this PHP env, we'll just fall through to the SVG.
                 
                 if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
                     self::serveDynamicPlaceholder($requestUri, $activeSite);
