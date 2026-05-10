@@ -2,71 +2,7 @@
 /**
  * Simplified Multi-site Router
  */
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
-$rootPath = realpath(__DIR__ . '/..');
+require_once __DIR__ . '/../class/App.php';
 
-// Autoloader for classes
-spl_autoload_register(function ($class_name) use ($rootPath) {
-    // Basic autoloader looking in the /class directory
-    $file = $rootPath . '/class/' . str_replace('\\', '/', $class_name) . '.php';
-    if (file_exists($file)) {
-        require_once $file;
-    }
-});
-
-$contentPath = $rootPath . '/my-data';
-if (!is_dir($contentPath)) {
-    $contentPath = $rootPath . '/content';
-}
-
-// Optionally, one could call CMS::validateSetup($contentPath) if a debug param is set
-if (isset($_GET['cms_debug'])) {
-    header('Content-Type: application/json');
-    echo json_encode(CMS::validateSetup($contentPath));
-    exit;
-}
-
-// 1. Resolve Site
-$activeSite = getenv('ACTIVE_SITE_OVERRIDE');
-$httpHost = $_SERVER['HTTP_HOST'] ?? 'site1.com';
-
-if (!$activeSite) {
-    $configFile = $contentPath . '/config.php';
-    if (file_exists($configFile)) {
-        $domainMap = require $configFile;
-        if (is_array($domainMap) && isset($domainMap[$httpHost])) {
-            $activeSite = $domainMap[$httpHost];
-        }
-    }
-}
-
-if (!$activeSite) {
-    $activeSite = $httpHost;
-}
-
-// Sanitize the site name (allow alphanumeric, dots, and dashes)
-$activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
-
-$siteDir = $contentPath . '/' . $activeSite;
-
-// 2. Fallback to site1.com if resolved site doesn't exist
-if (!is_dir($siteDir)) {
-    $activeSite = 'site1.com';
-    $siteDir = $contentPath . '/' . $activeSite;
-}
-
-// 3. Load the site's index.php
-$siteIndex = $siteDir . '/index.php';
-
-if (file_exists($siteIndex)) {
-    // Change directory to the site folder to support relative includes within site templates
-    chdir($siteDir);
-    require_once 'index.php';
-} else {
-    http_response_code(404);
-    echo "<h1>404 - Site Not Configured</h1>";
-    echo "<p>Could not find index.php for site: " . htmlspecialchars($activeSite) . "</p>";
-}
+App::bootstrap();
