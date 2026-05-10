@@ -100,6 +100,35 @@ async function createServer() {
     }
   });
 
+  app.get('/api/explorer', async (req, res) => {
+    try {
+      const explorePath = req.query.path ? String(req.query.path) : '';
+      const fullPath = path.join(repoPhpPath, explorePath);
+      
+      // Basic security check to prevent directory traversal
+      if (!fullPath.startsWith(repoPhpPath)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const stats = await fs.stat(fullPath);
+      if (stats.isDirectory()) {
+         const items = await fs.readdir(fullPath, { withFileTypes: true });
+         const results = items.map(item => ({
+             name: item.name,
+             isDirectory: item.isDirectory(),
+             path: path.join(explorePath, item.name).replace(/\\/g, '/')
+         }));
+         res.json({ type: 'directory', items: results });
+      } else {
+         const content = await fs.readFile(fullPath, 'utf-8');
+         res.json({ type: 'file', content });
+      }
+    } catch (error) {
+      console.error(`API Error /explorer:`, error);
+      res.status(500).json({ error: 'Failed to explore path' });
+    }
+  });
+
   // Frontend routes
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');

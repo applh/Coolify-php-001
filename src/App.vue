@@ -7,6 +7,7 @@
       </div>
       <nav class="flex gap-6 text-xs uppercase tracking-widest font-semibold opacity-70">
         <router-link to="/" class="hover:text-[#F27D26] transition-colors">Dashboard</router-link>
+        <router-link to="/explorer" class="hover:text-[#F27D26] transition-colors">Explorer</router-link>
         <a href="https://ais-dev-b4sj5apyjy3qy5glsde24e-241950013583.europe-west1.run.app" target="_blank" class="hover:text-[#F27D26] transition-colors">Live Preview</a>
       </nav>
     </header>
