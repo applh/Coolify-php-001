@@ -12,6 +12,7 @@ $title = "Site One - Welcome";
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center">
     <div class="max-w-xl w-full p-8 border border-zinc-800 rounded-2xl bg-zinc-900/50">
+        <img src="/img/site1-logo.png" alt="Site 1 Logo" class="w-32 h-32 rounded-lg mb-6 object-cover bg-zinc-800" loading="lazy">
         <h1 class="text-3xl font-bold mb-4">Welcome to Site 1</h1>
         <p class="text-zinc-400 leading-relaxed mb-6">
             This is a simple PHP template served from <code class="bg-zinc-800 px-1 rounded">/content/site1.com/index.php</code>.

@@ -54,7 +54,7 @@ $description = "Experience the perfect balance of energetic Samba dance and mind
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-display { font-family: 'Playfair Display', serif; }
         .hero-bg {
-            background-image: linear-gradient(rgba(4, 47, 46, 0.8), rgba(4, 47, 46, 0.9)), url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-image: linear-gradient(rgba(4, 47, 46, 0.8), rgba(4, 47, 46, 0.9)), url('/img/hero.jpg');
             background-size: cover;
             background-position: center;
         }
@@ -121,7 +121,7 @@ $description = "Experience the perfect balance of energetic Samba dance and mind
                     </ul>
                 </div>
                 <div class="relative">
-                    <img src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Meditation and Movement" class="rounded-2xl shadow-2xl object-cover h-[600px] w-full" loading="lazy">
+                    <img src="/img/meditation.jpg" alt="Meditation and Movement" class="rounded-2xl shadow-2xl object-cover h-[600px] w-full" loading="lazy">
                     <div class="absolute -bottom-8 -left-8 bg-brand-900 p-8 rounded-2xl shadow-xl max-w-xs hidden md:block">
                         <p class="text-brand-100 italic text-lg line-clamp-3">"SambaZen entirely changed how I relate to my body and my stress."</p>
                         <p class="text-brand-400 font-semibold mt-4">— Maria S.</p>
@@ -144,7 +144,7 @@ $description = "Experience the perfect balance of energetic Samba dance and mind
                 <!-- Card 1 -->
                 <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 border border-brand-100 group">
                     <div class="h-48 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1547153760-18fc86324498?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Weekly Classes" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="/img/class.jpg" alt="Weekly Classes" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                     </div>
                     <div class="p-8">
                         <div class="text-brand-500 font-medium text-sm mb-2">Ongoing</div>
@@ -160,7 +160,7 @@ $description = "Experience the perfect balance of energetic Samba dance and mind
                 <div class="bg-brand-950 rounded-3xl overflow-hidden shadow-xl transform border border-brand-800 group relative">
                     <div class="absolute top-0 right-0 bg-accent-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10">POPULAR</div>
                     <div class="h-48 overflow-hidden opacity-80">
-                        <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Weekend Retreat" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="/img/retreat.jpg" alt="Weekend Retreat" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                     </div>
                     <div class="p-8">
                         <div class="text-brand-300 font-medium text-sm mb-2">Immersive</div>

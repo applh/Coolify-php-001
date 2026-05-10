@@ -108,7 +108,7 @@ $description = "Bienvenue sur BabiBlog. Découvrez nos articles, astuces et réf
                 <!-- Article 1 -->
                 <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
                     <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Chambre bébé" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="/img/chambre-bebe.jpg" alt="Chambre bébé" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                     </div>
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Décoration</div>
@@ -123,7 +123,7 @@ $description = "Bienvenue sur BabiBlog. Découvrez nos articles, astuces et réf
                 <!-- Article 2 -->
                 <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
                     <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Recette saine" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="/img/recette-saine.jpg" alt="Recette saine" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                     </div>
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Recettes</div>
@@ -138,7 +138,7 @@ $description = "Bienvenue sur BabiBlog. Découvrez nos articles, astuces et réf
                 <!-- Article 3 -->
                 <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
                     <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Organisation" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="/img/organisation.jpg" alt="Organisation" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                     </div>
                     <div class="p-6 flex-grow flex flex-col">
                         <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Lifestyle</div>
