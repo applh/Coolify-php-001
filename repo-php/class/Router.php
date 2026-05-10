@@ -1,14 +1,6 @@
 <?php
 
 class Router {
-    private static function base64url_encode($data) {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    private static function base64url_decode($data) {
-        return base64_decode(strtr($data, '-_', '+/'));
-    }
-
     /**
      * Dispatch the request statically
      */
@@ -56,28 +48,36 @@ class Router {
                 readfile($mediaPath);
                 exit;
             } else {
-                // Check if base64 version exists
-                $relativeUri = ltrim(urldecode($requestUri), '/');
-                $b64File = $siteDir . '/b64/' . self::base64url_encode($relativeUri) . '.txt';
+                // Check if individual zip version exists
+                $zipFile = $siteDir . urldecode($requestUri) . '.zip';
                 
-                if (file_exists($b64File)) {
-                    $base64Str = file_get_contents($b64File);
-                    // It was originally base64 encoded by node (or PHP). Actually, the content is just base64 image data.
-                    $binary = base64_decode($base64Str);
-                    
-                    // Attempt to restore file for future requests
-                    $mediaPathToCreate = $siteDir . '/' . $relativeUri;
-                    $dirToCreate = dirname($mediaPathToCreate);
-                    if (!is_dir($dirToCreate)) {
-                        mkdir($dirToCreate, 0777, true);
+                if (file_exists($zipFile)) {
+                    $zip = new ZipArchive();
+                    if ($zip->open($zipFile) === TRUE) {
+                        // The file inside the zip is expected to have the same basename
+                        $entryName = basename(urldecode($requestUri));
+                        $binary = $zip->getFromName($entryName);
+                        
+                        if ($binary !== false) {
+                            // Attempt to restore file for future requests
+                            $mediaPathToCreate = $siteDir . urldecode($requestUri);
+                            $dirToCreate = dirname($mediaPathToCreate);
+                            if (!is_dir($dirToCreate)) {
+                                @mkdir($dirToCreate, 0777, true);
+                            }
+                            @file_put_contents($mediaPathToCreate, $binary);
+                            
+                            $mimeType = self::getMimeType($extension);
+                            header("Content-Type: $mimeType");
+                            echo $binary;
+                            $zip->close();
+                            exit;
+                        }
+                        $zip->close();
                     }
-                    file_put_contents($mediaPathToCreate, $binary);
-                    
-                    $mimeType = self::getMimeType($extension);
-                    header("Content-Type: $mimeType");
-                    echo $binary;
-                    exit;
-                } elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
+                }
+                
+                if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'])) {
                     self::serveDynamicPlaceholder($requestUri);
                     exit;
                 } else {

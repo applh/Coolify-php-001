@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
+import AdmZip from 'adm-zip';
 import db from './database.ts';
 
 // Use DB for logging starts
@@ -61,37 +62,40 @@ async function createServer() {
     console.error('Failed to ensure directory exists:', contentPath, err);
   }
 
-  // Restore images from site b64 folders for Git tracking
+  // Restore images from individual .zip files for Git tracking
   try {
     const sitesDir = path.join(repoPhpPath, 'content');
     const sitesDirExists = await fs.access(sitesDir).then(() => true).catch(() => false);
     
     if (sitesDirExists) {
-        const sites = await fs.readdir(sitesDir);
-        for (const site of sites) {
-            const b64Dir = path.join(sitesDir, site, 'b64');
-            const b64DirExists = await fs.access(b64Dir).then(() => true).catch(() => false);
-            if (b64DirExists) {
-                const files = await fs.readdir(b64Dir);
-                for (const file of files) {
-                    if (file.endsWith('.txt')) {
-                        const relativeUri = Buffer.from(file.slice(0, -4), 'base64url').toString('utf8');
-                        const outPath = path.join(sitesDir, site, relativeUri);
-                        try {
-                           await fs.access(outPath);
-                        } catch {
-                           const base64Str = await fs.readFile(path.join(b64Dir, file), 'utf8');
-                           await fs.mkdir(path.dirname(outPath), { recursive: true });
-                           await fs.writeFile(outPath, Buffer.from(base64Str, 'base64'));
-                           console.log(`Restored missing image for site ${site}: ${relativeUri}`);
+        async function walkAndRestore(dir: string) {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await walkAndRestore(fullPath);
+                } else if (entry.name.endsWith('.zip')) {
+                    const originalFile = fullPath.slice(0, -4);
+                    try {
+                        await fs.access(originalFile);
+                    } catch {
+                        // Original missing, restore from zip
+                        console.log(`Restoring ${originalFile} from zip...`);
+                        const zip = new AdmZip(fullPath);
+                        const zipEntries = zip.getEntries();
+                        if (zipEntries.length > 0) {
+                            const buffer = zipEntries[0].getData();
+                            await fs.writeFile(originalFile, buffer);
+                            console.log(`  Restored ${originalFile}`);
                         }
                     }
                 }
             }
         }
+        await walkAndRestore(sitesDir);
     }
   } catch (err) {
-    console.error('Error restoring media assets:', err);
+    console.error('Error restoring media from individual zips:', err);
   }
 
   // API Routes
@@ -250,20 +254,13 @@ async function createServer() {
       // Save to the filesystem
       await fs.writeFile(fullPath, buffer);
 
-      // Save to site b64 folder as .txt (base64) so it can be committed to a git repo
+      // Save individual zip for Git tracking
       try {
-          const parts = targetPath.split('/');
-          // targetPath is like "content/babiblog.fr/img/chambre-bebe.jpg"
-          if (parts[0] === 'content' && parts.length >= 3) {
-             const siteName = parts[1];
-             const relativeUri = parts.slice(2).join('/');
-             const b64Dir = path.join(repoPhpPath, 'content', siteName, 'b64');
-             await fs.mkdir(b64Dir, { recursive: true });
-             const txtFileName = Buffer.from(relativeUri).toString('base64url') + '.txt';
-             await fs.writeFile(path.join(b64Dir, txtFileName), imageBase64);
-          }
+          const indivZip = new AdmZip();
+          indivZip.addFile(path.basename(fullPath), buffer);
+          indivZip.writeZip(fullPath + '.zip');
       } catch (err) {
-          console.error('Failed to save base64 txt file', err);
+          console.error('Failed to create individual media zip', err);
       }
 
       res.json({ success: true, savedPath: targetPath });
