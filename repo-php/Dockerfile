@@ -3,10 +3,12 @@ FROM php:8.5-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    libzip-dev \
     zip \
     unzip \
     git \
     vim \
+    && docker-php-ext-install zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set PHP timezone
