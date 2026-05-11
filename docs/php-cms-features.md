@@ -57,6 +57,27 @@ The validation asserts:
 - Checks if the core backend content directory string acts as a properly readable file mapping.
 - Asserts presence of mapping configs.
 
-## 4. Bypassing FTP and Databases (Vue Control)
+## 4. Secure Admin Area and Passkey Authentication
 
-The frontend Express CMS writes files explicitly into either `content/` or `my-data/`. The flat-file architecture processes templates directly from whatever resides in that namespace dynamically. Updates sent from the Vue client are mapped identically: creating a markdown or template file via Node immediately results in its live resolution via the `Router` execution.
+The PHP CMS includes a built-in admin dashboard secured by an environment-based passkey (`APP_ADMIN_PASSKEY`).
+- Accessing `/admin` routes requests to the `AdminRouter` (`/repo-php/class/AdminRouter.php`).
+- It checks the passkey using headers or cookies.
+- This area provides a lightweight, pure-PHP hosted management layer without needing the full Node.js dev environment.
+
+## 5. Vue 3 Plain JS Architecture (No Node Build Step)
+
+The Admin Area uses Vue 3, but is compiled entirely in the browser using the global Vue build from a CDN.
+- Avoids Vite, Webpack, or Node.js environment requirements on the PHP server.
+- **Async Components:** Vue's `defineAsyncComponent` and ES Modules (`<script type="module">`) load component JS files dynamically to split the code efficiently without a bundler.
+- Full details available in `vue3-plain-js-components.md`.
+
+## 6. ZIP Import & Export (Backup/Migrate)
+
+Both the Node.js API and the PHP Admin API support full site export and import via `.zip` files.
+- Users can download an entire site's code, templates, and media as a single `.zip` file from the Site Dashboard or the PHP Admin view.
+- A ZIP archive can be uploaded to completely overwrite the `content/site.com` directory on the fly.
+- This drastically simplifies migrations and backing up pure flat-file architectures.
+
+## 7. Bypassing FTP and Databases (Vue Control)
+
+The frontend Express CMS (and now the PHP Admin) writes files explicitly into either `content/` or `my-data/`. The flat-file architecture processes templates directly from whatever resides in that namespace dynamically. Updates sent from the Vue client are mapped identically: creating a markdown or template file immediately results in its live resolution via the `Router` execution.

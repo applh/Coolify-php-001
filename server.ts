@@ -45,6 +45,7 @@ async function createServer() {
   // Since we run server.ts with tsx, __dirname is always the project root
   const rootDir = __dirname;
   const repoPhpPath = path.join(rootDir, 'repo-php');
+  const upload = multer({ storage: multer.memoryStorage() });
   let contentPath = path.join(repoPhpPath, 'my-data');
   
   // Check if my-data exists, fallback to content
@@ -115,6 +116,52 @@ async function createServer() {
     } catch (error) {
       console.error('API Error /sites:', error);
       res.status(500).json({ error: 'Failed to read sites' });
+    }
+  });
+
+  app.get('/api/sites/:site/download', async (req, res) => {
+    const site = req.params.site;
+    const sitePath = path.join(contentPath, site);
+    
+    if (!sitePath.startsWith(contentPath)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      await fs.access(sitePath);
+      const zip = new AdmZip();
+      zip.addLocalFolder(sitePath, site);
+      
+      const zipBuffer = zip.toBuffer();
+      res.set('Content-Type', 'application/zip');
+      res.set('Content-Disposition', `attachment; filename=${site}.zip`);
+      res.send(zipBuffer);
+    } catch (error) {
+      console.error(`API Error /sites/${site}/download:`, error);
+      res.status(500).json({ error: 'Failed to download site archive' });
+    }
+  });
+
+  app.post('/api/sites/:site/upload', upload.single('file'), async (req, res) => {
+    const site = req.params.site;
+    const sitePath = path.join(contentPath, site);
+    
+    if (!sitePath.startsWith(contentPath)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const zip = new AdmZip(req.file.buffer);
+      zip.extractAllTo(sitePath, true);
+      
+      res.json({ success: true, message: 'Site updated from zip' });
+    } catch (error) {
+      console.error(`API Error /sites/${site}/upload:`, error);
+      res.status(500).json({ error: 'Failed to upload site archive' });
     }
   });
 
@@ -347,8 +394,6 @@ async function createServer() {
   });
 
   // Sync API
-  const upload = multer({ storage: multer.memoryStorage() });
-
   app.get('/api/sync/export', async (req, res) => {
     try {
       const zip = new AdmZip();

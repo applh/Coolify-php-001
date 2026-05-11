@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { LayoutGrid, Plus, Globe, ArrowRight } from 'lucide-vue-next';
+import { LayoutGrid, Plus, Globe, ArrowRight, Download, Upload } from 'lucide-vue-next';
 
 const sites = ref<string[]>([]);
 const router = useRouter();
+
+const uploadInput = ref<HTMLInputElement | null>(null);
+const siteToUpload = ref<string>('');
 
 const fetchSites = async () => {
   const res = await fetch('/api/sites');
@@ -15,6 +18,41 @@ onMounted(fetchSites);
 
 const openEditor = (site: string) => {
   router.push(`/editor/${site}`);
+};
+
+const downloadSite = (site: string) => {
+  window.open(`/api/sites/${site}/download`, '_blank');
+};
+
+const triggerUpload = (site: string) => {
+  siteToUpload.value = site;
+  uploadInput.value?.click();
+};
+
+const onFileSelected = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !siteToUpload.value) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`/api/sites/${siteToUpload.value}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (res.ok) {
+      alert('Site updated successfully from zip!');
+    } else {
+      const e = await res.json();
+      alert('Failed to upload site: ' + e.error);
+    }
+  } catch {
+    alert('Upload error');
+  }
+  
+  target.value = '';
 };
 </script>
 
@@ -58,8 +96,17 @@ const openEditor = (site: string) => {
           /repo-php/content/{{ site }}
         </p>
         
-        <div class="flex items-center gap-2 text-[#F27D26] text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all">
-          Manage <ArrowRight :size="14" />
+        <div class="flex items-center gap-2 mt-4 z-10 relative">
+          <button @click.stop="downloadSite(site)" class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Download ZIP">
+            <Download :size="14" /> Download
+          </button>
+          <button @click.stop="triggerUpload(site)" class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Upload ZIP to Overwrite">
+            <Upload :size="14" /> Upload
+          </button>
+          <div class="flex-1"></div>
+          <div class="flex items-center gap-1 text-[#F27D26] text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all">
+            Manage <ArrowRight :size="14" />
+          </div>
         </div>
 
         <div class="absolute right-[-20px] bottom-[-20px] opacity-[0.03] scale-[4] group-hover:opacity-[0.07] transition-all pointer-events-none">
@@ -67,6 +114,8 @@ const openEditor = (site: string) => {
         </div>
       </div>
     </div>
+    
+    <input type="file" accept=".zip" ref="uploadInput" class="hidden" @change="onFileSelected" />
     
     <div
       v-if="sites.length === 0"

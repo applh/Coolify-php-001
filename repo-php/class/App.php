@@ -13,6 +13,12 @@ class App {
         self::initAutoloader();
         self::handleDebug();
         
+        $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        if (strpos($requestUri, '/admin') === 0) {
+            AdminRouter::dispatch(self::$contentPath);
+            exit;
+        }
+
         // Dispatch the request via the Front Controller / Router
         Router::dispatch(self::$contentPath);
     }

@@ -47,6 +47,40 @@ The CMS is designed to be stateless in its implementation, but stateful in its d
 
 The router first checks if `my-data` exists. If not, it falls back to `content`.
 
+## Site Internal Structure
+
+Each site directory (e.g., `/repo-php/content/mysite.com/`) typically follows a standard PHP templating structure:
+
+```text
+mysite.com/
+├── index.php           # The main entry point for the site
+├── header.php          # Shared header template
+├── footer.php          # Shared footer template
+├── sidebar.php         # (Optional) Shared sidebar
+├── img/                # Media directory
+│   ├── logo.png.zip    # AI-generated image wrapper
+│   └── hero.jpg.zip
+└── css/                # Site-specific styles
+    └── style.css
+```
+
+### Key Principles:
+- **Relative Inclusion:** Since the Router changes the working directory to the site folder, you can use `include 'header.php';` without needing absolute paths.
+- **Media Wrappers:** Images are stored as `.zip` files (e.g., `hero.jpg.zip`) to ensure cross-platform binary compatibility and Git synchronization. The PHP Router automatically extracts these on-the-fly.
+
+## ZIP Import & Export (Backup/Migrate)
+
+The CMS now provides built-in tools to download and upload entire site contexts as ZIP archives.
+
+### Export (Download)
+- Users can download a full site folder as a `.zip` file from the Dashboard.
+- This creates a portable snapshot of the site's code, templates, and current media wrappers.
+
+### Import (Upload)
+- Users can upload a `.zip` file to an existing site slot.
+- **Warning:** Uploading a ZIP will overwrite existing files in that site directory.
+- This is the preferred method for migrating a site from a local development environment into the CMS or for restoring from a backup.
+
 ## CMS Management (Vue + Express) Integration
 
 The Node.js (Express) backend serves as the active CMS manager for the PHP application. The frontend allows users to effectively bypass FTP and database storage by providing visual file-editing directly into the content directory.
