@@ -30,7 +30,7 @@ try {
 console.log('Server.ts: Initializing...');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const isProd = process.env.NODE_ENV === 'production' || process.env.PROD === 'true';
+const isProd = process.env.NODE_ENV === 'production';
 
 async function createServer() {
   const app = express();
@@ -86,12 +86,23 @@ async function createServer() {
                       } catch {
                           // Original missing, restore from zip
                           console.log(`Restoring ${originalFile} from zip...`);
-                          const zip = new AdmZip(fullPath);
-                          const zipEntries = zip.getEntries();
-                          if (zipEntries.length > 0) {
-                              const buffer = zipEntries[0].getData();
-                              await fs.writeFile(originalFile, buffer);
-                              console.log(`  Restored ${originalFile}`);
+                          try {
+                              const zip = new AdmZip(fullPath);
+                              const zipEntries = zip.getEntries();
+                              if (zipEntries.length > 0) {
+                                  const buffer = zipEntries[0].getData();
+                                  await fs.writeFile(originalFile, buffer);
+                                  console.log(`  Restored ${originalFile}`);
+                              } else {
+                                  console.warn(`  Zip entry list is empty for ${fullPath}`);
+                              }
+                          } catch (zipErr) {
+                              console.error(`  Failed to read zip ${fullPath}, unlinking:`, zipErr);
+                              try {
+                                  await fs.unlink(fullPath);
+                              } catch (unlinkErr) {
+                                  console.error(`  Failed to unlink ${fullPath}:`, unlinkErr);
+                              }
                           }
                       }
                   }
@@ -254,30 +265,23 @@ async function createServer() {
                const fullPath = path.join(sitePath, imagePath);
                
                const zipPath = fullPath + '.zip';
-               let existsZip = false;
                try {
                  await fs.access(zipPath);
-                 existsZip = true;
                } catch {
-                 existsZip = false;
+                 // ignore
                }
                
-               if (!existsZip) {
-                 const newZip = new AdmZip();
-                 newZip.writeZip(zipPath);
-               }
-               
-               // Check if zip is empty
-               let isZipEmpty = false;
+               // Check if zip is empty or invalid
+               let needsGeneration = false;
                try {
                  const checkZip = new AdmZip(zipPath);
                  const entries = checkZip.getEntries();
-                 if (entries.length === 0) isZipEmpty = true;
+                 if (entries.length === 0) needsGeneration = true;
                } catch {
-                 isZipEmpty = true; // if invalid or unreadable, re-generate it
+                 needsGeneration = true; // if invalid or unreadable, re-generate it
                }
 
-               if (isZipEmpty) {
+               if (needsGeneration) {
                  const targetPath = 'content/' + site + '/' + imagePath;
                  const filename = path.basename(imagePath);
                  const prompt = "Create an image for " + filename;
@@ -497,11 +501,21 @@ async function createServer() {
     });
   } else {
     const distPath = path.resolve(rootDir, 'dist');
-    console.log(`Serving static files from ${distPath}`);
-    app.use(express.static(distPath));
-    app.get(/.*/, (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    const indexHtmlPath = path.join(distPath, 'index.html');
+    
+    try {
+      await fs.access(indexHtmlPath);
+      console.log(`Serving static files from ${distPath}`);
+      app.use(express.static(distPath));
+      app.get(/.*/, (req, res) => {
+        res.sendFile(indexHtmlPath);
+      });
+    } catch {
+      console.error(`ERROR: dist/index.html not found at ${indexHtmlPath}. Did you run 'npm run build'?`);
+      app.get('/', (req, res) => {
+        res.status(500).send('Production build missing. Please run npm run build.');
+      });
+    }
   }
 
   const PORT = 3000;
