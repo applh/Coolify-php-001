@@ -1,28 +1,34 @@
 <?php
-$title = "Site One - Welcome";
+Layout::header("Site One - Welcome");
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><?php echo $title; ?></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/js/script.js" defer></script>
-</head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center">
-    <div class="max-w-xl w-full p-8 border border-zinc-800 rounded-2xl bg-zinc-900/50">
-        <img src="/img/site1-logo.png" alt="Site 1 Logo" class="w-32 h-32 rounded-lg mb-6 object-cover bg-zinc-800" loading="lazy">
-        <h1 class="text-3xl font-bold mb-4">Welcome to Site 1</h1>
-        <p class="text-zinc-400 leading-relaxed mb-6">
-            This is a simple PHP template served from <code class="bg-zinc-800 px-1 rounded">/content/site1.com/index.php</code>.
-        </p>
-        <div class="flex gap-4">
-            <span class="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-medium rounded-full border border-blue-500/20">Active Site: site1.com</span>
-            <?php if (getenv('ACTIVE_SITE_OVERRIDE')): ?>
-                <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-medium rounded-full border border-amber-500/20">Forced via ENV</span>
-            <?php endif; ?>
+
+<div class="space-y-12">
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div>
+            <h2 class="text-4xl md:text-5xl serif italic mb-6 leading-tight">A new perspective on digital minimalism.</h2>
+            <p class="text-lg opacity-60 leading-relaxed mb-8">
+                Welcome to Site 1. This template has been refactored to use the global <code>Layout</code> engine, allowing for managed headers, footers, and SEO defaults across the multi-site network.
+            </p>
+            <div class="flex gap-4">
+                <span class="px-3 py-1 bg-black/5 text-black/50 text-[10px] uppercase tracking-widest font-mono rounded">Status: Active</span>
+                <span class="px-3 py-1 bg-black/5 text-black/50 text-[10px] uppercase tracking-widest font-mono rounded">Host: site1.com</span>
+            </div>
         </div>
-    </div>
-</body>
-</html>
+        <div class="aspect-square bg-gray-200 overflow-hidden rounded-sm">
+            <img src="/img/site1-logo.png" alt="Site 1 Logo" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000">
+        </div>
+    </section>
+
+    <div class="h-px bg-black opacity-5 w-full"></div>
+
+    <section class="max-w-2xl">
+        <p class="text-sm opacity-50 mb-8 italic">
+            This content is served directly from <code class="bg-[#1a1a1a]/5 px-1 rounded not-italic">/content/site1.com/index.php</code>.
+        </p>
+    </section>
+</div>
+
+<?php
+Layout::footer();
+?>
+

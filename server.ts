@@ -130,6 +130,95 @@ async function createServer() {
     }
   });
 
+  app.post('/api/sites', async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Site name is required' });
+    
+    const sanitizedName = name.replace(/[^a-zA-Z0-9.-]/g, '').toLowerCase();
+    if (!sanitizedName) return res.status(400).json({ error: 'Invalid site name' });
+
+    const sitePath = path.join(contentPath, sanitizedName);
+    
+    try {
+      await fs.access(sitePath);
+      return res.status(400).json({ error: 'Site already exists' });
+    } catch {
+      // expected, site does not exist
+    }
+
+    try {
+      await fs.mkdir(sitePath, { recursive: true });
+      await fs.mkdir(path.join(sitePath, 'img'), { recursive: true });
+      
+      const defaultIndex = `<?php
+/**
+ * Welcome to ${sanitizedName}
+ */
+
+Layout::header('${sanitizedName}');
+?>
+
+<main class="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div class="space-y-8">
+        <p class="text-xl leading-relaxed">
+            Welcome to your new multi-tenant site. This page is generated using the global <code>Layout</code> class, ensuring a consistent aesthetic across your entire network.
+        </p>
+        
+        <div class="aspect-[4/5] bg-gray-200 overflow-hidden relative group">
+            <img src="/img/hero.jpg" alt="Featured" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
+                <span class="text-4xl serif italic">Place Media Here</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col justify-between py-12">
+        <div class="space-y-6">
+            <p class="text-xs uppercase tracking-[0.2em] opacity-40 font-mono">Vision</p>
+            <blockquote class="text-4xl serif italic leading-tight">
+                "Design is not just what it looks like and feels like. Design is how it works."
+            </blockquote>
+        </div>
+
+        <div class="pt-24">
+            <p class="text-xs uppercase tracking-[0.2em] opacity-40 font-mono mb-4">Location</p>
+            <p class="text-sm font-serif italic mb-8">Digital / Global / ${sanitizedName}</p>
+            <a href="#" class="inline-block border border-black/10 px-8 py-4 text-[10px] uppercase tracking-widest hover:bg-black hover:text-white transition-all font-mono">
+                Explore More
+            </a>
+        </div>
+    </div>
+</main>
+
+<?php
+Layout::footer();
+?>`;
+      await fs.writeFile(path.join(sitePath, 'index.php'), defaultIndex);
+      
+      res.json({ success: true, name: sanitizedName });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: 'Failed to create site: ' + msg });
+    }
+  });
+
+  app.delete('/api/sites/:site', async (req, res) => {
+    const site = req.params.site;
+    const sitePath = path.join(contentPath, site);
+    
+    if (!sitePath.startsWith(contentPath)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+      await fs.rm(sitePath, { recursive: true, force: true });
+      res.json({ success: true, message: 'Site deleted' });
+    } catch (error) {
+      console.error(`API Error DELETE /sites/${site}:`, error);
+      res.status(500).json({ error: 'Failed to delete site' });
+    }
+  });
+
   app.get('/api/sites/:site/download', async (req, res) => {
     const site = req.params.site;
     const sitePath = path.join(contentPath, site);

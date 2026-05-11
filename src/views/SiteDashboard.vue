@@ -4,6 +4,11 @@ import { useRouter } from 'vue-router';
 import { LayoutGrid, Plus, Globe, ArrowRight, Download, Upload } from 'lucide-vue-next';
 
 const sites = ref<string[]>([]);
+const isAddingSite = ref(false);
+const siteToDelete = ref<string | null>(null);
+const newSiteName = ref('');
+const isSubmitting = ref(false);
+const isDeleting = ref(false);
 const router = useRouter();
 
 const uploadInput = ref<HTMLInputElement | null>(null);
@@ -54,6 +59,57 @@ const onFileSelected = async (event: Event) => {
   
   target.value = '';
 };
+
+const createSite = async () => {
+  if (!newSiteName.value) return;
+  isSubmitting.value = true;
+  
+  try {
+    const res = await fetch('/api/sites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newSiteName.value }),
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      sites.value.push(data.name);
+      isAddingSite.value = false;
+      newSiteName.value = '';
+      router.push(`/editor/${data.name}`);
+    } else {
+      const e = await res.json();
+      alert('Error creating site: ' + e.error);
+    }
+  } catch {
+    alert('Request failed');
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const deleteSite = async () => {
+  if (!siteToDelete.value) return;
+  isDeleting.value = true;
+  
+  try {
+    const res = await fetch(`/api/sites/${siteToDelete.value}`, {
+      method: 'DELETE',
+    });
+    
+    if (res.ok) {
+      sites.value = sites.value.filter(s => s !== siteToDelete.value);
+      siteToDelete.value = null;
+    } else {
+      const e = await res.json();
+      alert('Error deleting site: ' + e.error);
+    }
+  } catch {
+    alert('Request failed');
+  } finally {
+    isDeleting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -67,9 +123,71 @@ const onFileSelected = async (event: Event) => {
           Manage your multi-domain PHP application
         </p>
       </div>
-      <button class="bg-[#F27D26] text-black px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border border-[#F27D26] hover:bg-transparent hover:text-[#F27D26] transition-all flex items-center gap-2">
+      <button 
+        class="bg-[#F27D26] text-black px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border border-[#F27D26] hover:bg-transparent hover:text-[#F27D26] transition-all flex items-center gap-2"
+        @click="isAddingSite = true"
+      >
         <Plus :size="16" /> Add New Site
       </button>
+    </div>
+
+    <!-- Add Site Modal -->
+    <div v-if="isAddingSite" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div class="bg-[#121212] border border-[#2A2A2A] p-8 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+        <h3 class="text-2xl font-serif italic mb-6">Create New Site</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[10px] uppercase tracking-widest opacity-40 mb-2 font-mono">Site Domain / Folder Name</label>
+            <input 
+              v-model="newSiteName"
+              type="text" 
+              placeholder="e.g. mynewproject.com"
+              class="w-full bg-[#181818] border border-[#2A2A2A] rounded px-4 py-3 text-white focus:outline-none focus:border-[#F27D26] transition-colors"
+              @keyup.enter="createSite"
+            >
+          </div>
+          <div class="flex gap-3 pt-4">
+            <button 
+              class="flex-1 px-4 py-3 text-xs font-bold uppercase tracking-wider opacity-40 hover:opacity-100 transition-all"
+              @click="isAddingSite = false"
+            >
+              Cancel
+            </button>
+            <button 
+              :disabled="!newSiteName || isSubmitting"
+              class="flex-1 bg-[#F27D26] text-black px-4 py-3 text-xs font-bold uppercase tracking-wider rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="createSite"
+            >
+              {{ isSubmitting ? 'Creating...' : 'Create Site' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="siteToDelete" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div class="bg-[#121212] border border-[#2A2A2A] p-8 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+        <h3 class="text-2xl font-serif italic mb-4">Delete Site?</h3>
+        <p class="text-sm opacity-50 mb-8 leading-relaxed">
+          Are you sure you want to delete <span class="text-white font-mono">{{ siteToDelete }}</span>? This action is permanent and will remove all site files and media assets.
+        </p>
+        <div class="flex gap-3">
+          <button 
+            class="flex-1 px-4 py-3 text-xs font-bold uppercase tracking-wider opacity-40 hover:opacity-100 transition-all font-mono"
+            @click="siteToDelete = null"
+          >
+            Cancel
+          </button>
+          <button 
+            :disabled="isDeleting"
+            class="flex-1 bg-red-600 text-white px-4 py-3 text-xs font-bold uppercase tracking-wider rounded hover:bg-red-700 transition-all disabled:opacity-50"
+            @click="deleteSite"
+          >
+            {{ isDeleting ? 'Deleting...' : 'Delete Permanently' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -84,8 +202,16 @@ const onFileSelected = async (event: Event) => {
             :size="24"
             class="opacity-40 group-hover:text-[#F27D26] group-hover:opacity-100 transition-all"
           />
-          <div class="text-[10px] uppercase tracking-widest opacity-30 font-mono">
-            active
+          <div class="flex items-center gap-2">
+            <button 
+              @click.stop="siteToDelete = site"
+              class="text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-30 hover:opacity-100 font-mono text-red-500 transition-all"
+            >
+              Delete
+            </button>
+            <div class="text-[10px] uppercase tracking-widest opacity-30 font-mono">
+              active
+            </div>
           </div>
         </div>
         
