@@ -68,7 +68,7 @@
                 <input
                   type="checkbox"
                   class="cursor-pointer bg-[#181818] border-[#2A2A2A]"
-                  :checked="selectAllPending"
+                  :checked="selectAll"
                   @change="toggleSelectAll"
                 >
               </th>
@@ -100,7 +100,6 @@
             >
               <td class="p-3 text-center">
                 <input
-                  v-if="task.status === 'pending' || task.status === 'failed'"
                   v-model="selectedTaskIds"
                   :value="task.id"
                   type="checkbox"
@@ -175,17 +174,14 @@ const selectedTaskIds = ref([]);
 
 const toggleSelectAll = (e) => {
     if (e.target.checked) {
-        selectedTaskIds.value = allTasks.value
-            .filter(t => t.status === 'pending' || t.status === 'failed')
-            .map(t => t.id);
+        selectedTaskIds.value = allTasks.value.map(t => t.id);
     } else {
         selectedTaskIds.value = [];
     }
 };
 
-const selectAllPending = computed(() => {
-    const processable = allTasks.value.filter(t => t.status === 'pending' || t.status === 'failed');
-    return processable.length > 0 && selectedTaskIds.value.length === processable.length;
+const selectAll = computed(() => {
+    return allTasks.value.length > 0 && selectedTaskIds.value.length === allTasks.value.length;
 });
 
 const pendingTasks = computed(() => allTasks.value.filter(t => t.status === 'pending'));
@@ -220,10 +216,10 @@ const updateTaskStatus = async (id, status, error_message = null) => {
 };
 
 const processQueue = async () => {
-    const tasksToProcess = allTasks.value.filter(t => selectedTaskIds.value.includes(t.id) && (t.status === 'pending' || t.status === 'failed'));
+    const tasksToProcess = allTasks.value.filter(t => selectedTaskIds.value.includes(t.id));
     
     if (tasksToProcess.length === 0) {
-        alert('Please select at least one pending or failed task to run.');
+        alert('Please select at least one task to run.');
         return;
     }
 
