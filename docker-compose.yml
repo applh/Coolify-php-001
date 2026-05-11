@@ -1,0 +1,16 @@
+services:
+  php-cms-manager:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - cms_data:/app/cms.db
+      - php_content:/app/repo-php/content
+    environment:
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: always
+
+volumes:
+  cms_data:
+  php_content:
