@@ -607,10 +607,10 @@ Layout::footer();
     }
   }
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = 3000;
   try {
-    app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`CMS Server successfully started and listening at http://0.0.0.0:${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`CMS Server successfully started and listening at http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);
