@@ -206,24 +206,31 @@ async function createServer() {
                if (imagePath.startsWith('/')) imagePath = imagePath.substring(1);
                const fullPath = path.join(sitePath, imagePath);
                
-               let exists = false;
+               const zipPath = fullPath + '.zip';
+               let existsZip = false;
                try {
-                 await fs.access(fullPath);
-                 exists = true;
+                 await fs.access(zipPath);
+                 existsZip = true;
                } catch {
-                 exists = false;
+                 existsZip = false;
                }
                
-               if (!exists) {
-                 try {
-                   await fs.access(fullPath + '.zip');
-                   exists = true;
-                 } catch {
-                   exists = false;
-                 }
+               if (!existsZip) {
+                 const newZip = new AdmZip();
+                 newZip.writeZip(zipPath);
                }
                
-               if (!exists) {
+               // Check if zip is empty
+               let isZipEmpty = false;
+               try {
+                 const checkZip = new AdmZip(zipPath);
+                 const entries = checkZip.getEntries();
+                 if (entries.length === 0) isZipEmpty = true;
+               } catch {
+                 isZipEmpty = true; // if invalid or unreadable, re-generate it
+               }
+
+               if (isZipEmpty) {
                  const targetPath = 'content/' + site + '/' + imagePath;
                  const filename = path.basename(imagePath);
                  const prompt = "Create an image for " + filename;
@@ -322,14 +329,11 @@ async function createServer() {
       // Ensure directory exists
       await fs.mkdir(path.dirname(fullPath), { recursive: true });
 
-      // Save to the filesystem
-      await fs.writeFile(fullPath, buffer);
-
-      // Save individual zip for Git tracking
       try {
+          const zipPath = fullPath + '.zip';
           const indivZip = new AdmZip();
           indivZip.addFile(path.basename(fullPath), buffer);
-          indivZip.writeZip(fullPath + '.zip');
+          indivZip.writeZip(zipPath);
       } catch (err) {
           console.error('Failed to create individual media zip', err);
       }
