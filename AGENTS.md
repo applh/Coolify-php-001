@@ -26,3 +26,10 @@ When generating or modifying sites within the `content/` directory, the AI agent
 - Use `htmlspecialchars($var, ENT_QUOTES, 'UTF-8')` when outputting any variable to prevent XSS attacks.
 - Ensure error reporting does not expose sensitive server paths or configurations in production (handled via `.env` or global PHP config).
 - Do not expose configuration secrets in public client-side code.
+
+## 5. Minimal Intervention & Scope Control
+- **Stick to the Request:** Only modify the specific features, files, or lines requested by the user. 
+- **No Unsolicited Refactors:** Do not rewrite existing logic for "cleanliness" or "best practices" unless it is directly causing the bug being fixed or is explicitly requested.
+- **Environment Stability:** Do not add configuration files (like `.gitignore`), change deployment scripts (`package.json`), or modify core server behavior (like `isProd` logic) unless it is necessary to fulfill the user's specific task.
+- **Keep it Simple:** Prefer the simplest solution over introducing new complexity, environmental variables, or architectural layers.
+- **Verify before Action:** If a feature isn't broken, do not "fix" it. If you suspect a change is needed outside the requested scope, ask the user before proceeding.
