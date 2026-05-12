@@ -105,50 +105,37 @@ $description = "Bienvenue sur BabiBlog. Découvrez nos articles, astuces et réf
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Article 1 -->
-                <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-                    <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="/img/chambre-bebe.jpg" alt="Chambre bébé" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Décoration</div>
-                        <h3 class="text-xl font-serif font-bold mb-3 text-babi-900 group-hover:text-babi-600 transition-colors">Aménager une chambre douce et apaisante</h3>
-                        <p class="text-babi-700/80 text-sm mb-4 line-clamp-3 mb-auto">
-                            Découvrez nos conseils pour créer un véritable cocon pour votre enfant, avec des matières naturelles et des couleurs tendres.
-                        </p>
-                        <span class="text-xs text-babi-400 mt-4 font-medium">Il y a 2 jours &middot; 4 min de lecture</span>
-                    </div>
-                </article>
+                <?php 
+                    Component::render('ArticleCard', [
+                        'image' => '/img/chambre-bebe.jpg',
+                        'title' => 'Aménager une chambre douce et apaisante',
+                        'category' => 'Décoration',
+                        'date' => 'Il y a 2 jours',
+                        'readTime' => 4
+                    ], function() {
+                        echo "Découvrez nos conseils pour créer un véritable cocon pour votre enfant, avec des matières naturelles et des couleurs tendres.";
+                    });
 
-                <!-- Article 2 -->
-                <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-                    <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="/img/recette-saine.jpg" alt="Recette saine" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Recettes</div>
-                        <h3 class="text-xl font-serif font-bold mb-3 text-babi-900 group-hover:text-babi-600 transition-colors">Idées de repas simples pour la semaine</h3>
-                        <p class="text-babi-700/80 text-sm mb-4 line-clamp-3 mb-auto">
-                            Comment s'organiser pour manger sainement sans passer des heures en cuisine ? Voici mon batch-cooking de la semaine.
-                        </p>
-                        <span class="text-xs text-babi-400 mt-4 font-medium">Il y a 5 jours &middot; 6 min de lecture</span>
-                    </div>
-                </article>
+                    Component::render('ArticleCard', [
+                        'image' => '/img/recette-saine.jpg',
+                        'title' => 'Idées de repas simples pour la semaine',
+                        'category' => 'Recettes',
+                        'date' => 'Il y a 5 jours',
+                        'readTime' => 6
+                    ], function() {
+                        echo "Comment s'organiser pour manger sainement sans passer des heures en cuisine ? Voici mon batch-cooking de la semaine.";
+                    });
 
-                <!-- Article 3 -->
-                <article class="bg-white rounded-2xl shadow-sm border border-babi-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-                    <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-gray-200">
-                        <img src="/img/organisation.jpg" alt="Organisation" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <div class="text-xs font-semibold tracking-wider text-babi-500 uppercase mb-2">Lifestyle</div>
-                        <h3 class="text-xl font-serif font-bold mb-3 text-babi-900 group-hover:text-babi-600 transition-colors">Trouver son équilibre pro/perso</h3>
-                        <p class="text-babi-700/80 text-sm mb-4 line-clamp-3 mb-auto">
-                            Entre le télétravail et la vie de famille, la frontière est parfois floue. Voici quelques pistes pour mieux cloisonner.
-                        </p>
-                        <span class="text-xs text-babi-400 mt-4 font-medium">Il y a 1 semaine &middot; 5 min de lecture</span>
-                    </div>
-                </article>
+                    Component::render('ArticleCard', [
+                        'image' => '/img/organisation.jpg',
+                        'title' => 'Trouver son équilibre pro/perso',
+                        'category' => 'Lifestyle',
+                        'date' => 'Il y a 1 semaine',
+                        'readTime' => 5
+                    ], function() {
+                        echo "Entre le télétravail et la vie de famille, la frontière est parfois floue. Voici quelques pistes pour mieux cloisonner.";
+                    });
+                ?>
             </div>
         </section>
         

@@ -19,6 +19,11 @@ class App {
             exit;
         }
 
+        if ($requestUri === '/api/render-component') {
+            self::handleComponentRender();
+            exit;
+        }
+
         if (strpos($requestUri, '/admin') === 0) {
             AdminRouter::dispatch(self::$contentPath);
             exit;
@@ -50,6 +55,28 @@ class App {
                 require_once $file;
             }
         });
+    }
+
+    private static function handleComponentRender() {
+        $name = $_GET['name'] ?? null;
+        $propsRaw = $_GET['props'] ?? '';
+        
+        if (!$name) {
+            http_response_code(400);
+            echo "Component name required";
+            return;
+        }
+
+        $props = [];
+        if ($propsRaw) {
+            $decoded = json_decode(base64_decode($propsRaw), true);
+            if (is_array($decoded)) {
+                $props = $decoded;
+            }
+        }
+
+        // Disable standard layout/plugins for fragment rendering
+        Component::render($name, $props);
     }
 
     private static function handleDebug() {
