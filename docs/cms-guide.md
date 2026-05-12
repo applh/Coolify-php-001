@@ -47,3 +47,8 @@ The CMS includes an AI-assisted management layer powered by Gemini. You can inte
 
 - **Developer Guide**: For details on how the AI integration works, see [Gemini API Interactions & Memory](./gemini-api-interactions.md).
 - **Function Calling**: The AI can perform file operations and site management tasks.
+
+## 6. Advanced: Data Persistence & Resets
+When deploying to production (e.g., via Coolify), the application uses a persistent volume for your site data (`my-data`).
+- **Persistence**: Your site changes are saved across deployments.
+- **Forced Reset**: If you need to revert all sites to the fresh state defined in your repository, set the environment variable `APP_DATA_RESET="true"` and redeploy. This will overwrite `my-data` with the latest contents of the `content/` folder.

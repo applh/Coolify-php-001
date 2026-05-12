@@ -1,27 +1,25 @@
-# AI Media Generator Implementation Plan
+# AI Media Generator Guide
 
-While the AI Studio coding agent itself cannot generate and save binary media files directly to the filesystem through chat prompts, **we can build an AI Media Generator panel into the Vue CMS dashboard powered by Gemini.**
+The CMS features a built-in AI Media Generator powered by Gemini, allowing for seamless image generation directly into your site folders.
 
-This means you can build a tool within the CMS where end-users enter a prompt and their Gemini API key, the frontend application makes an API request to the `@google/genai` SDK using the `gemini-2.5-flash-image` model, and then the Node.js backend saves the resulting base64 image data directly into the CMS folders.
+## Architecture
 
-## Architecture Overview
+The system uses a hybrid integration pattern to maximize security and efficiency:
 
-According to best practices, the Gemini API should **always** be called from the frontend code of the application.
+1.  **Frontend Generation (API Caller):** The `AiMediaTasks.vue` view handles the Gemini API integration. By calling Google's API directly from your browser, your API Key stays secure and never touches our intermediate logs.
+2.  **Backend Storage (The Saver):** Once an image is generated, the frontend sends the base64 data to the Express backend (`POST /api/media/save-base64`), which converts it to a binary file and saves it into the correct `repo-php/my-data` subfolder.
 
-1.  **Vue 3 Frontend (The Generator Panel & API Caller):**
-    *   A UI component (e.g., `AiMediaGenerator.vue`) with input fields for:
-        *   **API Key** (kept in the browser memory for the session).
-        *   **Prompt** (e.g., "A futuristic cityscape at sunset").
-        *   **Target Directory** (where to save the image in `repo-php`).
-    *   Uses `@google/genai` SDK to call `gemini-2.5-flash-image`.
-    *   Retrieves the base64-encoded image parts from the response.
-    *   Sends a `POST` request to the Express backend containing the base64 string and the target directory.
+## Usage Guide
 
-2.  **Express Backend (The Saver):**
-    *   An API endpoint (e.g., `POST /api/media/save-base64`) that accepts the base64 string and target path.
-    *   The backend converts the base64 string to a Buffer and saves the binary data as a `.png` file directly to the specified folder in `repo-php` utilizing the `fs.writeFile` API.
+1. **Obtain API Key**: Get your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. **Scan for Missing Media**: The dashboard automatically scans your PHP templates for `<img>` tags referencing files that don't exist.
+3. **Run the Queue**:
+   - Go to the **AI Media** section.
+   - Enter your API Key.
+   - select the tasks you wish to process.
+   - Click **Run Queue**.
 
-## Implementation Steps
+## Technical Workflow
 
 ### 1. Install Gemini SDK
 Install the official `@google/genai` package for the frontend.

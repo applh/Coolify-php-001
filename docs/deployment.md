@@ -9,11 +9,21 @@ This application is designed to be deployed using Docker, making it highly compa
 ## 2. Environment Variables
 Ensure the following variables are configured in your deployment platform:
 
-| Variable | Description |
-| :--- | :--- |
-| `PORT` | The port the server will listen on (default is 3000). |
-| `NODE_ENV` | Set to `production`. |
-| `GEMINI_API_KEY` | Your Google AI Studio API key for media generation. |
+### Core Node.js Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `PORT` | The port the server will listen on. | 3000 |
+| `NODE_ENV` | Set to `production` for optimized delivery. | `development` |
+| `GEMINI_API_KEY` | **Required** for AI Media Generation. | - |
+
+### PHP & Deployment Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `APP_DATA_RESET` | Set to `"true"` to force-reset `my-data` volume from `content/` on deploy. | `"false"` |
+| `APP_ADMIN_PASSKEY` | Passkey for accessing the browser-based PHP Admin area. | - |
+| `ACTIVE_SITE_OVERRIDE` | Force the PHP router to serve a specific site folder. | - |
 
 ## 3. Docker Compose Setup (Coolify / VPS)
 
@@ -60,5 +70,12 @@ For production deployments on multi-core servers, we recommend using PM2 Cluster
 
 See the [Node.js Multi-Core Scaling Guide](./coolify-node-scaling.md) for detailed instructions.
 
-## 6. Persistence Note
-**CRITICAL:** The `/app/repo-php/content` directory contains all your website data. Always use a Docker Volume to map this directory to your host machine to avoid data loss during container restarts or updates.
+## 6. Persistence Note & Volume Initialization
+**CRITICAL:** The `/app/repo-php/my-data` directory (which maps to `/var/www/html/my-data` in the PHP container) should be persistent.
+
+### Automatic Synchronization
+The `entrypoint.sh` script handles the initial setup of your persistent volume:
+1. **First Boot:** If `my-data` is empty or missing `config.php`, it automatically copies all site templates from the `content/` directory into the volume.
+2. **Forced Reset:** By setting `APP_DATA_RESET="true"` in your environment variables, the system will **WIPE** the `my-data` volume and re-sync it from the bundled `content/` directory on every deployment. This is useful for rolling back manual changes or resetting to the repository structure.
+
+Always use a Docker Volume to map `my-data` to your host machine to ensure your changes persist across container updates.

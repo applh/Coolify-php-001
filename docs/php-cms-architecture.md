@@ -42,8 +42,13 @@ Once the directory is resolved, the router:
 
 The CMS is designed to be stateless in its implementation, but stateful in its data bindings. 
 
-- **`/repo-php/content/`**: This ships with the initial boilerplate templates and demo sites (`site1.com`, `test.com`, etc.). It acts as the fallback.
-- **`/repo-php/my-data/`**: In production (or via Docker volumes), dynamic file storage can be mounted to `my-data`. This prevents container restarts from destroying user edits made via the CMS interface.
+- **`/repo-php/content/`**: This ships with the initial boilerplate templates and demo sites (`site1.com`, `test.com`, etc.). It acts as the source of truth for initialization.
+- **`/repo-php/my-data/`**: This is the active data directory. In production, a persistent volume should be mounted here.
+
+### Initialization & Data Reset (Entrypoint Logic)
+The `entrypoint.sh` script manages the synchronization between `content/` and `my-data/`:
+1. **Auto-Init**: If `/my-data/config.php` is missing, the script assumes the volume is new and copies the entire `/content/` directory into it.
+2. **Forced Reset**: If the environment variable `APP_DATA_RESET` is set to `"true"`, the script will recursively delete everything in `/my-data/` and perform a fresh copy from `/content/`.
 
 The router first checks if `my-data` exists. If not, it falls back to `content`.
 

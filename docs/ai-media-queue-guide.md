@@ -1,8 +1,15 @@
-# AI Media Generation Task Queue
+# AI Media Queue Guide
 
-To seamlessly integrate AI Studio's layout generation with your need for rich media (images) without breaking the flow, the best architecture is a **Task Queue System backed by SQLite**.
+The AI Media Queue is the engine that connects missing visual assets in your PHP sites with the Gemini generation engine.
 
-When the AI Studio agent works on your templates, it cannot generate binary images. Instead, it can create "Tasks" for missing media. Later, you log into the Vue Admin panel, provide your Gemini API key, and execute the queue.
+## Lifecycle of a Media Task
+
+1.  **Detection**: When you "Scan Sites" or navigate to the AI Media view, the backend parses all `.php` files in your site directories.
+2.  **Extraction**: It looks for standard `<img>` tags and extracts the `src` attribute.
+3.  **Validation**: It checks if the file exists in the corresponding `img/` or `assets/` directory.
+4.  **Creation**: If the file is missing, a new task is created in the SQLite database with an AI-generated prompt based on the file name.
+5.  **Processing**: You trigger the generation using your Gemini API key.
+6.  **Resolution**: Once generated and saved, the task is marked as `completed`, and the image becomes immediately available to the PHP site.
 
 ## 1. Database Schema (SQLite)
 

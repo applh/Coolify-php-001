@@ -128,6 +128,15 @@ export default [
 ];
 ```
 
+## Hybrid Architecture: Node + PHP
+This project combines a modern Node.js management layer with a high-performance PHP site-serving runtime.
+- Use the **Node.js Dashboard** to manage sites, files, and AI media.
+- The **PHP Engine** (in `/repo-php`) serves the actual high-traffic frontends.
+
+For deep dives into the PHP side, see:
+- [PHP CMS Architecture](./php-cms-architecture.md)
+- [PHP Static Assets & Media Wrappers](./media-generation-toolchain.md)
+
 ## Checklist before Publishing
 1. `"start"` script in `package.json` is cleanly set to `tsx server.ts`.
 2. `"build"` script is set to `vite build` (No esbuild on server).

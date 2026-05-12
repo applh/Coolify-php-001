@@ -14,8 +14,9 @@ We have provided comprehensive guides in the `docs/` directory:
 
 - **[Installation & Dev Setup](./docs/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
 - **[CMS Management Guide](./docs/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
-- **[Deployment Guide](./docs/deployment.md)**: Steps to deploy using Docker and Coolify.
-- **[Architecture](./docs/php-cms-architecture.md)**: Understanding how the Node API interacts with the PHP filesystem.
+- **[Deployment Guide](./docs/deployment.md)**: Steps to deploy using Docker and Coolify, including **persistence and reset** mechanisms.
+- **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system between Node and PHP.
+- **[AI Media Generator Guide](./docs/ai-media-generator-guide.md)**: How the integrated generation task queue works.
 
 ---
 
@@ -23,7 +24,8 @@ We have provided comprehensive guides in the `docs/` directory:
 
 - **Multi-Site Dashboard**: Create and delete PHP sites instantly.
 - **AI Media Copilot**: Automated generation of missing assets using **Google Gemini**.
-- **Modern PHP Framework**: Integrated `Layout` and `CMS` classes for elegant, consistent site design.
+- **Data Safety & Persistence**: Built-in volume initialization and the `APP_DATA_RESET` safety valve for production environments.
+- **Modern PHP Framework**: Integrated `Layout`, `CMS`, and `PluginManager` classes for elite site architecture.
 - **Real-time Editor**: Edit PHP templates directly from the browser.
 - **Docker Ready**: Pre-configured for seamless deployment to production environments.
 
