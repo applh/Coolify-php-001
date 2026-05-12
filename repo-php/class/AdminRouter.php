@@ -68,6 +68,34 @@ class AdminRouter {
             return;
         }
 
+        if ($uri === '/admin/api/ai/tasks') {
+            $tasks = AITaskManager::getTasks($contentPath);
+            echo json_encode(['status' => 'success', 'tasks' => array_values($tasks)]);
+            return;
+        }
+
+        if ($uri === '/admin/api/ai/tasks/add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $site = $data['site'] ?? 'site1.com';
+            $type = $data['type'] ?? 'improve_text';
+            $payload = $data['payload'] ?? ['text' => 'Hello World', 'context' => 'Home page'];
+            
+            $task = AITaskManager::addTask($contentPath, $site, $type, $payload);
+            echo json_encode(['status' => 'success', 'task' => $task]);
+            return;
+        }
+
+        if ($uri === '/admin/api/ai/heartbeat') {
+            // Forward call to the public heartbeat (or implement same logic)
+            // For simplicity, we just trigger it
+            $ch = curl_init('http://localhost:' . (getenv('PORT') ?: '3000') . '/api/heartbeat');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response = curl_exec($ch);
+            curl_close($ch);
+            echo $response;
+            return;
+        }
+
         if (preg_match('#^/admin/api/sites/([^/]+)/download$#', $uri, $matches)) {
             $site = $matches[1];
             self::downloadSite($contentPath, $site);
@@ -223,6 +251,59 @@ class AdminRouter {
                     </div>
                 </div>
 
+                <!-- AI Tasks Section -->
+                <div class="mt-16">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-2xl font-serif italic mb-1">AI Media Queue</h2>
+                            <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">Automated tasks via Heartbeat</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="triggerHeartbeat" class="px-3 py-1 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-[#F27D26] transition-all" :disabled="isBusy">
+                                {{ isBusy ? 'Processing...' : 'Run Heartbeat' }}
+                            </button>
+                            <button @click="addSampleTask" class="px-3 py-1 border border-[#2A2A2A] text-[10px] font-bold uppercase tracking-widest hover:border-white transition-all">
+                                Add Sample Task
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-[#2A2A2A] bg-[#181818] overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-[#222] border-b border-[#2A2A2A]">
+                                <tr>
+                                    <th class="p-3 font-mono opacity-40 uppercase">Task ID</th>
+                                    <th class="p-3 font-mono opacity-40 uppercase">Site</th>
+                                    <th class="p-3 font-mono opacity-40 uppercase">Type</th>
+                                    <th class="p-3 font-mono opacity-40 uppercase">Status</th>
+                                    <th class="p-3 font-mono opacity-40 uppercase text-right">Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="task in aiTasks" :key="task.id" class="border-b border-[#2A2A2A] last:border-0 hover:bg-[#222] transition-colors">
+                                    <td class="p-3 font-mono opacity-60">{{ task.id }}</td>
+                                    <td class="p-3">{{ task.site }}</td>
+                                    <td class="p-3">
+                                        <span class="px-1.5 py-0.5 bg-[#2A2A2A] rounded text-[9px] uppercase font-bold">{{ task.type }}</span>
+                                    </td>
+                                    <td class="p-3">
+                                        <span :class="{
+                                            'text-yellow-400': task.status === 'pending',
+                                            'text-blue-400': task.status === 'running',
+                                            'text-green-400': task.status === 'completed',
+                                            'text-red-400': task.status === 'failed'
+                                        }" class="font-bold lowercase italic">{{ task.status }}</span>
+                                    </td>
+                                    <td class="p-3 text-right font-mono opacity-30 text-[10px] italic">{{ task.updated_at }}</td>
+                                </tr>
+                                <tr v-if="aiTasks.length === 0">
+                                    <td colspan="5" class="p-8 text-center opacity-30 italic">No AI tasks in queue.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <input type="file" accept=".zip" ref="uploadInput" class="hidden" @change="onFileSelected" />
 
                 <div v-if="sites.length === 0" class="border border-dashed border-[#2A2A2A] py-20 text-center opacity-30 mt-8">
@@ -241,6 +322,8 @@ class AdminRouter {
                 const passkey = ref('');
                 const errorMsg = ref('');
                 const sites = ref([]);
+                const aiTasks = ref([]);
+                const isBusy = ref(false);
                 const uploadInput = ref(null);
                 const siteToUpload = ref('');
 
@@ -248,6 +331,63 @@ class AdminRouter {
                     await nextTick();
                     if(window.lucide) {
                         window.lucide.createIcons();
+                    }
+                };
+
+                const fetchTasks = async () => {
+                    const storedKey = localStorage.getItem('adminPasskey');
+                    try {
+                        const res = await fetch('/admin/api/ai/tasks', {
+                            headers: { 'X-Admin-Passkey': storedKey }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            aiTasks.value = data.tasks.reverse();
+                        }
+                    } catch (e) {
+                        console.error('Error fetching tasks', e);
+                    }
+                };
+
+                const triggerHeartbeat = async () => {
+                    isBusy.value = true;
+                    const storedKey = localStorage.getItem('adminPasskey');
+                    try {
+                        const res = await fetch('/admin/api/ai/heartbeat', {
+                            headers: { 'X-Admin-Passkey': storedKey }
+                        });
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            console.log('Heartbeat run:', data.message);
+                        } else {
+                            console.warn('Heartbeat error:', data.message);
+                        }
+                        await fetchTasks();
+                    } catch (e) {
+                        console.error('Heartbeat failed', e);
+                    } finally {
+                        isBusy.value = false;
+                    }
+                };
+
+                const addSampleTask = async () => {
+                    const storedKey = localStorage.getItem('adminPasskey');
+                    try {
+                        await fetch('/admin/api/ai/tasks/add', {
+                            method: 'POST',
+                            headers: { 
+                                'X-Admin-Passkey': storedKey,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                site: sites.value[0] || 'site1.com',
+                                type: 'improve_text',
+                                payload: { text: "Welcome to our website. We provide quality services.", context: "Landing Page Hero" }
+                            })
+                        });
+                        await fetchTasks();
+                    } catch (e) {
+                        console.error('Add task failed', e);
                     }
                 };
 
@@ -263,6 +403,7 @@ class AdminRouter {
                                 passkey.value = storedKey;
                                 const data = await res.json();
                                 sites.value = data.sites;
+                                await fetchTasks();
                                 loadLucide();
                             } else {
                                 localStorage.removeItem('adminPasskey');
@@ -347,11 +488,15 @@ class AdminRouter {
                     passkey,
                     errorMsg,
                     sites,
+                    aiTasks,
+                    isBusy,
                     login,
                     logout,
                     downloadSite,
                     triggerUpload,
                     onFileSelected,
+                    triggerHeartbeat,
+                    addSampleTask,
                     uploadInput
                 };
             }
