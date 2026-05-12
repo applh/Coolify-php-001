@@ -50,6 +50,40 @@ This project utilizes a specific pattern where binary assets (images) are stored
 
 ---
 
+## 4. Scaling Evaluation: From 1 to 1000 Pages
+
+As the scale of an application or site grows, the "Agent Experience" (AX) shifts from direct manipulation to orchestration.
+
+### Tier 1: The "Boutique" Site (1–20 Pages)
+*   **Best Tech:** Flat Markdown or PHP files.
+*   **Agent Workflow:** The agent can read the entire directory tree and often multiple full files in a single turn. It can perform "Whole-Site Refactors" easily.
+*   **Pros:** 100% visibility, zero infrastructure overhead, instant "edit-to-preview" feedback.
+*   **Cons:** Content and logic often get tangled in the same files.
+
+### Tier 2: The "Medium" App (20–200 Pages)
+*   **Best Tech:** Modular Flat Files with a centralized JSON index or a "Content Folder" pattern.
+*   **Agent Workflow:** The agent uses `list_dir` to explore and `grep` to find specific patterns. It can no longer read "everything" but can navigate effectively if folders are named semantically.
+*   **Pros:** Good balance of organization and speed.
+*   **Cons:** Risk of "Stale Context" if the agent forgets a global change (e.g., a header update) across 50 individual files.
+
+### Tier 3: The "Platform" Scale (200–1000+ Pages)
+*   **Best Tech:** SQLite / Headless CMS pattern with a structured API.
+*   **Agent Workflow:** The agent acts as a Database Administrator. It writes SQL queries to update many rows at once or calls specialized UI creation tools. It relies on **Metadata** rather than raw file content.
+*   **Pros:** High integrity, mass-update capabilities, global search/filter performance.
+*   **Cons:** "Opaque" to the agent without a bridge (SQL tool/Explorer). Harder to debug layout issues visually without a rendered preview for every row.
+
+---
+
+## Technical Comparison Table (Scale vs. Format)
+
+| Scale | Recommended Architecture | Primary Agent Tool | Maintenance Risk |
+| :--- | :--- | :--- | :--- |
+| **1-10 Pages** | No-Framework Flat Files | `edit_file` | Low (Easy visibility) |
+| **10-100 Pages** | Modular (PHP/Components) | `grep` + `edit_file` | Medium (Sync errors) |
+| **100-1000 Pages** | SQLite / Managed CMS | `sql_exec` / `bulk_api` | High (Data corruption) |
+
+---
+
 ## Summary Recommendation
 
 | Use Case | Recommended Format | Why? |
