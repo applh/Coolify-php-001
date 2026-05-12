@@ -42,6 +42,13 @@ Layout::footer();
 - **AI Media Queue**: The dashboard scans your `index.php` files for image references (e.g., `src="/img/hero.jpg"`). If the file is missing, it appears in the **AI Media** view.
 - **Processing**: Click "Run AI Generation" to have Gemini create optimized, context-aware placeholders or textures for your missing assets.
 
+## 4. Admin Management Area
+Beyond the Node.js dashboard, each PHP instance provides a secure `/admin` area for site-specific management.
+
+- **Interactive Forms**: Create custom forms (Contact, Inquiry, etc.) without writing code. See [Admin Area Guide](./php-admin-guide.md).
+- **Asset Management**: Upload and download site bundles as ZIP archives for easy migration.
+- **Queue Monitoring**: Watch AI media tasks as they process in the background.
+
 ## 5. AI Copilot & Management
 The CMS includes an AI-assisted management layer powered by Gemini. You can interact with the system using natural language to optimize SEO, generate content, or build new pages.
 

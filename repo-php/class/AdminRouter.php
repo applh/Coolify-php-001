@@ -244,7 +244,6 @@ class AdminRouter {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHP CMS Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-[#0e0e0e] text-[#f4f4f4] font-sans antialiased">
@@ -283,211 +282,48 @@ class AdminRouter {
                 </div>
 
                 <!-- Sites List -->
-                <div v-if="currentView === 'sites'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div v-for="site in sites" :key="site" class="group border border-[#2A2A2A] p-6 bg-[#181818] hover:border-[#F27D26] transition-all relative overflow-hidden">
-                        <h3 class="text-xl font-serif italic mb-2">{{ site }}</h3>
-                        <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">/content/{{ site }}</p>
-                        
-                        <div class="flex flex-wrap items-center gap-2 mt-4 z-10 relative">
-                            <button @click.stop="downloadSite(site)" class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Download ZIP">
-                                <i data-lucide="download" class="w-4 h-4"></i> Download
-                            </button>
-                            <button @click.stop="triggerUpload(site)" class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Upload ZIP to Overwrite">
-                                <i data-lucide="upload" class="w-4 h-4"></i> Upload
-                            </button>
-                            <button @click.stop="manageForms(site)" class="bg-[#F27D26]/20 text-[#F27D26] border border-[#F27D26]/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Manage Forms">
-                                <i data-lucide="form-input" class="w-4 h-4"></i> Forms
-                            </button>
-                        </div>
-                        
-                        <div class="absolute right-[-20px] bottom-[-20px] opacity-[0.03] scale-[4] group-hover:opacity-[0.07] transition-all pointer-events-none">
-                            <i data-lucide="layout-grid" class="w-8 h-8"></i>
-                        </div>
-                    </div>
+                <div v-if="currentView === 'sites'">
+                    <admin-sites-list 
+                        :sites="sites" 
+                        @download="downloadSite" 
+                        @upload="triggerUpload" 
+                        @manage-forms="manageForms"
+                    ></admin-sites-list>
                 </div>
 
                 <!-- Forms Manager View -->
                 <div v-if="currentView === 'forms'">
-                    <div class="flex justify-between items-end mb-8">
-                        <div>
-                            <h2 class="text-3xl font-serif italic mb-2">Forms for {{ activeSite }}</h2>
-                            <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">Create and manage custom site forms</p>
-                        </div>
-                        <button @click="createNewForm" class="bg-[#F27D26] text-black px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white transition-all">Create New Form</button>
-                    </div>
-
-                    <div v-if="siteForms.length === 0" class="border border-dashed border-[#2A2A2A] py-20 text-center opacity-30">
-                        <p class="italic">No forms created yet for this site.</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div v-for="form in siteForms" :key="form.id" class="border border-[#2A2A2A] p-6 bg-[#181818] hover:border-[#F27D26] transition-all group">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="text-xl font-serif italic mb-1">{{ form.title }}</h4>
-                                    <p class="text-[10px] font-mono opacity-40 uppercase mb-4">ID: {{ form.id }} | Fields: {{ form.fields.length }}</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button @click="viewSubmissions(form)" class="text-[10px] uppercase font-bold tracking-widest px-3 py-1 border border-[#2A2A2A] hover:border-blue-400 text-blue-400 transition-all">Submissions</button>
-                                    <button @click="editForm(form)" class="text-[10px] uppercase font-bold tracking-widest px-3 py-1 border border-[#2A2A2A] hover:border-[#F27D26] text-[#F27D26] transition-all">Edit</button>
-                                    <button @click="deleteForm(form.id)" class="text-[10px] uppercase font-bold tracking-widest px-3 py-1 border border-[#2A2A2A] hover:border-red-500 text-red-500 transition-all">Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <admin-forms-manager 
+                        :site="activeSite" 
+                        :forms="siteForms"
+                        @create="createNewForm"
+                        @edit="editForm"
+                        @delete="deleteForm"
+                        @view-submissions="viewSubmissions"
+                    ></admin-forms-manager>
                 </div>
 
                 <!-- Form Editor View -->
-                <div v-if="currentView === 'editor'" class="max-w-2xl mx-auto border border-[#2A2A2A] bg-[#181818] p-8">
-                    <h2 class="text-2xl font-serif italic mb-8">{{ editingForm.id ? 'Edit Form' : 'New Form' }}</h2>
-                    
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-xs font-mono uppercase tracking-widest opacity-50 mb-2">Form Title</label>
-                            <input type="text" v-model="editingForm.title" class="w-full bg-[#0e0e0e] border border-[#2A2A2A] p-3 text-white focus:outline-none focus:border-[#F27D26]" placeholder="e.g. Contact Us">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase tracking-widest opacity-50 mb-2">Form Slug / HTML ID</label>
-                            <input type="text" v-model="editingForm.slug" class="w-full bg-[#0e0e0e] border border-[#2A2A2A] p-3 text-white focus:outline-none focus:border-[#F27D26]" placeholder="contact-form">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono uppercase tracking-widest opacity-50 mb-2">Submit Button Label</label>
-                            <input type="text" v-model="editingForm.submit_label" class="w-full bg-[#0e0e0e] border border-[#2A2A2A] p-3 text-white focus:outline-none focus:border-[#F27D26]" placeholder="Send Message">
-                        </div>
-
-                        <div class="pt-8 border-t border-[#2A2A2A]">
-                            <div class="flex justify-between items-center mb-4">
-                                <h4 class="text-sm font-mono uppercase tracking-widest flex items-center gap-2">
-                                    <i data-lucide="list" class="w-4 h-4 text-[#F27D26]"></i> Fields
-                                </h4>
-                                <button @click="addField" class="text-[10px] uppercase font-bold tracking-widest text-[#F27D26] hover:text-white transition-all">+ Add Field</button>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div v-for="(field, index) in editingForm.fields" :key="index" class="p-4 bg-[#222] border border-[#333] relative">
-                                    <button @click="removeField(index)" class="absolute top-2 right-2 text-red-500 opacity-50 hover:opacity-100 italic font-serif text-sm">Remove</button>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-[9px] font-mono uppercase opacity-40 mb-1">Label</label>
-                                            <input type="text" v-model="field.label" class="w-full bg-[#0e0e0e] border border-[#333] p-2 text-xs focus:outline-none focus:border-[#F27D26]" placeholder="Full Name">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[9px] font-mono uppercase opacity-40 mb-1">Field Name (Technical)</label>
-                                            <input type="text" v-model="field.name" class="w-full bg-[#0e0e0e] border border-[#333] p-2 text-xs focus:outline-none focus:border-[#F27D26]" placeholder="name">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[9px] font-mono uppercase opacity-40 mb-1">Type</label>
-                                            <select v-model="field.type" class="w-full bg-[#0e0e0e] border border-[#333] p-2 text-xs focus:outline-none focus:border-[#F27D26]">
-                                                <option value="text">Text</option>
-                                                <option value="email">Email</option>
-                                                <option value="textarea">Textarea</option>
-                                                <option value="select">Select</option>
-                                                <option value="tel">Phone</option>
-                                                <option value="date">Date</option>
-                                            </select>
-                                        </div>
-                                        <div class="flex items-center gap-2 pt-4">
-                                            <input type="checkbox" v-model="field.required" :id="'req_' + index">
-                                            <label :for="'req_' + index" class="text-[10px] font-mono uppercase opacity-60">Required</label>
-                                        </div>
-                                    </div>
-                                    <div v-if="field.type === 'select'" class="mt-4">
-                                        <label class="block text-[9px] font-mono uppercase opacity-40 mb-1">Options (Comma separated)</label>
-                                        <textarea v-model="field.options_string" @input="updateOptions(field)" class="w-full bg-[#0e0e0e] border border-[#333] p-2 text-xs focus:outline-none focus:border-[#F27D26]" placeholder="Support, Sales, Feedback"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-4 pt-8">
-                            <button @click="saveForm" class="flex-1 bg-[#F27D26] text-black font-bold uppercase tracking-widest text-xs p-4 hover:bg-white transition-all">Save Form</button>
-                            <button @click="setView('forms')" class="px-6 border border-[#2A2A2A] text-xs font-bold uppercase tracking-widest hover:border-white transition-all">Cancel</button>
-                        </div>
-                    </div>
+                <div v-if="currentView === 'editor'">
+                    <admin-form-editor 
+                        :form="editingForm"
+                        @save="saveForm"
+                        @cancel="setView('forms')"
+                    ></admin-form-editor>
                 </div>
 
                 <!-- Submissions View -->
                 <div v-if="currentView === 'submissions'">
-                    <div class="flex justify-between items-end mb-8">
-                        <div>
-                            <h2 class="text-3xl font-serif italic mb-2">Submissions: {{ activeForm.title }}</h2>
-                            <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">Recent activity</p>
-                        </div>
-                        <button @click="exportSubmissions" class="text-[10px] border border-[#2A2A2A] px-3 py-1 hover:border-white transition-all font-bold uppercase">Export JSON</button>
-                    </div>
-
-                    <div v-if="submissions.length === 0" class="border border-dashed border-[#2A2A2A] py-20 text-center opacity-30">
-                        <p class="italic">No submissions found for this form yet.</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div v-for="sub in submissions" :key="sub.id" class="border border-[#2A2A2A] bg-[#181818] p-6">
-                            <div class="flex justify-between items-center mb-6 border-b border-[#2A2A2A] pb-4">
-                                <span class="text-[10px] font-mono opacity-40 uppercase tracking-widest">{{ sub.submitted_at }}</span>
-                                <span class="text-[10px] font-mono opacity-20 uppercase tracking-widest">ID: {{ sub.id }}</span>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                <div v-for="(val, key) in sub.data" :key="key">
-                                    <label class="block text-[9px] font-mono uppercase opacity-30 mb-1">{{ key }}</label>
-                                    <div class="text-sm border-l border-[#F27D26]/30 pl-3 leading-relaxed">{{ val }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <admin-submissions 
+                        :form="activeForm" 
+                        :submissions="submissions"
+                        @export="exportSubmissions"
+                    ></admin-submissions>
                 </div>
 
                 <!-- AI Tasks Section (Only on sites view) -->
-                <div v-if="currentView === 'sites'" class="mt-16">
-                    <div class="flex justify-between items-end mb-6">
-                        <div>
-                            <h2 class="text-2xl font-serif italic mb-1">AI Media Queue</h2>
-                            <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">Automated tasks via Heartbeat</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button @click="triggerHeartbeat" class="px-3 py-1 bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-[#F27D26] transition-all" :disabled="isBusy">
-                                {{ isBusy ? 'Processing...' : 'Run Heartbeat' }}
-                            </button>
-                            <button @click="addSampleTask" class="px-3 py-1 border border-[#2A2A2A] text-[10px] font-bold uppercase tracking-widest hover:border-white transition-all">
-                                Add Sample Task
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="border border-[#2A2A2A] bg-[#181818] overflow-hidden">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-[#222] border-b border-[#2A2A2A]">
-                                <tr>
-                                    <th class="p-3 font-mono opacity-40 uppercase">Task ID</th>
-                                    <th class="p-3 font-mono opacity-40 uppercase">Site</th>
-                                    <th class="p-3 font-mono opacity-40 uppercase">Type</th>
-                                    <th class="p-3 font-mono opacity-40 uppercase">Status</th>
-                                    <th class="p-3 font-mono opacity-40 uppercase text-right">Updated</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="task in aiTasks" :key="task.id" class="border-b border-[#2A2A2A] last:border-0 hover:bg-[#222] transition-colors">
-                                    <td class="p-3 font-mono opacity-60">{{ task.id }}</td>
-                                    <td class="p-3">{{ task.site }}</td>
-                                    <td class="p-3">
-                                        <span class="px-1.5 py-0.5 bg-[#2A2A2A] rounded text-[9px] uppercase font-bold">{{ task.type }}</span>
-                                    </td>
-                                    <td class="p-3">
-                                        <span :class="{
-                                            'text-yellow-400': task.status === 'pending',
-                                            'text-blue-400': task.status === 'running',
-                                            'text-green-400': task.status === 'completed',
-                                            'text-red-400': task.status === 'failed'
-                                        }" class="font-bold lowercase italic">{{ task.status }}</span>
-                                    </td>
-                                    <td class="p-3 text-right font-mono opacity-30 text-[10px] italic">{{ task.updated_at }}</td>
-                                </tr>
-                                <tr v-if="aiTasks.length === 0">
-                                    <td colspan="5" class="p-8 text-center opacity-30 italic">No AI tasks in queue.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <admin-ai-tasks v-if="currentView === 'sites'" :passkey="passkey"></admin-ai-tasks>
+            </div>
 
                 <input type="file" accept=".zip" ref="uploadInput" class="hidden" @change="onFileSelected" />
 
@@ -498,17 +334,22 @@ class AdminRouter {
         </main>
     </div>
 
-    <script>
-        const { createApp, ref, onMounted, nextTick } = Vue;
+    <script type="module">
+        import { createApp, ref, onMounted, nextTick, defineAsyncComponent } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 
-        createApp({
+        const app = createApp({
+            components: {
+                AdminSitesList: defineAsyncComponent(() => import('/js/components/AdminSitesList.js')),
+                AdminAiTasks: defineAsyncComponent(() => import('/js/components/AdminAiTasks.js')),
+                AdminFormsManager: defineAsyncComponent(() => import('/js/components/AdminFormsManager.js')),
+                AdminFormEditor: defineAsyncComponent(() => import('/js/components/AdminFormEditor.js')),
+                AdminSubmissions: defineAsyncComponent(() => import('/js/components/AdminSubmissions.js'))
+            },
             setup() {
                 const isAuthenticated = ref(false);
                 const passkey = ref('');
                 const errorMsg = ref('');
                 const sites = ref([]);
-                const aiTasks = ref([]);
-                const isBusy = ref(false);
                 const uploadInput = ref(null);
                 const siteToUpload = ref('');
 
@@ -588,7 +429,7 @@ class AdminRouter {
                     field.options = field.options_string.split(',').map(s => s.trim()).filter(s => s !== '');
                 };
 
-                const saveForm = async () => {
+                const saveForm = async (formData) => {
                     const storedKey = localStorage.getItem('adminPasskey');
                     try {
                         const res = await fetch('/admin/api/forms/save', {
@@ -599,7 +440,7 @@ class AdminRouter {
                             },
                             body: JSON.stringify({
                                 site: activeSite.value,
-                                form: editingForm.value
+                                form: formData
                             })
                         });
                         const data = await res.json();
@@ -659,63 +500,6 @@ class AdminRouter {
                     URL.revokeObjectURL(url);
                 };
 
-                const fetchTasks = async () => {
-                    const storedKey = localStorage.getItem('adminPasskey');
-                    try {
-                        const res = await fetch('/admin/api/ai/tasks', {
-                            headers: { 'X-Admin-Passkey': storedKey }
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            aiTasks.value = data.tasks.reverse();
-                        }
-                    } catch (e) {
-                        console.error('Error fetching tasks', e);
-                    }
-                };
-
-                const triggerHeartbeat = async () => {
-                    isBusy.value = true;
-                    const storedKey = localStorage.getItem('adminPasskey');
-                    try {
-                        const res = await fetch('/admin/api/ai/heartbeat', {
-                            headers: { 'X-Admin-Passkey': storedKey }
-                        });
-                        const data = await res.json();
-                        if (data.status === 'success') {
-                            console.log('Heartbeat run:', data.message);
-                        } else {
-                            console.warn('Heartbeat error:', data.message);
-                        }
-                        await fetchTasks();
-                    } catch (e) {
-                        console.error('Heartbeat failed', e);
-                    } finally {
-                        isBusy.value = false;
-                    }
-                };
-
-                const addSampleTask = async () => {
-                    const storedKey = localStorage.getItem('adminPasskey');
-                    try {
-                        await fetch('/admin/api/ai/tasks/add', {
-                            method: 'POST',
-                            headers: { 
-                                'X-Admin-Passkey': storedKey,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                site: sites.value[0] || 'site1.com',
-                                type: 'improve_text',
-                                payload: { text: "Welcome to our website. We provide quality services.", context: "Landing Page Hero" }
-                            })
-                        });
-                        await fetchTasks();
-                    } catch (e) {
-                        console.error('Add task failed', e);
-                    }
-                };
-
                 const checkAuth = async () => {
                     const storedKey = localStorage.getItem('adminPasskey');
                     if (storedKey) {
@@ -728,7 +512,6 @@ class AdminRouter {
                                 passkey.value = storedKey;
                                 const data = await res.json();
                                 sites.value = data.sites;
-                                await fetchTasks();
                                 loadLucide();
                             } else {
                                 localStorage.removeItem('adminPasskey');
@@ -808,42 +591,40 @@ class AdminRouter {
                     checkAuth();
                 });
 
-                return {
-                    isAuthenticated,
-                    passkey,
-                    errorMsg,
-                    sites,
-                    aiTasks,
-                    isBusy,
-                    currentView,
-                    activeSite,
-                    activeForm,
-                    siteForms,
-                    submissions,
-                    editingForm,
-                    setView,
-                    manageForms,
-                    createNewForm,
-                    editForm,
-                    addField,
-                    removeField,
-                    updateOptions,
-                    saveForm,
-                    deleteForm,
-                    viewSubmissions,
-                    exportSubmissions,
-                    login,
-                    logout,
-                    downloadSite,
-                    triggerUpload,
-                    onFileSelected,
-                    triggerHeartbeat,
-                    addSampleTask,
-                    uploadInput
-                };
-            }
-        }).mount('#app');
-    </script>
+                    return {
+                        isAuthenticated,
+                        passkey,
+                        errorMsg,
+                        sites,
+                        currentView,
+                        activeSite,
+                        activeForm,
+                        siteForms,
+                        submissions,
+                        editingForm,
+                        setView,
+                        manageForms,
+                        createNewForm,
+                        editForm,
+                        addField,
+                        removeField,
+                        updateOptions,
+                        saveForm,
+                        deleteForm,
+                        viewSubmissions,
+                        exportSubmissions,
+                        login,
+                        logout,
+                        downloadSite,
+                        triggerUpload,
+                        onFileSelected,
+                        uploadInput
+                    };
+                }
+            });
+            
+            app.mount('#app');
+        </script>
 </body>
 </html>
         <?php

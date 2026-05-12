@@ -118,3 +118,33 @@ When instantiating the app, load the component dynamically:
    ```
 
 By using the ES module build of Vue and native browser imports, we get robust component-based architecture without requiring compiling, Vite, or a Node build pipeline at all.
+
+## 4. Reusable Admin Component Library
+
+To maintain a consistent "Artful Minimalist" aesthetic across the admin area, we provide a set of pre-styled, reusable components in `/repo-php/public/js/components/`.
+
+### Core Components
+- **`CmsButton`**: Standard buttons with `primary`, `secondary`, `outline`, and `danger` variants. Supports loading states and Lucide icons.
+- **`CmsCard`**: A container for content with hover effects and support for decorative background icons.
+- **`CmsTable`**: A layout-aware table component with support for loading states, empty messages, and custom column slots.
+- **`CmsModal`**: A backdrop-shading modal with varying size constraints (`sm` to `xl`).
+
+### Example: Using the Library
+```javascript
+import CmsButton from './CmsButton.js';
+import CmsCard from './CmsCard.js';
+
+export default {
+    components: { CmsButton, CmsCard },
+    template: `
+        <cms-card title="Statistics" subtitle="Last 24 hours" icon="activity">
+            <p class="text-3xl font-serif">1,240</p>
+            <template #actions>
+                <cms-button variant="outline" size="sm">Refresh</cms-button>
+            </template>
+        </cms-card>
+    `
+};
+```
+
+For a full reference of props and slots, see [Admin Component Reference](./admin-component-reference.md).

@@ -14,7 +14,9 @@ We have provided comprehensive guides in the `docs/` directory:
 
 - **[Installation & Dev Setup](./docs/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
 - **[CMS Management Guide](./docs/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
-- **[Deployment Guide](./docs/deployment.md)**: Steps to deploy using Docker and Coolify, including **persistence and reset** mechanisms.
+- **[Admin Handbook](./docs/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
+- **[Admin Component Reference](./docs/admin-component-reference.md)**: Technical guide for building custom admin views with Vue 3.
+- **[Deployment Guide](./docs/deployment.md)**: Steps to deploy using Docker and Coolify.
 - **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system between Node and PHP.
 - **[AI Media Generator Guide](./docs/ai-media-generator-guide.md)**: How the integrated generation task queue works.
 
