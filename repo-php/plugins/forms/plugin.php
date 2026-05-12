@@ -33,54 +33,32 @@ class Forms {
         }, 5);
     }
 
+    public static function getActiveSitePublic() {
+        return self::getActiveSite();
+    }
+
     private static function getActiveSite() {
-        // Simple logic to get current site, mirroring Router.php logic
         $activeSite = getenv('ACTIVE_SITE_OVERRIDE');
         $httpHost = $_SERVER['HTTP_HOST'] ?? 'site1.com';
         if (!$activeSite) {
-             // We don't have easy access to domain map here without re-reading it
-             // but usually $httpHost is what we want for content subfolder
              $activeSite = $httpHost;
         }
-        return preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
+        $activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
+        
+        // Fallback to site1.com if domain-based site folder doesn't exist
+        $contentDir = realpath(__DIR__ . '/../../content');
+        if (!is_dir($contentDir . '/' . $activeSite)) {
+            $activeSite = 'site1.com';
+        }
+        return $activeSite;
     }
 }
 
-// Handle Form Submissions
-PluginManager::addAction('head', function() {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cms_form_id'])) {
-        $formId = $_POST['cms_form_id'];
-        $formData = [];
-        foreach ($_POST as $key => $value) {
-            if (strpos($key, 'f_') === 0) {
-                $fieldName = substr($key, 2);
-                $formData[$fieldName] = $value;
-            }
-        }
-
-        $activeSite = getenv('ACTIVE_SITE_OVERRIDE') ?: ($_SERVER['HTTP_HOST'] ?? 'site1.com');
-        $activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
-
-        FormsManager::addSubmission($activeSite, $formId, $formData);
-        
-        // Store success message in session or simple global for this request
-        $GLOBALS['cms_form_success'] = true;
-    }
-});
-
-// Show success message if submitted
-PluginManager::addAction('head', function() {
-    if (isset($GLOBALS['cms_form_success'])) {
-        echo "<script>alert('Thank you! Your submission has been received.');</script>";
-    }
-});
-
 // JSON API for Vue Component
-PluginManager::addAction('head', function() {
+(function() {
     if (isset($_GET['cms_api'])) {
         $api = $_GET['cms_api'];
-        $activeSite = getenv('ACTIVE_SITE_OVERRIDE') ?: ($_SERVER['HTTP_HOST'] ?? 'site1.com');
-        $activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
+        $activeSite = Forms::getActiveSitePublic();
 
         if ($api === 'get_form' && isset($_GET['id'])) {
             $formId = $_GET['id'];
@@ -98,7 +76,7 @@ PluginManager::addAction('head', function() {
                 echo json_encode($form);
             } else {
                 http_response_code(404);
-                echo json_encode(['error' => 'Form not found']);
+                echo json_encode(['error' => "Form not found: $formId on site $activeSite"]);
             }
             exit;
         }
@@ -110,15 +88,43 @@ PluginManager::addAction('head', function() {
 
             if (!$formId) {
                 http_response_code(400);
+                header('Content-Type: application/json');
                 echo json_encode(['error' => 'Missing form ID']);
                 exit;
             }
 
+            $activeSite = Forms::getActiveSitePublic();
             FormsManager::addSubmission($activeSite, $formId, $formData);
             
             header('Content-Type: application/json');
             echo json_encode(['success' => true, 'message' => 'Thank you! Your submission has been received.']);
             exit;
         }
+    }
+})();
+
+// Handle Form Submissions (Non-Vue version)
+PluginManager::addAction('head', function() {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cms_form_id'])) {
+        $formId = $_POST['cms_form_id'];
+        $formData = [];
+        foreach ($_POST as $key => $value) {
+            if (strpos($key, 'f_') === 0) {
+                $fieldName = substr($key, 2);
+                $formData[$fieldName] = $value;
+            }
+        }
+
+        $activeSite = Forms::getActiveSitePublic(); 
+        FormsManager::addSubmission($activeSite, $formId, $formData);
+        
+        $GLOBALS['cms_form_success'] = true;
+    }
+});
+
+// Show success message if submitted
+PluginManager::addAction('head', function() {
+    if (isset($GLOBALS['cms_form_success'])) {
+        echo "<script>alert('Thank you! Your submission has been received.');</script>";
     }
 });
