@@ -17,6 +17,24 @@ class CMS {
     }
 
     /**
+     * Gets all available plugins
+     */
+    public static function getPlugins() {
+        $plugins = [];
+        $pluginPath = __DIR__ . '/../plugins';
+        if (!is_dir($pluginPath)) return [];
+        
+        $items = scandir($pluginPath);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') continue;
+            if (is_dir($pluginPath . '/' . $item)) {
+                $plugins[] = $item;
+            }
+        }
+        return $plugins;
+    }
+
+    /**
      * Validates the core setup
      */
     public static function validateSetup($contentPath) {
@@ -24,6 +42,7 @@ class CMS {
             'content_path' => $contentPath,
             'is_writable' => is_writable($contentPath),
             'sites' => self::getSites($contentPath),
+            'available_plugins' => self::getPlugins(),
             'php_version' => PHP_VERSION,
             'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown'
         ];

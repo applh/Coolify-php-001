@@ -92,6 +92,9 @@ class Router {
         $siteIndex = $siteDir . '/index.php';
 
         if (file_exists($siteIndex)) {
+            // Initialize Plugins for this site
+            PluginManager::init($siteDir);
+
             // Change directory to the site folder to support relative includes within site templates
             chdir($siteDir);
             require_once 'index.php';

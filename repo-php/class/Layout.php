@@ -5,7 +5,8 @@ class Layout {
      * Renders a basic header with optional custom CSS/Head content
      */
     public static function header($title, $extraHead = '') {
-        $siteName = htmlspecialchars($title);
+        $siteName = PluginManager::applyFilters('site_title', $title);
+        $siteName = htmlspecialchars($siteName);
         ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,6 +22,7 @@ class Layout {
         .h-px-fade { height: 1px; background: linear-gradient(to right, rgba(26,26,26,0.1), rgba(26,26,26,0.05), transparent); }
     </style>
     <?php echo $extraHead; ?>
+    <?php PluginManager::doAction('head'); ?>
 </head>
 <body>
     <div class="max-w-4xl mx-auto px-6 py-12 md:py-24">
@@ -64,6 +66,7 @@ class Layout {
             </div>
         </footer>
     </div>
+    <?php PluginManager::doAction('footer'); ?>
 </body>
 </html>
         <?php
