@@ -27,6 +27,14 @@ The system uses specialized personas to ensure high-quality output based on cont
     - Suggesting performance optimizations (e.g., identifies large assets).
     - Generating boilerplate configuration or site structures.
 
+### 1.4 The Agent Coder
+- **Goal**: Perform complex, multi-file refactoring and feature implementation.
+- **Tasks**:
+    - Scanning existing class hierarchies to propose improvements.
+    - Extracting reusable logic from controllers into service classes.
+    - Creating new files and updating dependencies automatically.
+    - Implementing cross-cutting concerns (e.g., logging, auth) across several files.
+
 ## 2. Task Ecosystem
 
 Tasks are units of work executed by the AI agents via the `AIAgent` class.

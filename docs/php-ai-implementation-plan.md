@@ -21,11 +21,12 @@ The system will follow an asynchronous task-queue model:
     - `getTasks($site = null)`
 
 ### 2.2 `AIAgent` (class/AIAgent.php)
-- Responsibility: Execute prompts using the Gemini 1.5 Flash model.
+- Responsibility: Execute prompts using the Gemini 1.5 Flash or Pro models.
 - Authentication: Uses `GEMINI_API_KEY` environment variable.
 - Features:
     - `generateText($prompt)`
     - `improveWebpage($html, $instruction)`
+    - `refactorCode($files, $goal)`: (See `docs/ai-coder-agent-plan.md` for details)
 
 ### 2.3 `Heartbeat Controller` (Integrated into logic)
 - Route: `/api/heartbeat`
