@@ -99,6 +99,11 @@ $description = "Bienvenue sur BabiBlog. Découvrez nos articles, astuces et réf
 
         <!-- Articles Grid -->
         <section id="articles" class="py-16 md:py-24 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <?php 
+                // Initialize global state for the site
+                Store::set('site_brand', 'BabiBlog');
+                Store::set('show_read_time', true);
+            ?>
             <div class="flex items-baseline justify-between mb-10">
                 <h2 class="text-3xl font-serif font-bold text-babi-900">Derniers articles</h2>
                 <a href="#" class="text-sm font-medium text-babi-500 hover:text-babi-700 transition-colors">Voir tout &rarr;</a>

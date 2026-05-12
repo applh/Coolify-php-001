@@ -19,6 +19,7 @@ class Component {
         }
 
         // Prepare context
+        extract(Store::all());
         extract($props);
         
         // Define a helper for rendering slots inside the component file

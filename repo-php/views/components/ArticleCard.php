@@ -10,6 +10,11 @@
         <p class="text-babi-700/80 text-sm mb-4 line-clamp-3 mb-auto">
             <?php $slot(); ?>
         </p>
-        <span class="text-xs text-babi-400 mt-4 font-medium"><?php echo htmlspecialchars($date); ?> &middot; <?php echo htmlspecialchars($readTime); ?> min de lecture</span>
+        <span class="text-xs text-babi-400 mt-4 font-medium">
+            <?php echo htmlspecialchars($date); ?> 
+            <?php if (isset($show_read_time) && $show_read_time === true): ?>
+                &middot; <?php echo htmlspecialchars($readTime); ?> min de lecture
+            <?php endif; ?>
+        </span>
     </div>
 </article>

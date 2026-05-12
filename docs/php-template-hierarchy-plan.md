@@ -53,9 +53,27 @@ This mimics the "Async Component" behavior of Vue 3 where the UI remains respons
 3.  **Atomic Deployment**: Implementing a new templating system requires updating the `View` class, creating `Component.php`, and migrating existing site templates. An AI agent can perform these multi-file edits in a single coordinated action, ensuring the app never enters a broken state.
 4.  **Schema Generation**: The AI can automatically generate JSON schemas for the component props, which can then be used by the Vue 3 dashboard to provide a "Visual Editor" experience for these PHP components.
 
-## 5. Roadmap
+## 6. MVC Design Pattern Evaluation
+
+### Current Alignment
+The Component system integrates seamlessly into the **MVC (Model-View-Controller)** pattern:
+- **Model**: Responsible for data fetching and business logic.
+- **Controller**: Orchestrates the data flow and chooses the top-level view.
+- **View (`Component`)**: Handles the visual representation. Components act as "Micro-Views" that consume data passed from the Controller.
+
+### The "Store" Pattern for Cross-Component State
+To avoid **Prop Drilling** (passing data through multiple nested layers), we've implemented a **PHP Store** (`repo-php/class/Store.php`).
+
+#### Benefits for AI Agents and Humans:
+1.  **Deterministic Data Flow**: Instead of components guessing which variables are available in their scope, they can rely on `Store::get('user')` or expect global keys to be automatically extracted into their scope.
+2.  **Single Source of Truth**: Global metadata (site name, SEO config, user login state) is managed in one place.
+3.  **Encapsulation**: Components become more "Logic-Lite" as they pull what they need from the store rather than requiring complex constructor/prop injections.
+4.  **AI Optimization**: AI Agents are highly productive with central stores because they can reason about the "Global State" as a single object, rather than tracking variable mutations across 10 different include files.
+
+## 7. Roadmap Update
 
 -   [x] **Phase 1**: Create `repo-php/class/Component.php` with basic prop and slot support.
--   [ ] **Phase 2**: Update `Layout.php` to use the new Component system.
--   [x] **Phase 3**: Implement the `/api/render-component` endpoint and client-side "async" loader.
--   [x] **Phase 4**: Migrate `babiblog.fr` or `sambazen.net` to the new hierarchy as a proof of concept.
+-   [x] **Phase 2**: Implement `repo-php/class/Store.php` for global state management.
+-   [ ] **Phase 3**: Update `Layout.php` to use the new Component system and Store.
+-   [x] **Phase 4**: Implement the `/api/render-component` endpoint and client-side "async" loader.
+-   [x] **Phase 5**: Migrate `babiblog.fr` or `sambazen.net` to the new hierarchy.
