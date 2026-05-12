@@ -3,7 +3,6 @@
  * This component handles fetching form metadata and submitting data via JSON API.
  */
 
-/* global Vue */
 const { createApp, ref, onMounted } = Vue;
 
 const FormComponent = {

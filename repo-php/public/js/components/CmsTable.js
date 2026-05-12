@@ -22,7 +22,7 @@ export default {
             default: 'No items found.'
         }
     },
-    setup(props) {
+    setup() {
         return {};
     },
     template: `

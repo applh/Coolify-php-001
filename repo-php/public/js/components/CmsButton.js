@@ -16,7 +16,7 @@ export default {
         loading: Boolean,
         icon: String
     },
-    setup(props) {
+    setup() {
         const variants = {
             primary: 'bg-[#F27D26] text-black hover:bg-white',
             secondary: 'bg-[#2A2A2A] text-white hover:bg-[#F27D26] hover:text-black',

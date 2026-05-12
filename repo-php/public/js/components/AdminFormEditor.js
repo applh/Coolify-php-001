@@ -16,7 +16,7 @@ export default {
     },
     emits: ['save', 'cancel'],
     setup(props, { emit }) {
-        const { ref, reactive, watch } = Vue;
+        const { reactive } = Vue;
         
         // Local deep copy to avoid direct prop mutation
         const localForm = reactive(JSON.parse(JSON.stringify(props.form)));

@@ -51,7 +51,7 @@ export default {
         const triggerHeartbeat = async () => {
             isBusy.value = true;
             try {
-                const res = await fetch('/admin/api/ai/heartbeat', {
+                await fetch('/admin/api/ai/heartbeat', {
                     headers: { 'X-Admin-Passkey': props.passkey }
                 });
                 await fetchTasks();

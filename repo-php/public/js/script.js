@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title.style.color = '';
             }, 500);
         });
+    }
     // Async Component Hydration
     const hydrateAsyncComponents = async () => {
         const components = document.querySelectorAll('[data-component]');

@@ -229,6 +229,14 @@ const deleteSite = async () => {
           <button @click.stop="triggerUpload(site)" class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1" title="Upload ZIP to Overwrite">
             <Upload :size="14" /> Upload
           </button>
+          <a 
+            :href="`/repo-php/public/index.php?__site=${site}`" 
+            target="_blank"
+            @click.stop
+            class="bg-[#2A2A2A] text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded hover:bg-[#F27D26] hover:text-black transition-all flex items-center gap-1"
+          >
+            <Globe :size="14" /> View
+          </a>
           <div class="flex-1"></div>
           <div class="flex items-center gap-1 text-[#F27D26] text-xs font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all">
             Manage <ArrowRight :size="14" />

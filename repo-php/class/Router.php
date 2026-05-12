@@ -7,20 +7,73 @@ class Router {
     public static function dispatch($contentPath) {
         // 1. Resolve Site
         $activeSite = getenv('ACTIVE_SITE_OVERRIDE');
-        $httpHost = $_SERVER['HTTP_HOST'] ?? 'site1.com';
+        $httpHostRaw = $_SERVER['HTTP_HOST'] ?? '';
+        $httpHost = explode(':', $httpHostRaw)[0]; // Remove port
+        
+        // Allow query param override for development
+        if (isset($_GET['__site'])) {
+            $activeSite = $_GET['__site'];
+        }
 
-        if (!$activeSite) {
+        if (!$activeSite && $httpHost) {
             $configFile = $contentPath . '/config.php';
             if (file_exists($configFile)) {
                 $domainMap = require $configFile;
+                // Try exact match first
                 if (is_array($domainMap) && isset($domainMap[$httpHost])) {
                     $activeSite = $domainMap[$httpHost];
+                } else {
+                    // Try case-insensitive folder match from domain map
+                    foreach ($domainMap as $domain => $folder) {
+                        if (strcasecmp($domain, $httpHost) === 0) {
+                            $activeSite = $folder;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // If still not resolved, check if host matches any site name exactly or as a prefix/suffix
+            if (!$activeSite) {
+                $availableSites = CMS::getSites($contentPath);
+                
+                // Try exact case-insensitive match first for all
+                foreach ($availableSites as $site) {
+                    if (strcasecmp($httpHost, $site) === 0) {
+                        $activeSite = $site;
+                        break;
+                    }
+                }
+                
+                // If still not resolved, try substring match (longer names first to avoid "site1" matching "longsite1.com")
+                if (!$activeSite) {
+                    usort($availableSites, function($a, $b) {
+                        return strlen($b) <=> strlen($a);
+                    });
+                    foreach ($availableSites as $site) {
+                        if (stripos($httpHost, $site) !== false) {
+                            $activeSite = $site;
+                            break;
+                        }
+                    }
                 }
             }
         }
 
         if (!$activeSite) {
-            $activeSite = $httpHost;
+            $activeSite = $httpHost ?: 'site1.com';
+        }
+
+        // Final attempt to match existing folders case-insensitively if not found directly
+        $sanitized = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
+        if (!is_dir($contentPath . '/' . $sanitized)) {
+             $availableSites = CMS::getSites($contentPath);
+             foreach ($availableSites as $site) {
+                 if (strcasecmp($sanitized, $site) === 0) {
+                     $activeSite = $site;
+                     break;
+                 }
+             }
         }
         // Sanitize the site name (allow alphanumeric, dots, and dashes)
         $activeSite = preg_replace('/[^a-zA-Z0-9.-]/', '', $activeSite);
