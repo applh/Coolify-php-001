@@ -22,9 +22,15 @@ Layout::header("Site One - Welcome");
     <div class="h-px bg-black opacity-5 w-full"></div>
 
     <section class="max-w-2xl">
-        <p class="text-sm opacity-50 mb-8 italic">
+        <p class="text-sm opacity-50 mb-12 italic">
             This content is served directly from <code class="bg-[#1a1a1a]/5 px-1 rounded not-italic">/content/site1.com/index.php</code>.
         </p>
+
+        <div class="h-px bg-black opacity-5 w-full mb-12"></div>
+
+        <div id="contact">
+            <?php Forms::render('contact-form'); ?>
+        </div>
     </section>
 </div>
 

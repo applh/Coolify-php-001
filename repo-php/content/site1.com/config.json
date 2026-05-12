@@ -1,3 +1,3 @@
 {
-    "active_plugins": ["analytics", "seo-optimizer"]
+  "active_plugins": ["analytics", "seo-optimizer", "forms"]
 }
