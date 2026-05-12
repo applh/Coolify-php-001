@@ -74,6 +74,31 @@ As the scale of an application or site grows, the "Agent Experience" (AX) shifts
 
 ---
 
+## 5. Tooling: Empowerment for AI Agents
+
+To optimize an agent's performance, the environment must provide tools that bridge the gap between "Stochastic Reasoning" and "Deterministic Execution."
+
+### Existing Core Tools
+*   **Navigation (`list_dir`, `grep`):** Essential for large-scale discovery. Agents perform best when they can "search" before they "read."
+*   **Manipulation (`edit_file`, `multi_edit_file`):** Surgical edits are superior to full-file rewrites. They preserve history and minimize token waste.
+*   **Verification (`lint_applet`, `compile_applet`):** The "Self-Correction" loop. An agent with a linter is 10x more reliable than one without.
+*   **Knowledge Integration (`search_web`, `read_url_content`):** Allows the agent to consult documentation for third-party libraries (e.g., Tailwind, D3.js) in real-time.
+*   **Asset Generation (`generate_image`):** Crucial for building coherent UIs. Allows the agent to create missing brand assets, icons, or hero images on the fly.
+*   **Infrastructure Management (`set_up_firebase`, `deploy_firebase`):** Standardizes backend setup (Auth/DB), removing the need for the agent to "guess" server-side configurations.
+
+### specialized Project Utilities (Current)
+*   **Base64 Transformer:** Handles the conversion of `.jpg.zip` and `.txt` (b64) files. This allows agents to "see" filenames and sizes even if they cannot process the raw pixels directly.
+*   **Site Explorer UI:** A custom dashboard (like `SiteExplorer.vue`) that gives both humans and agents a visual map of the multi-site directory structure.
+
+### Useful Tools to Build (Future Optimization)
+1.  **Semantic Search Indexer:** Instead of raw `grep`, a tool that understands *intent* (e.g., "Find the logic that calculates tax rates") in large 1000+ page systems.
+2.  **Zipped-Asset Bridge:** A tool that allows the agent to "peek" inside `.zip` files and perform "hot-swaps" of binary assets without a full download/upload cycle.
+3.  **SQL Explorer for SQLite:** A command-line or UI bridge that allows the agent to run `SELECT` and `UPDATE` queries directly on database files to manage large-scale content.
+4.  **UI Snapshot Tool:** A tool that renders a headless view of a page and returns a structural description (or a low-res thumbnail) so the agent can verify layout changes visually.
+5.  **Dependency Graph Generator:** A tool that maps how files include/require each other (especially for PHP MVC), helping the agent avoid breaking "ripple effects" during refactors.
+
+---
+
 ## Technical Comparison Table (Scale vs. Format)
 
 | Scale | Recommended Architecture | Primary Agent Tool | Maintenance Risk |
