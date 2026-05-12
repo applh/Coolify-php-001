@@ -55,5 +55,10 @@ docker run -d \
   php-cms-manager
 ```
 
-## 5. Persistence Note
+## 5. Performance Scaling
+For production deployments on multi-core servers, we recommend using PM2 Cluster Mode to utilize all available CPU cores.
+
+See the [Node.js Multi-Core Scaling Guide](./coolify-node-scaling.md) for detailed instructions.
+
+## 6. Persistence Note
 **CRITICAL:** The `/app/repo-php/content` directory contains all your website data. Always use a Docker Volume to map this directory to your host machine to avoid data loss during container restarts or updates.

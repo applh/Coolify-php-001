@@ -42,9 +42,8 @@ Layout::footer();
 - **AI Media Queue**: The dashboard scans your `index.php` files for image references (e.g., `src="/img/hero.jpg"`). If the file is missing, it appears in the **AI Media** view.
 - **Processing**: Click "Run AI Generation" to have Gemini create optimized, context-aware placeholders or textures for your missing assets.
 
-## 4. Multi-Domain Routing
-In production, your external domains should be pointed to your server. The PHP router (`repo-php/public/index.php`) matches the `Host` header to the folders in `repo-php/content/`.
+## 5. AI Copilot & Management
+The CMS includes an AI-assisted management layer powered by Gemini. You can interact with the system using natural language to optimize SEO, generate content, or build new pages.
 
-Example:
-- Request for `site1.com` -> serves `repo-php/content/site1.com/index.php`
-- Request for `localhost:3000` -> default entry point.
+- **Developer Guide**: For details on how the AI integration works, see [Gemini API Interactions & Memory](./gemini-api-interactions.md).
+- **Function Calling**: The AI can perform file operations and site management tasks.
