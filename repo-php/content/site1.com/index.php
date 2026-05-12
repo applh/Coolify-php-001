@@ -29,7 +29,8 @@ Layout::header("Site One - Welcome");
         <div class="h-px bg-black opacity-5 w-full mb-12"></div>
 
         <div id="contact">
-            <?php Forms::render('contact-form'); ?>
+            <h3 class="text-sm uppercase tracking-widest opacity-30 mb-8 font-mono">Interactive Contact Form</h3>
+            <?php Forms::renderVue('contact-form'); ?>
         </div>
     </section>
 </div>

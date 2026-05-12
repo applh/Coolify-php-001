@@ -1,6 +1,6 @@
 {
   "name": "PHP CMS Manager",
-  "description": "Full-stack Node.js (Express + Vue3) CMS for managing a Multi-Site PHP Application.",
+  "description": "Full-stack Node.js CMS for managing Multi-Site PHP Applications, featuring a new Vue-powered Async Forms plugin.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

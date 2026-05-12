@@ -47,6 +47,44 @@ Layout::footer();
 ?>
 ```
 
+## Advanced: Vue Async Form Component
+
+For a smoother user experience without page reloads, you can use the Vue-powered async component. This version fetches form structure and submits data using AJAX.
+
+### 1. Usage in PHP Template
+
+Replace `Forms::render()` with `Forms::renderVue()`:
+
+```php
+<div class="max-w-xl mx-auto py-12">
+    <h1 class="text-3xl serif italic mb-8">AJAX Contact Form</h1>
+    
+    <?php Forms::renderVue('contact-form'); ?>
+</div>
+```
+
+### 2. Manual Integration (Outside of `Forms::renderVue`)
+
+If you want to integrate the component manually or in a different way, you need to include the following scripts:
+
+```html
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="/js/FormsComponent.js"></script>
+```
+
+Then, place a `div` with `data-vue-form` attribute:
+
+```html
+<div data-vue-form="contact-form"></div>
+```
+
+### 3. Features of the Vue Component
+
+- **Seamless Submissions**: No page refresh on submit.
+- **Loading States**: Built-in skeleton/loading animations.
+- **Dynamic Validation**: Real-time type checking based on the form definition.
+- **Improved UX**: Customizable success/error messages within the component.
+
 ## Managing Submissions
 
 - In the Admin Panel, click **Forms** on your site.
