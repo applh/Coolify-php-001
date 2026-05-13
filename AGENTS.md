@@ -33,3 +33,7 @@ When generating or modifying sites within the `content/` directory, the AI agent
 - **Environment Stability:** Do not add configuration files (like `.gitignore`), change deployment scripts (`package.json`), or modify core server behavior (like `isProd` logic) unless it is necessary to fulfill the user's specific task.
 - **Keep it Simple:** Prefer the simplest solution over introducing new complexity, environmental variables, or architectural layers.
 - **Verify before Action:** If a feature isn't broken, do not "fix" it. If you suspect a change is needed outside the requested scope, ask the user before proceeding.
+
+## 6. Documentation Management
+- **Prioritize `docs/`:** Always update and maintain documentation within the `docs/` directory.
+- **Root Folder Cleanliness:** Avoid writing new documentation files in the root folder. The only exception is the `README.md` file. All other technical guides, architecture notes, or manuals must be placed in or migrated to the `docs/` folder.
