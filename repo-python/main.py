@@ -14,25 +14,34 @@ def load_sites():
     with open("sites.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return HTMLResponse(content="", status_code=204)
+
 @app.get("/", response_class=HTMLResponse)
 async def read_site(request: Request):
-    sites = load_sites()
+    try:
+        sites = load_sites()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load sites: {str(e)}")
     
     # Domain detection
     host = request.headers.get("host", "").split(":")[0]
     site_override = request.query_params.get("__site")
     
-    active_site = None
-    for site in sites:
-        if site["domain"] == host or site["id"] == site_override:
-            active_site = site
-            break
-            
-    # Fallback
+    active_site = next(
+        (s for s in sites if s["domain"] == host or s["id"] == site_override),
+        sites[0] if sites else None
+    )
+    
     if not active_site:
-        active_site = sites[0]
+        raise HTTPException(status_code=404, detail="No sites configured")
         
-    return templates.TemplateResponse("site.html", {"request": request, "site": active_site})
+    return templates.TemplateResponse(
+        request=request,
+        name="site.html",
+        context={"site": active_site}
+    )
 
 @app.get("/api/sites")
 async def get_sites():
