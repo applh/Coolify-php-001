@@ -1,12 +1,12 @@
-# PHP CMS Manager (Full-Stack)
+# Multi-Stack CMS Manager (Full-Stack)
 
-A powerful, multi-tenant PHP content management system powered by a modern Node.js & Vue 3 dashboard. Manage dozens of independent PHP websites from a single interface with AI-driven media generation.
+A powerful, multi-tenant management system powered by a modern Node.js & Vue 3 dashboard. Manage dozens of independent stacks (PHP, React, Vue, Python) from a single interface with AI-driven media generation.
 
 ## 🚀 Quick Start (Management Dashboard)
 
 1. **Install Dependencies**: `npm install`
 2. **Launch Dashboard**: `npm run dev`
-3. **Open Dashboard**: Go to `http://localhost:3000` to start creating and managing your PHP sites.
+3. **Open Dashboard**: Go to `http://localhost:3000` to start creating and managing your sites.
 
 ## 📖 Detailed Instructions
 
@@ -15,20 +15,22 @@ We have provided comprehensive guides in the `docs/` directory:
 - **[Installation & Dev Setup](./docs/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
 - **[CMS Management Guide](./docs/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
 - **[Admin Handbook](./docs/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
-- **[Admin Component Reference](./docs/admin-component-reference.md)**: Technical guide for building custom admin views with Vue 3.
-- **[Deployment Guide](./docs/deployment.md)**: Steps to deploy using Docker and Coolify.
-- **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system between Node and PHP.
-- **[AI Media Generator Guide](./docs/ai-media-generator-guide.md)**: How the integrated generation task queue works.
+- **[Coolify Setup: PHP Stack](./docs/coolify-setup-php.md)**: Detailed PHP multisite deployment.
+- **[Coolify Setup: React Stack](./docs/coolify-setup-react.md)**: Vite + React deployment instructions.
+- **[Coolify Setup: Vue Stack](./docs/coolify-setup-vue.md)**: Vite + Vue deployment instructions.
+- **[Coolify Setup: Python Stack](./docs/coolify-setup-python.md)**: FastAPI + Uvicorn deployment instructions.
+- **[Deployment Guide](./docs/deployment.md)**: General steps to deploy using Docker and Coolify.
+- **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system.
 
 ---
 
 ## 🛠 Features
 
-- **Multi-Site Dashboard**: Create and delete PHP sites instantly.
+- **Multi-Stack Dashboard**: Manage PHP, React, Vue, and Python stacks instantly.
 - **AI Media Copilot**: Automated generation of missing assets using **Google Gemini**.
-- **Data Safety & Persistence**: Built-in volume initialization and the `APP_DATA_RESET` safety valve for production environments.
+- **Containerized Architecture**: Every stack is pre-configured with Docker and Docker Compose.
 - **Modern PHP Framework**: Integrated `Layout`, `CMS`, and `PluginManager` classes for elite site architecture.
-- **Real-time Editor**: Edit PHP templates directly from the browser.
+- **Real-time Editor**: Edit templates directly from the browser.
 - **Docker Ready**: Pre-configured for seamless deployment to production environments.
 
 ---
@@ -38,9 +40,9 @@ We have provided comprehensive guides in the `docs/` directory:
 ```text
 .
 ├── repo-php/               # Core PHP Engine & Website Content
-│   ├── class/              # Global PHP Helpers (Layout, CMS)
-│   ├── content/            # Directory for independent sites
-│   └── public/             # Entry point for the PHP application
+├── repo-react/             # Vite + React + TypeScript Stack
+├── repo-vue/               # Vite + Vue + TypeScript Stack
+├── repo-python/            # FastAPI + Uvicorn Python Stack
 ├── src/                    # Vue 3 Frontend (CMS Dashboard)
 ├── server.ts               # Express Backend (API & Site Management)
 ├── cms.db                  # SQLite database for task tracking

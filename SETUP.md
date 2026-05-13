@@ -1,25 +1,23 @@
-# PHP CMS Manager - Setup & Troubleshooting
+# Multi-Stack CMS Manager - Setup & Troubleshooting
 
-This project is a hybrid application featuring a **Node.js (Express + Vue 3) Management Dashboard** and a **Multi-Site PHP Application**.
+This project is an advanced hybrid application featuring a **Node.js (Express + Vue 3) Management Dashboard** and multiple containerized stacks: **PHP Multisite**, **React**, **Vue**, and **Python FastAPI**.
 
 ## 1. Architecture Overview
 
 ### Backend (Node.js/Express)
-- **Role:** CMS Management, File API, AI Media Task Queue, ZIP Import/Export.
+- **Role:** Centralized CMS Management, File API, AI Media Task Queue.
 - **Entry Point:** `server.ts`
 - **Database:** SQLite (`cms.db`) for tracking AI media tasks.
-- **Runtime:** Node.js (V3 in AI Studio containers).
 
 ### Frontend (Vue 3)
-- **Role:** Visual dashboard for managing sites, editing files, and generating AI images.
+- **Role:** Visual dashboard for managing all stacks, editing files, and generating AI images.
 - **Build System:** Vite.
-- **Production Build:** Files are generated into the `dist/` directory.
 
-### PHP Application (`repo-php/`)
-- **Role:** The actual website engine that serves client-facing pages.
-- **Structure:** Flat-file, multi-tenant.
-- **Routing:** Handled by `repo-php/public/index.php`.
-- **Deployment:** Intended to run in a PHP-enabled environment (like Coolify, Docker, or a standard LEMP stack).
+### Application Stacks
+- **repo-php/**: The original website engine that serves client-facing pages (Apache/PHP).
+- **repo-react/**: Modern React frontend stack (Vite + TypeScript).
+- **repo-vue/**: Modern Vue frontend stack (Vite + TypeScript).
+- **repo-python/**: Backend API stack (FastAPI + Uvicorn).
 
 ---
 

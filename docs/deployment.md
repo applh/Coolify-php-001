@@ -25,7 +25,16 @@ Ensure the following variables are configured in your deployment platform:
 | `APP_ADMIN_PASSKEY` | Passkey for accessing the browser-based PHP Admin area. | - |
 | `ACTIVE_SITE_OVERRIDE` | Force the PHP router to serve a specific site folder. | - |
 
-## 3. Docker Compose Setup (Coolify / VPS)
+## 3. Coolify Stack-Specific Guides
+
+We have prepared detailed setup instructions for each technology stack. Select the guide that matches your repository:
+
+- **[PHP Multisite Stack](./coolify-setup-php.md)**: Optimized Apache/PHP setup with persistent volume mapping for multi-site data.
+- **[React Frontend Stack](./coolify-setup-react.md)**: Vite-based React deployment using a Node.js serve container.
+- **[Vue Frontend Stack](./coolify-setup-vue.md)**: Vite-based Vue deployment with specialized static serving.
+- **[Python API Stack](./coolify-setup-python.md)**: FastAPI deployment using Uvicorn with worker scaling tips.
+
+## 4. General Docker Compose Setup (Coolify / VPS)
 
 You can use the provided `docker-compose.yml` file. It ensures data persistence for both the SQLite database and your multi-site PHP content.
 

@@ -94,7 +94,8 @@ To mimic the "AI Studio" experience within the CMS Dashboard, we will implement 
 | **Phase 1** | Implement `POST /api/sites` and "Add Site" UI | High [DONE] |
 | **Phase 2** | Abstract Shared Components in PHP `class/` | Medium [DONE] |
 | **Phase 3** | Implement Site Deletion and Domain Mapping UI | High [DONE] |
-| **Phase 4** | Gemini-powered AI Chat Copilot Integration | High |
-| **Phase 5** | Multi-Page Routing & JSON Content Schema | High |
-| **Phase 6** | Component-based visual block editor | Medium |
-| **Phase 7** | Bulk publishing & SEO optimization tools | Low |
+| **Phase 4** | Multi-Stack Support (React, Vue, Python FastAPI) | High [DONE] |
+| **Phase 5** | Gemini-powered AI Chat Copilot Integration | High |
+| **Phase 6** | Multi-Page Routing & JSON Content Schema | High |
+| **Phase 7** | Component-based visual block editor | Medium |
+| **Phase 8** | Bulk publishing & SEO optimization tools | Low |
