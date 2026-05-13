@@ -134,8 +134,8 @@ This project combines a modern Node.js management layer with a high-performance 
 - The **PHP Engine** (in `/repo-php`) serves the actual high-traffic frontends.
 
 For deep dives into the PHP side, see:
-- [PHP CMS Architecture](./php-cms-architecture.md)
-- [PHP Static Assets & Media Wrappers](./media-generation-toolchain.md)
+- [PHP CMS Architecture](../backend/php-cms-architecture.md)
+- [PHP Static Assets & Media Wrappers](../ai-agents/media-generation-toolchain.md)
 
 ## Checklist before Publishing
 1. `"start"` script in `package.json` is cleanly set to `tsx server.ts`.

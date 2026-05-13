@@ -26,7 +26,7 @@ The system will follow an asynchronous task-queue model:
 - Features:
     - `generateText($prompt)`
     - `improveWebpage($html, $instruction)`
-    - `refactorCode($files, $goal)`: (See `docs/ai-coder-agent-plan.md` for details)
+    - `refactorCode($files, $goal)`: (See `ai-coder-agent-guide.md` for details)
 
 ### 2.3 `Heartbeat Controller` (Integrated into logic)
 - Route: `/api/heartbeat`

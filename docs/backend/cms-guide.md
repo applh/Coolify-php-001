@@ -52,7 +52,7 @@ Beyond the Node.js dashboard, each PHP instance provides a secure `/admin` area 
 ## 5. AI Copilot & Management
 The CMS includes an AI-assisted management layer powered by Gemini. You can interact with the system using natural language to optimize SEO, generate content, or build new pages.
 
-- **Developer Guide**: For details on how the AI integration works, see [Gemini API Interactions & Memory](./gemini-api-interactions.md).
+- **Developer Guide**: For details on how the AI integration works, see [Gemini API Interactions & Memory](../ai-agents/gemini-api-interactions.md).
 - **Function Calling**: The AI can perform file operations and site management tasks.
 
 ## 6. Advanced: Data Persistence & Resets

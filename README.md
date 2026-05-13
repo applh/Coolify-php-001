@@ -12,17 +12,17 @@ A powerful, multi-tenant management system powered by a modern Node.js & Vue 3 d
 
 We have provided comprehensive guides in the `docs/` directory:
 
-- **[Installation & Dev Setup](./docs/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
-- **[CMS Management Guide](./docs/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
-- **[Admin Handbook](./docs/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
-- **[Coolify Setup: PHP Stack](./docs/coolify-setup-php.md)**: Detailed PHP multisite deployment.
-- **[Coolify Setup: React Stack](./docs/coolify-setup-react.md)**: Vite + React deployment instructions.
-- **[Coolify Setup: Vue Stack](./docs/coolify-setup-vue.md)**: Vite + Vue deployment instructions.
-- **[Coolify Setup: Python Stack](./docs/coolify-setup-python.md)**: FastAPI + Uvicorn deployment instructions.
-- **[Stack Performance Benchmarking](./docs/stack-performance-benchmarking.md)**: Plan for comparing the four technology stacks.
-- **[Deployment Guide](./docs/deployment.md)**: General steps to deploy using Docker and Coolify.
-- **[Rebuild & Deployment Tutorial](./docs/rebuild-guide.md)**: Full guide to recreate this project and deploy to production.
-- **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system.
+- **[Installation & Dev Setup](./docs/devops/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
+- **[CMS Management Guide](./docs/backend/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
+- **[Admin Handbook](./docs/user-guides/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
+- **[Coolify Setup: PHP Stack](./docs/devops/coolify-setup-php.md)**: Detailed PHP multisite deployment.
+- **[Coolify Setup: React Stack](./docs/devops/coolify-setup-react.md)**: Vite + React deployment instructions.
+- **[Coolify Setup: Vue Stack](./docs/devops/coolify-setup-vue.md)**: Vite + Vue deployment instructions.
+- **[Coolify Setup: Python Stack](./docs/devops/coolify-setup-python.md)**: FastAPI + Uvicorn deployment instructions.
+- **[Stack Performance Benchmarking](./docs/devops/stack-performance-benchmarking.md)**: Plan for comparing the four technology stacks.
+- **[Deployment Guide](./docs/devops/deployment.md)**: General steps to deploy using Docker and Coolify.
+- **[Rebuild & Deployment Tutorial](./docs/devops/rebuild-guide.md)**: Full guide to recreate this project and deploy to production.
+- **[Architecture](./docs/backend/php-cms-architecture.md)**: Understanding the hybrid file-sync system.
 
 ---
 
