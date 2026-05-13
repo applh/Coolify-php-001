@@ -5,6 +5,7 @@ type SiteData = {
   id: string;
   name: string;
   domain: string;
+  description: string;
   theme: {
     primary: string;
     accent: string;
