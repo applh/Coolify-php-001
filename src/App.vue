@@ -29,6 +29,12 @@
           AI Media Queue
         </router-link>
         <router-link
+          to="/benchmark"
+          class="hover:text-[#F27D26] transition-colors"
+        >
+          Benchmarks
+        </router-link>
+        <router-link
           to="/sync"
           class="hover:text-[#F27D26] transition-colors"
         >

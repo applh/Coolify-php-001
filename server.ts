@@ -397,6 +397,36 @@ Layout::footer();
   });
 
   // Media Tasks API
+  app.get('/api/benchmark', async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    try {
+      const start = performance.now();
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'User-Agent': 'CMS-Benchmarker/1.0' },
+        signal: AbortSignal.timeout(5000) // 5s timeout
+      });
+      const end = performance.now();
+      
+      res.json({
+        status: 'success',
+        statusCode: response.status,
+        responseTime: Math.round(end - start),
+        url: url
+      });
+    } catch (err) {
+      const error = err as Error;
+      res.json({
+        status: 'error',
+        error: error.message,
+        statusCode: 0,
+        responseTime: 0
+      });
+    }
+  });
+
   app.get('/api/media-files', (req, res) => {
     try {
       const targetPath = String(req.query.path || '');

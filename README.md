@@ -16,6 +16,7 @@ We have provided comprehensive guides in the `docs/` directory:
 - **[Setup & Troubleshooting](./docs/user-guides/setup-and-troubleshooting.md)**: Project-specific setup and common fixes.
 - **[Stack Comparison](./docs/stack-comparison.md)**: Evaluation of the 4 different technology stacks.
 - **[Development Plan](./docs/plan.md)**: High-level roadmap and feature progress.
+- **[Benchmarking Guide](./docs/benchmarking-guide.md)**: Instructions for the site performance monitoring tool.
 - **[CMS Management Guide](./docs/backend/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
 - **[Admin Handbook](./docs/user-guides/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
 - **[Coolify Setup: PHP Stack](./docs/devops/coolify-setup-php.md)**: Detailed PHP multisite deployment.
