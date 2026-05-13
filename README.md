@@ -19,6 +19,7 @@ We have provided comprehensive guides in the `docs/` directory:
 - **[Coolify Setup: React Stack](./docs/coolify-setup-react.md)**: Vite + React deployment instructions.
 - **[Coolify Setup: Vue Stack](./docs/coolify-setup-vue.md)**: Vite + Vue deployment instructions.
 - **[Coolify Setup: Python Stack](./docs/coolify-setup-python.md)**: FastAPI + Uvicorn deployment instructions.
+- **[Stack Performance Benchmarking](./docs/stack-performance-benchmarking.md)**: Plan for comparing the four technology stacks.
 - **[Deployment Guide](./docs/deployment.md)**: General steps to deploy using Docker and Coolify.
 - **[Architecture](./docs/php-cms-architecture.md)**: Understanding the hybrid file-sync system.
 
