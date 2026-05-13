@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: Dockerfile.web
     ports:
-      - "3000:80"
+      - "3004:80"
     depends_on:
       - app
     restart: always
