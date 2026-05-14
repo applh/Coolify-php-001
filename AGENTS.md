@@ -46,3 +46,7 @@ When generating or modifying sites within the `content/` directory, the AI agent
     - **Exercise**: A hands-on task to extend or debug the new feature.
     - **Complexity**: Assign it to Phase 1 through 5 based on difficulty.
 - **Student Prompting**: Always remind the user that a new training lab is available for the feature just developed.
+
+## 8. Training Content Hierarchy (60k Slides)
+- **Serialization**: Never create 1:1 files for slides. Use **JSON Manifests** (max 500 slides per file) to store slide metadata.
+- **Grounding**: Ensure any new architectural training content includes a `codeReferences` array in its JSON entry pointing to the physical file in `repo-*`.

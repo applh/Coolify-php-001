@@ -40,6 +40,12 @@
         >
           Sync
         </router-link>
+        <router-link
+          to="/training"
+          class="hover:text-[#F27D26] transition-colors text-[#F27D26] font-bold"
+        >
+          Training
+        </router-link>
         <a
           href="https://ais-dev-b4sj5apyjy3qy5glsde24e-241950013583.europe-west1.run.app"
           target="_blank"

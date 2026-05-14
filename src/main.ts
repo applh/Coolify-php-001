@@ -7,6 +7,7 @@ import SiteExplorer from './views/SiteExplorer.vue';
 import AiMediaTasks from './views/AiMediaTasks.vue';
 import SiteBenchmarker from './views/SiteBenchmarker.vue';
 import SyncState from './views/SyncState.vue';
+import TrainingCenter from './views/TrainingCenter.vue';
 import './style.css';
 
 const router = createRouter({
@@ -18,6 +19,7 @@ const router = createRouter({
     { path: '/ai-media', component: AiMediaTasks },
     { path: '/benchmark', component: SiteBenchmarker },
     { path: '/sync', component: SyncState },
+    { path: '/training', component: TrainingCenter },
   ],
 });
 

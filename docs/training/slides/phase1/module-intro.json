@@ -1,0 +1,22 @@
+{
+  "moduleId": "PHASE-1-INTRO",
+  "title": "Welcome to Full-Stack Engineering",
+  "totalSlides": 1000,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": 1,
+      "title": "The Nature of Information Density",
+      "content": "In this program, we process 60MB of structural logic. Each minute (1,000 hours total) represents 1KB of engineering pattern transmission.",
+      "tags": ["philosophy", "roadmap"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": 2,
+      "title": "Anatomy of the Universal Polyglot CMS",
+      "content": "The architecture is split across repo-php (Legacy/CMS Core) and modern modular stacks (Go, Rust, Python). Understanding the 'Glue' is your objective.",
+      "tags": ["architecture", "polyglot"],
+      "codeReferences": ["repo-php/class/CMS.php", "repo-go/main.go"]
+    }
+  ]
+}
