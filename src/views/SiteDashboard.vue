@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import { LayoutGrid, Plus, Globe, ArrowRight, Download, Upload } from 'lucide-vue-next';
 
 const sites = ref<string[]>([]);
+const repos = ref<string[]>([]);
+const selectedRepo = ref('repo-php');
 const isAddingSite = ref(false);
 const siteToDelete = ref<string | null>(null);
 const newSiteName = ref('');
@@ -14,19 +16,31 @@ const router = useRouter();
 const uploadInput = ref<HTMLInputElement | null>(null);
 const siteToUpload = ref<string>('');
 
+const fetchRepos = async () => {
+  const res = await fetch('/api/repos');
+  repos.value = await res.json();
+};
+
 const fetchSites = async () => {
-  const res = await fetch('/api/sites');
+  const res = await fetch(`/api/sites?repo=${selectedRepo.value}`);
   sites.value = await res.json();
 };
 
-onMounted(fetchSites);
+onMounted(async () => {
+  await fetchRepos();
+  await fetchSites();
+});
+
+const onRepoChange = () => {
+  fetchSites();
+};
 
 const openEditor = (site: string) => {
-  router.push(`/editor/${site}`);
+  router.push(`/editor/${site}?repo=${selectedRepo.value}`);
 };
 
 const downloadSite = (site: string) => {
-  window.open(`/api/sites/${site}/download`, '_blank');
+  window.open(`/api/sites/${site}/download?repo=${selectedRepo.value}`, '_blank');
 };
 
 const triggerUpload = (site: string) => {
@@ -43,7 +57,7 @@ const onFileSelected = async (event: Event) => {
   formData.append('file', file);
 
   try {
-    const res = await fetch(`/api/sites/${siteToUpload.value}/upload`, {
+    const res = await fetch(`/api/sites/${siteToUpload.value}/upload?repo=${selectedRepo.value}`, {
       method: 'POST',
       body: formData,
     });
@@ -68,7 +82,10 @@ const createSite = async () => {
     const res = await fetch('/api/sites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newSiteName.value }),
+      body: JSON.stringify({ 
+        name: newSiteName.value,
+        repo: selectedRepo.value
+      }),
     });
     
     if (res.ok) {
@@ -76,7 +93,7 @@ const createSite = async () => {
       sites.value.push(data.name);
       isAddingSite.value = false;
       newSiteName.value = '';
-      router.push(`/editor/${data.name}`);
+      router.push(`/editor/${data.name}?repo=${selectedRepo.value}`);
     } else {
       const e = await res.json();
       alert('Error creating site: ' + e.error);
@@ -93,7 +110,7 @@ const deleteSite = async () => {
   isDeleting.value = true;
   
   try {
-    const res = await fetch(`/api/sites/${siteToDelete.value}`, {
+    const res = await fetch(`/api/sites/${siteToDelete.value}?repo=${selectedRepo.value}`, {
       method: 'DELETE',
     });
     
@@ -117,11 +134,20 @@ const deleteSite = async () => {
     <div class="flex justify-between items-end mb-12">
       <div>
         <h2 class="text-3xl font-serif italic mb-2">
-          Sites
+          Workspace
         </h2>
-        <p class="text-sm opacity-50 font-mono">
-          Manage your multi-domain PHP application
-        </p>
+        <div class="flex items-center gap-4">
+          <select 
+            v-model="selectedRepo" 
+            @change="onRepoChange"
+            class="bg-[#181818] border border-[#2A2A2A] text-[#F27D26] text-xs font-bold uppercase tracking-wider px-3 py-2 rounded focus:outline-none focus:border-[#F27D26]"
+          >
+            <option v-for="repo in repos" :key="repo" :value="repo">{{ repo }}</option>
+          </select>
+          <p class="text-sm opacity-50 font-mono">
+            Manage your multi-stack application
+          </p>
+        </div>
       </div>
       <button 
         class="bg-[#F27D26] text-black px-4 py-2 text-xs font-bold uppercase tracking-wider rounded border border-[#F27D26] hover:bg-transparent hover:text-[#F27D26] transition-all flex items-center gap-2"
@@ -219,7 +245,7 @@ const deleteSite = async () => {
           {{ site }}
         </h3>
         <p class="text-[10px] font-mono opacity-40 uppercase tracking-tighter mb-4">
-          /repo-php/content/{{ site }}
+          /{{ selectedRepo }}/content/{{ site }}
         </p>
         
         <div class="flex items-center gap-2 mt-4 z-10 relative">
@@ -230,6 +256,7 @@ const deleteSite = async () => {
             <Upload :size="14" /> Upload
           </button>
           <a 
+            v-if="selectedRepo === 'repo-php'"
             :href="`/repo-php/public/index.php?__site=${site}`" 
             target="_blank"
             @click.stop

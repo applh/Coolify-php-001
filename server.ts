@@ -44,31 +44,37 @@ async function createServer() {
 
   // Since we run server.ts with tsx, __dirname is always the project root
   const rootDir = __dirname;
-  const repoPhpPath = path.join(rootDir, 'repo-php');
   const upload = multer({ storage: multer.memoryStorage() });
-  let contentPath = path.join(repoPhpPath, 'my-data');
-  
-  // Check if my-data exists, fallback to content
-  try {
-    await fs.access(contentPath);
-    console.log('Using persistent data from my-data');
-  } catch {
-    contentPath = path.join(repoPhpPath, 'content');
-    console.log('Using default templates from content');
-  }
 
-  // Ensure resolved content path exists
-  try {
-    await fs.mkdir(contentPath, { recursive: true });
-    console.log('Content path ensured:', contentPath);
-  } catch (err) {
-    console.error('Failed to ensure directory exists:', contentPath, err);
-  }
+  // Multi-repo support
+  const getRepoPath = (repoName: string) => {
+    return path.join(rootDir, repoName || 'repo-php');
+  };
 
-  // Restore images from individual .zip files for Git tracking (non-blocking)
-  (async () => {
-    console.log('Restoring media from zips...');
+  // Helper to get sites path for a repo
+  const getSitesPath = async (repoName: string) => {
+    const repoPath = getRepoPath(repoName);
+    let contentPath = path.join(repoPath, 'my-data');
     try {
+      await fs.access(contentPath);
+    } catch {
+      contentPath = path.join(repoPath, 'content');
+    }
+    // Fallback for non-PHP repos which might have different structures
+    try {
+      await fs.access(contentPath);
+    } catch {
+      // If it's a repo without 'content', just use the repo root
+      contentPath = repoPath;
+    }
+    return contentPath;
+  };
+
+  // Restore images from individual .zip files for Git tracking (non-blocking) - default to repo-php
+  (async () => {
+    console.log('Restoring media from zips (repo-php)...');
+    try {
+      const repoPhpPath = path.join(rootDir, 'repo-php');
       const sitesDir = path.join(repoPhpPath, 'content');
       const sitesDirExists = await fs.access(sitesDir).then(() => true).catch(() => false);
       
@@ -84,7 +90,6 @@ async function createServer() {
                       try {
                           await fs.access(originalFile);
                       } catch {
-                          // Original missing, restore from zip
                           console.log(`Restoring ${originalFile} from zip...`);
                           try {
                               const zip = new AdmZip(fullPath);
@@ -92,17 +97,9 @@ async function createServer() {
                               if (zipEntries.length > 0) {
                                   const buffer = zipEntries[0].getData();
                                   await fs.writeFile(originalFile, buffer);
-                                  console.log(`  Restored ${originalFile}`);
-                              } else {
-                                  console.warn(`  Zip entry list is empty for ${fullPath}`);
                               }
                           } catch (zipErr) {
-                              console.error(`  Failed to read zip ${fullPath}, unlinking:`, zipErr);
-                              try {
-                                  await fs.unlink(fullPath);
-                              } catch (unlinkErr) {
-                                  console.error(`  Failed to unlink ${fullPath}:`, unlinkErr);
-                              }
+                              console.error(`Failed to restore ${fullPath}:`, zipErr);
                           }
                       }
                   }
@@ -112,13 +109,28 @@ async function createServer() {
           console.log('Media restoration complete.');
       }
     } catch (err) {
-      console.error('Error restoring media from individual zips:', err);
+      console.error('Error restoring media:', err);
     }
   })();
 
   // API Routes
+  app.get('/api/repos', async (req, res) => {
+    try {
+      const items = await fs.readdir(rootDir, { withFileTypes: true });
+      const repos = items
+        .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('repo-'))
+        .map(dirent => dirent.name);
+      res.json(repos);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to read repos' });
+    }
+  });
+
   app.get('/api/sites', async (req, res) => {
     try {
+      const repo = String(req.query.repo || 'repo-php');
+      const contentPath = await getSitesPath(repo);
+      
       const folders = await fs.readdir(contentPath, { withFileTypes: true });
       const sites = folders
         .filter(dirent => dirent.isDirectory())
@@ -131,9 +143,10 @@ async function createServer() {
   });
 
   app.post('/api/sites', async (req, res) => {
-    const { name } = req.body;
+    const { name, repo = 'repo-php' } = req.body;
     if (!name) return res.status(400).json({ error: 'Site name is required' });
     
+    const contentPath = await getSitesPath(repo);
     const sanitizedName = name.replace(/[^a-zA-Z0-9.-]/g, '').toLowerCase();
     if (!sanitizedName) return res.status(400).json({ error: 'Invalid site name' });
 
@@ -204,6 +217,8 @@ Layout::footer();
 
   app.delete('/api/sites/:site', async (req, res) => {
     const site = req.params.site;
+    const repo = String(req.query.repo || 'repo-php');
+    const contentPath = await getSitesPath(repo);
     const sitePath = path.join(contentPath, site);
     
     if (!sitePath.startsWith(contentPath)) {
@@ -221,6 +236,8 @@ Layout::footer();
 
   app.get('/api/sites/:site/download', async (req, res) => {
     const site = req.params.site;
+    const repo = String(req.query.repo || 'repo-php');
+    const contentPath = await getSitesPath(repo);
     const sitePath = path.join(contentPath, site);
     
     if (!sitePath.startsWith(contentPath)) {
@@ -244,6 +261,8 @@ Layout::footer();
 
   app.post('/api/sites/:site/upload', upload.single('file'), async (req, res) => {
     const site = req.params.site;
+    const repo = String(req.query.repo || 'repo-php');
+    const contentPath = await getSitesPath(repo);
     const sitePath = path.join(contentPath, site);
     
     if (!sitePath.startsWith(contentPath)) {
@@ -267,6 +286,8 @@ Layout::footer();
 
   app.get('/api/sites/:site/files', async (req, res) => {
     const site = req.params.site;
+    const repo = String(req.query.repo || 'repo-php');
+    const contentPath = await getSitesPath(repo);
     const sitePath = path.join(contentPath, site);
     try {
       const files = await fs.readdir(sitePath);
@@ -279,6 +300,8 @@ Layout::footer();
 
   app.get('/api/sites/:site/files/:file', async (req, res) => {
     const { site, file } = req.params;
+    const repo = String(req.query.repo || 'repo-php');
+    const contentPath = await getSitesPath(repo);
     const filePath = path.join(contentPath, site, file);
     try {
       const content = await fs.readFile(filePath, 'utf-8');
@@ -291,7 +314,8 @@ Layout::footer();
 
   app.post('/api/sites/:site/files/:file', async (req, res) => {
     const { site, file } = req.params;
-    const { content } = req.body;
+    const { content, repo = 'repo-php' } = req.body;
+    const contentPath = await getSitesPath(repo);
     const filePath = path.join(contentPath, site, file);
     try {
       await fs.writeFile(filePath, content, 'utf-8');
@@ -305,10 +329,12 @@ Layout::footer();
   app.get('/api/explorer', async (req, res) => {
     try {
       const explorePath = req.query.path ? String(req.query.path) : '';
-      const fullPath = path.join(repoPhpPath, explorePath);
+      const repo = String(req.query.repo || 'repo-php');
+      const repoPath = getRepoPath(repo);
+      const fullPath = path.join(repoPath, explorePath);
       
       // Basic security check to prevent directory traversal
-      if (!fullPath.startsWith(repoPhpPath)) {
+      if (!fullPath.startsWith(repoPath)) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -333,7 +359,8 @@ Layout::footer();
 
   app.post('/api/scan-media', async (req, res) => {
     try {
-      const sitesDir = contentPath; // e.g. repo-php/content
+      const repo = String(req.body.repo || 'repo-php');
+      const sitesDir = await getSitesPath(repo); 
       const sites = await fs.readdir(sitesDir, { withFileTypes: true });
       let addedTasks = 0;
       
@@ -427,11 +454,13 @@ Layout::footer();
     }
   });
 
-  app.get('/api/media-files', (req, res) => {
+  app.get('/api/media-files', async (req, res) => {
     try {
       const targetPath = String(req.query.path || '');
-      const fullPath = path.join(repoPhpPath, targetPath);
-      if (!fullPath.startsWith(repoPhpPath)) {
+      const repo = String(req.query.repo || 'repo-php');
+      const repoPath = getRepoPath(repo);
+      const fullPath = path.join(repoPath, targetPath);
+      if (!fullPath.startsWith(repoPath)) {
         return res.status(403).json({ error: 'Access denied' });
       }
       res.sendFile(fullPath);
@@ -480,7 +509,7 @@ Layout::footer();
   // Base64 Save endpoint
   app.post('/api/media/save-base64', async (req, res) => {
     try {
-      const { imageBase64, targetPath } = req.body;
+      const { imageBase64, targetPath, repo = 'repo-php' } = req.body;
       
       if (!imageBase64 || !targetPath) {
          return res.status(400).json({ error: 'Missing image data or target path.' });
@@ -489,10 +518,11 @@ Layout::footer();
       // Convert base64 back to binary data
       const buffer = Buffer.from(imageBase64, 'base64');
 
-      const fullPath = path.join(repoPhpPath, targetPath);
+      const repoPath = getRepoPath(repo);
+      const fullPath = path.join(repoPath, targetPath);
       
       // Security check to avoid path traversal
-      if (!fullPath.startsWith(repoPhpPath)) {
+      if (!fullPath.startsWith(repoPath)) {
           return res.status(403).json({ error: 'Invalid save path' });
       }
 
@@ -519,18 +549,20 @@ Layout::footer();
   // Sync API
   app.get('/api/sync/export', async (req, res) => {
     try {
+      const repo = String(req.query.repo || 'repo-php');
+      const repoPath = getRepoPath(repo);
       const zip = new AdmZip();
       
       // Add cms.db
-      const dbPath = path.join(process.cwd(), 'data', 'cms.db');
-      zip.addLocalFile(dbPath, undefined, 'cms.db');
+      const currentDbPath = path.join(process.cwd(), 'data', 'cms.db');
+      zip.addLocalFile(currentDbPath, undefined, 'cms.db');
 
-      // Add repo-php folder
-      zip.addLocalFolder(repoPhpPath, 'repo-php');
+      // Add repo folder
+      zip.addLocalFolder(repoPath, repo);
 
       const buffer = zip.toBuffer();
       res.set('Content-Type', 'application/zip');
-      res.set('Content-Disposition', 'attachment; filename=cms-sync-export.zip');
+      res.set('Content-Disposition', `attachment; filename=cms-sync-${repo}.zip`);
       res.send(buffer);
     } catch (error) {
       console.error('Export Error:', error);
@@ -544,15 +576,18 @@ Layout::footer();
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      const repo = String(req.query.repo || 'repo-php');
+      const repoPath = getRepoPath(repo);
+
       const zip = new AdmZip(req.file.buffer);
       const zipEntries = zip.getEntries();
       
-      // Check if it's a valid export (contains repo-php and cms.db)
-      const hasRepo = zipEntries.some(e => e.entryName.startsWith('repo-php/'));
+      // Check if it's a valid export (contains repo folder and cms.db)
+      const hasRepo = zipEntries.some(e => e.entryName.startsWith(repo + '/'));
       const hasDb = zipEntries.some(e => e.entryName === 'cms.db');
 
       if (!hasRepo || !hasDb) {
-         return res.status(400).json({ error: 'Invalid export: missing repo-php or cms.db' });
+         return res.status(400).json({ error: `Invalid export: missing ${repo} or cms.db` });
       }
 
       // Temporary extraction path
@@ -564,25 +599,18 @@ Layout::footer();
       const newDbPath = path.join(tmpDir, 'cms.db');
       const currentDbPath = path.join(process.cwd(), 'data', 'cms.db');
       
-      // We need to be careful with cms.db. 
-      // Close DB connection if possible? better-sqlite3 doesn't have a simple async close in this setup usually
-      // but we can try to overwrite it. SQLite usually handles it if no active transaction.
-      
       await fs.copyFile(newDbPath, currentDbPath);
 
-      // Copy repo-php
-      const newRepoPath = path.join(tmpDir, 'repo-php');
-      // Remove old repo-php first to be clean
-      await fs.rm(repoPhpPath, { recursive: true, force: true });
-      await fs.cp(newRepoPath, repoPhpPath, { recursive: true });
+      // Copy repo
+      const newRepoPath = path.join(tmpDir, repo);
+      // Remove old repo first to be clean
+      await fs.rm(repoPath, { recursive: true, force: true });
+      await fs.cp(newRepoPath, repoPath, { recursive: true });
 
       // Cleanup tmp
       await fs.rm(tmpDir, { recursive: true, force: true });
 
-      res.json({ success: true, message: 'Import successful. The server might need a restart if DB changes are not visible.' });
-      
-      // Force exit to trigger platform restart if needed? 
-      // Actually let's just tell the user.
+      res.json({ success: true, message: 'Import successful.' });
     } catch (error) {
       console.error('Import Error:', error);
       res.status(500).json({ error: 'Failed to import state' });
@@ -636,10 +664,10 @@ Layout::footer();
     }
   }
 
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
   try {
-    app.listen(PORT, () => {
-      console.log(`CMS Server successfully started and listening at http://localhost:${PORT}`);
+    app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`CMS Server successfully started and listening at http://0.0.0.0:${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

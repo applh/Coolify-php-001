@@ -2,8 +2,18 @@
   <div class="max-w-6xl mx-auto flex flex-col h-full gap-4">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-3xl font-serif tracking-tight">
-        Repo PHP Explorer
+        Repository Explorer
       </h2>
+      <div class="flex items-center gap-3">
+        <span class="text-xs uppercase tracking-widest opacity-40 font-mono">Repo:</span>
+        <select 
+          v-model="selectedRepo" 
+          @change="onRepoChange"
+          class="bg-[#181818] border border-[#2A2A2A] text-[#F27D26] text-xs font-bold uppercase tracking-wider px-3 py-2 rounded focus:outline-none focus:border-[#F27D26]"
+        >
+          <option v-for="repo in repos" :key="repo" :value="repo">{{ repo }}</option>
+        </select>
+      </div>
     </div>
 
     <!-- Breadcrumbs -->
@@ -11,7 +21,7 @@
       <span
         class="cursor-pointer hover:text-white"
         @click="explore('')"
-      >repo-php</span>
+      >{{ selectedRepo }}</span>
       <template
         v-for="(part, index) in pathParts"
         :key="index"
@@ -107,6 +117,8 @@ import { ref, computed, onMounted } from 'vue';
 import { Folder, FolderUp, FileText } from 'lucide-vue-next';
 
 const currentPath = ref('');
+const selectedRepo = ref('repo-php');
+const repos = ref([]);
 const viewMode = ref('directory'); // 'directory' or 'file'
 const items = ref([]);
 const fileContent = ref('');
@@ -126,9 +138,14 @@ const getParentPath = () => {
   return parts.slice(0, -1).join('/');
 };
 
+const fetchRepos = async () => {
+  const res = await fetch('/api/repos');
+  repos.value = await res.json();
+};
+
 const explore = async (pathStr) => {
   try {
-    const res = await fetch(`/api/explorer?path=${encodeURIComponent(pathStr)}`);
+    const res = await fetch(`/api/explorer?repo=${selectedRepo.value}&path=${encodeURIComponent(pathStr)}`);
     if (!res.ok) throw new Error('Failed to fetch');
     const data = await res.json();
     
@@ -148,7 +165,6 @@ const explore = async (pathStr) => {
     }
   } catch (err) {
     console.error(err);
-    alert('Error accessing path.\nCheck console for details.');
   }
 };
 
@@ -156,7 +172,12 @@ const handleItemClick = (item) => {
   explore(item.path);
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchRepos();
   explore('');
 });
+
+const onRepoChange = () => {
+  explore('');
+};
 </script>
