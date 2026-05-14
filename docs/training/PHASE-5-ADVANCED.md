@@ -25,7 +25,12 @@ Synthesize everything you've learned. Build modular systems and leverage AI to s
 - **Task**: Read the `ai-refactoring-algorithm.md`.
 - **Exercise**: Use the AI to refactor `repo-php/class/Router.php` to support middle-wares.
 
-### 4. Agile Roles & AI Transformation
+### 4. Deployment & Coolify Mastery
+**Reference**: `docs/training/slides/phase5/deployment-coolify.json`
+- **Task**: Learn how to automate deployments using Coolify Webhooks and Node.js ZIP updates.
+- **Exercise**: Simulate a "Self-Update" by using `adm-zip` logic (referencing `server.ts`) to programmatically update a site's `index.php` from a buffer.
+
+### 5. Agile Roles & AI Transformation
 **Reference**: `docs/training/slides/phase5/agile-ai-roles.json`
 - **Task**: Understand how AI shifts core project roles (PO, SM, Developer).
 - **Exercise**: Complete the labs in [Practical Business, Management & DevOps](./PRACTICAL-BUSINESS-DEVOPS.md#3-agile-roles-in-the-ai-era).
