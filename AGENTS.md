@@ -37,3 +37,12 @@ When generating or modifying sites within the `content/` directory, the AI agent
 ## 6. Documentation Management
 - **Prioritize `docs/`:** Always update and maintain documentation within the `docs/` directory.
 - **Root Folder Cleanliness:** Avoid writing new documentation files in the root folder. The only exception is the `README.md` file. All other technical guides, architecture notes, or manuals must be placed in or migrated to the `docs/` folder.
+
+## 7. Educational Integrity (Training Updates)
+- **Automatic Lab Generation:** Whenever a new feature, plugin, or architectural change is implemented, the AI agent MUST append a new "Practical Lab" to the relevant file in `/docs/training/`.
+- **Lab Content Requirements:** Each new lab must include:
+    - **Goal**: What the student will learn.
+    - **Reference**: The specific files/folders modified.
+    - **Exercise**: A hands-on task to extend or debug the new feature.
+    - **Complexity**: Assign it to Phase 1 through 5 based on difficulty.
+- **Student Prompting**: Always remind the user that a new training lab is available for the feature just developed.
