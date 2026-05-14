@@ -2,18 +2,12 @@
 FROM node:22-slim AS builder
 WORKDIR /app
 
-# Set build-time environment variables
-ENV NODE_ENV=production
-
 # Install dependencies first for better caching
 COPY package*.json ./
 RUN npm install
 
-# Copy configuration files
-COPY vite.config.ts tsconfig.json tsconfig.node.json index.html ./
-
-# Copy source code
-COPY src ./src
+# Copy configuration files and source code
+COPY . .
 
 # Build the frontend assets
 RUN npm run build
