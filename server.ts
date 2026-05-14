@@ -121,7 +121,7 @@ async function createServer() {
         .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('repo-'))
         .map(dirent => dirent.name);
       res.json(repos);
-    } catch (_error) {
+    } catch (error) {
       res.status(500).json({ error: 'Failed to read repos' });
     }
   });
@@ -572,6 +572,13 @@ Layout::footer();
 
   app.post('/api/sync/import', upload.single('file'), async (req, res) => {
     try {
+      const providedSecret = req.headers['x-sync-secret'] || req.query.secret;
+      const expectedSecret = process.env.SYNC_SECRET_KEY;
+      
+      if (expectedSecret && providedSecret !== expectedSecret) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid sync secret' });
+      }
+
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
@@ -614,6 +621,46 @@ Layout::footer();
     } catch (error) {
       console.error('Import Error:', error);
       res.status(500).json({ error: 'Failed to import state' });
+    }
+  });
+
+  app.post('/api/sync/push', async (req, res) => {
+    try {
+      const { remoteUrl, secretKey, repo = 'repo-php' } = req.body;
+      if (!remoteUrl || !secretKey) {
+        return res.status(400).json({ error: 'Remote URL and Secret Key are required' });
+      }
+
+      const repoPath = getRepoPath(repo);
+      const zip = new AdmZip();
+      
+      const currentDbPath = path.join(process.cwd(), 'data', 'cms.db');
+      zip.addLocalFile(currentDbPath, undefined, 'cms.db');
+      zip.addLocalFolder(repoPath, repo);
+      const buffer = zip.toBuffer();
+
+      const formData = new FormData();
+      const blob = new Blob([buffer], { type: 'application/zip' });
+      formData.append('file', blob, `cms-sync-${repo}.zip`);
+
+      const response = await fetch(`${remoteUrl}${remoteUrl.includes('?') ? '&' : '?'}repo=${repo}`, {
+        method: 'POST',
+        headers: {
+          'x-sync-secret': secretKey
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return res.status(response.status).json({ error: `Remote error: ${errorText}` });
+      }
+
+      const result = await response.json();
+      res.json(result);
+    } catch (error) {
+      console.error('Push Error:', error);
+      res.status(500).json({ error: 'Failed to push sync: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
