@@ -118,10 +118,18 @@ async function createServer() {
     try {
       const items = await fs.readdir(rootDir, { withFileTypes: true });
       const repos = items
-        .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('repo-'))
-        .map(dirent => dirent.name);
+        .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.') && dirent.name !== 'node_modules' && dirent.name !== 'dist')
+        .map(dirent => dirent.name)
+        .sort((a, b) => {
+          // Sort repo-* first
+          const aIsRepo = a.startsWith('repo-');
+          const bIsRepo = b.startsWith('repo-');
+          if (aIsRepo && !bIsRepo) return -1;
+          if (!aIsRepo && bIsRepo) return 1;
+          return a.localeCompare(b);
+        });
       res.json(repos);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to read repos' });
     }
   });
