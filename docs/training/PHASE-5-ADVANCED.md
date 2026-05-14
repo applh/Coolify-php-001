@@ -35,6 +35,13 @@ Synthesize everything you've learned. Build modular systems and leverage AI to s
 - **Task**: Understand how AI shifts core project roles (PO, SM, Developer).
 - **Exercise**: Complete the labs in [Practical Business, Management & DevOps](./PRACTICAL-BUSINESS-DEVOPS.md#3-agile-roles-in-the-ai-era).
 
+### 6. Git Sync & Version Control Automation (40h)
+**Reference**: `docs/devops/git-sync-feature.md`
+- **Goal**: Master automated version control workflows.
+- **Reference**: `/docs/devops/git-sync-feature.md`
+- **Exercise**: Set up a local Git server using Gitea or similar, then configure the Node.js backend to push updates automatically on every "Save" event in the Site Editor.
+- **Complexity**: Phase 5
+
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/backend/php-plugin-system-guide.md`

@@ -100,3 +100,4 @@ To mimic the "AI Studio" experience within the CMS Dashboard, we will implement 
 | **Phase 7** | Multi-Page Routing & JSON Content Schema | High |
 | **Phase 8** | Component-based visual block editor | Medium |
 | **Phase 9** | Bulk publishing & SEO optimization tools | Low |
+| **Phase 10** | **Git Sync Feature (Remote Persistence)** | High |
