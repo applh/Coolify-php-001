@@ -25,6 +25,7 @@ Welcome to the practical training program. This curriculum is designed to take y
 While progressing through the phases, complete these specialized modules to deepen your expertise:
 
 - **Architecture**: [Software Architecture: OOP & Design Patterns](./SOFTWARE-ARCHITECTURE.md)
+- **AI Engine**: [AI Engineering: Building with LLMs](./AI-ENGINEERING.md)
 - **Quality**: [Testing, Performance & Optimization](./TESTING-AND-OPTIMIZATION.md)
 - **Design**: [Practical UI/UX Design for Engineers](./UI-UX-PRACTICE.md)
 
