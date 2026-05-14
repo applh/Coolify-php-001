@@ -21,38 +21,6 @@ services:
       retries: 3
     restart: always
 
-  # 2. LEGACY/CORE: PHP CMS Engine
-  php-engine:
-    build:
-      context: ./repo-php
-      dockerfile: Dockerfile
-    volumes:
-      - php_content:/var/www/html/content
-    networks:
-      - cms-mesh
-    restart: always
-
-  php-web:
-    build:
-      context: ./repo-php
-      dockerfile: Dockerfile.web
-    ports:
-      - "8081:80"
-    depends_on:
-      - php-engine
-    networks:
-      - cms-mesh
-    restart: always
-
-  # 3. MODERN: Python FastAPI Analytics/Media Stack
-  python-api:
-    build: ./repo-python
-    ports:
-      - "8082:3000"
-    networks:
-      - cms-mesh
-    restart: always
-
 networks:
   cms-mesh:
     driver: bridge
