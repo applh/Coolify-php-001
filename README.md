@@ -1,6 +1,6 @@
-# Multi-Stack CMS Manager (Full-Stack)
+# Universal Polyglot CMS Manager PRO
 
-A powerful, multi-tenant management system powered by a modern Node.js & Vue 3 dashboard. Manage dozens of independent stacks (PHP, React, Vue, Python) from a single interface with AI-driven media generation.
+A high-performance, multi-tenant management system powered by a modern Node.js & Vue 3 dashboard. Manage dozens of independent stacks (**PHP, Python, React, Vue, Go, Rust, Flutter, Android**) from a single interface with AI-driven media generation and benchmarked deployment patterns.
 
 ## 🚀 Quick Start (Management Dashboard)
 
@@ -12,32 +12,26 @@ A powerful, multi-tenant management system powered by a modern Node.js & Vue 3 d
 
 We have provided comprehensive guides in the `docs/` directory:
 
+- **[Multi-Stack Expansion Plan](./docs/plan-expansion.md)**: Details on the Go, Rust, Flutter, and Android setups.
 - **[Installation & Dev Setup](./docs/devops/setup-guide.md)**: Deep dive into the Node/Express/SQLite stack.
-- **[Setup & Troubleshooting](./docs/user-guides/setup-and-troubleshooting.md)**: Project-specific setup and common fixes.
-- **[Stack Comparison](./docs/stack-comparison.md)**: Evaluation of the 4 different technology stacks.
+- **[Stack Comparison](./docs/stack-comparison.md)**: Evaluation of the original technology stacks.
 - **[Development Plan](./docs/plan.md)**: High-level roadmap and feature progress.
 - **[Benchmarking Guide](./docs/benchmarking-guide.md)**: Instructions for the site performance monitoring tool.
+- **[AI Studio Recommendations](./docs/ai-agents/workflow-recommendations.md)**: Workflow and model selection guide for AI-driven development.
 - **[CMS Management Guide](./docs/backend/cms-guide.md)**: How to create sites, use the PHP `Layout` engine, and manage AI media.
 - **[Admin Handbook](./docs/user-guides/user-admin-handbook.md)**: A user-friendly guide to managing sites and forms.
 - **[Coolify Setup: PHP Stack](./docs/devops/coolify-setup-php.md)**: Detailed PHP multisite deployment.
-- **[Coolify Setup: React Stack](./docs/devops/coolify-setup-react.md)**: Vite + React deployment instructions.
-- **[Coolify Setup: Vue Stack](./docs/devops/coolify-setup-vue.md)**: Vite + Vue deployment instructions.
-- **[Coolify Setup: Python Stack](./docs/devops/coolify-setup-python.md)**: FastAPI + Uvicorn deployment instructions.
-- **[Stack Performance Benchmarking](./docs/devops/stack-performance-benchmarking.md)**: Plan for comparing the four technology stacks.
 - **[Deployment Guide](./docs/devops/deployment.md)**: General steps to deploy using Docker and Coolify.
-- **[Rebuild & Deployment Tutorial](./docs/devops/rebuild-guide.md)**: Full guide to recreate this project and deploy to production.
-- **[Architecture](./docs/backend/php-cms-architecture.md)**: Understanding the hybrid file-sync system.
 
 ---
 
 ## 🛠 Features
 
-- **Multi-Stack Dashboard**: Manage PHP, React, Vue, and Python stacks instantly.
+- **8+ Tech Stacks Supported**: Instant tracking for PHP, Python, React, Vue, Go, Rust, Flutter, and Android.
 - **AI Media Copilot**: Automated generation of missing assets using **Google Gemini**.
-- **Containerized Architecture**: Every stack is pre-configured with Docker and Docker Compose.
-- **Modern PHP Framework**: Integrated `Layout`, `CMS`, and `PluginManager` classes for elite site architecture.
-- **Real-time Editor**: Edit templates directly from the browser.
-- **Docker Ready**: Pre-configured for seamless deployment to production environments.
+- **Coolify Ready**: Every stack is pre-configured with Docker Compose optimized for self-hosting with Coolify.
+- **Performance Focused**: Includes Go and Rust for high-performance microservices.
+- **Hybrid Mobile Support**: Scaffolding for Flutter Web and Android build pipelines.
 
 ---
 
@@ -49,11 +43,13 @@ We have provided comprehensive guides in the `docs/` directory:
 ├── repo-react/             # Vite + React + TypeScript Stack
 ├── repo-vue/               # Vite + Vue + TypeScript Stack
 ├── repo-python/            # FastAPI + Uvicorn Python Stack
+├── repo-go/                # Go Microservice
+├── repo-rust/              # Rust Actix Web Service
+├── repo-flutter/           # Flutter Web Application
+├── repo-android/           # Android Build Environment
 ├── src/                    # Vue 3 Frontend (CMS Dashboard)
 ├── server.ts               # Express Backend (API & Site Management)
-├── cms.db                  # SQLite database for task tracking
-├── Dockerfile              # Production container config
-└── docs/                   # Exhaustive documentation
+├── docs/                   # Exhaustive documentation
 ```
 
 
