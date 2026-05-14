@@ -1,0 +1,218 @@
+{
+  "moduleId": "GLOSSARY-TECH-TERMS-2",
+  "title": "The Infinite Glossary: Protocols, Data & Workflow",
+  "totalSlides": 30,
+  "bundleId": 2,
+  "slides": [
+    {
+      "id": 31,
+      "title": "HTTP (Hypertext Transfer Protocol)",
+      "content": "The foundation of data communication for the World Wide Web. HTTP is a request-response protocol in the client-server computing model. When you click a link in our CMS, your browser sends an HTTP GET request to our Nginx server. The server processes the request (via PHP or Node) and sends back an HTTP response containing the status code (like 200 OK or 404 Not Found) and the content (HTML, JSON, or Images).",
+      "tags": ["network", "protocol"],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": 32,
+      "title": "API (Application Programming Interface)",
+      "content": "A set of definitions and protocols for building and integrating application software. In this project, the PHP backend exposes an API that the Vue frontend consumes. This allows the two different tech stacks to 'talk' to each other. By using a RESTful API design, we ensure that our data can be accessed by the web dashboard, an Android app, or even an external AI agent with proper authorization.",
+      "tags": ["backend", "api"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": 33,
+      "title": "JSON (JavaScript Object Notation)",
+      "content": "A lightweight data-interchange format that is easy for humans to read and write and easy for machines to parse and generate. JSON is the 'lingua franca' of our application. All API responses, our site configurations in `sites.json`, and our training slides themselves are stored in JSON. Its key-value pair structure makes it perfect for representing complex objects across different languages like PHP, TypeScript, and Python.",
+      "tags": ["data", "standard"],
+      "codeReferences": ["repo-react/src/sites.json", "docs/training/slides/phase1/module-intro.json"]
+    },
+    {
+      "id": 34,
+      "title": "SQLite",
+      "content": "A C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine. Unlike MySQL or PostgreSQL, SQLite is serverless—it reads and writes directly to ordinary disk files. We use it for architectural simplicity in certain environments or for local development databases, as it requires zero configuration while still providing full relational database capabilities via the PDO driver.",
+      "tags": ["database", "storage"],
+      "codeReferences": ["database.ts", "repo-php/class/DB.php"]
+    },
+    {
+      "id": 35,
+      "title": "CRUD (Create, Read, Update, Delete)",
+      "content": "The four basic functions of persistent storage. Our CMS is essentially a sophisticated CRUD engine for websites. You 'Create' a new site, 'Read' its content in the dashboard, 'Update' its theme, and 'Delete' it when no longer needed. Almost every controller in `repo-php/class/` and every view in `src/views/` is dedicated to handling one or more of these operations for different entities like Sites, Tasks, or Forms.",
+      "tags": ["architecture", "backend"],
+      "codeReferences": ["repo-php/class/Model.php", "src/views/SiteEditor.vue"]
+    },
+    {
+      "id": 36,
+      "title": "Middleware",
+      "content": "Software that sits between an operating system and the applications running on it, or in web dev, code that executes between a request and a response. Our PHP router supports middleware for tasks like checking if a user is logged in before allowing access to the `/admin` route. If authentication fails, the middleware 'intercepts' the request and redirects to the login page, preventing the controller logic from ever running for unauthorized users.",
+      "tags": ["architecture", "security"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": 37,
+      "title": "Authentication (Auth)",
+      "content": "The process of verifying the identity of a user or service. In our platform, we support multiple auth strategies, including session-based auth for the PHP CMS and potentially Token-based auth for the API. It's the gatekeeper that ensures only `applh2@gmail.com` can manage the sites they own. In the AI Studio environment, some of this is handled by the platform's own identity layer.",
+      "tags": ["security", "auth"],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": 38,
+      "title": "Authorization (RBAC)",
+      "content": "The process of giving someone permission to do or have something. While Authentication asks 'Who are you?', Authorization asks 'What are you allowed to do?'. We use Role-Based Access Control (RBAC) to distinguish between 'Admins' who can manage the entire server and 'Site Owners' who can only edit their specific content in the `repo-php/content/` directory.",
+      "tags": ["security", "auth"],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": 39,
+      "title": "JWT (JSON Web Token)",
+      "content": "An open standard that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. In the modern part of our stack (Vue to API), we might use JWTs to maintain state, allowing the client to 'prove' their identity on every request without the server needing to store a session in memory.",
+      "tags": ["security", "protocol"],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": 40,
+      "title": "CORS (Cross-Origin Resource Sharing)",
+      "content": "A system, consisting of transmitting HTTP headers, that determines whether browsers block frontend JavaScript code from accessing responses for cross-origin requests. Since our Vue app (origin A) might call the PHP API (origin B), we must configure CORS headers in Nginx or PHP to allow these requests. Without it, the browser's 'Same-Origin Policy' would block our dashboard from fetching site data for security reasons.",
+      "tags": ["security", "web-standards"],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": 41,
+      "title": "Payload",
+      "content": "The actual data transmitted in an HTTP request or response, excluding the headers and metadata. When you save a new site configuration, the 'Payload' is the JSON object containing the site name, description, and theme settings. In the `handleFirestoreError` logic, we also refer to the 'ErrorInfo' as the payload that helps the system diagnose issues with security rules or database connectivity.",
+      "tags": ["data", "networking"],
+      "codeReferences": ["src/views/SiteEditor.vue"]
+    },
+    {
+      "id": 42,
+      "title": "Endpoints",
+      "content": "Specific URLs or channels that an API uses to communicate with other software. Each endpoint represents a specific resource or action. For example, `GET /api/sites` might be the endpoint to list all sites, while `POST /api/generate-image` would be the endpoint to invoke our AI media generator. Well-named endpoints are the hallmark of a 'RESTful' API and make the backend intuitive for frontend developers.",
+      "tags": ["backend", "api"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": 43,
+      "title": "Query Parameters",
+      "content": "The part of a URL that assigns values to specified parameters. They always appear after a question mark (`?`). For instance, in `/admin?site=site1.com`, the query parameter is `site` with a value of `site1.com`. We use these for filtering, searching, or passing context to our views without needing to change the base URL structure, which is vital for state consistency in the dashboard.",
+      "tags": ["web-fundamentals", "routing"],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": 44,
+      "title": "Environment Variables (.env)",
+      "content": "Variables whose values are set outside the program, typically in the operating system or a `.env` file. They are used to store sensitive configuration like API keys (`GEMINI_API_KEY`) or database credentials without hardcoding them into the source code. This is a critical security practice (12-Factor App methodology) that ensures your secrets don't end up in public Git repositories.",
+      "tags": ["devops", "security"],
+      "codeReferences": [".env.example", "repo-php/.env.example"]
+    },
+    {
+      "id": 45,
+      "title": "Git (Commit, Push, Pull)",
+      "content": "A distributed version control system for tracking changes in source code during software development. 'Commit' saves your changes locally with a message. 'Push' sends them to a remote server (like GitHub). 'Pull' fetches changes from others. In our documentation (`docs/devops/git-sync-feature.md`), we discuss how Git allows multiple engineers to work on this massive polyglot repo without overwriting each other's work.",
+      "tags": ["devops", "vcs"],
+      "codeReferences": ["docs/devops/git-sync-feature.md"]
+    },
+    {
+      "id": 46,
+      "title": "Repository (Repo)",
+      "content": "A central location where data is stored and managed. In software, a repo contains all the files, folders, and history of a project. Our project is a 'Monorepo' or 'Polyglot Repo', meaning it contains multiple distinct sub-projects (`repo-php`, `repo-python`, `repo-react`) in a single Git repository. This allows for easier coordination between the different microservices that make up the whole FRAISE platform.",
+      "tags": ["devops", "vcs"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": 47,
+      "title": "Branching",
+      "content": "The ability in Git to diverge from the main line of development and continue to do work without messing with that main line. You might create a `feature/ai-dashboard` branch to work on the AI views. This allows for 'Isolated Development', where new features can be built, tested, and reviewed in a 'Pull Request' before being merged into the 'production' branch that the user sees.",
+      "tags": ["devops", "workflow"],
+      "codeReferences": ["docs/devops/git-sync-feature.md"]
+    },
+    {
+      "id": 48,
+      "title": "Merge Request / Pull Request",
+      "content": "A method of submitting contributions to an open-source project or specialized organization. When you finish a feature on a branch, you create a PR/MR to ask the lead architect to review your code. This is where 'Code Review' happens—ensuring the new code meets our performance standards, follows the naming conventions in `AGENTS.md`, and doesn't introduce any new security vulnerabilities.",
+      "tags": ["devops", "collaboration"],
+      "codeReferences": ["AGENTS.md"]
+    },
+    {
+      "id": 49,
+      "title": "Markdown (.md)",
+      "content": "A lightweight markup language with plain-text-formatting syntax. It is often used for formatting readme files, for writing messages in online discussion forums, and to create rich text using a plain text editor. All our documentation in the `docs/` folder is written in Markdown. It’s perfect for technical docs because it can be read easily as plain text but renders as beautiful, structured HTML on GitHub or in our 'Training Center' UI.",
+      "tags": ["documentation", "standard"],
+      "codeReferences": ["README.md", "docs/plan.md"]
+    },
+    {
+      "id": 50,
+      "title": "YAML",
+      "content": "A human-friendly data serialization language for all programming languages. It's often used for configuration files. We use it for Docker Compose files and potential CI/CD pipelines. YAML uses indentation to define structure, making it very readable compared to XML or even JSON for deeply nested configurations. Its strict indentation rules help prevent errors that could break your entire deployment infrastructure.",
+      "tags": ["data", "configuration"],
+      "codeReferences": ["docker-compose.yml", "repo-php/docker-compose.yml"]
+    },
+    {
+      "id": 51,
+      "title": "Interface (TypeScript / PHP)",
+      "content": "A contract that defines the 'Shape' of an object. In TypeScript (used in `src/`), an interface ensures a variable has certain properties (like a `Site` having a `name` string). In PHP (used in `repo-php/class/`), an interface ensures a class implements certain methods. This allows for 'Polymorphism', where the CMS can treat any 'Plugin' the same way as long as it adheres to the correct interface.",
+      "tags": ["programming", "type-system"],
+      "codeReferences": ["src/sites.json", "repo-php/class/Component.php"]
+    },
+    {
+      "id": 52,
+      "title": "Type Safety",
+      "content": "The extent to which a programming language prevents or discourages type errors. TypeScript is 'Type Safe' because it catches errors—like trying to add a number to a string—during development before the code even runs. This reduces 'Runtime Crashes' and makes the code self-documenting. Our PHP code also uses 'Type Hinting' (e.g. `public function save(Site $site)`) to achieve similar reliability on the backend.",
+      "tags": ["programming", "best-practices"],
+      "codeReferences": ["src/main.ts", "repo-php/class/Model.php"]
+    },
+    {
+      "id": 53,
+      "title": "Generics",
+      "content": "A feature of some languages that allows for 'Type-Parameterization'. In our TypeScript code, you might see `Promise<Site[]>`. This means the function returns a Promise that *eventually* contains an array of *Sites*. Generics allow us to write reusable logic (like a data-fetching function) that still maintains strict type checking across many different data models.",
+      "tags": ["programming", "advanced"],
+      "codeReferences": ["src/views/SiteExplorer.vue"]
+    },
+    {
+      "id": 54,
+      "title": "Async/Await",
+      "content": "Syntactic sugar in JavaScript and Python for working with Promises/Asynchronous operations. It makes asynchronous code look and behave a bit more like synchronous code. Instead of using complex 'Callback Hell', we can just `await fetch('/api/sites')`. This is what allows our dashboard to remain responsive even while waiting for a slow AI generation or a large database query to complete.",
+      "tags": ["programming", "frontend"],
+      "codeReferences": ["src/views/SiteDashboard.vue"]
+    },
+    {
+      "id": 55,
+      "title": "Promises",
+      "content": "An object representing the eventual completion (or failure) of an asynchronous operation and its resulting value. A Promise can be in one of three states: Pending, Fulfilled, or Rejected. All our network calls in the Vue dashboard return Promises. We use them to handle the 'non-blocking' nature of JavaScript, ensuring the UI doesn't freeze while the server is processing a request.",
+      "tags": ["programming", "javascript"],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": 56,
+      "title": "Callback Functions",
+      "content": "A function passed into another function as an argument, which is then invoked inside the outer function to complete some kind of routine or action. In our PHP `AITaskManager`, we might use callbacks to handle the results of successful AI completions. In JS, callbacks were the precursor to Promises, and we still use them for event listeners like 'onClick' in our Vue components.",
+      "tags": ["programming", "fundamentals"],
+      "codeReferences": ["repo-php/class/AITaskManager.php"]
+    },
+    {
+      "id": 57,
+      "title": "Event Loop",
+      "content": "A programming construct or design pattern that waits for and dispatches events or messages in a program. It’s what allows JavaScript to be 'Concurrent' despite being single-threaded. The event loop monitors the call stack and the callback queue. If the stack is empty, it pushes the next task from the queue onto the stack. This is why our dashboard can handle user clicks while still processing a background API response.",
+      "tags": ["programming", "javascript"],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": 58,
+      "title": "NPM Scripts",
+      "content": "Pre-defined commands stored in the `package.json` file. Commands like `npm run dev` or `npm run build` trigger complex toolchains (like Vite or TypeScript compilers) with a single keystroke. They provide a unified interface for all developer tasks, ensuring that everyone on the team uses the exact same build flags and environment configurations across the entire project lifecycle.",
+      "tags": ["devops", "tooling"],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": 59,
+      "title": "Dev Server",
+      "content": "A local web server used by developers to preview their code in real-time. In this app, the dev server runs on port 3000. It typically features 'Live Reload' (which we have managed carefully in this environment) to show changes instantly. The dev server also provides detailed error messages and debugging tools that are stripped away in the production build for security and performance.",
+      "tags": ["frontend", "workflow"],
+      "codeReferences": ["vite.config.ts"]
+    },
+    {
+      "id": 60,
+      "title": "Build Pipeline",
+      "content": "The series of automated steps that transform source code into a production-ready application. This usually involves: 1. Linting (checking for errors), 2. Testing, 3. Compiling (TS to JS), 4. Minifying (making files smaller), and 5. Deploying. Our `Dockerfile` captures this entire pipeline, ensuring that the version of FRAISE running in production is exactly the same as the one we tested in development.",
+      "tags": ["devops", "workflow"],
+      "codeReferences": ["Dockerfile"]
+    }
+  ]
+}

@@ -9,6 +9,11 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 
 ## Practical Labs
 
+### 0. Technical Language Grounding (10h)
+**Reference**: `docs/training/slides/glossary/`
+- **Task**: Review the **[Full-Stack Technical Glossary](./TECHNICAL-GLOSSARY.md)**.
+- **Goal**: Internalize the 60+ technical terms that define the FRAISE architecture. This 3,000-word glossary is your map for the entire 1,000-hour journey.
+
 ### 1. The Anatomy of a Landing Page (40h)
 **Reference**: `repo-php/content/onepage.demo/index.php`
 - **Task**: Clone this file and create `repo-php/content/my-first-site/index.php`. 

@@ -16,7 +16,7 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 | Phase | Duration | Focus | Key Repositories |
 |-------|----------|-------|------------------|
-| [Phase 1: Web Fundamentals](./PHASE-1-BEGINNER.md) | 175h | HTML5, CSS3, Vanilla JS, PHP Basics | `repo-php/content/site1.com`, `public/css` |
+| [Phase 1: Web Fundamentals](./PHASE-1-BEGINNER.md) | 175h | HTML5, CSS3, Vanilla JS, PHP Basics, **Technical Glossary** | `repo-php/content/site1.com`, `public/css` |
 | [Phase 2: Modern Frontend](./PHASE-2-FRONTEND.md) | 225h | React, Vue 3, Tailwind CSS, State Management | `repo-react`, `repo-vue`, `src/` |
 | [Phase 3: Backend Systems](./PHASE-3-BACKEND.md) | 275h | PHP MVC, Go, Rust, Python APIs, Databases | `repo-php/class`, `repo-go`, `repo-rust`, `repo-python` |
 | [Phase 4: Mobile & Multi-Platform](./PHASE-4-MOBILE.md) | 175h | Android (Kotlin), Flutter (Dart) | `repo-android`, `repo-flutter` |
@@ -24,7 +24,7 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 ## Skill Progression Path
 
-1. **Foundations**: Learn how the web works, HTTP requests, and basic syntax.
+1. **Foundations**: Learn how the web works, HTTP requests, and basic syntax. **[Master the Full-Stack Glossary](./TECHNICAL-GLOSSARY.md)**.
 2. **Component-Driven Design**: Shift from manual DOM manipulation to declarative UI frameworks.
 3. **The "Everything" Backend**: Understand different backend paradigms (Scripting vs. Compiled systems).
 4. **Infrastructure as Code**: Learn to containerize applications for consistent deployment.
