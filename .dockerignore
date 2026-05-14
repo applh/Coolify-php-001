@@ -4,6 +4,7 @@ dist
 **/dist
 .env
 cms.db
+data/
 *.log
 .DS_Store
 .git

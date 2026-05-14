@@ -31,6 +31,9 @@ RUN npm install --omit=dev
 # Copy the built assets
 COPY --from=builder /app/dist ./dist
 
+# Create data directory and ensure it's writable
+RUN mkdir -p /app/data && chmod 777 /app/data
+
 # Copy the server and other runtime source files
 # We run these with tsx directly
 COPY server.ts database.ts metadata.json populate-tasks.ts ./

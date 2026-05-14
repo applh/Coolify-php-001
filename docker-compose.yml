@@ -6,7 +6,7 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     volumes:
-      - cms_data:/app/cms.db
+      - cms_data:/app/data
       - php_content:/app/repo-php/content
     environment:
       - NODE_ENV=production

@@ -522,8 +522,8 @@ Layout::footer();
       const zip = new AdmZip();
       
       // Add cms.db
-      const dbPath = path.join(process.cwd(), 'cms.db');
-      zip.addLocalFile(dbPath);
+      const dbPath = path.join(process.cwd(), 'data', 'cms.db');
+      zip.addLocalFile(dbPath, undefined, 'cms.db');
 
       // Add repo-php folder
       zip.addLocalFolder(repoPhpPath, 'repo-php');
@@ -552,8 +552,7 @@ Layout::footer();
       const hasDb = zipEntries.some(e => e.entryName === 'cms.db');
 
       if (!hasRepo || !hasDb) {
-         // Try to handle case where repo-php might NOT be under a folder if it was zipped differently
-         // But our export puts it in 'repo-php/'
+         return res.status(400).json({ error: 'Invalid export: missing repo-php or cms.db' });
       }
 
       // Temporary extraction path
@@ -563,7 +562,7 @@ Layout::footer();
 
       // Copy cms.db
       const newDbPath = path.join(tmpDir, 'cms.db');
-      const currentDbPath = path.join(process.cwd(), 'cms.db');
+      const currentDbPath = path.join(process.cwd(), 'data', 'cms.db');
       
       // We need to be careful with cms.db. 
       // Close DB connection if possible? better-sqlite3 doesn't have a simple async close in this setup usually
