@@ -1,46 +1,60 @@
-# Use Node.js 22 as specified in package.json
+# Build Stage
 FROM node:22-slim AS builder
-
 WORKDIR /app
 
-# Install build dependencies
+# Set build-time environment variables
+ENV NODE_ENV=production
+
+# Install dependencies first for better caching
 COPY package*.json ./
 RUN npm install
 
-# Copy source and build the frontend assets
-COPY . .
+# Copy configuration files
+COPY vite.config.ts tsconfig.json tsconfig.node.json index.html ./
+
+# Copy source code
+COPY src ./src
+
+# Build the frontend assets
 RUN npm run build
 
-# Production stage
+# Production Stage
 FROM node:22-slim
-
 WORKDIR /app
 
-# Install production dependencies and healthcheck utility
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Install production dependencies only
+# Copy package files (needed for dependencies in Stage 2)
 COPY package*.json ./
+
+# Install only production dependencies
+# tsx depends on its own esbuild, but having typescript in dev might be missed
+# if tsx needs it. However, the user had it in dev.
+# We'll install production deps.
 RUN npm install --omit=dev
 
-# Copy the built assets from the builder stage
+# Copy the built assets
 COPY --from=builder /app/dist ./dist
-# Copy the server and other necessary assets
-COPY --from=builder /app/server.ts ./
-COPY --from=builder /app/database.ts ./
-COPY --from=builder /app/repo-php ./repo-php
-COPY --from=builder /app/metadata.json ./
-COPY --from=builder /app/populate-tasks.ts ./
 
-# Install tsx globally or rely on local if in package.json
-RUN npm install -g tsx
+# Copy the server and other runtime source files
+# We run these with tsx directly
+COPY server.ts database.ts metadata.json populate-tasks.ts ./
+COPY repo-php ./repo-php
 
-# Expose the app port
-EXPOSE 3000
+# Ensure tsx is available (should be in node_modules after npm install)
+# But having a global fallback or local execution is safer
+ENV PATH /app/node_modules/.bin:$PATH
 
-# Set production environment
+# CMS Manager settings
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Start the application
+EXPOSE 3000
+
+# Healthcheck to verify the server is responding
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:3000/api/sites || exit 1
+
+# Start the application using tsx
 CMD ["tsx", "server.ts"]
