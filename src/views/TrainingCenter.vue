@@ -175,7 +175,7 @@ function backToDashboard() {
           <BookOpen class="w-4 h-4" />
           Training Architecture
         </div>
-        <h2 class="text-3xl font-serif italic italic text-white">Knowledge Transmission Center</h2>
+        <h2 class="text-3xl font-serif italic text-white">Human x AI Skills Center</h2>
         <p class="text-sm text-white/50 max-w-2xl">
           Managing 60MB of training logic across 60,000 architectural slides.
           This interface demonstrates how AI Studio optimizes polyglot stack transitions.

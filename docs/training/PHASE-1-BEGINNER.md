@@ -1,4 +1,4 @@
-# Phase 1: Web Fundamentals (175 Hours)
+# Phase 1: Web Fundamentals (200 Hours)
 
 This phase focuses on the "classic" web stack. You will learn to build responsive landing pages and simple dynamic sites using PHP.
 
@@ -34,6 +34,12 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 **Reference**: `repo-php/plugins/forms/`
 - **Task**: Look at how forms are structured in `site1.com/forms/forms.json`.
 - **Exercise**: Add a new field to the contact form and verify it appears in the UI.
+
+### 5. Software Engineering Core Fundamentals (20h)
+**Reference**: `docs/training/slides/phase1/software-engineering-fundamentals.json`
+- **Task**: Review the 100 slides on Software Engineering fundamentals.
+- **Exercise**: Identify 3 design patterns used in the `repo-php/class` directory and explain how they contribute to the system's architecture.
+- **Goal**: Establish a strong foundation in CS, OOP, and security principles before moving to complex frontend frameworks.
 
 ## Recommended Reading
 - [MDN Web Docs: HTML/CSS](https://developer.mozilla.org/)

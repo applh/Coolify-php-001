@@ -1,0 +1,708 @@
+{
+  "moduleId": "PHASE-1-SWE-FUNDAMENTALS",
+  "title": "Software Engineering Fundamentals",
+  "totalSlides": 100,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": 1,
+      "title": "Computer Fundamentals: The CPU",
+      "content": "The Central Processing Unit is the 'brain' of the computer, executing instructions stored in memory. In our stack, the CPU handles everything from PHP processing to Go compilation.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["repo-go/main.go"]
+    },
+    {
+      "id": 2,
+      "title": "Computer Fundamentals: Memory (RAM)",
+      "content": "RAM is volatile storage used for active processes. When you run `server.ts`, Node.js allocates memory for your application state.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["server.ts"]
+    },
+    {
+      "id": 3,
+      "title": "Computer Fundamentals: Binary and Data",
+      "content": "Computers process data as 0s and 1s. Every character in `README.md` is encoded in UTF-8, represented by binary sequences.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": 4,
+      "title": "Computer Fundamentals: Storage (SSD/HDD)",
+      "content": "Persistent storage holds your codebase. Your files in `/repo-php/` live here until loaded into RAM for execution.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["repo-php/content/site1.com/index.php"]
+    },
+    {
+      "id": 5,
+      "title": "Computer Fundamentals: The Operating System",
+      "content": "The OS (like Linux in our Docker container) manages hardware resources. Our `Dockerfile` defines the environment the OS provides.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["Dockerfile"]
+    },
+    {
+      "id": 6,
+      "title": "Computer Fundamentals: Networking (DNS)",
+      "content": "Domain Name System translates human names like site1.com into IP addresses. Our local environment uses `nginx.conf` to mimic this routing.",
+      "tags": ["networking", "fundamentals"],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": 7,
+      "title": "Computer Fundamentals: HTTP Protocol",
+      "content": "The web runs on Request and Response. PHP receives a GET request and sends back HTML in `repo-php/public/index.php`.",
+      "tags": ["networking", "fundamentals"],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": 8,
+      "title": "Computer Fundamentals: Ports and Proxies",
+      "content": "Nginx listens on port 80 and proxies requests to our PHP or Node servers. Check `docker-compose.yml` for port mappings.",
+      "tags": ["networking", "fundamentals"],
+      "codeReferences": ["docker-compose.yml"]
+    },
+    {
+      "id": 9,
+      "title": "Computer Fundamentals: Virtualization",
+      "content": "Docker allows us to run isolated containers. This ensures 'it works on my machine' applies to the production server too.",
+      "tags": ["devops", "fundamentals"],
+      "codeReferences": ["repo-php/Dockerfile"]
+    },
+    {
+      "id": 10,
+      "title": "Computer Fundamentals: The Kernel",
+      "content": "The core of the OS that interfaces directly with hardware. Docker containers share the host's kernel but have their own user space.",
+      "tags": ["hardware", "fundamentals"],
+      "codeReferences": ["Dockerfile"]
+    },
+    {
+      "id": 11,
+      "title": "Program Fundamentals: Algorithms",
+      "content": "An algorithm is a step-by-step procedure for solving a problem. `Router.php` uses an algorithm to match URLs to file paths.",
+      "tags": ["logic", "programming"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": 12,
+      "title": "Program Fundamentals: Variables and Types",
+      "content": "Variables store data. TypeScript adds strict typing to ensure a variable intended for a number isn't assigned a string.",
+      "tags": ["programming", "typescript"],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": 13,
+      "title": "Program Fundamentals: Control Structures",
+      "content": "If/Else and Loops control the flow of a program. See `View.php` to see how it loops through component data.",
+      "tags": ["logic", "programming"],
+      "codeReferences": ["repo-php/class/View.php"]
+    },
+    {
+      "id": 14,
+      "title": "Program Fundamentals: Functions",
+      "content": "Functions are reusable blocks of code. `DB.php` contains functions to query the database efficiently.",
+      "tags": ["programming", "reusability"],
+      "codeReferences": ["repo-php/class/DB.php"]
+    },
+    {
+      "id": 15,
+      "title": "Program Fundamentals: Data Structures (Arrays)",
+      "content": "Arrays store lists of items. Our `sites.json` uses an array structure to list all available websites.",
+      "tags": ["data", "programming"],
+      "codeReferences": ["repo-python/sites.json"]
+    },
+    {
+      "id": 16,
+      "title": "Program Fundamentals: Data Structures (Objects/Maps)",
+      "content": "Objects (or associative arrays in PHP) store key-value pairs. `config.json` is a perfect example of this.",
+      "tags": ["data", "programming"],
+      "codeReferences": ["repo-php/content/site1.com/config.json"]
+    },
+    {
+      "id": 17,
+      "title": "Program Fundamentals: Compilation",
+      "content": "Compiled languages like Go or Rust transform code into machine-executable binaries before running.",
+      "tags": ["programming", "performance"],
+      "codeReferences": ["repo-go/main.go"]
+    },
+    {
+      "id": 18,
+      "title": "Program Fundamentals: Interpretation",
+      "content": "Interpreted languages like PHP or Python execute code line-by-line via an interpreter at runtime.",
+      "tags": ["programming", "scripting"],
+      "codeReferences": ["repo-python/main.py"]
+    },
+    {
+      "id": 19,
+      "title": "Program Fundamentals: Recursion",
+      "content": "A function calling itself. Useful for traversing hierarchical structures like the CMS folder tree in `Hierarchy.php`.",
+      "tags": ["logic", "programming"],
+      "codeReferences": ["repo-php/class/Hierarchy.php"]
+    },
+    {
+      "id": 20,
+      "title": "Program Fundamentals: Error Handling",
+      "content": "Try/Catch blocks prevent your app from crashing when something goes wrong. Essential for database connections in `DB.php`.",
+      "tags": ["programming", "stability"],
+      "codeReferences": ["repo-php/class/DB.php"]
+    },
+    {
+      "id": 21,
+      "title": "Software Engineering: The SDLC",
+      "content": "The Software Development Life Cycle includes Planning, Analysis, Design, Implementation, and Maintenance.",
+      "tags": ["engineering", "lifecycle"],
+      "codeReferences": ["docs/plan.md"]
+    },
+    {
+      "id": 22,
+      "title": "Software Engineering: Version Control (Git)",
+      "content": "Git tracks changes to code over time. Every file in this project is part of a Git repository history.",
+      "tags": ["engineering", "tools"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": 23,
+      "title": "Software Engineering: Agile Methodology",
+      "content": "Agile focuses on iterative development and constant feedback. We use small modules in our training to mirror this.",
+      "tags": ["engineering", "management"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": 24,
+      "title": "Software Engineering: Technical Debt",
+      "content": "Fast but 'dirty' fixes accumulate debt. Refactoring `repo-php` into modern stacks like `repo-react` reduces this debt.",
+      "tags": ["engineering", "quality"],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": 25,
+      "title": "Software Engineering: CI/CD",
+      "content": "Continuous Integration and Deployment automate testing and pushing code to production. Our `Dockerfile` is the basis for CI.",
+      "tags": ["engineering", "devops"],
+      "codeReferences": ["Dockerfile"]
+    },
+    {
+      "id": 26,
+      "title": "Software Engineering: Documentation",
+      "content": "Good code needs good docs. The `/docs/` folder in this repo is vital for understanding the complex CMS architecture.",
+      "tags": ["engineering", "communication"],
+      "codeReferences": ["docs/backend/php-cms-architecture.md"]
+    },
+    {
+      "id": 27,
+      "title": "Software Engineering: Code Reviews",
+      "content": "Peer review improves code quality and shares knowledge. It is the human equivalent of running `eslint`.",
+      "tags": ["engineering", "quality"],
+      "codeReferences": ["eslint.config.js"]
+    },
+    {
+      "id": 28,
+      "title": "Software Engineering: Testing Pyramid",
+      "content": "A mix of Unit, Integration, and E2E tests ensures stability. We test small components in `/repo-php/plugins/`.",
+      "tags": ["engineering", "testing"],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": 29,
+      "title": "Software Engineering: Requirement Engineering",
+      "content": "Understanding WHAT to build before HOW to build it. `metadata.json` defines the core requirements for each applet.",
+      "tags": ["engineering", "planning"],
+      "codeReferences": ["metadata.json"]
+    },
+    {
+      "id": 30,
+      "title": "Software Engineering: Maintainability",
+      "content": "Writing code that others (or future you) can easily update. Clean class structures in `repo-php` promote this.",
+      "tags": ["engineering", "quality"],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": 31,
+      "title": "Design Patterns: The Singleton",
+      "content": "Ensures a class has only one instance. `DB.php` often uses this pattern to manage a single shared database connection.",
+      "tags": ["patterns", "architecture"],
+      "codeReferences": ["repo-php/class/DB.php"]
+    },
+    {
+      "id": 32,
+      "title": "Design Patterns: Factory Method",
+      "content": "Creates objects without specifying the exact class. `Component.php` uses this to generate different UI elements dynamically.",
+      "tags": ["patterns", "architecture"],
+      "codeReferences": ["repo-php/class/Component.php"]
+    },
+    {
+      "id": 33,
+      "title": "Design Patterns: Observer Pattern",
+      "content": "An object maintains a list of dependents and notifies them of state changes. Vue's reactivity in `src/App.vue` uses this.",
+      "tags": ["patterns", "frontend"],
+      "codeReferences": ["src/App.vue"]
+    },
+    {
+      "id": 34,
+      "title": "Design Patterns: MVC (Model-View-Controller)",
+      "content": "Separates data (Model), logic (Controller), and UI (View). `repo-php` is architected entirely around this separation.",
+      "tags": ["patterns", "architecture"],
+      "codeReferences": ["repo-php/class/Controller.php", "repo-php/class/Model.php", "repo-php/class/View.php"]
+    },
+    {
+      "id": 35,
+      "title": "Design Patterns: Strategy Pattern",
+      "content": "Defines a family of algorithms and makes them interchangeable. Our `AIAgent.php` selects different prompts based on intent.",
+      "tags": ["patterns", "ai"],
+      "codeReferences": ["repo-php/class/AIAgent.php"]
+    },
+    {
+      "id": 36,
+      "title": "Design Patterns: Decorator Pattern",
+      "content": "Adds behavior to an object dynamically. Plugins in `repo-php/plugins/` act as decorators for the core CMS functionality.",
+      "tags": ["patterns", "plugins"],
+      "codeReferences": ["repo-php/class/PluginManager.php"]
+    },
+    {
+      "id": 37,
+      "title": "Design Patterns: Adapter Pattern",
+      "content": "Allows incompatible interfaces to work together. We use this to bridge `repo-php` data into `repo-react` frontend.",
+      "tags": ["patterns", "architecture"],
+      "codeReferences": ["docs/backend/node-cms-features.md"]
+    },
+    {
+      "id": 38,
+      "title": "Design Patterns: Repository Pattern",
+      "content": "Mediates between the domain and data mapping layers. used in `Store.php` to abstract file system storage.",
+      "tags": ["patterns", "data"],
+      "codeReferences": ["repo-php/class/Store.php"]
+    },
+    {
+      "id": 39,
+      "title": "Design Patterns: Command Pattern",
+      "content": "Encapsulates a request as an object. `AITaskManager.php` treats AI requests as executable tasks in a queue.",
+      "tags": ["patterns", "ai"],
+      "codeReferences": ["repo-php/class/AITaskManager.php"]
+    },
+    {
+      "id": 40,
+      "title": "Design Patterns: Dependency Injection",
+      "content": "Objects receive other objects they depend on. PHP's `App.php` injects the Router into the main execution flow.",
+      "tags": ["patterns", "architecture"],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": 41,
+      "title": "UI Design: Visual Hierarchy",
+      "content": "Guiding the user's eye to the most important elements first. Headlines in `onepage.demo/index.php` use size and weight for this.",
+      "tags": ["ui", "design"],
+      "codeReferences": ["repo-php/content/onepage.demo/index.php"]
+    },
+    {
+      "id": 42,
+      "title": "UI Design: Consistency",
+      "content": "Using recurring patterns for buttons, colors, and fonts. `style.css` defines standard Tailwind classes for our components.",
+      "tags": ["ui", "design"],
+      "codeReferences": ["repo-php/public/css/style.css"]
+    },
+    {
+      "id": 43,
+      "title": "UI Design: Typography",
+      "content": "The art of arranging type to make written language legible and appealing. We use sans-serif fonts for a modern, clean look.",
+      "tags": ["ui", "design"],
+      "codeReferences": ["src/style.css"]
+    },
+    {
+      "id": 44,
+      "title": "UI Design: Color Theory",
+      "content": "Using color to evoke emotion and provide feedback. Red for errors, green for success in `AdminSubmissions.js`.",
+      "tags": ["ui", "design"],
+      "codeReferences": ["repo-php/public/js/components/AdminSubmissions.js"]
+    },
+    {
+      "id": 45,
+      "title": "UI Design: Layout (Flexbox/Grid)",
+      "content": "Systematic arrangements of elements on a page. Our responsive sidebars use CSS Flexbox to adapt to mobile screens.",
+      "tags": ["ui", "layout"],
+      "codeReferences": ["repo-php/views/layouts/sidebar.php"]
+    },
+    {
+      "id": 46,
+      "title": "UI Design: White Space",
+      "content": "Also known as negative space, it prevents clutter and allows content to 'breathe'. Used extensively in `startup.demo`.",
+      "tags": ["ui", "design"],
+      "codeReferences": ["repo-php/content/startup.demo/index.php"]
+    },
+    {
+      "id": 47,
+      "title": "UI Design: Affordance",
+      "content": "Visual cues that suggest how an element should be used. Buttons in `CmsButton.js` look clickable because of shadows and borders.",
+      "tags": ["ui", "interaction"],
+      "codeReferences": ["repo-php/public/js/components/CmsButton.js"]
+    },
+    {
+      "id": 48,
+      "title": "UI Design: Responsive Breakpoints",
+      "content": "Specific widths where layout changes. Tailwind classes like `md:`, `lg:` help us manage this in `index.html`.",
+      "tags": ["ui", "responsive"],
+      "codeReferences": ["index.html"]
+    },
+    {
+      "id": 49,
+      "title": "UI Design: Icons and Imagery",
+      "content": "Visual symbols that convey meaning quickly. SVG icons in our dashboards provide context without text overhead.",
+      "tags": ["ui", "graphics"],
+      "codeReferences": ["public/vite.svg"]
+    },
+    {
+      "id": 50,
+      "title": "UI Design: Dark Mode",
+      "content": "A high-contrast theme that reduces eye strain. Modern app architectures often support theme toggles via CSS variables.",
+      "tags": ["ui", "accessibility"],
+      "codeReferences": ["src/style.css"]
+    },
+    {
+      "id": 51,
+      "title": "UX Design: User Research",
+      "content": "Understanding the needs and pain points of your users BEFORE building. Vital for our CMS admin interface design.",
+      "tags": ["ux", "research"],
+      "codeReferences": ["docs/user-guides/user-admin-handbook.md"]
+    },
+    {
+      "id": 52,
+      "title": "UX Design: User Flows",
+      "content": "The path a user takes through your app to complete a task. `AdminRouter.js` manages these transitions in the admin panel.",
+      "tags": ["ux", "navigation"],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": 53,
+      "title": "UX Design: Accessibility (A11y)",
+      "content": "Ensuring everyone can use your software, including those with disabilities. Use `alt` tags and semantic HTML.",
+      "tags": ["ux", "accessibility"],
+      "codeReferences": ["repo-php/views/shell.php"]
+    },
+    {
+      "id": 54,
+      "title": "UX Design: Information Architecture",
+      "content": "Organizing data so it makes sense to the user. Our sidebar categorizes tools into 'Dashboard', 'Editor', and 'Sync'.",
+      "tags": ["ux", "organization"],
+      "codeReferences": ["src/App.vue"]
+    },
+    {
+      "id": 55,
+      "title": "UX Design: Feedback Loops",
+      "content": "Letting the user know the system received their input. Loading spinners and success toasts in `AdminAiTasks.js` provide this.",
+      "tags": ["ux", "interaction"],
+      "codeReferences": ["repo-php/public/js/components/AdminAiTasks.js"]
+    },
+    {
+      "id": 56,
+      "title": "UX Design: Friction",
+      "content": "Removing unnecessary steps to make a process smoother. Our form plugin aims for 'Zero-Config' setup.",
+      "tags": ["ux", "optimization"],
+      "codeReferences": ["repo-php/plugins/forms/FormsManager.php"]
+    },
+    {
+      "id": 57,
+      "title": "UX Design: Error Prevention",
+      "content": "Designing UI so errors are hard to make. Dropdowns instead of text for 'status' in `AdminFormsManager.js` help here.",
+      "tags": ["ux", "psychology"],
+      "codeReferences": ["repo-php/public/js/components/AdminFormsManager.js"]
+    },
+    {
+      "id": 58,
+      "title": "UX Design: Cognitive Load",
+      "content": "The amount of mental effort required to use your app. Clean layouts in `babiblog.fr` keep this low for readers.",
+      "tags": ["ux", "psychology"],
+      "codeReferences": ["repo-php/content/babiblog.fr/index.php"]
+    },
+    {
+      "id": 59,
+      "title": "UX Design: Micro-copy",
+      "content": "Short bits of text like button labels and tooltips. 'Deploy' vs 'Save' can change the user's expectation.",
+      "tags": ["ux", "content"],
+      "codeReferences": ["src/views/SiteDashboard.vue"]
+    },
+    {
+      "id": 60,
+      "title": "UX Design: Prototype Testing",
+      "content": "Testing low-fidelity versions of a feature to validate ideas. This repo started as a 'onpage.demo' prototype.",
+      "tags": ["ux", "validation"],
+      "codeReferences": ["repo-php/content/onepage.demo/index.php"]
+    },
+    {
+      "id": 61,
+      "title": "DX (Developer Experience): Tooling",
+      "content": "The ecosystem that developers use. VS Code, npm, and Vite create the 'DX loop' for this project.",
+      "tags": ["dx", "tools"],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": 62,
+      "title": "DX: Scaffolding and CLIs",
+      "content": "Tools that generate boilerplate code. `npm create vite` is a classic example used for our React/Vue repos.",
+      "tags": ["dx", "automation"],
+      "codeReferences": ["repo-react/package.json"]
+    },
+    {
+      "id": 63,
+      "title": "DX: IDE Support",
+      "content": "IntelliSense and Type checking (via TypeScript) help developers find bugs as they type them.",
+      "tags": ["dx", "typescript"],
+      "codeReferences": ["tsconfig.json"]
+    },
+    {
+      "id": 64,
+      "title": "DX: Faster Feedback Loops",
+      "content": "Hot Module Replacement (HMR) allows code changes to appear instantly without a full page refresh.",
+      "tags": ["dx", "productivity"],
+      "codeReferences": ["vite.config.ts"]
+    },
+    {
+      "id": 65,
+      "title": "DX: API Documentation",
+      "content": "Clean, searchable documentation makes integrating systems easier. check our `/docs/` for API examples.",
+      "tags": ["dx", "docs"],
+      "codeReferences": ["docs/backend/cms-guide.md"]
+    },
+    {
+      "id": 66,
+      "title": "DX: Consistent Code Style",
+      "content": "Using Linters (Eslint) and Formatters (Prettier) to keep the codebase uniform for all contributors.",
+      "tags": ["dx", "standards"],
+      "codeReferences": ["eslint.config.js"]
+    },
+    {
+      "id": 67,
+      "title": "DX: Dependency Management",
+      "content": "Managing external libraries cleanly. `package.json` tracks versions so others can reproduce our build environment.",
+      "tags": ["dx", "tools"],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": 68,
+      "title": "DX: Sandbox Environments",
+      "content": "Local development setups that mimic production. Our `docker-compose.yml` provides this environment perfectly.",
+      "tags": ["dx", "devops"],
+      "codeReferences": ["docker-compose.yml"]
+    },
+    {
+      "id": 69,
+      "title": "DX: Error Messaging",
+      "content": "Clear, actionable error logs. The 'Insufficient permissions' errors in our Firebase skill are designed to be caught and handled.",
+      "tags": ["dx", "debugging"],
+      "codeReferences": ["database.ts"]
+    },
+    {
+      "id": 70,
+      "title": "DX: Automated Refactoring",
+      "content": "Using scripts or AI agents to clean up code. `docs/ai-agents/ai-refactoring-algorithm.md` outlines our approach.",
+      "tags": ["dx", "ai"],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": 71,
+      "title": "AX (AI Experience): The AI Coder Agent",
+      "content": "Designing software specifically for AI agents to understand and modify. Clean, modular code is high 'AX' code.",
+      "tags": ["ax", "ai"],
+      "codeReferences": ["AGENTS.md"]
+    },
+    {
+      "id": 72,
+      "title": "AX: Prompt Engineering for Developers",
+      "content": "The art of writing instructions that an AI can execute reliably. See our `AI-STUDENT-PROMPTS.md` for examples.",
+      "tags": ["ax", "ai"],
+      "codeReferences": ["docs/training/AI-STUDENT-PROMPTS.md"]
+    },
+    {
+      "id": 73,
+      "title": "AX: Human-in-the-Loop",
+      "content": "AI generates the code, but the human reviews and integrates it. This is the heart of the FRAISE approach.",
+      "tags": ["ax", "workflow"],
+      "codeReferences": ["docs/ai-agents/ai-coder-agent-guide.md"]
+    },
+    {
+      "id": 74,
+      "title": "AX: Structured Metadata for Agents",
+      "content": "Providing JSON context (like `metadata.json`) so the AI knows the project's boundaries and capabilities.",
+      "tags": ["ax", "context"],
+      "codeReferences": ["metadata.json"]
+    },
+    {
+      "id": 75,
+      "title": "AX: Self-Correcting Code",
+      "content": "Agents that can detect errors and fix them automatically. This requires clear integration points and error logs.",
+      "tags": ["ax", "automation"],
+      "codeReferences": ["repo-php/class/AITaskManager.php"]
+    },
+    {
+      "id": 76,
+      "title": "AX: Grounding with LLMs",
+      "content": "Connecting AI agents to real documentation and files to prevent hallucinations. Our `docs/` folder 'grounds' the agent.",
+      "tags": ["ax", "reliability"],
+      "codeReferences": ["docs/ai-agents/gemini-api-interactions.md"]
+    },
+    {
+      "id": 77,
+      "title": "AX: Continuous Training for Agents",
+      "content": "Keeping agent instructions (in `AGENTS.md`) up to date with new project patterns.",
+      "tags": ["ax", "management"],
+      "codeReferences": ["AGENTS.md"]
+    },
+    {
+      "id": 78,
+      "title": "AX: Multi-Agent Workflows",
+      "content": "One agent writes code, another writes tests, a third generates media. `media-generation-toolchain.md` explains this.",
+      "tags": ["ax", "workflow"],
+      "codeReferences": ["docs/ai-agents/media-generation-toolchain.md"]
+    },
+    {
+      "id": 79,
+      "title": "AX: AI Privacy and Data Security",
+      "content": "Ensuring sensitive keys aren't leaked to LLMs. We use `.env.example` to hide secrets from the codebase.",
+      "tags": ["ax", "security"],
+      "codeReferences": [".env.example"]
+    },
+    {
+      "id": 80,
+      "title": "AX: Future of Software Engineering",
+      "content": "The shift from writing code to managing logic flows and agent instructions. You are at the forefront of this shift.",
+      "tags": ["ax", "philosophy"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": 81,
+      "title": "OOP: Classes and Objects",
+      "content": "A class is a blueprint; an object is an instance. `AIAgent.php` is a class used to create specialized AI agents.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/AIAgent.php"]
+    },
+    {
+      "id": 82,
+      "title": "OOP: Encapsulation",
+      "content": "Hiding internal data and exposing only what is necessary. `CMS.php` encapsulates the complexity of site management.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": 83,
+      "title": "OOP: Inheritance",
+      "content": "A class acquiring properties of another. Our `Controller.php` provides base functionality that other controllers inherit.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/Controller.php"]
+    },
+    {
+      "id": 84,
+      "title": "OOP: Polymorphism",
+      "content": "One interface, many forms. Different plugins in `/plugins/` all implement a standard interface but behave differently.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/plugins/analytics/plugin.php"]
+    },
+    {
+      "id": 85,
+      "title": "OOP: Composition over Inheritance",
+      "content": "Building complex objects by combining smaller ones. `Layout.php` composes headers, sidebars, and main content.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/Layout.php"]
+    },
+    {
+      "id": 86,
+      "title": "OOP: Abstraction",
+      "content": "Generalizing behavior to simplify usage. `Model.php` abstracts database queries so you don't write SQL everywhere.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/Model.php"]
+    },
+    {
+      "id": 87,
+      "title": "OOP: SOLID Principles (S)",
+      "content": "Single Responsibility Principle: A class should have only one reason to change. `Email.php` (if it existed) shouldn't format PDFs.",
+      "tags": ["oop", "standards"],
+      "codeReferences": ["repo-php/class/AITaskManager.php"]
+    },
+    {
+      "id": 88,
+      "title": "OOP: Interfaces",
+      "content": "Contracts that define what a class must do. `Component.php` forces all UI parts to have a `render()` method.",
+      "tags": ["oop", "architecture"],
+      "codeReferences": ["repo-php/class/Component.php"]
+    },
+    {
+      "id": 89,
+      "title": "OOP: Static Methods",
+      "content": "Methods that belong to the class itself, not an instance. Often used for 'helper' functions in `App.php`.",
+      "tags": ["oop", "logic"],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": 90,
+      "title": "OOP: Constructors",
+      "content": "Special functions that run when an object is created. `Router.php` initializes its routing table in the constructor.",
+      "tags": ["oop", "logic"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": 91,
+      "title": "Security: Input Sanitization",
+      "content": "Always cleaning user data to prevent XSS and SQL injection. Crucial in `FormsManager.php`.",
+      "tags": ["security", "safety"],
+      "codeReferences": ["repo-php/plugins/forms/FormsManager.php"]
+    },
+    {
+      "id": 92,
+      "title": "Security: Authentication",
+      "content": "Verifying who a user is. Firebase Auth (discussed in our skill) is a industry standard for this project.",
+      "tags": ["security", "identity"],
+      "codeReferences": ["database.ts"]
+    },
+    {
+      "id": 93,
+      "title": "Security: Authorization (RBAC)",
+      "content": "Controlling what a user can do. Our admin panel uses role-based access to restrict specific dashboards.",
+      "tags": ["security", "identity"],
+      "codeReferences": ["docs/backend/php-admin-guide.md"]
+    },
+    {
+      "id": 94,
+      "title": "Security: Encryption (At Rest)",
+      "content": "Storing data securely on disk. SQLite databases or JSON files should be protected by file-system permissions.",
+      "tags": ["security", "data"],
+      "codeReferences": ["repo-python/sites.json"]
+    },
+    {
+      "id": 95,
+      "title": "Security: HTTPS/SSL",
+      "content": "Encrypting data as it travels over the web. Our Nginx config ensures traffic is secure when deployed via Docker.",
+      "tags": ["security", "networking"],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": 96,
+      "title": "Testing: Unit Testing",
+      "content": "Testing individual functions in isolation. Vitest or Jest are commonly used in the modern repos like `repo-react`.",
+      "tags": ["testing", "quality"],
+      "codeReferences": ["repo-react/package.json"]
+    },
+    {
+      "id": 97,
+      "title": "Testing: Integration Testing",
+      "content": "Testing how different modules work together. Like testing if the `PluginManager` loads the `Forms` plugin correctly.",
+      "tags": ["testing", "quality"],
+      "codeReferences": ["repo-php/class/PluginManager.php"]
+    },
+    {
+      "id": 98,
+      "title": "Testing: E2E (End-to-End)",
+      "content": "Simulating a real user journey through the browser. Tools like Playwright or Cypress verify the full stack.",
+      "tags": ["testing", "quality"],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": 99,
+      "title": "Security: OWASP Top 10",
+      "content": "A list of the 10 most critical web application security risks. Understanding these is vital for any full-stack dev.",
+      "tags": ["security", "standards"],
+      "codeReferences": ["docs/ai-agents/ai-coder-agent-guide.md"]
+    },
+    {
+      "id": 100,
+      "title": "Software Engineering: Lifetime Learning",
+      "content": "The field changes daily. Being a great engineer means never stopping your education. Congrats on finishing these 100 fundamentals!",
+      "tags": ["engineering", "philosophy"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    }
+  ]
+}
