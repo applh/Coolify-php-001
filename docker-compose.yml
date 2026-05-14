@@ -1,6 +1,8 @@
 services:
-  php-cms-manager:
+  # 1. CORE: Node.js Management Dashboard (Central Controller)
+  cms-manager:
     build: .
+    image: polyglot-cms-manager:latest
     ports:
       - "${PORT:-3000}:3000"
     volumes:
@@ -9,7 +11,51 @@ services:
     environment:
       - NODE_ENV=production
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - APP_ADMIN_PASSKEY=${APP_ADMIN_PASSKEY}
+    networks:
+      - cms-mesh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/sites"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: always
+
+  # 2. LEGACY/CORE: PHP CMS Engine
+  php-engine:
+    build:
+      context: ./repo-php
+      dockerfile: Dockerfile
+    volumes:
+      - php_content:/var/www/html/content
+    networks:
+      - cms-mesh
+    restart: always
+
+  php-web:
+    build:
+      context: ./repo-php
+      dockerfile: Dockerfile.web
+    ports:
+      - "8081:80"
+    depends_on:
+      - php-engine
+    networks:
+      - cms-mesh
+    restart: always
+
+  # 3. MODERN: Python FastAPI Analytics/Media Stack
+  python-api:
+    build: ./repo-python
+    ports:
+      - "8082:3000"
+    networks:
+      - cms-mesh
+    restart: always
+
+networks:
+  cms-mesh:
+    driver: bridge
 
 volumes:
   cms_data:

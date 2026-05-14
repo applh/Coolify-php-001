@@ -16,6 +16,9 @@ FROM node:22-slim
 
 WORKDIR /app
 
+# Install production dependencies and healthcheck utility
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Install production dependencies only
 COPY package*.json ./
 RUN npm install --omit=dev
