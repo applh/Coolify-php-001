@@ -50,8 +50,9 @@
     <main class="flex-grow p-6">
       <router-view />
     </main>
-    <footer class="border-t border-[#2A2A2A] p-4 text-[10px] text-center opacity-40 uppercase tracking-[0.2em]">
-      Node.js CMS &copy; 2026 &mdash; Powered by SQLite
+    <footer class="border-t border-[#2A2A2A] p-4 text-[10px] text-center opacity-40 uppercase tracking-[0.2em] flex justify-center items-center gap-4">
+      <span>Node.js CMS &copy; 2026 &mdash; Powered by SQLite</span>
+      <span class="px-1.5 py-0.5 border border-white/20 rounded-sm">v1.2.0</span>
     </footer>
   </div>
 </template>
