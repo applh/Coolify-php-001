@@ -43,7 +43,7 @@ COPY repo-php ./repo-php
 # But having a global fallback or local execution is safer
 ENV PATH /app/node_modules/.bin:$PATH
 
-# CMS Manager settings
+# FRAISE * AI Software Engineer settings
 ENV NODE_ENV=production
 ENV PORT=3000
 

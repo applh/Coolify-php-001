@@ -1,4 +1,4 @@
-# Multi-Stack CMS Manager - Setup & Troubleshooting
+# FRAISE * AI Software Engineer - Setup & Troubleshooting
 
 This project is an advanced hybrid application featuring a **Node.js (Express + Vue 3) Management Dashboard** and multiple containerized stacks: **PHP Multisite**, **React**, **Vue**, and **Python FastAPI**.
 
@@ -29,7 +29,7 @@ This project is an advanced hybrid application featuring a **Node.js (Express + 
 2. **Start Development Server:**
    Run `npm run dev`. This starts the Node.js server with Vite middleware enabled.
 3. **Open Preview:**
-   Use the AI Studio Preview window to interact with the CMS Manager.
+   Use the AI Studio Preview window to interact with FRAISE.
 
 ### Production Build & "Publish" (Deployment)
 1. **Build the Frontend:**
@@ -78,5 +78,5 @@ This originates from the PHP application (`repo-php`). It means the `Host` heade
 
 ## 5. Deployment Recommendation
 For a live production environment, we recommend:
-1. Hosting the **Node.js CMS Manager** on a Node service (e.g., Cloud Run, Railway, Heroku).
+1. Hosting the **Node.js FRAISE Backend** on a Node service (e.g., Cloud Run, Railway, Heroku).
 2. Hosting the **PHP Multisite App** on a specialized PHP platform or a VPS using Docker (as provided in `repo-php/docker-compose.yml`).

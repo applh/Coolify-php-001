@@ -121,7 +121,7 @@ async function createServer() {
         .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('repo-'))
         .map(dirent => dirent.name);
       res.json(repos);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to read repos' });
     }
   });

@@ -2,11 +2,11 @@
   <div class="min-h-screen flex flex-col bg-[#121212] text-[#E4E3E0]">
     <header class="border-b border-[#2A2A2A] p-4 flex justify-between items-center bg-[#181818]">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-[#F27D26] rounded flex items-center justify-center font-bold text-black text-xs">
-          UCM
+        <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white text-xs">
+          🍓
         </div>
-        <h1 class="font-serif italic text-lg tracking-tight">
-          Universal CMS Manager
+        <h1 class="font-serif italic text-2xl tracking-tighter font-extrabold text-red-500">
+          🍓 FRAISE
         </h1>
       </div>
       <nav class="flex gap-6 text-xs uppercase tracking-widest font-semibold opacity-70">
@@ -52,7 +52,7 @@
       <router-view />
     </main>
     <footer class="border-t border-[#2A2A2A] p-4 text-[10px] text-center opacity-40 uppercase tracking-[0.2em] flex justify-center items-center gap-4">
-      <span>Universal Polyglot CMS &copy; 2026 &mdash; Support Multi-Stack</span>
+      <span>🍓 FRAISE &copy; 2026</span>
       <span class="px-1.5 py-0.5 border border-white/20 rounded-sm">v1.2.0</span>
     </footer>
   </div>

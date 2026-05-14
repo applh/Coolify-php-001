@@ -13,7 +13,7 @@
     },
     {
       "id": 2,
-      "title": "Anatomy of the Universal Polyglot CMS",
+      "title": "Anatomy of the FRAISE * AI Software Engineer",
       "content": "The architecture is split across repo-php (Legacy/CMS Core) and modern modular stacks (Go, Rust, Python). Understanding the 'Glue' is your objective.",
       "tags": ["architecture", "polyglot"],
       "codeReferences": ["repo-php/class/CMS.php", "repo-go/main.go"]
