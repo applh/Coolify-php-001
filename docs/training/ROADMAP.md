@@ -1,4 +1,4 @@
-# 900-Hour Full-stack Development Roadmap
+# 1000-Hour Full-stack Development Roadmap
 
 Welcome to the practical training program. This curriculum is designed to take you from a absolute beginner to a versatile full-stack engineer by studying and extending the real-world repositories found in this project.
 
@@ -6,10 +6,10 @@ Welcome to the practical training program. This curriculum is designed to take y
 
 | Phase | Duration | Focus | Key Repositories |
 |-------|----------|-------|------------------|
-| [Phase 1: Web Fundamentals](./PHASE-1-BEGINNER.md) | 150h | HTML5, CSS3, Vanilla JS, PHP Basics | `repo-php/content/site1.com`, `public/css` |
-| [Phase 2: Modern Frontend](./PHASE-2-FRONTEND.md) | 200h | React, Vue 3, Tailwind CSS, State Management | `repo-react`, `repo-vue`, `src/` |
-| [Phase 3: Backend Systems](./PHASE-3-BACKEND.md) | 250h | PHP MVC, Go, Rust, Python APIs, Databases | `repo-php/class`, `repo-go`, `repo-rust`, `repo-python` |
-| [Phase 4: Mobile & Multi-Platform](./PHASE-4-MOBILE.md) | 150h | Android (Kotlin), Flutter (Dart) | `repo-android`, `repo-flutter` |
+| [Phase 1: Web Fundamentals](./PHASE-1-BEGINNER.md) | 175h | HTML5, CSS3, Vanilla JS, PHP Basics | `repo-php/content/site1.com`, `public/css` |
+| [Phase 2: Modern Frontend](./PHASE-2-FRONTEND.md) | 225h | React, Vue 3, Tailwind CSS, State Management | `repo-react`, `repo-vue`, `src/` |
+| [Phase 3: Backend Systems](./PHASE-3-BACKEND.md) | 275h | PHP MVC, Go, Rust, Python APIs, Databases | `repo-php/class`, `repo-go`, `repo-rust`, `repo-python` |
+| [Phase 4: Mobile & Multi-Platform](./PHASE-4-MOBILE.md) | 175h | Android (Kotlin), Flutter (Dart) | `repo-android`, `repo-flutter` |
 | [Phase 5: DevOps & AI Agents](./PHASE-5-ADVANCED.md) | 150h | Docker, Nginx, AI Coder Agents, CMS Architecture | `docs/ai-agents`, `repo-php/plugins` |
 
 ## Skill Progression Path

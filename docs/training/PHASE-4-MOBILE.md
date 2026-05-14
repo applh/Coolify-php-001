@@ -1,4 +1,4 @@
-# Phase 4: Mobile & Multi-Platform (150 Hours)
+# Phase 4: Mobile & Multi-Platform (175 Hours)
 
 Learn to take your web skills into the palms of users' hands.
 
@@ -9,12 +9,12 @@ Learn to take your web skills into the palms of users' hands.
 
 ## Practical Labs
 
-### 1. Flutter Mastery (80h)
+### 1. Flutter Mastery (95h)
 **Reference**: `repo-flutter/lib/main.dart`
 - **Task**: Understand the Widget tree.
 - **Exercise**: Add a "Details View" that opens when you click a site name in the list.
 
-### 2. Native Android with Kotlin (70h)
+### 2. Native Android with Kotlin (80h)
 **Reference**: `repo-android/`
 - **Task**: Study the project structure.
 - **Exercise**: Modify the `MainActivity` to include a navigation drawer.
