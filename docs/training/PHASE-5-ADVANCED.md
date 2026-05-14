@@ -25,6 +25,11 @@ Synthesize everything you've learned. Build modular systems and leverage AI to s
 - **Task**: Read the `ai-refactoring-algorithm.md`.
 - **Exercise**: Use the AI to refactor `repo-php/class/Router.php` to support middle-wares.
 
+### 4. Agile Roles & AI Transformation
+**Reference**: `docs/training/slides/phase5/agile-ai-roles.json`
+- **Task**: Understand how AI shifts core project roles (PO, SM, Developer).
+- **Exercise**: Complete the labs in [Practical Business, Management & DevOps](./PRACTICAL-BUSINESS-DEVOPS.md#3-agile-roles-in-the-ai-era).
+
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/backend/php-plugin-system-guide.md`

@@ -22,7 +22,17 @@ This module moves beyond code to the systems and strategies that make software s
     - **Task**: After completing any Phase lab, write a "Post-Mortem" in your backlog.
     - **Exercise**: Document what was difficult, what you would automate next time, and how long it actually took vs. estimated.
 
-## 3. DevOps & Performance (Practical)
+## 3. Agile Roles in the AI Era
+**Goal**: Understand how AI shifts the responsibilities of traditional software teams.
+
+- **Lab 1: AI-Driven Backlog Grooming**
+    - **Task**: Review the slides in `docs/training/slides/phase5/agile-ai-roles.json`.
+    - **Exercise**: Take your `MY-SRE-BACKLOG.md` and use the AI agent to generate 3 alternative technical approaches for one of your user stories. Identify which tasks could be delegated to the `Agent Coder` vs. which require human oversight.
+- **Lab 2: The Virtual Scrum Master**
+    - **Task**: Study `docs/ai-agents/ai-agents-roles-tasks.md`.
+    - **Exercise**: Create a checklist for an AI agent that would perform a "Daily Standup" for this repository. What files would it need to monitor (e.g., `git log`, `file_list.txt`) to report progress accurately?
+
+## 4. DevOps & Performance (Practical)
 **Goal**: Master the environment where your code lives.
 
 - **Lab 1: Container Hardening**

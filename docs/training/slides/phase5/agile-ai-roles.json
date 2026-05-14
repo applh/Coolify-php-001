@@ -1,0 +1,43 @@
+{
+  "moduleId": "AGILE-AI",
+  "title": "Agile Roles & AI Transformation",
+  "totalSlides": 5,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": 1,
+      "title": "The Product Owner (PO) & AI",
+      "content": "The PO maximizes value by managing the backlog. AI assists by analyzing user feedback at scale, generating draft User Stories from raw requirements (Gherkin style), and predicting feature impact using historical data. AI can partially replace routine backlog clerical work.",
+      "tags": ["agile", "management", "ai-transformation"],
+      "codeReferences": ["docs/training/PRACTICAL-BUSINESS-DEVOPS.md"]
+    },
+    {
+      "id": 2,
+      "title": "The Scrum Master (SM) & AI",
+      "content": "The Scrum Master facilitates the process and removes impediments. AI helps by auto-summarizing standups, detecting 'sprint smell' (velocity drops), and automating routine reporting. AI agents can act as persistent 'nudges' for process compliance.",
+      "tags": ["agile", "scrum", "automation"],
+      "codeReferences": ["docs/ai-agents/ai-agents-roles-tasks.md"]
+    },
+    {
+      "id": 3,
+      "title": "The Developer & AI Coder Agents",
+      "content": "Developers move from 'writing code' to 'orchestrating agents'. AI agents handle boilerplate, unit test generation, and complex refactoring (e.g., repo-php to modern stacks). Human focus shifts to architecture, security, and edge-case logic.",
+      "tags": ["coding", "ai-agents", "engineering"],
+      "codeReferences": ["docs/ai-agents/ai-coder-agent-guide.md", "repo-php/class/AIAgent.php"]
+    },
+    {
+      "id": 4,
+      "title": "The QA / Tester & AI Verification",
+      "content": "Quality Assurance evolves into Model Verification. AI can generate thousands of edge-case test vectors, perform visual regression testing, and identify security vulnerabilities in real-time. Routine regression testing is increasingly fully automated by agents.",
+      "tags": ["testing", "qa", "security"],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": 5,
+      "title": "Stakeholders & AI Transparency",
+      "content": "Stakeholders provide vision and funding. AI provides them with instant, high-fidelity status reports and interactive prototypes. While AI can simulate user feedback, the 'human-in-the-loop' stakeholder remains critical for final alignment and 'Go/No-Go' decisions.",
+      "tags": ["business", "stakeholders", "transparency"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    }
+  ]
+}
