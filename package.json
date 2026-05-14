@@ -23,7 +23,6 @@
     "eslint": "^10.3.0",
     "eslint-plugin-vue": "^10.9.1",
     "tailwindcss": "^4.3.0",
-    "typescript": "^6.0.3",
     "vite": "^6.2.3",
     "vue-eslint-parser": "^10.4.0"
   },
@@ -40,6 +39,7 @@
     "lucide-vue-next": "^1.0.0",
     "multer": "^1.4.5-lts.1",
     "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
     "vue": "^3.5.34",
     "vue-router": "^5.0.6"

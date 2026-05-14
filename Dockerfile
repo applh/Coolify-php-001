@@ -1,20 +1,30 @@
 # Build Stage
-FROM node:22-slim AS builder
+FROM node:22 AS builder
 WORKDIR /app
+
+# Declare ARGs for build-time if needed (Vite can use them if prefixed with VITE_)
+ARG GEMINI_API_KEY
+ARG APP_ADMIN_PASSKEY
+ARG PORT=3000
 
 # Install dependencies first for better caching
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy configuration files and source code
 COPY . .
 
-# Build the frontend assets
-RUN npm run build
+# Build the frontend assets with memory limit
+RUN node --max-old-space-size=1024 ./node_modules/vite/bin/vite.js build
 
 # Production Stage
 FROM node:22-slim
 WORKDIR /app
+
+# Declare ARGs again for the final stage (Coolify requirement)
+ARG GEMINI_API_KEY
+ARG APP_ADMIN_PASSKEY
+ARG PORT=3000
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -54,4 +64,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD curl -f http://localhost:3000/api/sites || exit 1
 
 # Start the application using tsx
-CMD ["tsx", "server.ts"]
+CMD ["node", "--import", "tsx", "server.ts"]

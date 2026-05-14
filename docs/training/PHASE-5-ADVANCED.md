@@ -42,6 +42,12 @@ Synthesize everything you've learned. Build modular systems and leverage AI to s
 - **Exercise**: Set up a local Git server using Gitea or similar, then configure the Node.js backend to push updates automatically on every "Save" event in the Site Editor.
 - **Complexity**: Phase 5
 
+### 7. Interactive Curriculum Engine (Dynamic JSON Navigation)
+**Goal**: Learn how to build a high-performance content reader for large-scale training data (60,000+ slides).
+**Reference**: `src/views/TrainingCenter.vue` and `docs/training/slides/`
+**Exercise**: Implement a client-side search indexing system for the Slide Reader that pre-fetches the JSON manifests and allows fuzzy searching across all 60,000 slide titles.
+**Complexity**: Phase 5
+
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/backend/php-plugin-system-guide.md`

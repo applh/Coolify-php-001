@@ -2,7 +2,6 @@ services:
   # 1. CORE: Node.js Management Dashboard (Central Controller)
   cms-manager:
     build: .
-    image: polyglot-cms-manager:latest
     ports:
       - "${PORT:-3000}:3000"
     volumes:
