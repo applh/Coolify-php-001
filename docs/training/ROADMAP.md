@@ -2,6 +2,16 @@
 
 Welcome to the practical training program. This curriculum is designed to take you from a absolute beginner to a versatile full-stack engineer by studying and extending the real-world repositories found in this project.
 
+## The Training Concept: 60 Million Octets of Knowledge
+
+To master this curriculum, we view your journey through the lens of **Information Density**:
+- **Duration**: 1,000 Hours = **60,000 Minutes**.
+- **Learning Pace**: 1 "Slide" of new information per minute.
+- **Slide Capacity**: Each slide contains **1,000 Octets** (1KB) of data (approx. 20 lines of code/text × 50 characters).
+- **Total Payload**: You will process and internalize **60 Megabytes** of pure technical content by the end of this program.
+
+This program isn't just about reading; it's about the transmission of 60MB of structural logic from our repositories into your engineering intuition.
+
 ## Program Overview
 
 | Phase | Duration | Focus | Key Repositories |
