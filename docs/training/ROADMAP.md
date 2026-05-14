@@ -26,6 +26,7 @@ While progressing through the phases, complete these specialized modules to deep
 
 - **Architecture**: [Software Architecture: OOP & Design Patterns](./SOFTWARE-ARCHITECTURE.md)
 - **AI Engine**: [AI Engineering: Building with LLMs](./AI-ENGINEERING.md)
+- **Data & Math**: [Practical Math & Statistics](./MATH-AND-STATS.md)
 - **Quality**: [Testing, Performance & Optimization](./TESTING-AND-OPTIMIZATION.md)
 - **Design**: [Practical UI/UX Design for Engineers](./UI-UX-PRACTICE.md)
 
