@@ -46,8 +46,16 @@ RUN mkdir -p /app/data && chmod 777 /app/data
 
 # Copy the server and other runtime source files
 # We run these with tsx directly
-COPY server.ts database.ts metadata.json populate-tasks.ts ./
+COPY server.ts database.ts scheduler.ts metadata.json populate-tasks.ts ./
+COPY docs ./docs
+COPY repo-android ./repo-android
+COPY repo-flutter ./repo-flutter
+COPY repo-go ./repo-go
 COPY repo-php ./repo-php
+COPY repo-python ./repo-python
+COPY repo-react ./repo-react
+COPY repo-rust ./repo-rust
+COPY repo-vue ./repo-vue
 
 # Ensure tsx is available (should be in node_modules after npm install)
 # But having a global fallback or local execution is safer
