@@ -1,0 +1,548 @@
+{
+  "moduleId": "M009",
+  "title": "The Infinite Glossary: Protocols, Data & Workflow",
+  "totalSlides": 30,
+  "bundleId": 2,
+  "slides": [
+    {
+      "id": "H081-01",
+      "title": "HTTP (Hypertext Transfer Protocol)",
+      "content": "The Hypertext Transfer Protocol (HTTP) is the lifeblood of the modern web, serving as the primary protocol for transmitting hypermedia documents across the internet. In our CMS, HTTP acts as the standardized language that allows a user's browser to communicate with our multi-tenant servers. When you navigate to a site or click a save button, the browser initiates an HTTP 'Request'—a structured message containing a Method (GET, POST, PUT, DELETE), a URL, and often a Body full of JSON data. Our Nginx server receives this request and coordinates a 'Response' that includes a Status Code (such as 200 for success, or 403 for forbidden) and the requested content. Understanding the stateless nature of HTTP is critical for engineering reliable applications; because the server doesn't 'remember' previous requests by default, we must use sophisticated mechanisms like cookies and JWT tokens to maintain a user's session. Mastering the nuances of HTTP headers, caching strategies, and security protocols like HTTPS is what separates a junior web developer from a senior systems architect, ensuring that data flows securely and efficiently across the global technical landscape.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><path d='M100 100 L180 100 M220 100 L300 100' stroke='#3b82f6' stroke-width='3' stroke-linecap='round'/><path d='M280 90 L300 100 L280 110' fill='none' stroke='#3b82f6' stroke-width='2'/><path d='M120 110 L100 100 L120 90' fill='none' stroke='#3b82f6' stroke-width='2'/><circle cx='100' cy='100' r='5' fill='#1e40af'/><circle cx='300' cy='100' r='5' fill='#1e40af'/><text x='200' y='170' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af' font-weight='600'>Stateless Data Exchange</text></svg>",
+      "tags": ["network", "protocol"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview",
+        "https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol",
+        "https://www.w3.org/Protocols/"
+      ],
+      "studentPrompts": [
+        "Explain the difference between HTTP/1.1 and HTTP/2 in terms of performance and multiplexing.",
+        "How do 'Idempotent' methods like GET and PUT prevent accidental data duplication during network retries?",
+        "Describe the purpose of 'Intermediaries' (proxies, gateways) in an HTTP-based distributed system."
+      ],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": "H081-02",
+      "title": "API (Application Programming Interface)",
+      "content": "An API is the digital contract that allows separate software systems to interact with each other in a predictable, high-fidelity manner. In the FRAISE platform, our PHP backend exposes a RESTful API that serves as the 'Single Source of Truth' for our Vue dashboard. Instead of the frontend reaching directly into the database, it makes requests to these API endpoints, which handle authorization, data validation, and business logic. This separation is crucial for scalability; it allows us to upgrade our frontend without touching the backend, or vice versa, as long as the API contract remains intact. A well-designed API is intuitive and self-documenting, using standard HTTP methods and status codes to communicate success or failure. By adhering to these standards, we ensure that our data can be consumed not just by our own dashboard, but by mobile apps, external AI agents, or third-party integrations, turning our CMS into a flexible hub for digital content and cognitive processing.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='80' y='60' width='100' height='80' rx='8' fill='#22c55e' fill-opacity='0.1' stroke='#22c55e' stroke-width='2'/><rect x='220' y='60' width='100' height='80' rx='8' fill='#22c55e' fill-opacity='0.1' stroke='#22c55e' stroke-width='2'/><path d='M180 100 H220' stroke='#166534' stroke-width='3' stroke-dasharray='4'/><text x='130' y='160' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#14532d'>System A</text><text x='270' y='160' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#14532d'>System B</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#14532d' font-weight='600'>Inter-System Communication Contract</text></svg>",
+      "tags": ["backend", "api"],
+      "links": [
+        "https://en.wikipedia.org/wiki/API",
+        "https://aws.amazon.com/what-is/api/",
+        "https://restfulapi.net/"
+      ],
+      "studentPrompts": [
+        "What is the difference between a REST API and a GraphQL API, and when would you choose one over the other?",
+        "Explain the importance of 'API Versioning' for maintaining compatibility with older mobile applications.",
+        "How can an API Gateway improve the security and performance of a microservices-based architecture?"
+      ],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": "H081-03",
+      "title": "JSON (JavaScript Object Notation)",
+      "content": "JSON has emerged as the 'Lingua Franca' of the modern web—a lightweight, human-readable data format that is language-independent. In our polyglot repository, JSON is the invisible bridge that allows PHP, TypeScript, and Python to exchange complex structured data without friction. Its simplicity is its greatest strength: by using only key-value pairs and arrays, JSON can represent almost any data structure required in software engineering. In our platform, we use JSON for everything from our `sites.json` configuration to our training slide manifests and our AI agent's task descriptions. Because JSON is natively supported by JavaScript, it allows our Vue dashboard to parse server responses instantly with zero overhead. Mastering JSON isn't just about understanding brackets and quotes; it's about learning how to design efficient data schemas that are both easy for a human to audit and optimized for machine processing across high-latency networks.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff1f2'/><text x='100' y='70' font-family='monospace' font-size='14' fill='#e11d48'>{</text><text x='120' y='95' font-family='monospace' font-size='12' fill='#e11d48'>\"id\": \"FRAISE-01\",</text><text x='120' y='120' font-family='monospace' font-size='12' fill='#e11d48'>\"status\": \"active\",</text><text x='120' y='145' font-family='monospace' font-size='12' fill='#e11d48'>\"tags\": [\"ai\"]</text><text x='100' y='170' font-family='monospace' font-size='14' fill='#e11d48'>}</text><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#881337' font-weight='600'>Universal Data Serialization</text></svg>",
+      "tags": ["data", "standard"],
+      "links": [
+        "https://www.json.org/json-en.html",
+        "https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON",
+        "https://en.wikipedia.org/wiki/JSON"
+      ],
+      "studentPrompts": [
+        "Why is JSON preferred over XML for most modern web application APIs?",
+        "Explain the term 'Serialization' and 'Deserialization' in the context of passing a PHP object to a Vue frontend.",
+        "How can a 'JSON Schema' be used to validate complex configuration files before they are saved to the database?"
+      ],
+      "codeReferences": ["repo-react/src/sites.json", "docs/training/slides/phase1/module-intro.json"]
+    },
+    {
+      "id": "H081-04",
+      "title": "SQLite",
+      "content": "SQLite is a marvel of software engineering—a self-contained, serverless, zero-configuration SQL database engine that resides entirely within a single disk file. Unlike traditional databases like MySQL or PostgreSQL that require a separate server process, SQLite reads and writes directly to common files, making it incredibly lightweight and reliable. In the FRAISE architecture, we utilize SQLite for local development, architectural simulations, and certain edge-computing scenarios where high-availability server clusters would be overkill. Despite its small footprint, SQLite supports the full spectrum of SQL features, including complex joins, transactions, and robust data typing. Its 'Atomic' commit logic ensures that data integrity is maintained even in the event of a system crash or power failure. By mastering SQLite, you learn the fundamentals of relational database design without the overhead of enterprise server management, providing a versatile tool for everything from mobile apps to high-performance local data storage.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#ecfeff'/><ellipse cx='200' cy='120' rx='80' ry='30' fill='#0891b2' fill-opacity='0.1' stroke='#0891b2' stroke-width='2'/><path d='M120 120 V80 Q120 50 200 50 Q280 50 280 80 V120' fill='none' stroke='#0891b2' stroke-width='2'/><path d='M150 90 L250 90' stroke='#0891b2' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#155e75' font-weight='600'>Atomic File-Based Storage</text></svg>",
+      "tags": ["database", "storage"],
+      "links": [
+        "https://sqlite.org/index.html",
+        "https://www.sqlite.org/faq.html",
+        "https://en.wikipedia.org/wiki/SQLite"
+      ],
+      "studentPrompts": [
+        "When would you choose SQLite over MySQL for a production web application?",
+        "Explain the 'Serverless' concept of SQLite. How does it manage concurrent writes if there is no central server process?",
+        "Discuss the limitations of SQLite in terms of multi-user concurrency and high-volume data writes."
+      ],
+      "codeReferences": ["database.ts", "repo-php/class/DB.php"]
+    },
+    {
+      "id": "H081-05",
+      "title": "CRUD (Create, Read, Update, Delete)",
+      "content": "CRUD represents the four fundamental operations that define the lifecycle of data within a persistent storage system. Almost every web application, from a simple todo-list to a global social network, is built upon these four pillars. In the FRAISE CMS, we implement CRUD for virtually every entity: you 'Create' a new site entry, 'Read' its details to display them in the explorer, 'Update' its configuration via the site editor, and 'Delete' it when it is no longer required. Each of these operations usually maps to a specific HTTP Method and a specific SQL command. By grouping our application logic into CRUD-based controllers, we ensure that our codebase remains predictable and follows the 'Single Responsibility Principle.' Mastering the CRUD flow is essential for any software engineer, as it provides the standardized framework for managing the state of any digital resource throughout its entire existence, from birth to archival.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><rect x='80' y='60' width='40' height='40' rx='4' fill='#be185d' fill-opacity='0.1' stroke='#be185d' stroke-width='2'/><rect x='140' y='60' width='40' height='40' rx='4' fill='#be185d' fill-opacity='0.1' stroke='#be185d' stroke-width='2'/><rect x='200' y='60' width='40' height='40' rx='4' fill='#be185d' fill-opacity='0.1' stroke='#be185d' stroke-width='2'/><rect x='260' y='60' width='40' height='40' rx='4' fill='#be185d' fill-opacity='0.1' stroke='#be185d' stroke-width='2'/><text x='100' y='130' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#831843' font-weight='600'>C</text><text x='160' y='130' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#831843' font-weight='600'>R</text><text x='220' y='130' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#831843' font-weight='600'>U</text><text x='280' y='130' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#831843' font-weight='600'>D</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#831843' font-weight='600'>The Data Lifecycle Pillar</text></svg>",
+      "tags": ["architecture", "backend"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Create,_read,_update_and_delete",
+        "https://www.codecademy.com/articles/what-is-crud",
+        "https://www.freecodecamp.org/news/crud-operations-explained/"
+      ],
+      "studentPrompts": [
+        "Map the CRUD operations to their corresponding HTTP methods (GET, POST, PUT, DELETE) and SQL commands (INSERT, SELECT, UPDATE, DELETE).",
+        "Why is it important to implement 'Soft Deletes' (marking a record as deleted instead of removing it) in enterprise systems?",
+        "Explain how the 'Read' operation often becomes the most performance-sensitive part of a high-traffic production application."
+      ],
+      "codeReferences": ["repo-php/class/Model.php", "src/views/SiteEditor.vue"]
+    },
+    {
+      "id": "H081-06",
+      "title": "Middleware",
+      "content": "Middleware acts as a sophisticated 'intercept layer' that processes requests before they reach their final destination within a web application. Imagine a series of security checkpoints at an airport: one checks your ticket (Authentication), another scans your luggage (Validation), and another verifies your visa (Authorization). Only after passing all these 'Middleware' layers do you reach your plane (the Controller). In our PHP and Node backends, middleware allows us to modularize cross-cutting concerns like logging, rate limiting, and session management. By decoupling this logic from our core business routes, we maintain a 'Clean Architecture' where controllers only focus on their specific tasks. Mastering middleware is key to building secure, scalable systems, as it provides a standardized way to apply global rules and transformations to every incoming packet of data before it is processed by the application core.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><path d='M80 100 H320' stroke='#7c3aed' stroke-width='2' stroke-dasharray='4'/><rect x='130' y='60' width='40' height='80' rx='4' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='1'/><rect x='180' y='60' width='40' height='80' rx='4' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='1'/><rect x='230' y='60' width='40' height='80' rx='4' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='1'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6' font-weight='600'>Multi-Layered Request Processing</text></svg>",
+      "tags": ["architecture", "security"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Middleware",
+        "https://expressjs.com/en/guide/using-middleware.html",
+        "https://laravel.com/docs/9.x/middleware"
+      ],
+      "studentPrompts": [
+        "Explain the 'Chain of Responsibility' pattern and how it relates to web middleware.",
+        "How can middleware be used to implement 'Global Error Handling' in a Node.js API?",
+        "Design a middleware function that logs the execution time of every HTTP request to the console."
+      ],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": "H081-07",
+      "title": "Authentication (Auth)",
+      "content": "Authentication is the critical security process of verifying that a user is who they claim to be. It is the first line of defense in any digital system, typically involving a combination of 'something you know' (password), 'something you have' (phone/token), or 'something you are' (biometrics). In the FRAISE platform, we handle authentication to ensure that each user can only access the dashboard and sites that belong to their unique identity. While traditional systems use server-side sessions, modern platforms often leverage federated identities (like Google Login) or decentralized protocols to provide a more seamless and secure user experience. Understanding the difference between 'Stateful' (Session-based) and 'Stateless' (Token-based) authentication is vital for designing systems that can scale across multiple servers while maintaining a consistent and impenetrable security perimeter for every user.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><circle cx='200' cy='80' r='30' fill='#ea580c' fill-opacity='0.1' stroke='#ea580c' stroke-width='2'/><path d='M170 140 Q200 110 230 140' fill='none' stroke='#ea580c' stroke-width='2'/><rect x='185' y='70' width='30' height='20' rx='2' fill='#ea580c'/><path d='M200 90 V105' stroke='#ea580c' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412' font-weight='600'>Identity Verification Layer</text></svg>",
+      "tags": ["security", "auth"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Authentication",
+        "https://auth0.com/intro-to-iam/what-is-authentication",
+        "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html"
+      ],
+      "studentPrompts": [
+        "What is Multi-Factor Authentication (MFA) and why is it considered significantly more secure than single-factor passwords?",
+        "Explain the 'Salt' and 'Hash' process for storing user passwords securely in a database.",
+        "Compare 'Social Login' (OAuth) vs 'Email/Password' authentication in terms of user friction and security trade-offs."
+      ],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": "H081-08",
+      "title": "Authorization (RBAC)",
+      "content": "Authorization is the logical process that determines what an already-authenticated user is allowed to see or do. While Authentication verifies identity, Authorization manages permissions. In many professional systems, we implement Role-Based Access Control (RBAC), where users are assigned roles like 'Admin', 'Editor', or 'Viewer.' In our CMS, being an 'Admin' allows you to modify the core system configuration, while a 'Site Owner' is authorized only to manage their specific site content. This hierarchy prevents accidents and malicious actions by ensuring that every user operates with the 'Principle of Least Privilege.' Effective authorization design involves mapping complex business requirements into clear, enforceable rules that can be audited and updated without rewriting the core application logic, ensuring that sensitive data is always protected behind a wall of fine-grained permissions.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><rect x='120' y='60' width='160' height='80' rx='8' fill='#0ea5e9' fill-opacity='0.1' stroke='#0ea5e9' stroke-width='2'/><circle cx='160' cy='100' r='10' fill='#0ea5e9' fill-opacity='0.2'/><circle cx='200' cy='100' r='10' fill='#0ea5e9' fill-opacity='0.4'/><circle cx='240' cy='100' r='10' fill='#0ea5e9'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#075985' font-weight='600'>Permission-Based Access Control</text></svg>",
+      "tags": ["security", "auth"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Role-based_access_control",
+        "https://okta.com/identity-101/rbac-vs-abac/",
+        "https://csrc.nist.gov/projects/role-based-access-control"
+      ],
+      "studentPrompts": [
+        "What is the difference between RBAC (Role-Based) and ABAC (Attribute-Based) access control?",
+        "Explain the 'Principle of Least Privilege' and how it minimizes the 'Blast Radius' of a compromised user account.",
+        "How would you implement a 'Super Admin' role that can bypass all standard authorization checks for debugging purposes?"
+      ],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": "H081-09",
+      "title": "JWT (JSON Web Token)",
+      "content": "JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties. It is the gold standard for stateless authentication in modern distributed systems. A JWT consists of three parts: a Header (algorithm), a Payload (user data), and a Signature (security). Because the server signs the token with a private secret, it can trust the information inside the token on every subsequent request without needing to look up a session in the database. This 'Self-Contained' nature makes JWTs perfect for microservices and mobile apps, as they can be passed in HTTP headers to prove identity across different domains. However, because they are stateless, they require careful management of expiration times and 'Refresh Token' strategies to prevent security leaks, as a stolen JWT cannot be easily revoked without specialized blacklisting mechanisms.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><path d='M100 80 H300' stroke='#db2777' stroke-width='2' stroke-dasharray='5'/><text x='130' y='110' font-family='monospace' font-size='10' fill='#db2777'>Header</text><text x='200' y='110' text-anchor='middle' font-family='monospace' font-size='10' fill='#db2777'>Payload</text><text x='270' y='110' font-family='monospace' font-size='10' fill='#db2777'>Signature</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#831843' font-weight='600'>Stateless Cryptographic Identity</text></svg>",
+      "tags": ["security", "protocol"],
+      "links": [
+        "https://jwt.io/introduction/",
+        "https://en.wikipedia.org/wiki/JSON_Web_Token",
+        "https://auth0.com/docs/secure/tokens/json-web-tokens"
+      ],
+      "studentPrompts": [
+        "Explain why a JWT shouldn't contain sensitive information like a user's raw password, despite being 'Signed'.",
+        "How does a 'Secret Key' prevent an attacker from modifying the data inside a JWT payload?",
+        "What are the benefits of using JWTs in a microservices environment compared to traditional cookie-based sessions?"
+      ],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": "H081-10",
+      "title": "CORS (Cross-Origin Resource Sharing)",
+      "content": "CORS is a vital browser security mechanism that allows a server to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading of resources. By default, browsers implement a 'Same-Origin Policy' that prevents JavaScript on `site-a.com` from calling an API on `site-b.com` to prevent data theft. CORS relaxes this policy by using special HTTP headers like `Access-Control-Allow-Origin`. In our environment, if the Vue dashboard is running on a different port or domain than the PHP API, we must configure our server to explicitly allow requests from the dashboard's origin. Misconfiguring CORS is one of the most common causes of 'Network Errors' for junior developers, but mastering it is essential for building real-world, multi-tenant applications where frontend and backend services often live on separate infrastructure nodes.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#ecfeff'/><rect x='80' y='60' width='80' height='60' rx='4' fill='#0891b2' fill-opacity='0.1' stroke='#0891b2' stroke-width='2'/><rect x='240' y='60' width='80' height='60' rx='4' fill='#0891b2' fill-opacity='0.1' stroke='#0891b2' stroke-width='2'/><path d='M160 90 H240' stroke='#0891b2' stroke-width='2' stroke-dasharray='4'/><path d='M230 80 L240 90 L230 100' fill='none' stroke='#0891b2' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#155e75' font-weight='600'>Cross-Domain Security Handshake</text></svg>",
+      "tags": ["security", "web-standards"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
+        "https://en.wikipedia.org/wiki/Cross-origin_resource_sharing",
+        "https://web.dev/cross-origin-resource-sharing/"
+      ],
+      "studentPrompts": [
+        "What is a 'Preflight' request in CORS and why does the browser send an OPTIONS request before certain PUT or POST calls?",
+        "Explain the security risks of setting `Access-Control-Allow-Origin: *` in a production environment.",
+        "How do CORS headers differ from the 'Content-Security-Policy' (CSP) header in terms of what they protect?"
+      ],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": "H081-11",
+      "title": "Payload",
+      "content": "In the context of computer networking and data transmission, the 'Payload' is the actual intended message or data transmitted within an HTTP packet, excluding its headers, metadata, and overhead. Think of a physical package sent through the mail: the box, padding, and shipping label are the 'Protocol Overhead,' while the actual item inside is the 'Payload.' In our CMS, when you update a site's meta tags, the Payload is the JSON object containing the new title and description. Understanding the size and structure of your payload is critical for performance; excessively large payloads can lead to slow response times and high memory usage on both the client and server. Mastering payload optimization—through techniques like field minification, compression, and removing redundant data—is essential for building high-concurrency applications that remain responsive even under heavy network load or bandwidth constraints.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fffbeb'/><rect x='120' y='60' width='160' height='80' rx='4' fill='#d97706' fill-opacity='0.1' stroke='#d97706' stroke-width='2'/><rect x='140' y='80' width='120' height='40' rx='2' fill='#d97706' fill-opacity='0.2' stroke='#d97706' stroke-width='1'/><text x='200' y='175' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#92400e' font-weight='600'>Intentional Data Encapsulation</text></svg>",
+      "tags": ["data", "networking"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Payload_(computing)",
+        "https://developer.mozilla.org/en-US/docs/Glossary/Payload",
+        "https://www.techtarget.com/searchnetworking/definition/payload"
+      ],
+      "studentPrompts": [
+        "How does the choice of data format (JSON vs Protobuf) affect the total payload size for a mobile application?",
+        "Explain the importance of 'Gzip' or 'Brotli' compression in reducing the payload size transmitted over HTTP.",
+        "What is 'Over-fetching' and how does it impact the efficiency of data payloads in a REST API?"
+      ],
+      "codeReferences": ["src/views/SiteEditor.vue"]
+    },
+    {
+      "id": "H081-12",
+      "title": "Endpoints",
+      "content": "An Endpoint is a specific URL or communication channel provided by an API that allows external systems to interact with its resources. Each endpoint represents a specific 'Verb' and 'Noun' combination—for example, `GET /sites` to list all sites or `DELETE /task/45` to remove a specific task. Well-designed endpoints are the hallmark of a professional API, following the principles of REST (Representational State Transfer) to ensure they are intuitive, discoverable, and stateless. In the FRAISE ecosystem, our endpoints are strictly defined in our PHP router and consumed by our Vue and Python services. By organizing our system into clear endpoints, we create a 'Semantic Map' of our application's capabilities, making it easy for developers to integrate new features or for AI agents to autonomously perform complex tasks like site generation and media optimization.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdfa'/><path d='M100 60 H300' stroke='#0d9488' stroke-width='2' stroke-dasharray='4'/><circle cx='100' cy='60' r='6' fill='#0d9488'/><circle cx='200' cy='60' r='6' fill='#0d9488'/><circle cx='300' cy='60' r='6' fill='#0d9488'/><text x='100' y='90' text-anchor='middle' font-family='monospace' font-size='10' fill='#115e59'>/api/v1</text><text x='200' y='90' text-anchor='middle' font-family='monospace' font-size='10' fill='#115e59'>/sites</text><text x='300' y='90' text-anchor='middle' font-family='monospace' font-size='10' fill='#115e59'>/tasks</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#115e59' font-weight='600'>Relational Resource Mapping</text></svg>",
+      "tags": ["backend", "api"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Web_API#Endpoints",
+        "https://smartbear.com/blog/what-is-an-api-endpoint/",
+        "https://www.postman.com/what-is-an-api-endpoint/"
+      ],
+      "studentPrompts": [
+        "Why is it better to use plural nouns (e.g., `/users`) instead of verbs (e.g., `/getUsers`) for RESTful API endpoints?",
+        "Explain how 'Path Variables' (e.g., `/sites/:id`) allow a single endpoint to handle requests for thousands of different resources.",
+        "Design a set of endpoints for a 'Library Management' system that covers all four CRUD operations."
+      ],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": "H081-13",
+      "title": "Query Parameters",
+      "content": "Query Parameters are a crucial part of the URL used to pass additional data-key-value pairs to a web application without changing the base path. They appear after a question mark (`?`) and are separated by ampersands (`&`), such as `/search?q=ai&limit=10`. In our management dashboard, we use query parameters to maintain state—filtering the list of sites, tracking the current active tab, or passing a 'Success' message after a form submission. Unlike 'Path Variables,' which are used to identify a specific resource, query parameters are primarily used for searching, sorting, and session context. Mastering query parameter management is essential for building a 'Resilient UI,' as it allows users to bookmark specific states of the application or share links that preserve their current view, ensuring a seamless and predictable navigation experience across the entire FRAISE platform.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><rect x='80' y='70' width='240' height='30' rx='4' fill='#a21caf' fill-opacity='0.1' stroke='#a21caf' stroke-width='2'/><text x='200' y='90' text-anchor='middle' font-family='monospace' font-size='10' fill='#701a75'>?sort=date&filter=active</text><path d='M100 120 L150 150 M300 120 L250 150' stroke='#a21caf' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75' font-weight='600'>Dynamic Context Injection</text></svg>",
+      "tags": ["web-fundamentals", "routing"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Query_string",
+        "https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams",
+        "https://support.google.com/analytics/answer/1033867"
+      ],
+      "studentPrompts": [
+        "How do you securely handle sensitive data (like API keys) if it must be passed via a URL query parameter?",
+        "Explain the benefit of using 'URLSearchParams' in modern JavaScript for manipulating query strings.",
+        "Why are query parameters often excluded from 'Canonical URLs' by search engines like Google?"
+      ],
+      "codeReferences": ["repo-php/class/AdminRouter.php"]
+    },
+    {
+      "id": "H081-14",
+      "title": "Environment Variables (.env)",
+      "content": "Environment Variables are the security-first standard for managing configuration and secrets outside of an application's source code. By storing sensitive data like `GEMINI_API_KEY`, `DB_PASSWORD`, and `STRIPE_SECRET` in a `.env` file that is never committed to Git, we prevent accidental exposure of our mission-critical credentials. This follows the industry-standard '12-Factor App' methodology, ensuring that the same code can run in development, staging, and production with only a change in the environment context. In our FRAISE platform, we use environment variables to configure our PHP, Node, and Python services dynamically. Mastering environment variable management is a foundational skill for high-stakes software engineering, as it allows for secure, automated deployments while maintaining a 'Zero Trust' approach to infrastructure secrets and third-party API integrations.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='100' y='60' width='200' height='80' rx='8' fill='#2563eb' fill-opacity='0.1' stroke='#2563eb' stroke-width='2'/><path d='M120 90 L280 90' stroke='#2563eb' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af' font-weight='600'>Externalized Configuration Secret</text></svg>",
+      "tags": ["devops", "security"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Environment_variable",
+        "https://12factor.net/config",
+        "https://www.dotenv.org/docs/"
+      ],
+      "studentPrompts": [
+        "Why is it a critical security failure to commit a `.env` file containing real secrets to a public GitHub repository?",
+        "Explain the purpose of a `.env.example` file in an open-source or collaborative project.",
+        "How do modern cloud platforms like Cloud Run or Coolify manage environment variables without using physical `.env` files?"
+      ],
+      "codeReferences": [".env.example", "repo-php/.env.example"]
+    },
+    {
+      "id": "H081-15",
+      "title": "Git (Commit, Push, Pull)",
+      "content": "Git is the distributed version control system that serves as the 'Chronological Record' of an entire software project's evolution. It allows developers to work together on a massive, complex codebase without overwriting each other's work or losing historical context. 'Commit' creates a local snapshot of your changes with a descriptive message; 'Push' uploads those snapshots to a central server (like GitHub); and 'Pull' fetches and merges the latest work from your teammates. In our polyglot repository, Git is the glue that coordinates the work of AI agents and human engineers alike. By maintaining a clean, atomized commit history, we can 'Time Travel' to any previous state of the application to diagnose bugs, revert breaking changes, or experiment with new architectural patterns with the absolute certainty that no previous work is ever truly lost.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fefce8'/><circle cx='100' cy='100' r='10' fill='#eab308' stroke='#854d0e' stroke-width='2'/><circle cx='200' cy='100' r='10' fill='#eab308' stroke='#854d0e' stroke-width='2'/><circle cx='300' cy='100' r='10' fill='#eab308' stroke='#854d0e' stroke-width='2'/><path d='M110 100 H190 M210 100 H290' stroke='#854d0e' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#854d0e' font-weight='600'>Iterative Immutable History</text></svg>",
+      "tags": ["devops", "vcs"],
+      "links": [
+        "https://git-scm.com/doc",
+        "https://en.wikipedia.org/wiki/Git",
+        "https://www.atlassian.com/git/tutorials/what-is-version-control"
+      ],
+      "studentPrompts": [
+        "What is the difference between `git merge` and `git rebase` in terms of how they affect the project history?",
+        "How can a 'Merge Conflict' occur and what are the best practices for resolving it in a multi-developer team?",
+        "Explain the benefit of writing 'Atomic Commits' (small, focused changes) instead of giant, multi-feature commits."
+      ],
+      "codeReferences": ["docs/devops/git-sync-feature.md"]
+    },
+    {
+      "id": "H081-16",
+      "title": "Repository (Repo)",
+      "content": "A Repository, or 'Repo,' is the central storage location for all the files, folders, and history of a software project. In our architecture, we utilize a 'Monorepo' or 'Polyglot Repo' strategy, where multiple distinct sub-projects—PHP, React/Vue, and Python—coexist within a single unified version control environment. This approach is highly beneficial for complex full-stack applications like FRAISE, as it allows for atomic changes that span across both frontend and backend code in a single commit. A well-organized repository is the foundation of effective team collaboration; it provides a shared 'Single Source of Truth' where developers can easily navigate the entire codebase, understand cross-project dependencies, and ensure that every service in the cluster is perfectly synchronized. Mastering repository management—including READMEs, file structures, and ignored files—is essential for maintaining a clean, professional, and accessible codebase for both human engineers and automated AI agents.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='100' y='60' width='200' height='100' rx='8' fill='#166534' fill-opacity='0.1' stroke='#166534' stroke-width='2'/><path d='M120 90 H280 M120 110 H280 M120 130 H220' stroke='#166534' stroke-width='1.5' stroke-linecap='round'/><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#14532d' font-weight='600'>Unified Project Source Container</text></svg>",
+      "tags": ["devops", "vcs"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Repository_(version_control)",
+        "https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories",
+        "https://monorepo.tools/"
+      ],
+      "studentPrompts": [
+        "What are the pros and cons of a 'Monorepo' vs a 'Polyrepo' architecture for a growing technology startup?",
+        "Explain the importance of the `.gitignore` file and what types of files should never be committed to a repository.",
+        "How can repository 'Tags' be used to mark specific releases or milestones in the development lifecycle?"
+      ],
+      "codeReferences": ["README.md"]
+     },
+    {
+      "id": "H081-17",
+      "title": "Branching",
+      "content": "Branching is the powerful capability within Git that allows multiple independent lines of development to coexist relative to the main project history. Imagine a tree: the trunk is your production-ready code (the `main` branch), while each branch represents a new feature, bug fix, or experiment. This 'Isolated Development' model is critical for professional engineering teams; it allows you to build and test high-risk features—like a new AI dashboard or a complex database migration—without affecting the stability of the live application. Only after a branch is fully vetted and reviewed is it 'Merged' back into the trunk. Mastering branching strategies (like Git Flow or Trunk-Based Development) is essential for maintaining a high 'Deployment Velocity' while ensuring that your production environment remains a safe and reliable destination for every user.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><path d='M100 150 V50' stroke='#be185d' stroke-width='4' stroke-linecap='round'/><path d='M100 120 Q150 120 150 80' fill='none' stroke='#be185d' stroke-width='3' stroke-dasharray='4'/><path d='M100 100 Q200 100 200 60' fill='none' stroke='#be185d' stroke-width='3' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#831843' font-weight='600'>Non-Linear Feature Isolation</text></svg>",
+      "tags": ["devops", "workflow"],
+      "links": [
+        "https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging",
+        "https://www.atlassian.com/git/tutorials/using-branches",
+        "https://trunkbaseddevelopment.com/"
+      ],
+      "studentPrompts": [
+        "Compare 'Feature Branching' vs 'Trunk-Based Development'—which one is better for high-frequency CI/CD?",
+        "What is a 'Long-Lived Branch' and why is it generally considered a source of technical debt in modern DevOps?",
+        "Explain the benefit of using 'Branch Protections' to prevent direct pushes to the `main` or `production` branches."
+      ],
+      "codeReferences": ["docs/devops/git-sync-feature.md"]
+    },
+    {
+      "id": "H081-18",
+      "title": "Merge Request / Pull Request",
+      "content": "A Merge Request (MR) or Pull Request (PR) is the collaborative 'Gatekeeper' in modern software development. It is the process of inviting your team to review, discuss, and approve changes from a development branch before they are merged into the main codebase. In the FRAISE ecosystem, PRs are where the 'Code Review' happens—ensuring that every new feature follows our architectural guidelines, performance standards, and security protocols. It is a critical pedagogical tool; junior developers receive feedback from seniors, and the entire team gains shared ownership of the code. A well-documented PR, complete with descriptions, screenshots, and test results, is the hallmark of a professional engineer. By utilizing this 'Checked-and-Balanced' workflow, we ensure that only high-quality, peer-vetted code ever reaches our production servers, significantly reducing the likelihood of regressions or security vulnerabilities in our multi-tenant CMS.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='100' y='70' width='200' height='60' rx='8' fill='#2563eb' fill-opacity='0.1' stroke='#2563eb' stroke-width='2'/><path d='M150 100 L250 100' stroke='#1e40af' stroke-width='2' stroke-linecap='round'/><path d='M230 90 L250 100 L230 110' fill='none' stroke='#1e40af' stroke-width='2'/><circle cx='80' cy='100' r='10' fill='#2563eb' fill-opacity='0.2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af' font-weight='600'>Collaborative Synchronous Validation</text></svg>",
+      "tags": ["devops", "collaboration"],
+      "links": [
+        "https://docs.github.com/en/pull-requests",
+        "https://docs.gitlab.com/ee/user/project/merge_requests/",
+        "https://www.atlassian.com/git/tutorials/making-a-pull-request"
+      ],
+      "studentPrompts": [
+        "Why is it important to keep Pull Requests small and focused on a single change instead of multiple features?",
+        "What are the key things a senior developer should look for during a 'Security-Minded' code review of a new API endpoint?",
+        "Explain how automated 'CI Checks' (tests, linting) can save time during the manual PR review process."
+      ],
+      "codeReferences": ["AGENTS.md"]
+    },
+    {
+      "id": "H081-19",
+      "title": "Markdown (.md)",
+      "content": "Markdown is the lightweight, plain-text formatting language that has become the industry standard for technical documentation. Its philosophy is simple: a documentation format should be as easy to write as it is to read, ensuring that formatting never gets in the way of ideas. In the FRAISE platform, all our internal guides, project plans, and architectural notes—located in the `docs/` directory—are written in Markdown. Because it is plain text, it is perfectly version-controlled by Git, allowing us to track changes to our documentation just as easily as changes to our code. Mastering Markdown enables you to create rich, structured documents with headers, lists, links, and even code snippets that render beautifully on GitHub or within our local training center, providing a bridge between 'Technical Logic' and 'Human Understanding' that is essential for any high-functioning engineering team.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><path d='M120 60 H280 V140 H120 Z' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='2'/><path d='M140 80 H220 M140 100 H260 M140 120 H260' stroke='#7c3aed' stroke-width='2' stroke-linecap='round'/><path d='M250 80 L270 80' stroke='#7c3aed' stroke-width='3' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6' font-weight='600'>Standardized Technical Prose</text></svg>",
+      "tags": ["documentation", "standard"],
+      "links": [
+        "https://daringfireball.net/projects/markdown/",
+        "https://commonmark.org/",
+        "https://www.markdownguide.org/"
+      ],
+      "studentPrompts": [
+        "How does Markdown facilitate better collaboration in a software project compared to binary formats like `.docx`?",
+        "Explain how 'Frontmatter' (YAML metadata at the start of a `.md` file) can be used by static site generators or documentation tools.",
+        "Design a sample Markdown template for an 'Architectural Decision Record' (ADR) that includes status, context, and consequences."
+      ],
+      "codeReferences": ["README.md", "docs/plan.md"]
+    },
+    {
+      "id": "H081-20",
+      "title": "YAML",
+      "content": "YAML (YAML Ain't Markup Language) is a human-friendly data serialization standard that has become the primary language for infrastructure configuration and CI/CD pipelines. Unlike JSON, which uses braces and quotes, YAML relies on indentation to define structure, making it exceptionally readable and concise for complex configurations. In our FRAISE ecosystem, we use YAML for our Docker Compose files and potential automated deployment scripts. Its 'Keys: Values' approach is perfectly suited for defining environment variables, network settings, and volume mounts in a way that is easy for a DevOps engineer to audit at a glance. However, because it is indentation-sensitive, it requires a disciplined approach—a single extra space can break an entire production deployment. Mastering YAML is a critical skill for the modern engineer, providing the 'Declarative Interface' needed to manage the complex cloud infrastructures that power our multi-tenant application cluster.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fefce8'/><text x='100' y='70' font-family='monospace' font-size='12' fill='#854d0e'>services:</text><text x='120' y='95' font-family='monospace' font-size='12' fill='#854d0e'>  web:</text><text x='140' y='120' font-family='monospace' font-size='12' fill='#854d0e'>    image: node:18</text><text x='140' y='145' font-family='monospace' font-size='12' fill='#854d0e'>    ports: [\"3000:3000\"]</text><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#854d0e' font-weight='600'>Declarative Infrastructure Blueprint</text></svg>",
+      "tags": ["data", "configuration"],
+      "links": [
+        "https://yaml.org/",
+        "https://en.wikipedia.org/wiki/YAML",
+        "https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html"
+      ],
+      "studentPrompts": [
+        "Why is YAML often preferred over JSON for configuration files that are modified by humans?",
+        "Explain the importance of 'Strict Indentation' in YAML and how a linter can help prevent deployment-breaking errors.",
+        "How can YAML 'Anchors' and 'Aliases' be used to reduce duplication in a large multi-service `docker-compose.yml` file?"
+      ],
+      "codeReferences": ["docker-compose.yml", "repo-php/docker-compose.yml"]
+    },
+    {
+      "id": "H081-21",
+      "title": "Interface (TypeScript / PHP)",
+      "content": "An Interface is a critical architectural construct that defines a rigorous 'Contract' for the shape and behavior of an object or class without prescribing its internal implementation. In the FRAISE platform, we utilize interfaces in both our TypeScript frontend and PHP backend to ensure 'Structural Integrity' across our polyglot stack. In TypeScript, an interface ensures that data objects have the correct properties; in PHP, it mandates that a class implements specific methods. This allows for 'Polymorphism'—where different services (like a Google Analytics plugin vs a Plausible plugin) can be used interchangeably as long as they both adhere to the same `AnalyticsInterface`. Mastering interfaces is the key to building loosely-coupled, modular systems where components can be evolved, replaced, or extended independently, ensuring that our multi-tenant CMS remains flexible and resilient as it scales to support new technologies and third-party integrations.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdfa'/><path d='M100 80 H180' stroke='#0d9488' stroke-width='2' stroke-dasharray='4'/><rect x='180' y='60' width='40' height='40' rx='4' fill='#0d9488' fill-opacity='0.1' stroke='#0d9488' stroke-width='2'/><path d='M220 80 H300' stroke='#0d9488' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#115e59' font-weight='600'>Abstract Architectural Contract</text></svg>",
+      "tags": ["programming", "type-system"],
+      "links": [
+        "https://www.typescriptlang.org/docs/handbook/interfaces.html",
+        "https://www.php.net/manual/en/language.oop5.interfaces.php",
+        "https://en.wikipedia.org/wiki/Interface_(computing)"
+      ],
+      "studentPrompts": [
+        "What is the difference between an 'Abstract Class' and an 'Interface' in object-oriented programming?",
+        "Explain how interfaces facilitate 'Dependency Injection' and improve the testability of complex software systems.",
+        "Design an interface for a 'FileStorageService' that could be implemented by both a LocalDisk and an S3 bucket provider."
+      ],
+      "codeReferences": ["src/sites.json", "repo-php/class/Component.php"]
+    },
+    {
+      "id": "H081-22",
+      "title": "Type Safety",
+      "content": "Type Safety is the logical guarantee that a program will not attempt to perform operations on data that are incompatible with its defined type. In our FRAISE stack, we leverage the power of TypeScript on the frontend and Type Hinting in PHP to catch 'Type Mismatch' errors—like trying to perform arithmetic on a boolean or passing an array where a string is expected—during the development phase. This 'Early Detection' is vital for building robust systems; it turns runtime 'Crashes' into compile-time 'Corrections.' A type-safe codebase is essentially self-documenting, as the types themselves describe how data flows through the system. By committing to a type-safe architecture, we significantly reduce the 'Cognitive Load' on developers and ensuring that our multi-tenant platform remains stable, predictable, and remarkably easy to refactor as we introduce advanced AI-driven features and complex data models.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><rect x='150' y='60' width='100' height='80' rx='10' fill='#0ea5e9' fill-opacity='0.1' stroke='#0ea5e9' stroke-width='3'/><path d='M175 100 L185 110 L220 80' fill='#0ea5e9' stroke='#0ea5e9' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#075985' font-weight='600'>Proactive Logical Constraint Verification</text></svg>",
+      "tags": ["programming", "best-practices"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Type_safety",
+        "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
+        "https://www.php.net/manual/en/language.types.declarations.php"
+      ],
+      "studentPrompts": [
+        "How does the 'Strict Typing' mode in PHP 8 differ from the dynamic typing of earlier PHP versions?",
+        "Explain the benefit of 'Static Analysis' tools like PHPStan or ESLint in enforcing type safety across a large team.",
+        "Discuss the trade-offs between 'Strongly Typed' languages and 'Loosely Typed' languages in terms of development speed and system reliability."
+      ],
+      "codeReferences": ["src/main.ts", "repo-php/class/Model.php"]
+    },
+    {
+      "id": "H081-23",
+      "title": "Generics",
+      "content": "Generics are a sophisticated feature of modern type systems that allow developers to write reusable code which can operate on a variety of types while still maintaining 'Strict Type Safety.' Imagine a box designed to hold 'Any Item,' but once you put a 'Book' in it, the box 'Remembers' that it now specifically contains a Book. In our TypeScript code, you might see a pattern like `Promise<Site[]>`. This tells the compiler that the function will eventually return an array specifically of `Site` objects. Without generics, we would have to use the dangerously non-specific `any` type or rewrite the same fetching logic for every different data model. Mastering generics is a hallmark of an advanced software engineer; it allows you to build powerful, flexible abstractions—like universal data fetchers or complex state managers—that are both highly reusable and mathematically guaranteed to be type-safe across the entire FRAISE platform.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><rect x='120' y='70' width='160' height='60' rx='4' fill='#a21caf' fill-opacity='0.1' stroke='#a21caf' stroke-width='2'/><text x='200' y='105' text-anchor='middle' font-family='monospace' font-size='14' fill='#701a75'>List&lt;T&gt;</text><path d='M150 140 L250 140' stroke='#a21caf' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75' font-weight='600'>Parameterized Architectural Abstraction</text></svg>",
+      "tags": ["programming", "advanced"],
+      "links": [
+        "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+        "https://en.wikipedia.org/wiki/Generic_programming",
+        "https://www.php.net/manual/en/language.oop5.generics.php"
+      ],
+      "studentPrompts": [
+        "Explain the concept of 'Type Parameters' (e.g., `<T>`) and how they provide 'Type Identity' throughout a function's execution.",
+        "How do Generics help avoid 'Type Casting' and improve the performance of a high-traffic application?",
+        "Design a generic `DataSource<T>` interface that could handle CRUD operations for any entity in our system."
+      ],
+      "codeReferences": ["src/views/SiteExplorer.vue"]
+    },
+    {
+      "id": "H081-24",
+      "title": "Async/Await",
+      "content": "Async/Await is the elegant, modern syntax for managing asynchronous operations in JavaScript and Python, allowing 'Non-Blocking' code to be written with the readability of standard 'Synchronous' logic. Before this pattern, developers were often trapped in 'Callback Hell,' struggling to coordinate multiple nested network requests. With `await`, the execution of a function is paused until a Promise resolves, but the main calculation thread remains free to handle user interactions like clicks or scrolls. In the FRAISE dashboard, we use `async/await` for every API call—from fetching the list of sites to invoking the Gemini media generator—ensuring that our UI remains 'Butter-Smooth' even while performing heavy processing in the background. Mastering this pattern is essential for building high-performance, reactive web applications that provide a first-class user experience by seamlessly managing the inherent latencies of a distributed, AI-integrated backend.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><path d='M100 100 Q200 40 300 100 T100 100' stroke='#2563eb' stroke-width='2' fill='none' stroke-dasharray='4'/><circle cx='100' cy='100' r='5' fill='#1e40af'/><circle cx='300' cy='100' r='5' fill='#1e40af'/><text x='200' y='170' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af' font-weight='600'>Non-Blocking Sequential Execution</text></svg>",
+      "tags": ["programming", "frontend"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Async_await",
+        "https://javascript.info/async-await",
+        "https://docs.python.org/3/library/asyncio-task.html"
+      ],
+      "studentPrompts": [
+        "Explain how `await` works under the hood even though JavaScript is a 'Single-Threaded' language.",
+        "What is the importance of 'Error Handling' (using try/catch) when working with `async/await`?",
+        "Compare `Promise.all()` vs sequential `await` calls when fetching data from five different API endpoints."
+      ],
+      "codeReferences": ["src/views/SiteDashboard.vue"]
+    },
+    {
+      "id": "H081-25",
+      "title": "Promises",
+      "content": "A Promise is a powerful object representing the eventual completion (or failure) of an asynchronous operation and its resulting value. It acts as a 'Placeholder' for a value that hasn't arrived yet—like a pager at a busy restaurant that vibrates once your table is ready. A Promise can exist in three states: 'Pending' (waiting), 'Fulfilled' (success with data), or 'Rejected' (failure with error). In the FRAISE platform, every network request to our PHP API or the Google Maps SDK returns a Promise. By utilizing Promises, we can elegantly chain multiple operations together, ensuring that each step only occurs after the previous one has successfully completed. Understanding the internal mechanics of 'The Promise Lifecycle' is critical for managing the complexities of modern, distributed software, providing a standardized foundation for building reliable, error-tolerant, and highly interactive user interfaces.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff1f2'/><rect x='150' y='60' width='100' height='80' rx='10' fill='#e11d48' fill-opacity='0.1' stroke='#e11d48' stroke-width='2' stroke-dasharray='5'/><text x='200' y='105' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#881337'>Future Value</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#881337' font-weight='600'>Asynchronous State Encapsulation</text></svg>",
+      "tags": ["programming", "javascript"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+        "https://javascript.info/promise-basics",
+        "https://web.dev/promises/"
+      ],
+      "studentPrompts": [
+        "Why was the introduction of Promises considered a 'Game-Changer' for managing JavaScript complexity compared to callbacks?",
+        "Explain the purpose of `.then()`, `.catch()`, and `.finally()` in a Promise-based workflow.",
+        "What happens to a 'Pending' promise if the network connection is lost or the server never responds?"
+      ],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": "H081-26",
+      "title": "Callback Functions",
+      "content": "A Callback Function is a function passed as an argument to another function, intended to be executed after a specific task or event has completed. This 'Continuation-Passing' style was the foundational way to handle asynchronous logic in JavaScript before the advent of Promises and Async/Await. In our PHP backend and certain legacy parts of our frontend, callbacks allow our system to remain 'Event-Driven'—for example, triggering a cleanup routine after an AI task is successfully archived. While callbacks are incredibly powerful for creating flexible, higher-order functions, they can lead to 'Callback Hell' (deeply nested, unreadable code) if overused. Mastering the transition from callbacks to more modern asynchronous patterns is a vital evolutionary step for any engineer, providing the necessary tools to build clean, maintainable, and highly responsive applications within the FRAISE multi-tenant architecture.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdfa'/><path d='M100 80 H200 V120 H300' stroke='#0d9488' stroke-width='2' fill='none' stroke-dasharray='4'/><circle cx='100' cy='80' r='5' fill='#0d9488'/><circle cx='300' cy='120' r='5' fill='#0d9488'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#115e59' font-weight='600'>Deferred Functional Continuation</text></svg>",
+      "tags": ["programming", "fundamentals"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Glossary/Callback_function",
+        "https://javascript.info/callbacks",
+        "https://en.wikipedia.org/wiki/Callback_(computer_programming)"
+      ],
+      "studentPrompts": [
+        "What is 'Callback Hell' and how do modern patterns like Promises solve the readability issues associated with it?",
+        "Explain the difference between a 'Synchronous' callback and an 'Asynchronous' callback in JavaScript.",
+        "How do you handle 'Error First' callbacks in standard Node.js environments (the `(err, data) => {}` pattern)?"
+      ],
+      "codeReferences": ["repo-php/class/AITaskManager.php"]
+    },
+    {
+      "id": "H081-27",
+      "title": "Event Loop",
+      "content": "The Event Loop is the 'Engine Room' of JavaScript, the sophisticated mechanism that allows a single-threaded language to perform non-blocking I/O operations despite its architectural simplicity. It works by constantly monitoring the 'Call Stack' and the 'Task Queue'—if the stack is empty, it pushes the next pending job (like a resolved API call or a user click) into the stack for execution. This cycle is what allows our FRAISE dashboard to remain interactive while simultaneously processing network responses, AI generations, and real-time document updates. Without the event loop, every network request would completely 'Freeze' the browser until the data arrived. Understanding the nuances of the event loop—including the difference between 'Microtasks' and 'Macrotasks'—is essential for building highly performant applications that provide a buttery-smooth user experience on even the most constrained devices.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><path d='M200 100 m-40,0 a40,40 0 1,0 80,0 a40,40 0 1,0 -80,0' fill='none' stroke='#7c3aed' stroke-width='3' stroke-dasharray='5'/><path d='M240 100 L250 110 M240 100 L230 110' fill='none' stroke='#7c3aed' stroke-width='3'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6' font-weight='600'>Single-Threaded Concurrency Orchestrator</text></svg>",
+      "tags": ["programming", "javascript"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop",
+        "https://javascript.info/event-loop",
+        "https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/"
+      ],
+      "studentPrompts": [
+        "Why is it a bad idea to run a heavy, long-running mathematical calculation directly on the main event loop thread?",
+        "Explain the difference between the 'Call Stack' and the 'Callback Queue' in the context of the event loop.",
+        "What is the role of 'Web APIs' (like `setTimeout`) in allowing JavaScript to move tasks off the main thread?"
+      ],
+      "codeReferences": ["src/main.ts"]
+    },
+    {
+      "id": "H081-28",
+      "title": "NPM Scripts",
+      "content": "NPM Scripts are the standardized 'Shortcuts' defined in an application's `package.json`, providing a unified interface for triggering complex build tools, linters, and development servers. Instead of forcing every developer to memorize long, arcane terminal commands with dozens of flags, we define simple aliases like `npm run dev` or `npm run build`. This abstraction is critical for team consistency; it ensures that every engineer—and every automated CI/CD pipeline—is using exactly the same build configuration and environment settings. In the FRAISE platform, our scripts coordinate the compilation of TypeScript, the minification of assets via Vite, and the orchestration of our multi-stack Docker containers. Mastering NPM scripts allows you to build powerful, automated 'Developer Experience' (DX) workflows that reduce friction and ensure the predictable, high-fidelity delivery of software throughout the entire project lifecycle.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><rect x='80' y='60' width='240' height='80' rx='8' fill='#ea580c' fill-opacity='0.1' stroke='#ea580c' stroke-width='2'/><text x='110' y='95' font-family='monospace' font-size='12' fill='#9a3412'>\"dev\": \"vite\",</text><text x='110' y='120' font-family='monospace' font-size='12' fill='#9a3412'>\"build\": \"tsc &amp;&amp; vite build\"</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412' font-weight='600'>Standardized Toolchain Orchestration</text></svg>",
+      "tags": ["devops", "tooling"],
+      "links": [
+        "https://docs.npmjs.com/cli/v9/using-npm/scripts",
+        "https://nodesource.com/blog/an-absolute-beginners-guide-to-using-npm-scripts/",
+        "https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb25317333/"
+      ],
+      "studentPrompts": [
+        "Explain the difference between `npm install` and `npm run build` in a typical web development workflow.",
+        "How can you use 'Pre' and 'Post' scripts (e.g., `prebuild`) to automate tasks like cleaning the `dist/` directory?",
+        "What are the benefits of using NPM scripts for cross-platform compatibility compared to writing custom Bash or PowerShell scripts?"
+      ],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": "H081-29",
+      "title": "Dev Server",
+      "content": "A Dev Server is a localized environment optimized for the rapid, iterative lifecycle of software development. Unlike a production server, which is optimized for security and raw speed, a dev server is designed for 'Developer Velocity,' providing features like Hot Module Replacement (HMR) to show code changes instantly in the browser without a full page refresh. In our project, the dev server runs on port 3000, serving as our primary workspace for building the Vue dashboard and testing the PHP API. It often includes 'Debug Overlays' that expose detailed error logs and performance metrics which are stripped away in production for security reasons. Mastering your development server environment is a core part of becoming a high-output engineer; it provides the 'Fast Feedback Loop' needed to experiment boldly and fix bugs rapidly before shipping your code to the high-stakes production cluster.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='120' y='60' width='160' height='80' rx='8' fill='#2563eb' fill-opacity='0.1' stroke='#2563eb' stroke-width='2'/><path d='M200 80 V120 M180 100 H220' stroke='#1e40af' stroke-width='2' stroke-linecap='round'/><circle cx='200' cy='100' r='30' fill='none' stroke='#1e40af' stroke-width='1' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af' font-weight='600'>Rapid Iteration Feedback Loop</text></svg>",
+      "tags": ["frontend", "workflow"],
+      "links": [
+        "https://vitejs.dev/guide/features.html#hot-module-replacement",
+        "https://en.wikipedia.org/wiki/Localhost",
+        "https://web.dev/instant-observability-with-the-new-dev-server/"
+      ],
+      "studentPrompts": [
+        "What is Hot Module Replacement (HMR) and how does it differ from a simple 'Live Reload' of the entire page?",
+        "Why is it dangerous to leave a development server exposed to the public internet without proper firewall configuration?",
+        "Explain the benefit of using a 'Proxy' in a development server to avoid CORS issues when calling a local backend API."
+      ],
+      "codeReferences": ["vite.config.ts"]
+    },
+    {
+      "id": "H081-30",
+      "title": "Build Pipeline",
+      "content": "A Build Pipeline is the fully automated series of transformations that convert raw source code into a secure, optimized, and production-ready application artifact. Think of it as a factory assembly line: code goes in one end, is rigorously 'Linted' (checked for style), 'Tested' (checked for logic), 'Compiled' (converted from TS to JS), and 'Minified' (shrunk for speed), before emerging as a Docker image ready for deployment. In the FRAISE platform, our pipeline ensures that every commit to the main branch is scientifically verified and performance-tuned before it ever touches a production server. Mastering the build pipeline is the ultimate stage of DevOps maturity; it eliminates the 'Human Error' associated with manual deployments and ensures that the version of the application running in the cloud is exactly the same high-fidelity code we approved in development.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='60' y='80' width='60' height='40' rx='4' fill='#166534' fill-opacity='0.1' stroke='#166534' stroke-width='1'/><rect x='140' y='80' width='60' height='40' rx='4' fill='#166534' fill-opacity='0.1' stroke='#166534' stroke-width='1'/><rect x='220' y='80' width='60' height='40' rx='4' fill='#166534' fill-opacity='0.1' stroke='#166534' stroke-width='1'/><rect x='300' y='80' width='60' height='40' rx='4' fill='#166534' fill-opacity='0.1' stroke='#166534' stroke-width='1'/><path d='M120 100 H140 M200 100 H220 M280 100 H300' stroke='#166534' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#14532d' font-weight='600'>Automated High-Fidelity Delivery</text></svg>",
+      "tags": ["devops", "workflow"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Continuous_integration",
+        "https://cloud.google.com/build/docs/concepts/build-pipeline",
+        "https://www.atlassian.com/continuous-delivery/adopting-ci-cd"
+      ],
+      "studentPrompts": [
+        "Explain the importance of 'Build Artifacts' and why they should be immutable once they leave the pipeline.",
+        "What are the benefits of 'Multi-Stage Docker Builds' in creating small, secure production images?",
+        "Design a high-level pipeline for a React application that includes Linting, Unit Testing, and Production Minification."
+      ],
+      "codeReferences": ["Dockerfile"]
+    }
+  ]
+}

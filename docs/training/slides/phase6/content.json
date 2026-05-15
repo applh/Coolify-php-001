@@ -1,0 +1,36 @@
+{
+  "moduleId": "PHASE-6-POLYGLOT",
+  "title": "Polyglot Systems: Node, Go & Python",
+  "totalSlides": 2,
+  "bundleId": 6,
+  "slides": [
+    {
+      "id": "S006-01",
+      "title": "High-Performance Services in Go",
+      "content": "Go (Golang), developed by Google, is engineered specifically for high-concurrency environments, offering exceptional performance, efficient memory management, and a robust standard library designed for networking and microservices. Its unique approach to concurrency—utilizing lightweight threads called 'goroutines' and communication channels to share data between them—circumvents the complexities of traditional thread management and synchronization locks often necessary in C++ or Java. This allows Go to handle massive workloads efficiently, making it an ideal choice for constructing modular, high-scale microservices, API gateways, and infrastructure tooling. Go's simplicity, short compilation times, and strong static typing encourage maintainable, reliable code even in large-scale distributed systems where communication latency and throughput are critical. By embracing Go, developers can build services that consume fewer resources, process requests concurrently with minimal overhead, and scale horizontally with ease across multi-tenant containerized architectures, ensuring high availability in modern backend infrastructure.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><path d='M100 50 Q200 150 300 50' fill='none' stroke='#0284c7' stroke-width='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#0369a1'>High-Concurrency Backend with Go</text></svg>",
+      "tags": ["go", "backend", "concurrency", "golang"],
+      "links": ["https://go.dev/doc/"],
+      "studentPrompts": [
+        "How do goroutines improve concurrency compared to traditional threading models?",
+        "Why is Go often preferred for building microservices in containerized environments?",
+        "Explain how Go's type system contributes to the reliability of distributed systems."
+      ],
+      "codeReferences": ["repo-go/main.go"]
+    },
+    {
+      "id": "S006-02",
+      "title": "Python for Data-Driven Services",
+      "content": "Python has solidified its position as the premier language for data processing, scientific computing, and rapid API development, bolstered by a colossal ecosystem of libraries (NumPy, Pandas, FastAPI). Its interpreted nature, clean syntax, and focus on developer productivity make it ideal for prototyping complex business logic or building data-heavy services that require seamless integration with machine learning or analytical processes. In a polyglot architecture, Python often shines where rapid data transformation, API endpoint development, or scripting complex configurations is necessary. Furthermore, frameworks like FastAPI leverage asynchronous programming patterns to overcome Python's GIL limitations, providing competitive performance for web applications. While not as high-throughput as Go for raw system execution, Python reduces the time-to-market for data-intensive projects by allowing developers to manipulate, aggregate, and expose complex datasets with minimal boilerplate. It is commonly tasked with generating reports, managing data-driven configurations, and orchestrating complex automation scripts within a microservice landscape.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fffbeb'/><rect x='100' y='60' width='200' height='80' fill='#f59e0b' fill-opacity='0.2' rx='10'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#92400e'>Rapid Data API Development with Python</text></svg>",
+      "tags": ["python", "api", "data", "backend"],
+      "links": ["https://fastapi.tiangolo.com/"],
+      "studentPrompts": [
+        "In what scenarios would you choose Python over Node.js or Go for backend development?",
+        "How does Python's ecosystem ease the process of building data-driven API services?",
+        "Compare the suitability of Python versus Go for orchestrating complex infrastructure configurations."
+      ],
+      "codeReferences": ["repo-python/main.py"]
+    }
+  ]
+}

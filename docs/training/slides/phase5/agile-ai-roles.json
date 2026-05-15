@@ -1,0 +1,98 @@
+{
+  "moduleId": "M085",
+  "title": "Agile Roles & AI Transformation",
+  "totalSlides": 5,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": "H800-01",
+      "title": "The Product Owner (PO) & AI",
+      "content": "In an AI-augmented Agile environment, the role of the Product Owner (PO) evolves from manual backlog management to high-level value orchestration. The PO remains the ultimate authority on 'What' should be built to maximize product value, but they now leverage AI to process vast amounts of user feedback and market data at scale. AI tools can automatically distill thousands of customer reviews into actionable insights, generate initial drafts of User Stories in structured Gherkin format, and even predict the potential impact of a feature based on historical sprint data. This allows the PO to spend less time on routine clerical work and more time on strategic alignment and stakeholder management. However, the PO's human judgment remains irreplaceable for navigating complex ethical dilemmas, prioritizing high-risk innovations, and ensuring that the product vision remains true to the brand's core values.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f8fafc\"/><circle cx=\"100\" cy=\"100\" r=\"40\" fill=\"#3b82f6\" fill-opacity=\"0.1\" stroke=\"#3b82f6\" stroke-width=\"2\"/><path d=\"M160 100 H300\" stroke=\"#64748b\" stroke-width=\"2\" stroke-dasharray=\"4\"/><rect x=\"220\" y=\"80\" width=\"60\" height=\"40\" rx=\"4\" fill=\"#3b82f6\" fill-opacity=\"0.2\" stroke=\"#3b82f6\" stroke-width=\"1\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#64748b\">The PO: From Backlog Manager to Value Orchestrator</text></svg>",
+      "tags": ["agile", "management", "ai-transformation"],
+      "links": [
+        "https://www.scrum.org/resources/what-is-a-product-owner",
+        "https://www.atlassian.com/agile/scrum/product-owner",
+        "https://medium.com/product-manager-life/how-ai-is-changing-the-role-of-the-product-manager-813d1e1f7c70"
+      ],
+      "studentPrompts": [
+        "How can AI help a Product Owner identify 'Hidden Patterns' in user feedback that a human might miss?",
+        "Discuss the risks of relying too heavily on AI-generated User Stories without manual refinement.",
+        "How does AI-driven impact prediction change the way a PO approaches the Sprint Planning session?"
+      ],
+      "codeReferences": ["docs/training/PRACTICAL-BUSINESS-DEVOPS.md"]
+    },
+    {
+      "id": "H800-02",
+      "title": "The Scrum Master (SM) & AI",
+      "content": "The Scrum Master's mission of facilitating the Agile process and removing impediments is significantly enhanced by AI integrations. Modern SMs use AI agents to auto-summarize daily standups, providing a clear record of blockers and commitments without manual note-taking. AI-powered analytics can detect 'Sprint Smell'—subtle drops in team velocity or shifts in work patterns that might indicate burnout or emerging technical debt. These tools act as persistent 'Process Nudges,' identifying where compliance with the Scrum framework is slipping and suggesting corrective actions before the sprint is derailed. While the AI handles the data-driven monitoring, the Scrum Master can focus on the 'Human' side of the team—coaching members through conflict, fostering a culture of psychological safety, and ensuring that the team remains autonomous and self-organizing in an increasingly automated world.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#fefce8\"/><circle cx=\"200\" cy=\"80\" r=\"50\" fill=\"#eab308\" fill-opacity=\"0.1\" stroke=\"#eab308\" stroke-width=\"2\"/><path d=\"M150 150 Q200 120 250 150\" stroke=\"#eab308\" stroke-width=\"4\" fill=\"none\"/><text x=\"200\" y=\"185\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#854d0e\">The SM: Data-Driven Facilitation & Coaching</text></svg>",
+      "tags": ["agile", "scrum", "automation"],
+      "links": [
+        "https://www.scrum.org/resources/what-is-a-scrum-master",
+        "https://www.atlassian.com/agile/scrum/scrum-master",
+        "https://www.scrumalliance.org/about-scrum/roles/scrum-master"
+      ],
+      "studentPrompts": [
+        "What is 'Sprint Smell' and how can an AI agent detect it before the human Scrum Master does?",
+        "Explain the benefit of AI-automated standup summaries for a distributed, global engineering team.",
+        "How can a Scrum Master use AI to identify and remove 'Cross-Team Dependencies' that are slowing down the sprint?"
+      ],
+      "codeReferences": ["docs/ai-agents/ai-agents-roles-tasks.md"]
+    },
+    {
+      "id": "H800-03",
+      "title": "The Developer & AI Coder Agents",
+      "content": "The role of the Software Developer is undergoing a profound transformation as AI Coder Agents become standard members of the engineering team. Developers are moving from simply 'writing code' to 'orchestrating agents'—defining the high-level architecture, security protocols, and system requirements, while delegating boilerplate generation and complex refactoring to specialized AI tools. In our FRAISE ecosystem, AI agents handle tasks like migrating legacy `repo-php` code to modern Go or Rust stacks, generating comprehensive unit test suites in milliseconds, and identifying obscure security vulnerabilities. This shift allows human developers to focus on the high-value aspects of engineering: creative problem-solving, architectural integrity, and complex edge-case logic that requires deep contextual understanding. The developer of the future is an Architect-Pilot, guiding a fleet of AI agents to build systems of unprecedented scale and reliability.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#0f172a\"/><rect x=\"100\" y=\"60\" width=\"80\" height=\"80\" rx=\"8\" fill=\"#10b981\" fill-opacity=\"0.1\" stroke=\"#10b981\" stroke-width=\"2\"/><path d=\"M180 100 H300\" stroke=\"#38bdf8\" stroke-width=\"4\" stroke-dasharray=\"10\"><animate attributeName=\"stroke-dashoffset\" from=\"20\" to=\"0\" dur=\"1s\" repeatCount=\"indefinite\"/></path><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#94a3b8\">The Developer: Orchestrating the AI Fleet</text></svg>",
+      "tags": ["coding", "ai-agents", "engineering"],
+      "links": [
+        "https://www.wired.com/story/ai-coding-agents-future-programming/",
+        "https://github.com/features/copilot",
+        "https://www.deepmind.com/blog/alphacode-a-new-milestone-in-competitive-programming"
+      ],
+      "studentPrompts": [
+        "How does the shift from 'Writing' to 'Orchestrating' code impact the learning path for a junior developer?",
+        "Discuss the importance of 'Human Verification' in an environment where AI agents generate 80% of the codebase.",
+        "What are the primary 'Creative' tasks that remain exclusively human in the era of AI-driven software development?"
+      ],
+      "codeReferences": ["docs/ai-agents/ai-coder-agent-guide.md", "repo-php/class/AIAgent.php"]
+    },
+    {
+      "id": "H800-04",
+      "title": "The QA / Tester & AI Verification",
+      "content": "Quality Assurance (QA) is evolving from manual test execution into the high-level science of Model Verification. In an AI-driven stack, the QA engineer utilizes AI to generate thousands of diverse test vectors, covering edge cases that would be impossible to identify manually. AI-powered visual regression tools can instantly detect subtle UI changes across hundreds of different devices and screen sizes, while automated security agents scan the entire codebase for vulnerabilities in real-time. Routine regression testing is increasingly fully automated, allowing QA professionals to focus on 'Exploratory Testing' and 'System Integrity'—probing the boundaries of how different AI models and human-written core logic interact under extreme conditions. The modern QA engineer is a Guardian of Reliability, ensuring that the increasingly complex interactions of an AI-augmented infrastructure remain safe, performant, and perfectly aligned with user expectations.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f5f3ff\"/><path d=\"M100 100 Q200 40 300 100 T100 100\" fill=\"none\" stroke=\"#7c3aed\" stroke-width=\"2\"/><circle cx=\"200\" cy=\"100\" r=\"30\" fill=\"#7c3aed\" fill-opacity=\"0.1\" stroke=\"#7c3aed\" stroke-width=\"2\"/><path d=\"M190 100 L200 110 L220 90\" fill=\"none\" stroke=\"#7c3aed\" stroke-width=\"4\" stroke-linecap=\"round\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#5b21b6\">The QA Explorer: Guarding System Integrity</text></svg>",
+      "tags": ["testing", "qa", "security"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Software_quality_assurance",
+        "https://www.testim.io/blog/artificial-intelligence-in-software-testing/",
+        "https://applitools.com/blog/ai-in-test-automation/"
+      ],
+      "studentPrompts": [
+        "How can AI generate 'Synthetic Data' to test an application's resilience without compromising user privacy?",
+        "Explain the concept of 'Visual Regression Testing' and why it is essential for a multi-tenant CMS with hundreds of unique themes.",
+        "Discuss the role of the human QA engineer in verifying the output of an AI-driven refactoring agent."
+      ],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": "H800-05",
+      "title": "Stakeholders & AI Transparency",
+      "content": "Stakeholders—including business leaders, investors, and end-users—are the ultimate judges of a product's success, and their interaction with the engineering team is being revolutionized by AI transparency. Instead of waiting for weekly status reports, stakeholders now gain instant, high-fidelity insights through interactive AI dashboards that track project health in real-time. AI agents can generate working prototypes and simulate user flows in minutes, allowing stakeholders to 'feel' the product long before the final code is written. While AI can simulate user feedback and predict market response, the 'Human-in-the-Loop' stakeholder remains the critical factor for final alignment, ensuring that the engineering roadmap perfectly matches the business vision and ethical standards of the organization. The future of stakeholder management is defined by radical transparency and rapid iteration, powered by a unified architectural stream of data and AI simulation.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f8fafc\"/><path d=\"M100 150 L150 100 L200 120 L250 50 L300 80\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"3\"/><circle cx=\"250\" cy=\"50\" r=\"5\" fill=\"#22c55e\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#64748b\">The Stakeholder: Vision, Feedback, & Human Alignment</text></svg>",
+      "tags": ["business", "stakeholders", "transparency"],
+      "links": [
+        "https://www.atlassian.com/agile/scrum/stakeholders",
+        "https://www.pmi.org/learning/library/stakeholder-management-software-development-projects-6799",
+        "https://hbr.org/2019/01/how-ai-will-change-strategy-a-stakeholder-view"
+      ],
+      "studentPrompts": [
+        "How does 'Real-Time Transparency' change the relationship between the engineering team and business leadership?",
+        "Discuss the limitation of using AI-simulated users for final product validation—why is a real human stakeholder still required?",
+        "How can AI prototypes help a stakeholder make faster 'Go/No-Go' decisions on high-risk technical features?"
+      ],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    }
+  ]
+}

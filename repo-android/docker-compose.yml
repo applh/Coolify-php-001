@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+  android-builder:
+    build: .
+    volumes:
+      - .:/app
+    # This service is for building, not persistent running

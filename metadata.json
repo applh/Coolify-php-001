@@ -1,6 +1,6 @@
 {
-  "name": "Agent Manager",
-  "description": "Admin dashboard to manage agents",
+  "name": "🍓 FRAISE",
+  "description": "The Ultimate Fullstack AI Software Engineer platform – building, managing, and scaling multi-stack applications with high-fidelity automation and benchmarking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

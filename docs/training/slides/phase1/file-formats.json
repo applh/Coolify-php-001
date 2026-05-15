@@ -1,0 +1,368 @@
+{
+  "moduleId": "M001",
+  "title": "File Formats Across Polyglot Systems",
+  "totalSlides": 20,
+  "bundleId": 2,
+  "slides": [
+    {
+      "id": "FF-001",
+      "title": "Introduction to File Formats",
+      "content": "In a modern, polyglot software environment like FRAISE, understanding how data is stored, represented, and interpreted across different languages (such as PHP, Python, Go, and Rust) is a critical technical requirement. A file extension, while helpful for human recognition, is essentially just a label that hints at the content within. The true nature of a file is defined by its internal structure and the character encoding it utilizes. For an engineer, being able to distinguish between plain-text configurations, binary media streams, and compiled executables is the baseline for effective system administration and software development. Whether we are dealing with high-performance Rust binaries or flexible PHP scripts, the goal remains the same: ensuring that every bit of data is correctly identified and processed by the system's execution pipeline without corruption or loss of integrity.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><path d='M100 40 H200 L240 80 V160 H100 Z' fill='#3b82f6' fill-opacity='0.1' stroke='#3b82f6' stroke-width='2'/><path d='M200 40 V80 H240' fill='none' stroke='#3b82f6' stroke-width='1'/><text x='170' y='120' text-anchor='middle' font-family='sans-serif' font-size='14' fill='#1e40af'>File Architecture</text></svg>",
+      "tags": ["fundamentals", "polyglot"],
+      "links": [
+        "https://en.wikipedia.org/wiki/File_format",
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types",
+        "https://www.freecodecamp.org/news/what-is-a-file-extension/"
+      ],
+      "studentPrompts": [
+        "What is a 'Magic Number' (File Signature) and how does the OS use it to identify a file type even if the extension is wrong?",
+        "Explain why a polyglot environment requires a unified strategy for handling different line-ending characters (LF vs CRLF).",
+        "How can an engineer use the `file` command in a Unix terminal to inspect the true nature of an unknown binary file?"
+      ],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": "FF-002",
+      "title": "PHP: Hypertext Preprocessor (.php)",
+      "content": "PHP files are the backbone of our CMS core and demo site templates. At their heart, they are plain-text scripts that are executed by the PHP interpreter on the server. A single `.php` file is incredibly flexible; it can contain standard HTML for structure, CSS for styling, JavaScript for client-side interactivity, and powerful server-side PHP logic all within the same document. This 'Multi-State' nature is what allows our `index.php` files to act as dynamic orchestrators, reacting to user requests and fetching data from the database before generating the final HTML that is sent back to the browser. As a developer, managing the structure of these files—ensuring a clean separation between the logic 'Controller' and the presentation 'View'—is essential for building a scalable and maintainable multi-tenant architecture like FRAISE.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><ellipse cx='200' cy='100' rx='80' ry='50' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='3'/><text x='200' y='110' text-anchor='middle' font-family='monospace' font-size='32' fill='#5b21b6' font-weight='700'>PHP</text></svg>",
+      "tags": ["php", "backend"],
+      "links": [
+        "https://www.php.net/manual/en/intro-whatis.php",
+        "https://en.wikipedia.org/wiki/PHP",
+        "https://www.w3schools.com/php/"
+      ],
+      "studentPrompts": [
+        "Why is it considered 'best practice' to avoid using the closing `?>` tag in files that contain purely PHP logic?",
+        "Explain how the PHP interpreter distinguishes between literal HTML text and executable PHP code blocks within the same file.",
+        "How does the `include` and `require` functionality in PHP enable the creation of a DRY (Don't Repeat Yourself) template system?"
+      ],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": "FF-003",
+      "title": "JS & TS (.js, .ts, .tsx)",
+      "content": "JavaScript is the universal language of the web, responsible for all the interactive behavior you see in modern browsers. While standard `.js` files are powerful, they lack 'Type Safety,' which can lead to unpredictable errors in large projects. This is why we have adopted TypeScript (`.ts`), a superset of JavaScript that adds a strict typing system. By using TypeScript, our IDE can catch potential bugs—like trying to perform math on a string—before the code ever runs. For our React and Vue repositories, we use `.tsx` and `.vue` files, which allow us to write HTML-like structures (JSX/Templates) directly inside our scripts. This 'Component-Based' approach is what makes our frontend architecture so modular and easy to test, ensuring that every interactive element of the FRAISE platform is both predictable and high-performance.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='80' y='60' width='80' height='80' rx='4' fill='#3b82f6' fill-opacity='0.2'/><text x='120' y='110' text-anchor='middle' font-family='sans-serif' font-size='24' fill='#1e40af' font-weight='700'>JS</text><rect x='240' y='60' width='80' height='80' rx='4' fill='#2563eb' fill-opacity='0.1' stroke='#2563eb' stroke-width='2'/><text x='280' y='110' text-anchor='middle' font-family='sans-serif' font-size='24' fill='#1e40af' font-weight='700'>TS</text></svg>",
+      "tags": ["javascript", "typescript", "frontend"],
+      "links": [
+        "https://www.typescriptlang.org/",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+        "https://react.dev/learn/writing-markup-with-jsx"
+      ],
+      "studentPrompts": [
+        "What are the primary advantages of using TypeScript over plain JavaScript when building a complex, data-driven dashboard?",
+        "Explain the role of 'Transpilation' (converting TS to JS) in the modern web development build process.",
+        "How does the `.tsx` extension change how an IDE and a build tool like Vite interpret the brackets and tags within a script file?"
+      ],
+      "codeReferences": ["repo-react/src/App.tsx", "repo-vue/src/main.ts"]
+    },
+    {
+      "id": "FF-004",
+      "title": "JSON: JS Object Notation (.json)",
+      "content": "JSON (JavaScript Object Notation) is the lightweight, text-based standard for data exchange on the modern web. Its beauty lies in its simplicity: it represents data as a collection of nested 'Key/Value' pairs and 'Arrays' that are both human-readable and machine-parsable. Because it is natively valid JavaScript syntax, it is the natural choice for browser-server communication, but its universal adoption across every major language makes it the backbone of our polyglot serialization layer. In the FRAISE project, we utilize `.json` files for everything from site-wide metadata in `sites.json` to the complex manifest that stores these training slides. This structured approach ensures that when our Python AI agent generates a new site configuration, our PHP backend can read and interpret it perfectly without any 'Translation' overhead, maintaining a single source of truth for the entire platform's state.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><path d='M100 50 L100 150 M300 50 L300 150' stroke='#f97316' stroke-width='1' stroke-dasharray='4'/><text x='110' y='80' font-family='monospace' font-size='16' fill='#9a3412'>{ \"key\": \"value\" }</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412'>The Universal Data Blueprint</text></svg>",
+      "tags": ["data", "config"],
+      "links": [
+        "https://www.json.org/json-en.html",
+        "https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON",
+        "https://en.wikipedia.org/wiki/JSON"
+      ],
+      "studentPrompts": [
+        "Why is JSON generally preferred over XML for data exchange in modern web APIs?",
+        "Explain the fundamental difference between a 'JSON Object' `{}` and a 'JSON Array' `[]`.",
+        "How can you use the `jq` command-line tool to quickly extract a specific field from a massive JSON configuration file?"
+      ],
+      "codeReferences": ["repo-php/content/site1.com/config.json", "repo-python/sites.json"]
+    },
+    {
+      "id": "FF-005",
+      "title": "YAML: Indentation and Logic (.yml)",
+      "content": "YAML (YAML Ain't Markup Language) is a data serialization format that prioritizes human readability and ease of editing above all else. Unlike JSON, which relies on brackets and braces for structure, YAML uses **Indentation (Whitespace)** to define its hierarchy. This makes it an ideal choice for complex configuration files that need to be managed by human engineers and DevOps professionals. Because a single misplaced brace in JSON can crash an entire build pipeline, YAML's clean and 'Semantic' layout is used for our most critical infrastructure blueprints—specifically our `docker-compose.yml` service orchestrator and our Flutter `pubspec.yaml` dependency manifests. Mastering YAML requires a disciplined approach to spacing, as even a single extra space can change how a service is mapped or which version of a library is installed in your development environment.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='80' y='40' width='240' height='120' rx='4' fill='#16a34a' fill-opacity='0.05' stroke='#16a34a' stroke-width='1' stroke-dasharray='4'/><text x='100' y='70' font-family='monospace' font-size='12' fill='#166534'>services:</text><text x='120' y='95' font-family='monospace' font-size='12' fill='#166534'>  database:</text><text x='140' y='120' font-family='monospace' font-size='12' fill='#166534'>    image: postgres</text></svg>",
+      "tags": ["config", "devops"],
+      "links": [
+        "https://yaml.org/",
+        "https://en.wikipedia.org/wiki/YAML",
+        "https://www.redhat.com/en/topics/automation/what-is-yaml"
+      ],
+      "studentPrompts": [
+        "Why is indentation considered a 'Risky' way to define structure in computer science? How do we mitigate this in YAML?",
+        "Explain the concept of 'YAML Anchors' and how they help reduce duplication in a large multi-service Docker configuration.",
+        "Compare the 'Cognitive Load' of reading a 100-line JSON file versus a 100-line YAML file."
+      ],
+      "codeReferences": ["docker-compose.yml", "repo-flutter/pubspec.yaml"]
+    },
+    {
+      "id": "FF-006",
+      "title": "Python Scripts (.py)",
+      "content": "Python files are the toolsets of our automation and AI layers. Like YAML, Python's language syntax is inherently tied to indentation, forcing a level of visual clarity that makes the code extremely easy to scan and understand. In the FRAISE repository, our `.py` scripts handle the 'Heavy Lifting' of massive content migrations, automated site generation, and template rendering. Because Python has such a vast ecosystem of libraries for data manipulation and AI interaction, these files act as the 'Glue' that connects our high-speed system binaries with our flexible web frontend. As an engineer, you'll use these scripts to perform surgical operations on our site manifests—such as the site resolver in `repo-python/main.py`—ensuring that every site in our network is correctly tracked, updated, and synchronized according to the project's central metadata.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fefce8'/><circle cx='200' cy='100' r='60' fill='#eab308' fill-opacity='0.1' stroke='#eab308' stroke-width='2'/><path d='M170 100 Q200 70 230 100 T170 100' fill='#854d0e' fill-opacity='0.2' stroke='#854d0e' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#854d0e'>Automation & AI Orchestration</text></svg>",
+      "tags": ["python", "scripting"],
+      "links": [
+        "https://www.python.org/doc/",
+        "https://en.wikipedia.org/wiki/Python_(programming_language)",
+        "https://www.learnpython.org/"
+      ],
+      "studentPrompts": [
+        "Explain how Python's indentation-based syntax influences the 'Single Responsibility Principle' in script design.",
+        "What is a `virtualenv` and why is it essential for managing dependencies in a polyglot repository like ours?",
+        "How can you use the `import` system in Python to create reusable utility modules across multiple site-generation scripts?"
+      ],
+      "codeReferences": ["repo-python/main.py"]
+    },
+    {
+      "id": "FF-007",
+      "title": "Go Source Files (.go, .mod)",
+      "content": "Go (Golang) source files represent the high-performance, statically-typed layer of our backend services. Unlike PHP or Python, which are interpreted, Go is a compiled language; `.go` files are transformed into efficient machine code binaries that run at near C-level speeds. This makes it our preferred choice for building our most performance-critical tools, such as the benchmarking engine and the central router. A Go project is governed by the `go.mod` file, which acts as the 'Dependency Constitution,' precisely tracking every library used by the system to ensure 100% reproducible builds. In our `repo-go` directory, the modular and concurrent nature of these files allows us to handle thousands of simultaneous requests across our demo sites with minimal memory overhead and extreme reliability.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><path d='M150 60 H250 V140 H150 Z' fill='#38bdf8' fill-opacity='0.1' stroke='#38bdf8' stroke-width='2'/><text x='200' y='110' text-anchor='middle' font-family='monospace' font-size='24' fill='#0369a1' font-weight='700'>GO</text></svg>",
+      "tags": ["go", "backend"],
+      "links": [
+        "https://golang.org/doc/",
+        "https://en.wikipedia.org/wiki/Go_(programming_language)",
+        "https://tour.golang.org/welcome/1"
+      ],
+      "studentPrompts": [
+        "Why is Go often chosen for cloud infrastructure and microservice routing over traditional languages like Java or PHP?",
+        "Explain the benefit of Go's 'Static Binaries' (all dependencies included) for deploying services in small Docker containers.",
+        "How does the `go.mod` file prevent the 'Dependency Hell' often found in large, enterprise-scale software projects?"
+      ],
+      "codeReferences": ["repo-go/main.go", "repo-go/go.mod"]
+    },
+    {
+      "id": "FF-008",
+      "title": "Rust Source Files (.rs, .toml)",
+      "content": "Rust is the most mathematically rigorous language in our stack, used for parts of the system that require absolute memory safety and high-speed execution without the overhead of a 'Garbage Collector.' `.rs` source files contain code that is checked by the Rust compiler's 'Borrow Checker'—a strictly enforced system that prevents common memory bugs like buffer overflows or data races before the program ever runs. The `Cargo.toml` file is the manifest for the Rust project, managing everything from dependencies to specialized build profiles (like optimizing for binary size vs. speed). In our platform, Rust is used for the underlying system tools that require the highest degree of security and performance, ensuring that even under extreme load, the FRAISE environment remains stable and impenetrable.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><circle cx='200' cy='100' r='50' fill='#ea580c' fill-opacity='0.1' stroke='#ea580c' stroke-width='2'/><path d='M170 100 L230 100 M200 70 L200 130' stroke='#ea580c' stroke-width='1' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412'>Memory-Safe Systems Engineering</text></svg>",
+      "tags": ["rust", "systems"],
+      "links": [
+        "https://www.rust-lang.org/learn",
+        "https://doc.rust-lang.org/book/",
+        "https://en.wikipedia.org/wiki/Rust_(programming_language)"
+      ],
+      "studentPrompts": [
+        "Explain how Rust's 'Zero-Cost Abstractions' allow for high-level code structure without sacrificing hardware-level performance.",
+        "What is the 'Borrow Checker' and how does it catch bugs during the compilation phase that other languages only find at runtime?",
+        "Compare the role of `Cargo.toml` in Rust with `package.json` in Node.js. How do they handle version locking differently?"
+      ],
+      "codeReferences": ["repo-rust/src/main.rs", "repo-rust/Cargo.toml"]
+    },
+    {
+      "id": "FF-009",
+      "title": "Markdown (.md)",
+      "content": "Markdown is the lightweight markup language that powers the entire knowledge base of the FRAISE project. It is designed to be highly readable in its raw text form while allowing for easy conversion into beautiful, structured HTML for our training portals and internal dashboards. Using simple symbols like `#` for headers, `-` for lists, and `` ` `` for code snippets, markdown enables our developers and AI agents to collaborate on complex documentation without the overhead of bulky 'Rich Text' editors. Every file in the `/docs/` directory is an `.md` file, serving as a 'Living Document' that can be version-controlled, searched, and automatically indexed by our training manifesting system. This ensures that as our architecture evolves, our documentation remains perfectly synchronized and accessible to both humans and machines.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><path d='M60 40 V160' stroke='#64748b' stroke-width='3'/><text x='100' y='70' font-family='monospace' font-size='16' fill='#334155' font-weight='700'># Documentation</text><text x='100' y='100' font-family='monospace' font-size='14' fill='#475569'>**Status:** MD-Powered</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#64748b'>Plain-Text Narrative Formatting</text></svg>",
+      "tags": ["documentation", "content"],
+      "links": [
+        "https://daringfireball.net/projects/markdown/",
+        "https://www.markdownguide.org/",
+        "https://commonmark.org/"
+      ],
+      "studentPrompts": [
+        "Why is Markdown the industry-standard choice for README files and technical documentation in open-source projects?",
+        "Explain how the use of Markdown enables 'Documentation as Code' workflows where documentation is reviewed like scripts.",
+        "How can you use Markdown to embedded links, images, and formatted code blocks with syntax highlighting?"
+      ],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": "FF-010",
+      "title": "Base64 Encoded Text (.txt)",
+      "content": "In specific parts of our multi-tenant CMS, we utilize a technique called 'Base64 Encoding' to represent binary data (like images or encrypted payloads) as standard text characters. While this increases the file size by about 33%, it allows us to store images inside simple `.txt` files that can be easily moved across systems that might struggle with 'Binary' data streams. For example, in our `babiblog.fr` site content, we store critical organizational assets as Base64 strings. This 'Textification' of media ensures that our AI agents—which primarily work with text—can move and recreate these images across different environments without needing a specialized binary handling layer. It is a powerful, architectural 'Bypass' that ensures maximum portability for our most critical media assets.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#0f172a'/><text x='20' y='100' font-family='monospace' font-size='12' fill='#10b981'>aW1nL29yZ2FuaXNhdGlvbi5qcGc=...</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#94a3b8'>Binary to Text ASCII Mapping</text></svg>",
+      "tags": ["data", "media"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Base64",
+        "https://developer.mozilla.org/en-US/docs/Glossary/Base64",
+        "https://www.freecodecamp.org/news/what-is-base64-encoding/"
+      ],
+      "studentPrompts": [
+        "What is the fundamental trade-off of storing an image as a Base64 string instead of a standard JPEG file?",
+        "Explain how the `base64` command in a Linux terminal can be used to convert an image file into a text stream and back again.",
+        "Why is it common to see Base64 strings used for small icons embedded directly inside CSS or HTML files?"
+      ],
+      "codeReferences": ["repo-php/content/babiblog.fr/b64/aW1nL29yZ2FuaXNhdGlvbi5qcGc.txt"]
+    },
+    {
+      "id": "FF-011",
+      "title": "Compressed Archives (.zip)",
+      "content": "ZIP files are the standard 'Group and Shrink' mechanism used throughout our repository to manage large collections of assets. By mathematically identifying patterns within multiple files, ZIP compression can drastically reduce the amount of physical space required on the hard drive (and the time required to transfer them over a network). In our multi-tenant CMS, we use `.zip` folders within the site content directories to store high-resolution image assets that are not currently active but must be preserved. This 'Archival' approach ensures that our main git repository remains lean and fast to clone, while still providing a single, verifiable package for all a site's required media. As a developer, you'll use tools like `unzip` in our Dockerized environments to dynamically extract these assets during the site's 'Production Bootstrap' phase.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><rect x='150' y='50' width='100' height='100' rx='8' fill='#db2777' fill-opacity='0.1' stroke='#db2777' stroke-width='2'/><path d='M190 70 V130 M170 90 H230' stroke='#db2777' stroke-width='2' stroke-linecap='round'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#be185d'>Pattern-Matched Delta Compression</text></svg>",
+      "tags": ["storage", "compression"],
+      "links": [
+        "https://en.wikipedia.org/wiki/ZIP_(file_format)",
+        "https://www.pkware.com/zip-standard",
+        "https://www.howtogeek.com/178146/htg-explains-how-does-file-compression-work/"
+      ],
+      "studentPrompts": [
+        "Explain the difference between 'Lossless' compression (used in ZIP) and 'Lossy' compression (used in JPEG).",
+        "Why is a ZIP file considered a 'Container' as well as a 'Compression' format?",
+        "How can you use the command line to create encrypted ZIP archives for safely transmitting sensitive configuration data?"
+      ],
+      "codeReferences": ["repo-php/content/babiblog.fr/img/organisation.jpg.zip"]
+    },
+    {
+      "id": "FF-012",
+      "title": "HTML: HyperText Markup (.html)",
+      "content": "HTML (HyperText Markup Language) is the structural skeleton of the entire World Wide Web. Every piece of content you see in a browser—from a simple blog post to a complex dashboard—at its fundamental level, is an HTML document. Although we use high-level frameworks like React and Vue to manage our interfaces, these frameworks eventually 'Render' down into standard HTML tags like `<div>`, `<h1>`, and `<p>`. In the FRAISE project, we utilize standard `.html` files for our top-level entry point in `index.html` and for the static templates used by our Python site generator. Understanding the hierarchical, tree-like structure of HTML (the Document Object Model or DOM) is vital for every developer, as it defines exactly how your application's data is exposed to both human users and search engine crawlers.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><text x='200' y='80' text-anchor='middle' font-family='monospace' font-size='32' fill='#a21caf' font-weight='700'>&lt;HTML /&gt;</text><path d='M100 120 H300' stroke='#a21caf' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75'>The Web's Hierarchical Foundation</text></svg>",
+      "tags": ["frontend", "structure"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML",
+        "https://www.w3schools.com/html/",
+        "https://en.wikipedia.org/wiki/HTML"
+      ],
+      "studentPrompts": [
+        "Explain the concept of 'Semantic HTML' and why using tags like `<article>` is better than just using generic `<div>` tags.",
+        "What is the 'DOM' and how does JavaScript interact with it to create dynamic, interactive web experiences?",
+        "How does the browser's 'Parsing Engine' handle malformed HTML compared to strict languages like XML?"
+      ],
+      "codeReferences": ["index.html", "repo-python/templates/site.html"]
+    },
+    {
+      "id": "FF-013",
+      "title": "CSS: Cascading Styles (.css)",
+      "content": "If HTML is the skeleton of a website, CSS (Cascading Style Sheets) is its 'Visual Skin.' CSS defines every visual aspect of our application, from the typography and colors to the complex grid layouts of our dashboards. In FRAISE, we leverage the power of **Tailwind CSS**, a utility-first framework that allows us to apply styles directly within our HTML without needing to write massive, custom `.css` files. However, all of these utilities eventually compile into a single, high-performance `.css` file (like `repo-php/public/css/style.css`) that the browser can cache and apply instantly. Mastering the 'Cascading' nature of CSS—how rules overlap and override each other based on specificity—is essential for building a consistent, polished design system that looks perfect across every device and browser in our multi-tenant network.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='80' y='60' width='240' height='80' rx='8' fill='#3b82f6' fill-opacity='0.1' stroke='#3b82f6' stroke-width='2'/><path d='M100 80 H300 M100 100 H300 M100 120 H300' stroke='#3b82f6' stroke-width='1'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af'>Visual Presentation & Layout Logic</text></svg>",
+      "tags": ["frontend", "style"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS",
+        "https://www.w3schools.com/css/",
+        "https://css-tricks.com/"
+      ],
+      "studentPrompts": [
+        "Explain the 'Box Model' in CSS and how padding, borders, and margins influence an element's total width.",
+        "How can the 'Cascading' nature of CSS lead to difficult-to-debug layout issues in a large project?",
+        "Compare traditional 'Vanilla CSS' with a utility-first framework like Tailwind. What are the trade-offs for a fast-moving team?"
+      ],
+      "codeReferences": ["repo-php/public/css/style.css", "src/style.css"]
+    },
+    {
+      "id": "FF-014",
+      "title": "Environment Variable Files (.env)",
+      "content": "Environment variable files, specifically `.env`, are the high-security 'Vaults' of our software environment. They store sensitive configuration secrets—such as database passwords, third-party API keys (like Gemini or Stripe), and system-wide feature flags—that must never be hard-coded into the application's source code or committed to a public Git repository. In the FRAISE ecosystem, we use the `.env.example` file as a safe, non-private template that tells other developers which keys they need to provide in their own local environment. By keeping these secrets isolated in a file that is ignored by Git, we ensure that our codebase remains secure while allowing our applications to adapt instantly to different environments (Development, Staging, Production) without a single code change.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><circle cx='200' cy='80' r='40' fill='#f97316' fill-opacity='0.1' stroke='#f97316' stroke-width='2' stroke-dasharray='4'/><path d='M185 85 L215 85 M200 70 L200 100' stroke='#f97316' stroke-width='2' stroke-linecap='round'/><text x='200' y='160' text-anchor='middle' font-family='monospace' font-size='14' fill='#9a3412'>API_KEY=********</text><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412'>Encapsulated Operational Secrets</text></svg>",
+      "tags": ["security", "config"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Environment_variable",
+        "https://www.dotenv.org/",
+        "https://medium.com/it-dead-inside/why-you-should-never-commit-env-files-to-git-6c3e98f7e7f6"
+      ],
+      "studentPrompts": [
+        "What is the massive security risk of committing a `.env` file containing real production secrets to GitHub?",
+        "How do modern cloud platforms (like Cloud Run) inject environment variables into your application without using an `.env` file?",
+        "Explain how using different `.env` files allows an application to switch between a local SQLite database and a production PostgreSQL database instantly."
+      ],
+      "codeReferences": [".env.example"]
+    },
+    {
+      "id": "FF-015",
+      "title": "Docker Blueprint Files",
+      "content": "The `Dockerfile` and `docker-compose.yml` are the 'Infrastructure Blueprints' of our entire platform. A `Dockerfile` contains the exact, step-by-step instructions for building a container image—specifying the operating system, the required libraries, and the startup commands for a single service (like our PHP backend). The `docker-compose.yml` file acts as the high-level 'Orchestrator,' defining how these individual containers interact with each other, which ports are exposed to the outside world, and how persistent data volumes are mapped. Together, these files ensure that our entire polyglot environment is 'Portable'—any developer can clone the repository and, with a single `docker-compose up` command, recreate the exact same production-grade server environment on their own machine, eliminating the 'It works on my machine' bug forever.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><rect x='100' y='40' width='200' height='120' rx='4' fill='#0ea5e9' fill-opacity='0.1' stroke='#0ea5e9' stroke-width='2'/><path d='M130 70 H270 M130 95 H270 M130 120 H270' stroke='#0ea5e9' stroke-width='1' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#075985'>Infrastructure-as-Code Containers</text></svg>",
+      "tags": ["devops", "containers"],
+      "links": [
+        "https://docs.docker.com/engine/reference/builder/",
+        "https://docs.docker.com/compose/",
+        "https://en.wikipedia.org/wiki/Docker_(software)"
+      ],
+      "studentPrompts": [
+        "Compare a Docker 'Container' with a 'Virtual Machine'. Why are containers preferred for modern web microservices?",
+        "Explain how the `docker-compose.yml` file simplifies the management of a project with multiple interconnected services (PHP, Node, DB).",
+        "What is a 'Multi-Stage Build' in a Dockerfile and how does it help in creating smaller, more secure production images?"
+      ],
+      "codeReferences": ["Dockerfile", "docker-compose.yml"]
+    },
+    {
+      "id": "FF-016",
+      "title": "Nginx Configuration (.conf)",
+      "content": "Nginx configuration files are the 'Air Traffic Control' for all incoming web requests to our server. As a high-performance reverse proxy, Nginx listens for traffic and, based on the rules defined in `.conf` files, decides exactly which service should handle each request. In our environment, the `repo-php/nginx.conf` file is vital for mapping human-readable domain names (like `site1.com`) to the internal IPs and ports of our backend containers. It also handles critical tasks like SSL termination (HTTPS), traffic load balancing, and the serving of static assets (like CSS and JS) at lightning speed without bothering the slower PHP or Node servers. Mastering these configuration blocks allows an engineer to create a unified 'Single Entrance' for a complex, multi-language system, ensuring a seamless experience for the end user regardless of which container is providing the content.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><circle cx='200' cy='80' r='50' fill='#16a34a' fill-opacity='0.1' stroke='#16a34a' stroke-width='2'/><path d='M200 30 V130 M150 80 H250' stroke='#16a34a' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#166534'>The Reverse Proxy Traffic Shield</text></svg>",
+      "tags": ["networking", "server"],
+      "links": [
+        "https://nginx.org/en/docs/",
+        "https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/",
+        "https://en.wikipedia.org/wiki/Nginx"
+      ],
+      "studentPrompts": [
+        "Why is it better to serve static `.jpg` images via Nginx rather than having a PHP script read and output them?",
+        "Explain the role of the `proxy_pass` directive in a reverse proxy setup.",
+        "How can Nginx configuration be used to protect a server from 'Denial of Service' (DoS) attacks through rate limiting?"
+      ],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": "FF-017",
+      "title": "Shell Scripts (.sh)",
+      "content": "Shell scripts (`.sh`) are the 'Automation Glue' of the Linux environment. They allow us to group complex sequences of terminal commands into a single executable file, ensuring that repetitive operational tasks—like starting a database, clearing a cache, or bootstrapping a new site—are performed perfectly and consistently every time. In our Dockerized setup, the `repo-php/entrypoint.sh` script is the first piece of code that runs when one of our containers starts up. It handles the 'Pre-Flight Checklist': ensuring the filesystem permissions are correct, running any needed data migrations, and finally launching the web server itself. Learning to write reliable shell scripts—utilizing variables, loops, and 'Error-on-Fail' flags—is a critical skill that distinguishes a standard coder from a true DevOps automation expert.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#1e293b'/><text x='20' y='60' font-family='monospace' font-size='14' fill='#10b981'>$ ./bootstrap.sh</text><rect x='20' y='80' width='300' height='10' fill='#334155' rx='2'/><rect x='20' y='80' width='210' height='10' fill='#10b981' rx='2'/><text x='20' y='120' font-family='monospace' font-size='12' fill='#94a3b8'>Running migrations...</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#94a3b8'>Automated Operational Sequences</text></svg>",
+      "tags": ["automation", "devops"],
+      "links": [
+        "https://linuxconfig.org/bash-scripting-tutorial-for-beginners",
+        "https://en.wikipedia.org/wiki/Shell_script",
+        "https://ryanstutorials.net/bash-scripting-tutorial/"
+      ],
+      "studentPrompts": [
+        "Why is 'Shebang' line (`#!/bin/bash`) significant at the start of a shell script?",
+        "Explain how the `set -e` command can increase the reliability of an automation script by preventing it from continuing after an error.",
+        "How can you pass arguments (like a site name) into a shell script to make it more dynamic and reusable?"
+      ],
+      "codeReferences": ["repo-php/entrypoint.sh"]
+    },
+    {
+      "id": "FF-018",
+      "title": "Gradle Build Files (.gradle)",
+      "content": "In our mobile and Android development layers, `.gradle` files serve as the sophisticated 'Build Orchestrators' for the Java and Kotlin environments. Gradle is a build automation tool that uses a domain-specific language (based on Groovy or Kotlin) to define exactly how a project is compiled, tested, and packaged into a final `.apk` for deployment. Unlike simple script files, Gradle build files understand the complex 'Dependency Graph' of your project—they can automatically download the correct versions of hundreds of libraries from around the web while ensuring there are no conflicts between them. For the FRAISE platform, our `repo-android/build.gradle` file defines the common properties used across our mobile experiments, ensuring that every andorid-based component we build follows the same professional standards for performance and compatibility.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><path d='M150 40 L250 40 L270 60 V140 H130 V60 Z' fill='#fb923c' fill-opacity='0.1' stroke='#fb923c' stroke-width='2'/><text x='200' y='110' text-anchor='middle' font-family='monospace' font-size='18' fill='#9a3412'>Gradle Registry</text></svg>",
+      "tags": ["android", "build"],
+      "links": [
+        "https://docs.gradle.org/current/userguide/userguide.html",
+        "https://en.wikipedia.org/wiki/Gradle",
+        "https://developer.android.com/studio/build/index.html"
+      ],
+      "studentPrompts": [
+        "What is a 'Dependency' in the context of a Gradle project and how does the build tool resolve version conflicts?",
+        "Compare the 'Declarative' approach of Gradle build files with the 'Imperative' approach of standard shell scripts.",
+        "How can you use Gradle 'Build Flavors' to create different versions (e.g., Free vs Pro) of an Android application from the same source code?"
+      ],
+      "codeReferences": ["repo-android/build.gradle"]
+    },
+    {
+      "id": "FF-019",
+      "title": "Dart & Flutter (.dart)",
+      "content": "The `.dart` extension identifies source files written in the Dart language, the high-performance engine powering the **Flutter** multi-platform framework. Dart is a unique language designed for lightning-fast client-side execution on both mobile (iOS/Android) and web platforms. In a Flutter project, like the one in our `repo-flutter` directory, `.dart` files are used to construct the 'Widget Tree'—a hierarchical representation of the user interface where every element (from a simple label to a complex animation) is a modular, reusable widget. Because Dart can be compiled 'Just-In-Time' (JIT) for fast development and 'Ahead-Of-Time' (AOT) for maximum production speed, it provides an incredible Developer Experience (DX), allowing for 'Hot Reload' where code changes appear on a mobile device in less than a second without losing the application's state.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><path d='M100 100 L200 40 L300 100 L200 160 Z' fill='#38bdf8' fill-opacity='0.1' stroke='#38bdf8' stroke-width='2'/><text x='200' y='110' text-anchor='middle' font-family='monospace' font-size='24' fill='#0369a1' font-weight='700'>DART</text></svg>",
+      "tags": ["mobile", "flutter"],
+      "links": [
+        "https://dart.dev/",
+        "https://flutter.dev/docs",
+        "https://en.wikipedia.org/wiki/Dart_(programming_language)"
+      ],
+      "studentPrompts": [
+        "How does the concept of 'Everything is a Widget' in Flutter simplify the design of complex, cross-platform user interfaces?",
+        "Explain the benefit of Dart's AOT (Ahead-of-Time) compilation for the startup time and performance of mobile applications.",
+        "What is 'State Management' in a Flutter app and how do `.dart` files coordinate the flow of data between different widgets?"
+      ],
+      "codeReferences": ["repo-flutter/lib/main.dart"]
+    },
+    {
+      "id": "FF-020",
+      "title": "SVG: Scalable Vector Graphics",
+      "content": "Unlike traditional image formats like JPEG or PNG which store colors as a grid of static pixels, SVG (Scalable Vector Graphics) stores images as a set of **Mathematical Instructions**. An `.svg` file is actually a text file—specifically a valid XML document—that contains commands describing paths, shapes, and colors. This architectural choice gives SVGs two massive advantages for web development: they have virtually zero file size compared to raster photos, and they can be scaled to any dimension (from a tiny mobile icon to a massive desktop banner) without any loss in quality or 'pixelation.' In the FRAISE platform, we use SVGs for every illustration and icon in these slides. This ensures that our training interface remains ultra-crisp on high-resolution displays and lightning-fast to load, as the brower can 'Draw' the images instantly from the text-based manifests provided by our AI agents.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><circle cx='200' cy='100' r='50' fill='none' stroke='#db2777' stroke-width='2'/><path d='M160 100 L240 100 M200 60 L200 140' stroke='#db2777' stroke-width='1' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#be185d'>Vector Math over Pixel Grids</text></svg>",
+      "tags": ["graphics", "frontend"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/SVG",
+        "https://en.wikipedia.org/wiki/Scalable_Vector_Graphics",
+        "https://www.w3schools.com/graphics/svg_intro.asp"
+      ],
+      "studentPrompts": [
+        "Why is it possible to animate an SVG with CSS and JavaScript in a way that is impossible with a PNG file?",
+        "Explain why an SVG of a simple logo is often 100x smaller than the same logo saved as a high-resolution JPEG.",
+        "How can you inspect an SVG file on a website's dashboard using the browser's 'Inspect Element' tool to modify its color directly in your browser?"
+      ],
+      "codeReferences": ["public/vite.svg"]
+    }
+  ]
+}

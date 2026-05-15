@@ -1,0 +1,19 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.env
+cms.db
+data/
+*.log
+.DS_Store
+.git
+# Repos not currently managed by server.ts to reduce context
+# repo-android
+# repo-flutter
+# repo-go
+# repo-python
+# repo-react
+# repo-rust
+# repo-vue
+# Keep repo-php as it is the primary target
