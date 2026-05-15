@@ -1,32 +1,36 @@
-[
-  {
-    "id": "deployment-intro",
-    "title": "Modernizing the Deployment Cycle",
-    "content": "Traditional deployments were slow, error-prone, and required manual FTP file transfers or 'SSH + Git Pull'. Modern engineering moves faster by treating infrastructure as code and automating everything.\n\nKey Concepts:\n- **CD (Continuous Deployment)**: Code is deployed automatically upon every push to a specific branch.\n- **Immutable Infrastructure**: Instead of patching a running server, we build a new container image and swap the old one out.\n- **Observability**: Real-time logging and health checks ensure the app is healthy post-deployment.",
-    "codeReferences": ["docs/devops/deployment.md"]
-  },
-  {
-    "id": "coolify-overview",
-    "title": "Coolify: The Self-Hosted Heroku Alternative",
-    "content": "Coolify is an open-source, self-hosted platform that simplifies application management. It acts as an orchestrator for Docker and Docker Compose, providing a UI for:\n- **Git Integration**: Auto-detects changes in GitHub/GitLab.\n- **Reverse Proxy**: Automatically configures Traefik for SSL and domains.\n- **Monitoring**: Built-in health checks and log streaming.\n- **Substack Management**: Deploy multiple independent services (like our multi-stack CMS) on a single node.",
-    "codeReferences": ["docs/devops/rebuild-guide.md"]
-  },
-  {
-    "id": "coolify-api-webhooks",
-    "title": "Automating with Coolify Webhooks",
-    "content": "Coolify provides a 'Deploy Webhook' for every application. This allows external systems (like our CMS manager) to trigger a redeploy programmatically without manual intervention.\n\n**API Endpoint Pattern**:\n`POST https://<coolify-url>/api/v1/deploy?uuid=<app-uuid>&force=true`\n\n**Common Use Cases**:\n1. **External CI**: Triggering a deploy after a long-running external test suite passes.\n2. **Manual Sync**: A 'Deploy Now' button in the admin dashboard.\n3. **Event-Driven**: Auto-deploying when a specific configuration file in a persistent volume is updated.",
-    "codeReferences": ["docs/devops/coolify-setup-php.md", "repo-php/public/index.php", "repo-php/class/Router.php"]
-  },
-  {
-    "id": "zip-self-update",
-    "title": "Self-Updating Stacks via ZIP Archives",
-    "content": "While Git is the standard, some scenarios (like CMS site uploads) require immediate 'Self-Updates' without a full container rebuild. Our Node.js stack implements this using **adm-zip**.\n\n**Workflow**:\n1. Client uploads a `.zip` file of a site folder to `/api/sites/:site/upload`.\n2. The Node.js server extracts the zip directly into the active `content/` or `my-data/` directory.\n3. The PHP Router instantly starts serving the new files.\n\n**Why this matters**: High speed. You can update specific site assets or templates in milliseconds without restarting the server or waiting for a Docker build.",
-    "codeReferences": ["docs/backend/node-cms-features.md", "server.ts"]
-  },
-  {
-    "id": "volume-persistence",
-    "title": "Persistence & Volume Injection Strategies",
-    "content": "In Docker, persistence is achieved through **Volumes**. We use two core strategies for deployment flexibility:\n\n1. **Standard Volume**: Maps a directory like `my-data` to the host. Data persists indefinitely across redeploys.\n2. **Volume Injection (APP_DATA_RESET)**: By setting an environment variable, our `entrypoint.sh` can detect a fresh deployment and selectively wipe or re-sync site data from the repository templates.\n\n**Best Practice**: Use `APP_DATA_RESET=true` during 'Template Updates' to ensure all client sites receive the latest core structural fixes from the repository.",
-    "codeReferences": ["repo-php/entrypoint.sh", "docs/devops/coolify-setup-php.md"]
-  }
-]
+{
+  "moduleId": "M073",
+  "title": "Coolify Setup & Deployment",
+  "slides": [
+    {
+      "id": "H720-01",
+      "title": "Modernizing the Deployment Cycle",
+      "content": "Traditional deployments were slow, error-prone, and required manual FTP file transfers or 'SSH + Git Pull'. Modern engineering moves faster by treating infrastructure as code and automating everything.\n\nKey Concepts:\n- **CD (Continuous Deployment)**: Code is deployed automatically upon every push to a specific branch.\n- **Immutable Infrastructure**: Instead of patching a running server, we build a new container image and swap the old one out.\n- **Observability**: Real-time logging and health checks ensure the app is healthy post-deployment.",
+      "codeReferences": ["docs/devops/deployment.md"]
+    },
+    {
+      "id": "H720-02",
+      "title": "Coolify: The Self-Hosted Heroku Alternative",
+      "content": "Coolify is an open-source, self-hosted platform that simplifies application management. It acts as an orchestrator for Docker and Docker Compose, providing a UI for:\n- **Git Integration**: Auto-detects changes in GitHub/GitLab.\n- **Reverse Proxy**: Automatically configures Traefik for SSL and domains.\n- **Monitoring**: Built-in health checks and log streaming.\n- **Substack Management**: Deploy multiple independent services (like our multi-stack CMS) on a single node.",
+      "codeReferences": ["docs/devops/rebuild-guide.md"]
+    },
+    {
+      "id": "H720-03",
+      "title": "Automating with Coolify Webhooks",
+      "content": "Coolify provides a 'Deploy Webhook' for every application. This allows external systems (like our CMS manager) to trigger a redeploy programmatically without manual intervention.\n\n**API Endpoint Pattern**:\n`POST https://<coolify-url>/api/v1/deploy?uuid=<app-uuid>&force=true`\n\n**Common Use Cases**:\n1. **External CI**: Triggering a deploy after a long-running external test suite passes.\n2. **Manual Sync**: A 'Deploy Now' button in the admin dashboard.\n3. **Event-Driven**: Auto-deploying when a specific configuration file in a persistent volume is updated.",
+      "codeReferences": ["docs/devops/coolify-setup-php.md", "repo-php/public/index.php", "repo-php/class/Router.php"]
+    },
+    {
+      "id": "H720-04",
+      "title": "Self-Updating Stacks via ZIP Archives",
+      "content": "While Git is the standard, some scenarios (like CMS site uploads) require immediate 'Self-Updates' without a full container rebuild. Our Node.js stack implements this using **adm-zip**.\n\n**Workflow**:\n1. Client uploads a `.zip` file of a site folder to `/api/sites/:site/upload`.\n2. The Node.js server extracts the zip directly into the active `content/` or `my-data/` directory.\n3. The PHP Router instantly starts serving the new files.\n\n**Why this matters**: High speed. You can update specific site assets or templates in milliseconds without restarting the server or waiting for a Docker build.",
+      "codeReferences": ["docs/backend/node-cms-features.md", "server.ts"]
+    },
+    {
+      "id": "H720-05",
+      "title": "Persistence & Volume Injection Strategies",
+      "content": "In Docker, persistence is achieved through **Volumes**. We use two core strategies for deployment flexibility:\n\n1. **Standard Volume**: Maps a directory like `my-data` to the host. Data persists indefinitely across redeploys.\n2. **Volume Injection (APP_DATA_RESET)**: By setting an environment variable, our `entrypoint.sh` can detect a fresh deployment and selectively wipe or re-sync site data from the repository templates.\n\n**Best Practice**: Use `APP_DATA_RESET=true` during 'Template Updates' to ensure all client sites receive the latest core structural fixes from the repository.",
+      "codeReferences": ["repo-php/entrypoint.sh", "docs/devops/coolify-setup-php.md"]
+    }
+  ]
+}

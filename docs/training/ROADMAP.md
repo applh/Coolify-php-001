@@ -16,11 +16,16 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 | Phase | Duration | Focus | Key Repositories |
 |-------|----------|-------|------------------|
-| [Phase 1: Web Fundamentals](./PHASE-1-BEGINNER.md) | 200h | HTML5, CSS3, Vanilla JS, PHP Basics, **Technical Glossary** | `repo-php/content/site1.com`, `public/css` |
-| [Phase 2: Modern Frontend](./PHASE-2-FRONTEND.md) | 225h | React, Vue 3, Tailwind CSS, State Management | `repo-react`, `repo-vue`, `src/` |
-| [Phase 3: Backend Systems](./PHASE-3-BACKEND.md) | 275h | PHP MVC, Go, Rust, Python APIs, Databases | `repo-php/class`, `repo-go`, `repo-rust`, `repo-python` |
-| [Phase 4: Mobile & Multi-Platform](./PHASE-4-MOBILE.md) | 175h | Android (Kotlin), Flutter (Dart) | `repo-android`, `repo-flutter` |
-| [Phase 5: DevOps & AI Agents](./PHASE-5-ADVANCED.md) | 150h | Docker, Nginx, AI Coder Agents, CMS Architecture | `docs/ai-agents`, `repo-php/plugins` |
+| [P01: Web Foundations](./PHASE-01-FOUNDATIONS.md) | 100h | HTML, CSS, JS, PHP Basics, Glossary | `repo-php/content` |
+| [P02: Adv Styling](./PHASE-02-STYLING.md) | 100h | Tailwind, Responsive, Animation | `public/css` |
+| [P03: Orchestration](./PHASE-03-ORCHESTRATION.md) | 100h | React, Vue 3, State Management | `repo-react`, `repo-vue` |
+| [P04: Component Systems](./PHASE-04-COMPONENTS.md) | 100h | Design Systems, Shadcn, D3 | `src/components` |
+| [P05: Backend Mastery](./PHASE-05-BACKEND.md) | 100h | PHP MVC, CMS Core, Plugins, SQL | `repo-php/class` |
+| [P06: Polyglot Backends](./PHASE-06-POLYGLOT.md) | 100h | Go, Rust, Python, Microservices | `repo-go`, `repo-rust` |
+| [P07: Mobile Platforms](./PHASE-07-MOBILE.md) | 100h | Android (Kotlin), Flutter (Dart) | `repo-android`, `repo-flutter` |
+| [P08: Cloud & DevOps](./PHASE-08-DEVOPS.md) | 100h | Docker, Coolify, Deployment | `docs/devops` |
+| [P09: AI Agents](./PHASE-09-AGENTS.md) | 100h | Gemini API, RAG, Coder Agents | `docs/ai-agents` |
+| [P10: Capstone Project](./PHASE-10-CAPSTONE.md) | 100h | Architecture, Security, Math | `metadata.json` |
 
 ## Skill Progression Path
 

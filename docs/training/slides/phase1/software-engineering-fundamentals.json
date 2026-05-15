@@ -1,144 +1,144 @@
 {
-  "moduleId": "PHASE-1-SWE-FUNDAMENTALS",
+  "moduleId": "M010",
   "title": "Software Engineering Fundamentals",
   "totalSlides": 100,
   "bundleId": 1,
   "slides": [
     {
-      "id": 1,
+      "id": "H090-01",
       "title": "Computer Fundamentals: The CPU",
       "content": "The Central Processing Unit is the 'brain' of the computer, executing instructions stored in memory. In our stack, the CPU handles everything from PHP processing to Go compilation.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["repo-go/main.go"]
     },
     {
-      "id": 2,
+      "id": "H090-02",
       "title": "Computer Fundamentals: Memory (RAM)",
       "content": "RAM is volatile storage used for active processes. When you run `server.ts`, Node.js allocates memory for your application state.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["server.ts"]
     },
     {
-      "id": 3,
+      "id": "H090-03",
       "title": "Computer Fundamentals: Binary and Data",
       "content": "Computers process data as 0s and 1s. Every character in `README.md` is encoded in UTF-8, represented by binary sequences.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["README.md"]
     },
     {
-      "id": 4,
+      "id": "H090-04",
       "title": "Computer Fundamentals: Storage (SSD/HDD)",
       "content": "Persistent storage holds your codebase. Your files in `/repo-php/` live here until loaded into RAM for execution.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["repo-php/content/site1.com/index.php"]
     },
     {
-      "id": 5,
+      "id": "H090-05",
       "title": "Computer Fundamentals: The Operating System",
       "content": "The OS (like Linux in our Docker container) manages hardware resources. Our `Dockerfile` defines the environment the OS provides.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["Dockerfile"]
     },
     {
-      "id": 6,
+      "id": "H090-06",
       "title": "Computer Fundamentals: Networking (DNS)",
       "content": "Domain Name System translates human names like site1.com into IP addresses. Our local environment uses `nginx.conf` to mimic this routing.",
       "tags": ["networking", "fundamentals"],
       "codeReferences": ["repo-php/nginx.conf"]
     },
     {
-      "id": 7,
+      "id": "H090-07",
       "title": "Computer Fundamentals: HTTP Protocol",
       "content": "The web runs on Request and Response. PHP receives a GET request and sends back HTML in `repo-php/public/index.php`.",
       "tags": ["networking", "fundamentals"],
       "codeReferences": ["repo-php/public/index.php"]
     },
     {
-      "id": 8,
+      "id": "H090-08",
       "title": "Computer Fundamentals: Ports and Proxies",
       "content": "Nginx listens on port 80 and proxies requests to our PHP or Node servers. Check `docker-compose.yml` for port mappings.",
       "tags": ["networking", "fundamentals"],
       "codeReferences": ["docker-compose.yml"]
     },
     {
-      "id": 9,
+      "id": "H090-09",
       "title": "Computer Fundamentals: Virtualization",
       "content": "Docker allows us to run isolated containers. This ensures 'it works on my machine' applies to the production server too.",
       "tags": ["devops", "fundamentals"],
       "codeReferences": ["repo-php/Dockerfile"]
     },
     {
-      "id": 10,
+      "id": "H090-10",
       "title": "Computer Fundamentals: The Kernel",
       "content": "The core of the OS that interfaces directly with hardware. Docker containers share the host's kernel but have their own user space.",
       "tags": ["hardware", "fundamentals"],
       "codeReferences": ["Dockerfile"]
     },
     {
-      "id": 11,
+      "id": "H091-01",
       "title": "Program Fundamentals: Algorithms",
       "content": "An algorithm is a step-by-step procedure for solving a problem. `Router.php` uses an algorithm to match URLs to file paths.",
       "tags": ["logic", "programming"],
       "codeReferences": ["repo-php/class/Router.php"]
     },
     {
-      "id": 12,
+      "id": "H091-02",
       "title": "Program Fundamentals: Variables and Types",
       "content": "Variables store data. TypeScript adds strict typing to ensure a variable intended for a number isn't assigned a string.",
       "tags": ["programming", "typescript"],
       "codeReferences": ["src/main.ts"]
     },
     {
-      "id": 13,
+      "id": "H091-03",
       "title": "Program Fundamentals: Control Structures",
       "content": "If/Else and Loops control the flow of a program. See `View.php` to see how it loops through component data.",
       "tags": ["logic", "programming"],
       "codeReferences": ["repo-php/class/View.php"]
     },
     {
-      "id": 14,
+      "id": "H091-04",
       "title": "Program Fundamentals: Functions",
       "content": "Functions are reusable blocks of code. `DB.php` contains functions to query the database efficiently.",
       "tags": ["programming", "reusability"],
       "codeReferences": ["repo-php/class/DB.php"]
     },
     {
-      "id": 15,
+      "id": "H091-05",
       "title": "Program Fundamentals: Data Structures (Arrays)",
       "content": "Arrays store lists of items. Our `sites.json` uses an array structure to list all available websites.",
       "tags": ["data", "programming"],
       "codeReferences": ["repo-python/sites.json"]
     },
     {
-      "id": 16,
+      "id": "H091-06",
       "title": "Program Fundamentals: Data Structures (Objects/Maps)",
       "content": "Objects (or associative arrays in PHP) store key-value pairs. `config.json` is a perfect example of this.",
       "tags": ["data", "programming"],
       "codeReferences": ["repo-php/content/site1.com/config.json"]
     },
     {
-      "id": 17,
+      "id": "H091-07",
       "title": "Program Fundamentals: Compilation",
       "content": "Compiled languages like Go or Rust transform code into machine-executable binaries before running.",
       "tags": ["programming", "performance"],
       "codeReferences": ["repo-go/main.go"]
     },
     {
-      "id": 18,
+      "id": "H091-08",
       "title": "Program Fundamentals: Interpretation",
       "content": "Interpreted languages like PHP or Python execute code line-by-line via an interpreter at runtime.",
       "tags": ["programming", "scripting"],
       "codeReferences": ["repo-python/main.py"]
     },
     {
-      "id": 19,
+      "id": "H091-09",
       "title": "Program Fundamentals: Recursion",
       "content": "A function calling itself. Useful for traversing hierarchical structures like the CMS folder tree in `Hierarchy.php`.",
       "tags": ["logic", "programming"],
       "codeReferences": ["repo-php/class/Hierarchy.php"]
     },
     {
-      "id": 20,
+      "id": "H091-10",
       "title": "Program Fundamentals: Error Handling",
       "content": "Try/Catch blocks prevent your app from crashing when something goes wrong. Essential for database connections in `DB.php`.",
       "tags": ["programming", "stability"],

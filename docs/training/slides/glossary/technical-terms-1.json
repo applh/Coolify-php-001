@@ -1,214 +1,214 @@
 {
-  "moduleId": "GLOSSARY-TECH-TERMS",
+  "moduleId": "M009",
   "title": "The Infinite Glossary of Technical Architecture",
   "totalSlides": 30,
   "bundleId": 1,
   "slides": [
     {
-      "id": 1,
+      "id": "H080-01",
       "title": "PHP (Hypertext Preprocessor)",
       "content": "A server-side scripting language designed for web development. In this app, PHP is the primary engine for the legacy CMS core located in `repo-php/`. It handles template rendering, database interactions via PDO, and the plugin ecosystem. PHP's execution model is typically request-response, where a script initializes, processes data, and terminates for every HTTP request, though features like OPcache and modern runtimes have significantly optimized this lifecycle.",
       "tags": ["backend", "language"],
       "codeReferences": ["repo-php/public/index.php"]
     },
     {
-      "id": 2,
+      "id": "H080-02",
       "title": "MVC (Model-View-Controller)",
       "content": "An architectural pattern that separates an application into three main logical components: the Model (data logic), the View (UI logic), and the Controller (business logic). Our CMS implements a custom MVC framework. Models in `repo-php/class/Model.php` interact with the DB, Views are modular PHP files in `repo-php/views/`, and Controllers manage the flow between them. This separation ensures that the database schema doesn't leak directly into the frontend, allowing for easier maintenance and testing.",
       "tags": ["architecture", "pattern"],
       "codeReferences": ["repo-php/class/Controller.php", "repo-php/class/Model.php", "repo-php/class/View.php"]
     },
     {
-      "id": 3,
+      "id": "H080-03",
       "title": "CMS (Content Management System)",
       "content": "A software application that allows users to create, manage, and modify content on a website without needing specialized technical knowledge. This project is a 'Multi-Tenant' CMS, meaning it can host multiple sites (site1.com, site2.com) from a single shared codebase. The `CMS` class in `repo-php/class/CMS.php` acts as the orchestrator, determining which site folder in `content/` to load based on the request hostname and managing the plugin lifecycle for that specific instance.",
       "tags": ["product", "system"],
       "codeReferences": ["repo-php/class/CMS.php"]
     },
     {
-      "id": 4,
+      "id": "H080-04",
       "title": "PSR (PHP Standard Recommendation)",
       "content": "A set of PHP specifications published by the PHP Framework Interop Group. This app follows PSR patterns for coding styles and autoloading. Adhering to standards like PSR-4 (Autoloading) ensures that classes located in `repo-php/class/` can be automatically found by the PHP engine without thousands of manual `require` statements. This promotes interoperability with external libraries installed via Composer and makes the codebase predictable for other PHP developers.",
       "tags": ["standards", "best-practices"],
       "codeReferences": ["repo-php/class/App.php"]
     },
     {
-      "id": 5,
+      "id": "H080-05",
       "title": "Composer",
       "content": "The standard dependency manager for PHP. It allows you to declare the libraries your project depends on and it will manage (install/update) them for you. In our architecture, Composer handles the installation of critical tools like routing libraries or database drivers. The `vendor/` directory (mapped in Docker volumes) contains these libraries, ensuring that our core logic remains slim while leveraging the vast PHP ecosystem for common tasks like image processing or API clients.",
       "tags": ["devops", "backend"],
       "codeReferences": ["repo-php/Dockerfile"]
     },
     {
-      "id": 6,
+      "id": "H080-06",
       "title": "Nginx",
       "content": "A high-performance HTTP server, reverse proxy, and IMAP/POP3 proxy server. Within our stack, Nginx acts as the 'Gateway' (port 80 inside the container, 3000 outside). It handles incoming traffic, serves static assets (CSS, JS, Images) directly for speed, and passes dynamic requests to the PHP-FPM process or the Node.js server. The `nginx.conf` file defines how routes are rewritten, ensuring that a request for `/admin/` is correctly mapped to the entrypoint script.",
       "tags": ["infrastructure", "server"],
       "codeReferences": ["repo-php/nginx.conf"]
     },
     {
-      "id": 7,
+      "id": "H080-07",
       "title": "Docker & Docker Compose",
       "content": "Docker is a platform for developing, shipping, and running applications in containers—lightweight, standalone, executable packages that include everything needed to run a piece of software. Docker Compose manages multi-container applications. This project is 'Container-Native', using Docker to ensure that the PHP repo, the Python repo, and the React repo all run in identical environments regardless of whether a developer is on Windows, Mac, or Linux. It eliminates the 'it works on my machine' problem.",
       "tags": ["devops", "containerization"],
       "codeReferences": ["repo-php/docker-compose.yml", "Dockerfile"]
     },
     {
-      "id": 8,
+      "id": "H080-08",
       "title": "PDO (PHP Data Objects)",
       "content": "A database access layer providing a uniform method of access to multiple databases. The `DB` class in `repo-php/class/DB.php` uses PDO to interact with SQLite or MySQL safely. PDO is critical for security because it supports 'Prepared Statements', which automatically sanitize user input to prevent SQL Injection attacks. Instead of concatenating variables into strings, we pass them as parameters, allowing the DB engine to handle the data safely.",
       "tags": ["database", "security"],
       "codeReferences": ["repo-php/class/DB.php"]
     },
     {
-      "id": 9,
+      "id": "H080-09",
       "title": "Router",
       "content": "A component that maps incoming URLs to specific code handlers. Our app uses both a backend Router in `repo-php/class/Router.php` and a frontend router in the Vue app. The Backend Router analyzes the Request URI (e.g., `/api/tasks`) and invokes the correct PHP controller. This allows us to have clean, 'Pretty URLs' without `.php` extensions, which is better for SEO and user experience. The frontend router handles navigation within the dashboard without triggering a full page reload.",
       "tags": ["architecture", "routing"],
       "codeReferences": ["repo-php/class/Router.php"]
     },
     {
-      "id": 10,
+      "id": "H080-10",
       "title": "Plugin Architecture",
       "content": "A design pattern that allows extending the functionality of a core system without modifying its source code. The `PluginManager` in `repo-php/class/PluginManager.php` scans the `plugins/` directory (e.g., `analytics`, `seo-optimizer`, `forms`) and hooks them into the CMS lifecycle. This 'Open-Closed Principle' implementation means we can add a new feature like a newsletter signup simply by dropping a folder into the plugins directory, which the CMS then automatically initializes.",
       "tags": ["architecture", "modularity"],
       "codeReferences": ["repo-php/class/PluginManager.php", "repo-php/plugins/forms/plugin.php"]
     },
     {
-      "id": 11,
+      "id": "H080-11",
       "title": "Vue 3 (Composition API)",
       "content": "A progressive JavaScript framework for building user interfaces. Our main dashboard uses Vue 3 with the Composition API (`setup` script). Unlike the Options API, the Composition API allows us to group logic by feature rather than by lifecycle hook, making complex components like `SiteEditor.vue` much easier to read. Vue's reactivity system ensures that when the data changes, the UI updates instantly without manual DOM manipulation, leading to a more responsive 'app-like' experience.",
       "tags": ["frontend", "framework"],
       "codeReferences": ["src/App.vue", "src/main.ts"]
     },
     {
-      "id": 12,
+      "id": "H080-12",
       "title": "Vite",
       "content": "A modern frontend build tool that provides an extremely fast development environment and optimized production builds. Vite replaces older tools like Webpack by leveraging native ES modules in the browser. It features Hot Module Replacement (HMR)—though disabled in our specific agentic environment for stability—and uses esbuild for blazing-fast bundling. Vite is what orchestrates the compilation of our `.vue` and `.ts` files into the small, optimized chunks sent to the user's browser.",
       "tags": ["frontend", "tooling"],
       "codeReferences": ["vite.config.ts", "package.json"]
     },
     {
-      "id": 13,
+      "id": "H080-13",
       "title": "Tailwind CSS",
       "content": "A utility-first CSS framework that allows for rapid UI development by applying low-level utility classes directly in the HTML or Vue templates. Instead of writing custom CSS for a card, we use classes like `bg-white shadow-xl rounded-lg p-6`. This approach ensures visual consistency, eliminates the need for large, unmaintainable CSS files, and provides a 'design system' out of the box. In this app, Tailwind is injected via `@import \"tailwindcss\";` in the global CSS file.",
       "tags": ["frontend", "styling"],
       "codeReferences": ["src/style.css"]
     },
     {
-      "id": 14,
+      "id": "H080-14",
       "title": "Props & Events",
       "content": "The primary communication mechanism between parent and child components in Vue. 'Props' flow down from parent to child (e.g., passing a `site` object to a `SiteCard` component). 'Events' (emitted via `defineEmits`) flow up from child to parent (e.g., the `SiteCard` emitting a `delete` event when a button is clicked). This 'One-Way Data Flow' makes it easy to track where data is coming from and where changes are being handled, preventing the 'spaghetti state' common in older jQuery apps.",
       "tags": ["frontend", "vue"],
       "codeReferences": ["src/views/SiteExplorer.vue"]
     },
     {
-      "id": 15,
+      "id": "H080-15",
       "title": "Reactive State (ref, reactive)",
       "content": "In Vue 3, reactivity is achieved using `ref` for primitive values and `reactive` for objects. When a reactive variable changes, Vue automatically detects the change and re-renders only the parts of the DOM that depend on that variable. For example, in our `SiteExplorer`, the `sites` array is a `ref`. When we add a new site, Vue doesn't refresh the whole page; it simply appends a new card to the list in milliseconds. This is the core of why modern web apps feel so fast.",
       "tags": ["frontend", "state-management"],
       "codeReferences": ["src/views/SiteExplorer.vue"]
     },
     {
-      "id": 16,
+      "id": "H080-16",
       "title": "Virtual DOM",
       "content": "A programming concept where an 'ideal', or 'virtual', representation of a UI is kept in memory and synced with the 'real' DOM by a library such as Vue. When state changes, Vue creates a new Virtual DOM tree, compares it with the old one (a process called 'diffing'), and calculates the minimum number of changes needed to update the actual browser DOM. This is far more efficient than re-rendering the entire HTML body, especially for high-latency operations or complex UI structures.",
       "tags": ["frontend", "performance"],
       "codeReferences": ["src/main.ts"]
     },
     {
-      "id": 17,
+      "id": "H080-17",
       "title": "Single Page Application (SPA)",
       "content": "A web application or website that interacts with the user by dynamically rewriting the current web page with new data from the web server, instead of the default method of a browser loading entire new pages. Our main dashboard is an SPA built with Vue. While the legacy sites in `repo-php/content/` are Multi-Page Applications (MPA) where every link clicks to a new URL, the dashboard feels like a desktop app because only data (JSON) is exchanged over the network after the initial load.",
       "tags": ["architecture", "frontend"],
       "codeReferences": ["index.html", "src/App.vue"]
     },
     {
-      "id": 18,
+      "id": "H080-18",
       "title": "Gemini API",
       "content": "A family of generative AI models developed by Google DeepMind. This app integrates Gemini 1.5 Flash and Pro to power automated tasks like content generation, code refactoring, and SEO optimization. We access it via the `@google/genai` SDK. The API allows the app to process text, code, and images to provide intelligent responses, such as 'generating a marketing banner for a new startup' inside the `AiMediaTasks.vue` view. It's the 'brain' that makes this a 'Smart CMS'.",
       "tags": ["ai", "integration"],
       "codeReferences": ["docs/ai-agents/gemini-api-interactions.md"]
     },
     {
-      "id": 19,
+      "id": "H080-19",
       "title": "AI Agent",
       "content": "An autonomous AI system that can perceive its environment, reason about tasks, and take actions to achieve specific goals. In our system, the 'AI Coder Agent' and 'Media Generator Agent' (documented in `docs/ai-agents/`) are specialized instances of Gemini-powered logic. Unlike a simple chatbot, an agent has 'Tools' (like our PHP API) that it can call to perform real operations, such as creating a new site template or fixing a CSS bug by writing to the filesystem.",
       "tags": ["ai", "product"],
       "codeReferences": ["docs/ai-agents/ai-agents-roles-tasks.md", "repo-php/class/AIAgent.php"]
     },
     {
-      "id": 20,
+      "id": "H080-20",
       "title": "Prompt Engineering",
       "content": "The process of structuring text that can be interpreted and understood by a generative AI model. In our codebase, you'll see complex system prompts that define the agent's persona, constraints, and output formats (like 'Always return JSON'). Effective prompt engineering is what ensures the AI generates valid Tailwind classes instead of generic CSS or creates a PHP class that actually conforms to our `Controller` interface. It is the new 'coding' for AI-integrated apps.",
       "tags": ["ai", "methodology"],
       "codeReferences": ["docs/training/AI-STUDENT-PROMPTS.md"]
     },
     {
-      "id": 21,
+      "id": "H080-21",
       "title": "Function Calling (AI)",
       "content": "A technique that allows LLMs to interact with external APIs or functions. Instead of the AI just talking, it 'outputs' a structured request (like `createSite({name: 'My Store'})`) which our system then executes. This bridge allows the Gemini model to bridge the gap between 'natural language' and 'executable code'. Our `AITaskManager` in PHP manages these cycles, ensuring that AI-generated decisions are validated before they hit the database or the live site.",
       "tags": ["ai", "engineering"],
       "codeReferences": ["repo-php/class/AITaskManager.php"]
     },
     {
-      "id": 22,
+      "id": "H080-22",
       "title": "LLM (Large Language Model)",
       "content": "A type of artificial intelligence algorithm that uses deep learning techniques and massively large data sets to understand, summarize, generate, and predict new content. Gemini is our chosen LLM. These models are based on the Transformer architecture and are pre-trained on trillions of tokens of text. This app leverages the LLM's understanding of programming languages (PHP, TypeScript, Python) to assist the developer in everything from writing docs to porting features.",
       "tags": ["ai", "technology"],
       "codeReferences": ["docs/ai-agents/ai-agent-tech-evaluation.md"]
     },
     {
-      "id": 23,
+      "id": "H080-23",
       "title": "Coolify",
       "content": "An open-source, self-hostable alternative to Heroku/Netlify. We use Coolify for our production deployment strategy. It manages the VPS, handles SSL certificates via Traefik, and automates deployments from GitHub. Coolify's ability to host multi-stack dockerized apps (PHP + Node + Python) makes it the perfect match for our polyglot repository, allowing us to scale the 'Sites' independently of the 'Management Dashboard'.",
       "tags": ["devops", "deployment"],
       "codeReferences": ["docs/devops/coolify-setup-php.md", "docs/training/slides/phase5/deployment-coolify.json"]
     },
     {
-      "id": 24,
+      "id": "H080-24",
       "title": "CI/CD (Continuous Integration/Deployment)",
       "content": "A method to frequently deliver apps to customers by introducing automation into the stages of app development. Continuous Integration (CI) refers to the automatic testing of code changes. Continuous Deployment (CD) refers to the automatic release of that code to the server. Our documentation in `docs/devops/` outlines how every commit to the main branch triggers a rebuild of the Docker images and a zero-downtime update of the containers via Coolify or Cloud Run.",
       "tags": ["devops", "workflow"],
       "codeReferences": ["docs/devops/deployment.md"]
     },
     {
-      "id": 25,
+      "id": "H080-25",
       "title": "Webhooks",
       "content": "A way for one app to provide other apps with real-time information. A webhook delivers data to other applications as it happens, meaning you get data immediately. In our CMS, we use webhooks for external integrations, such as receiving form submissions from a static site or getting deployment status updates from Coolify. Instead of our app 'polling' (asking every 5 minutes), the external service 'pushes' the data to our API endpoint the moment an event occurs.",
       "tags": ["backend", "api"],
       "codeReferences": ["repo-php/plugins/forms/plugin.php"]
     },
     {
-      "id": 26,
+      "id": "H080-26",
       "title": "SEO (Search Engine Optimization)",
       "content": "The practice of orienting your website to rank higher on a search engine results page. Our `seo-optimizer` plugin automates this by managing meta tags, generating sitemaps, and ensuring semantic HTML (using `<header>`, `<main>`, `<h1>` vs `<div>`). The AI agent can analyze a site's content and auto-generate 'Open Graph' descriptions that make the site look professional when shared on social media, directly impacting traffic and conversion rates.",
       "tags": ["marketing", "frontend"],
       "codeReferences": ["repo-php/plugins/seo-optimizer/plugin.php", "AGENTS.md"]
     },
     {
-      "id": 27,
+      "id": "H080-27",
       "title": "Analytics Plugins",
       "content": "Tools used to collect and analyze data about how visitors interact with your website. Our multi-tenant CMS has a dedicated `analytics` plugin. It can inject tracking scripts (like Google Analytics or plausible.io) into every page rendered by the CMS. Because it's a plugin, we can enable it for `site2.com` while keeping it disabled for `site1.com`, demonstrating the power of our modular architectural approach.",
       "tags": ["product", "plugin"],
       "codeReferences": ["repo-php/plugins/analytics/plugin.php"]
     },
     {
-      "id": 28,
+      "id": "H080-28",
       "title": "Form Management",
       "content": "The system for creating web forms and processing their data. Located in `repo-php/plugins/forms/`, our Form Manager allows site owners to build complex contact forms visually. The system handles validation, anti-spam (honeypots/reCAPTCHA), and persistence. Submissions are stored in JSON or SQL and can be viewed in the 'Submissions' tab of the main dashboard, bridged via a cross-stack API call from the Vue frontend to the PHP backend.",
       "tags": ["product", "forms"],
       "codeReferences": ["repo-php/plugins/forms/FormsManager.php", "repo-php/public/js/components/AdminFormsManager.js"]
     },
     {
-      "id": 29,
+      "id": "H080-29",
       "title": "Template Hierarchy",
       "content": "A logic system that determines which PHP file is used to render a specific page. Based on WordPress's architecture, our `Hierarchy` class in `repo-php/class/Hierarchy.php` looks for specific files: `front-page.php`, then `index.php`. This allows sites in `content/` to be extremely customized. For example, `babiblog.fr` can have a special layout for articles just by adding `single.php`, while other sites fall back to the default `index.php` template.",
       "tags": ["architecture", "backend"],
       "codeReferences": ["repo-php/class/Hierarchy.php", "docs/backend/php-template-hierarchy-guide.md"]
     },
     {
-      "id": 30,
+      "id": "H080-30",
       "title": "Benchmarking",
       "content": "The act of running a computer program, a set of programs, or other operations, in order to assess the relative performance of an object. Our `SiteBenchmarker.vue` tool analyzes things like 'Time to First Byte' (TTFB) and PageSpeed scores. By comparing our PHP stack against the Go or Rust stacks, we can scientifically prove the efficiency of our AI-optimized architectures. This is critical for scaling a CMS to thousands of concurrent users across different cloud regions.",
       "tags": ["devops", "performance"],
