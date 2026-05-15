@@ -38,5 +38,21 @@ Master the art of writing maintainable, scalable, and reusable code through obje
     - **Task**: Identify if `CMS.php` is doing too much (e.g., routing, data fetching, and rendering).
     - **Exercise**: Extract the "Rendering" logic into a separate `Renderer` class to satisfy SRP.
 
+## 4. DRY & Refactoring Techniques
+**Goal**: Eliminate redundancy and simplify code logic.
+
+- **Lab 1: Identifying Duplication**
+    - **Reference**: `repo-php/class/App.php` and `repo-php/class/Router.php`
+    - **Task**: Find overlapping path-handling logic between these two classes.
+    - **Exercise**: Create a shared `PathHelper` trait or class to unify URL normalization.
+- **Lab 2: Method Extraction**
+    - **Reference**: `repo-php/class/Layout.php`
+    - **Task**: Look for large blocks of logic in the `render` method.
+    - **Exercise**: Refactor the method by extracting "Head", "Body", and "Footer" logic into private helper methods.
+- **Lab 3: Eliminating Magic Numbers**
+    - **Reference**: `repo-php/class/AITaskManager.php`
+    - **Task**: Identify hardcoded limits or intervals.
+    - **Exercise**: Refactor the class to use class constants for configuration values.
+
 ## Integration
 Apply one architectural refactor to your backend labs every week.

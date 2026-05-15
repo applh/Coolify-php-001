@@ -32,6 +32,12 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 - **Task**: Study the technical terms.
 - **Exercise**: Pass the M009 module quiz.
 
+### 4. DRY & Refactoring Mastery (10h)
+**Reference**: `docs/training/slides/phase1/dry-refactoring-best-practices.json`
+- **Task**: Master the "Rule of Three" and "Extraction" techniques.
+- **Exercise**: Refactor a repetitive block of code in `repo-php/content/site1.com/index.php`.
+- **Goal**: Achieve clean, non-repetitive code.
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `README.md`

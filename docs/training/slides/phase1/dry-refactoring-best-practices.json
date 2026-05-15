@@ -1,0 +1,148 @@
+{
+  "moduleId": "M010-DRY",
+  "title": "DRY Principles & Refactoring Techniques",
+  "totalSlides": 20,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": "DRY-01",
+      "title": "Introduction to DRY",
+      "content": "DRY stands for 'Don't Repeat Yourself'. It is a principle of software development aimed at reducing repetition of software patterns, replacing it with abstractions or using data normalization.",
+      "tags": ["philosophy", "fundamentals"],
+      "codeReferences": ["repo-php/class/Component.php"]
+    },
+    {
+      "id": "DRY-02",
+      "title": "The Dangers of WET Code",
+      "content": "WET (Write Everything Twice) code leads to maintenance nightmares. If you copy-paste a bug, you have to fix it in multiple places. It increases the probability of inconsistency.",
+      "tags": ["quality", "maintenance"],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": "DRY-03",
+      "title": "When to Refactor: The Rule of Three",
+      "content": "The first time you do something, you just do it. The second time you do something similar, you wince at the duplication, but you do the duplicate thing anyway. The third time you do something similar, you refactor.",
+      "tags": ["refactoring", "strategy"],
+      "codeReferences": ["repo-php/class/View.php"]
+    },
+    {
+      "id": "DRY-04",
+      "title": "Abstraction as a Solution",
+      "content": "Abstraction involves pulling out common behavior into a single function or class. `DB.php` abstracts database connections so you don't repeat connection logic in every model.",
+      "tags": ["oop", "reusability"],
+      "codeReferences": ["repo-php/class/DB.php"]
+    },
+    {
+      "id": "DRY-05",
+      "title": "Refactoring: Definition",
+      "content": "Refactoring is the process of restructuring existing computer code—changing the factoring—without changing its external behavior.",
+      "tags": ["refactoring", "quality"],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": "DRY-06",
+      "title": "The Refactoring Cycle",
+      "content": "1. Red: Write a failing test. 2. Green: Make it pass. 3. Refactor: Clean up the code while keeping tests green. This TDD cycle ensures safety during structural changes.",
+      "tags": ["testing", "workflow"],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": "DRY-07",
+      "title": "Extract Method",
+      "content": "One of the most common refactoring techniques. If you have a code fragment that can be grouped together, turn it into a method whose name explains the purpose.",
+      "tags": ["refactoring", "technique"],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": "DRY-08",
+      "title": "Inline Method",
+      "content": "The opposite of Extract Method. If a method body is just as clear as its name, put the method's body into its callers and remove the method.",
+      "tags": ["refactoring", "clean-code"],
+      "codeReferences": ["repo-php/class/Controller.php"]
+    },
+    {
+      "id": "DRY-09",
+      "title": "Replace Temp with Query",
+      "content": "You are using a temporary variable to hold the result of an expression. Extract the expression into a method. Replace all references to the temp with the expression.",
+      "tags": ["refactoring", "logic"],
+      "codeReferences": ["repo-php/class/Model.php"]
+    },
+    {
+      "id": "DRY-10",
+      "title": "Decomposing Conditionals",
+      "content": "Large `if-then-else` blocks can be hard to read. Extract the parts of the condition into variables or methods with descriptive names.",
+      "tags": ["refactoring", "readability"],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": "DRY-11",
+      "title": "Consolidate Duplicate Conditional Fragments",
+      "content": "If the same fragment of code is in all branches of a conditional expression, move it outside of the expression.",
+      "tags": ["dry", "logic"],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": "DRY-12",
+      "title": "Replace Magic Number with Symbolic Constant",
+      "content": "Avoid using literal numbers with special meaning. Define them as constants (e.g., `const MAX_SITES = 10;`) to improve clarity and maintainability.",
+      "tags": ["clean-code", "standards"],
+      "codeReferences": ["repo-python/sites.json"]
+    },
+    {
+      "id": "DRY-13",
+      "title": "Smell: Long Method",
+      "content": "Methods should ideally be less than 20 lines. If a method is too long, it likely has too many responsibilities (violating SRP).",
+      "tags": ["code-smell", "architecture"],
+      "codeReferences": ["repo-php/class/Layout.php"]
+    },
+    {
+      "id": "DRY-14",
+      "title": "Smell: Large Class",
+      "content": "A class that tries to do too much often shows up as having too many instance variables. Split it into smaller, focused classes.",
+      "tags": ["code-smell", "srp"],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": "DRY-15",
+      "title": "Refactoring Tool: ESLint",
+      "content": "Linters can automatically detect code smells and enforce style rules. They are your first line of defense against messy code.",
+      "tags": ["tools", "automation"],
+      "codeReferences": ["eslint.config.js"]
+    },
+    {
+      "id": "DRY-16",
+      "title": "Refactoring Tool: IDE Refactoring",
+      "content": "Modern IDEs provide built-in tools for 'Rename', 'Extract Method', and 'Change Signature'. Use them to reduce manual errors.",
+      "tags": ["tools", "dx"],
+      "codeReferences": ["tsconfig.json"]
+    },
+    {
+      "id": "DRY-17",
+      "title": "Technical Debt vs. Refactoring",
+      "content": "Refactoring is the act of paying down technical debt. Regular refactoring prevents the interest (bugs, slow dev time) from becoming overwhelming.",
+      "tags": ["engineering", "management"],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": "DRY-18",
+      "title": "Premature Abstraction",
+      "content": "The opposite of DRY. Don't build complex abstractions until you actually have duplication. Sometimes, 'a little duplication is better than a wrong abstraction.'",
+      "tags": ["philosophy", "strategy"],
+      "codeReferences": ["repo-php/class/Store.php"]
+    },
+    {
+      "id": "DRY-19",
+      "title": "DRY in CSS: Variable Usage",
+      "content": "Repeat colors and spacing? Use CSS variables or Tailwind utility classes to ensure a single source of truth for your design system.",
+      "tags": ["frontend", "dry"],
+      "codeReferences": ["repo-php/public/css/style.css"]
+    },
+    {
+      "id": "DRY-20",
+      "title": "Summary: The Goal of Refactoring",
+      "content": "The goal is not to have perfect code, but to have code that is easy to understand, easy to change, and has minimal duplication.",
+      "tags": ["summary", "philosophy"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    }
+  ]
+}
