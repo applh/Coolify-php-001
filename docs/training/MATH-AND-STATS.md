@@ -5,6 +5,25 @@ Software engineering is often about logic, but AI Engineering and Data Visualiza
 ## 1. Linear Algebra, Matrices & Dimensionality (The AI Foundation)
 **Goal**: Understand how AI "sees" data as coordinates in multi-dimensional space, and how to manipulate these dimensions.
 
+<div align="center">
+  <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" style="max-width: 400px; margin: 1em 0;">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+      </marker>
+    </defs>
+    <line x1="20" y1="80" x2="180" y2="80" stroke="#9ca3af" stroke-width="2" />
+    <line x1="20" y1="80" x2="20" y2="10" stroke="#9ca3af" stroke-width="2" />
+    <line x1="20" y1="80" x2="120" y2="40" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow)" />
+    <text x="125" y="35" fill="#3b82f6" font-size="12" font-family="sans-serif">Vector A (Math)</text>
+    <line x1="20" y1="80" x2="160" y2="70" stroke="#ef4444" stroke-width="3" />
+    <polygon points="160,70 152,66 154,74" fill="#ef4444" />
+    <text x="145" y="85" fill="#ef4444" font-size="12" font-family="sans-serif">Vector B (Stats)</text>
+    <path d="M 50 68 A 40 40 0 0 0 54 53" fill="none" stroke="#10b981" stroke-width="2"/>
+    <text x="60" y="65" fill="#10b981" font-size="12" font-family="sans-serif">θ (Similarity)</text>
+  </svg>
+</div>
+
 - **Practical Lab: The Distance Between Ideas**
     - **Goal**: Master Cosine Similarity & Vectors.
     - **Reference**: `docs/ai-agents/ai-refactoring-algorithm.md`
@@ -25,6 +44,17 @@ Software engineering is often about logic, but AI Engineering and Data Visualiza
 
 ## 2. Statistics & Data Cleanup
 **Goal**: Stop guessing, start measuring with confidence, and ensure your data is reliable.
+
+<div align="center">
+  <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg" style="max-width: 500px; margin: 1em 0;">
+    <line x1="20" y1="130" x2="280" y2="130" stroke="#374151" stroke-width="2"/>
+    <path d="M 30 130 Q 80 130 100 80 T 150 20 T 200 80 T 270 130" fill="none" stroke="#3b82f6" stroke-width="3"/>
+    <line x1="150" y1="130" x2="150" y2="20" stroke="#9ca3af" stroke-dasharray="4,4"/>
+    <text x="135" y="145" font-size="12" font-family="sans-serif" fill="#4b5563">Mean</text>
+    <line x1="230" y1="130" x2="230" y2="90" stroke="#ef4444" stroke-dasharray="4,4"/>
+    <text x="215" y="145" font-size="12" fill="#ef4444" font-family="sans-serif">P99 (Outliers)</text>
+  </svg>
+</div>
 
 - **Practical Lab: Mean, Median, and Outliers**
     - **Goal**: Learn descriptive statistics for performance evaluation.
