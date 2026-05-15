@@ -1,7 +1,0 @@
-version: '3.8'
-services:
-  rust-app:
-    build: .
-    ports:
-      - "8081:8081"
-    restart: always
