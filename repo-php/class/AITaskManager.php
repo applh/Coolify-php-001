@@ -29,7 +29,10 @@ class AITaskManager {
             'result' => null,
             'error' => null,
             'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
+            'updated_at' => date('Y-m-d H:i:s'),
+            'is_recurring' => $payload['is_recurring'] ?? false,
+            'cron_expression' => $payload['cron_expression'] ?? null,
+            'last_run_at' => null
         ];
         
         $tasks[] = $newTask;

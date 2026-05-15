@@ -44,3 +44,10 @@ Harness the power of Large Language Models to build autonomous coding and conten
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/ai-agents/ai-agents-roles-tasks.md`
+
+### 5. Agent Teams and Automations (10h)
+**Reference**: `docs/ai-agents/agent-teams-implementation-plan.md`
+- **Goal**: Learn to implement team-based AI agent task execution with cron automation.
+- **Task**: Analyze the `AgentTeamManager` and `Scheduler` classes in the PHP backend.
+- **Exercise**: Create a new automated agent in `agent_teams.json` and set up a recurring cron task for it.
+- **Complexity**: Phase 3

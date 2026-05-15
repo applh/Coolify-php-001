@@ -58,6 +58,7 @@ const currentBundle = ref<SlideBundle | null>(null);
 const currentSlideIndex = ref(0);
 const viewMode = ref<'dashboard' | 'phase' | 'reader'>('dashboard');
 const isLoading = ref(false);
+const isSyncing = ref(false);
 const error = ref<string | null>(null);
 
 // Initialize modules
@@ -86,6 +87,28 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+const syncWithProd = async () => {
+  if (isSyncing.value) return;
+  isSyncing.value = true;
+  try {
+    const res = await fetch('http://localhost:3000/api/admin/sync', {
+      method: 'POST'
+    });
+    // Fallback if not mapped on node proxy:
+    if (!res.ok) {
+       await fetch('http://localhost:8000/admin/api/sync', {
+          method: 'POST'
+       });
+    }
+    alert('Sync with production completed (simulated).');
+  } catch (e) {
+    console.error(e);
+    alert('Error syncing with Prod.');
+  } finally {
+    isSyncing.value = false;
+  }
+};
 
 // Computed stats
 const stats = computed(() => {
@@ -207,6 +230,14 @@ function backToDashboard() {
       </div>
 
       <div class="flex gap-3 flex-wrap">
+        <button 
+          @click="syncWithProd"
+          :disabled="isSyncing"
+          class="bg-[#F27D26]/20 border border-[#F27D26] px-5 py-3 rounded-lg flex flex-col items-center min-w-[120px] backdrop-blur-sm shadow-xl hover:bg-[#F27D26]/40 transition-colors text-[#F27D26] cursor-pointer"
+        >
+          <span class="text-[9px] uppercase tracking-[0.1em] mb-1 font-bold">Prod Sync</span>
+          <span class="text-lg font-mono font-bold">{{ isSyncing ? 'SYNCING...' : 'SYNC' }}</span>
+        </button>
         <div
           v-for="(val, label) in stats"
           :key="label"

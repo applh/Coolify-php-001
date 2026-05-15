@@ -27,6 +27,10 @@ class AIAgent {
                 return $this->generateMeta($payload['content']);
             case 'suggest_improvements':
                 return $this->suggestImprovements($payload['site_data']);
+            case 'generate_slide_outline':
+                return $this->generateSlideOutline($payload['topic']);
+            case 'generate_slide_svg':
+                return $this->generateSlideSvg($payload['slide_data']);
             default:
                 throw new Exception("Unknown task type: $type");
         }
@@ -50,6 +54,23 @@ class AIAgent {
     private function suggestImprovements($siteData) {
         $prompt = "Analyze this website landing page content and suggest 3 specific improvements to increase conversion.\n\nContent: \"$siteData\"\n\nProvide suggestions as a list.";
         return $this->askGemini($prompt);
+    }
+
+    private function generateSlideOutline($topic) {
+        $prompt = "You are a Curriculum Designer.\nGenerate a pedagogical slide outline for the topic: \"$topic\".\nProvide the response as valid JSON with an array of objects, containing 'title' and 'content' for each slide.";
+        $result = $this->askGemini($prompt);
+        if (preg_match('/\{.*\}/s', $result, $matches) || preg_match('/\[.*\]/s', $result, $matches)) {
+            return json_decode($matches[0], true);
+        }
+        return ['error' => 'Failed to parse JSON response', 'raw' => $result];
+    }
+
+    private function generateSlideSvg($slideData) {
+        $prompt = "You are a Visual Designer.\nGenerate a highly stylized SVG illustration representing the following slide content:\n\nTitle: " . ($slideData['title'] ?? '') . "\nContent: " . ($slideData['content'] ?? '') . "\n\nFormat your response to return ONLY valid SVG code. Do not wrap it in markdown or comments.";
+        $result = $this->askGemini($prompt);
+        // Clean markdown backticks if any
+        $result = preg_replace('/^```(xml|svg)?|```$/i', '', trim($result));
+        return ['svg' => trim($result)];
     }
 
     private function askGemini($prompt) {

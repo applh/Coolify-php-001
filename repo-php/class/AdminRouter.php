@@ -90,6 +90,9 @@ class AdminRouter {
         }
 
         if ($uri === '/admin/api/ai/heartbeat') {
+            require_once __DIR__ . '/Scheduler.php';
+            Scheduler::runDueTasks($contentPath);
+
             // Forward call to the public heartbeat (or implement same logic)
             // For simplicity, we just trigger it
             $ch = curl_init('http://localhost:' . (getenv('PORT') ?: '3000') . '/api/heartbeat');
@@ -97,6 +100,15 @@ class AdminRouter {
             $response = curl_exec($ch);
             curl_close($ch);
             echo $response;
+            return;
+        }
+
+        if ($uri === '/admin/api/sync' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Placeholder logic for Sync Feature between AI Studio Preview and Prod Training Center
+            // 1. Authenticate with prod using a token
+            // 2. Fetch updated training content
+            // 3. Push local changes
+            echo json_encode(['status' => 'success', 'message' => 'Sync triggered successfully.']);
             return;
         }
 
