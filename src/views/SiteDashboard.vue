@@ -2,10 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
-  LayoutGrid, 
   Plus, 
   Globe, 
-  ArrowUpRight, 
   Download, 
   Upload, 
   Database, 

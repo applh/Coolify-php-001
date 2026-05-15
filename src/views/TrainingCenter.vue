@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
-  BookOpen, Search, Zap, Code, 
+  Search, Zap, Code, 
   ChevronLeft, ChevronRight, X, ExternalLink, Filter,
   Clock, Target, Grid3X3, List as ListIcon,
-  LayoutDashboard, Database
+  LayoutDashboard, Database, Sparkles, TrendingUp
 } from 'lucide-vue-next';
 
-// Content URLs
-import glossary1Url from '../../docs/training/slides/glossary/technical-terms-1.json?url';
-import glossary2Url from '../../docs/training/slides/glossary/technical-terms-2.json?url';
-import moduleIntroUrl from '../../docs/training/slides/phase1/module-intro.json?url';
-import agileAiRolesUrl from '../../docs/training/slides/phase5/agile-ai-roles.json?url';
-import deploymentCoolifyUrl from '../../docs/training/slides/phase5/deployment-coolify.json?url';
+// Load taxonomy
 import taxonomyData from '../../docs/training/taxonomy.json';
 
 interface Slide {
-  id: number;
+  id: string | number;
   title: string;
   content: string;
   tags: string[];
@@ -45,15 +40,10 @@ interface Phase {
   modules: Module[];
 }
 
-// Map actual files to taxonomy modules
-const CONTENT_MAP: Record<string, string> = {
-  'M001': moduleIntroUrl,
-  'M009': glossary1Url, 
-  'M010': glossary2Url, 
-  'M085': agileAiRolesUrl, 
-  'M073': deploymentCoolifyUrl, 
-};
+// Global data store for modules
+const allSlidesData = ref<Record<string, SlideBundle>>({});
 
+// Dynamic Module Discovery
 const phases = ref<Phase[]>(taxonomyData.phases);
 const searchQuery = ref('');
 const activeView = ref<'atlas' | 'list'>('atlas');
@@ -67,16 +57,56 @@ const viewMode = ref<'dashboard' | 'phase' | 'reader'>('dashboard');
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
+// Initialize modules
+onMounted(async () => {
+  isLoading.value = true;
+  try {
+    // Vite's dynamic import for all slide JSONs
+    const modulesImport = import.meta.glob<SlideBundle>('../../docs/training/slides/**/*.json', { import: 'default', eager: true });
+    
+    const data: Record<string, SlideBundle> = {};
+    for (const path in modulesImport) {
+      const bundle = modulesImport[path];
+      if (bundle && bundle.moduleId) {
+        // Some files might cover multiple modules (e.g. M093-M094)
+        const ids = bundle.moduleId.split('-').map(id => id.trim());
+        ids.forEach(id => {
+          data[id] = bundle;
+        });
+      }
+    }
+    allSlidesData.value = data;
+  } catch (err) {
+    console.error('Failed to load dynamic modules:', err);
+    error.value = 'Failed to index training curriculum.';
+  } finally {
+    isLoading.value = false;
+  }
+});
+
 // Computed stats
 const stats = computed(() => {
   const totalModules = phases.value.reduce((acc, p) => acc + p.modules.length, 0);
-  const totalContent = Object.keys(CONTENT_MAP).length;
+  const availableContentCount = Object.keys(allSlidesData.value).length;
+  const coverage = Math.round((availableContentCount / totalModules) * 100);
   return {
     totalHours: 1000,
     totalModules,
-    availableContent: `${totalContent}%`,
-    readyStatus: 'OPTIMIZED'
+    curriculumCoverage: `${coverage}%`,
+    readyStatus: coverage > 50 ? 'OPTIMIZED' : 'DRAFT'
   };
+});
+
+const latestModules = computed(() => {
+  // Sort modules by bundleId descending, or just pick the ones we have content for and take the last few phases
+  const available = Object.keys(allSlidesData.value);
+  
+  // Flatten all modules and filter by availability
+  const allFlattened = phases.value.flatMap(p => p.modules);
+  const availableObjects = allFlattened.filter(m => available.includes(m.id));
+  
+  // Sort by ID descending (usually newer modules have higher numbers)
+  return availableObjects.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 4);
 });
 
 const filteredPhases = computed(() => {
@@ -105,26 +135,13 @@ async function openPhase(phase: Phase) {
 }
 
 async function startModule(module: Module) {
-  const path = CONTENT_MAP[module.id];
-  if (!path) return;
+  const bundle = allSlidesData.value[module.id];
+  if (!bundle) return;
 
   selectedModule.value = module;
-  isLoading.value = true;
-  error.value = null;
   currentSlideIndex.value = 0;
-  
-  try {
-    const response = await fetch(path);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    currentBundle.value = data;
-    viewMode.value = 'reader';
-  } catch (err) {
-    console.error('Failed to load module:', err);
-    error.value = 'Could not load training content.';
-  } finally {
-    isLoading.value = false;
-  }
+  currentBundle.value = bundle;
+  viewMode.value = 'reader';
 }
 
 function nextSlide() {
@@ -245,32 +262,44 @@ function backToDashboard() {
           v-if="activeView === 'atlas'"
           class="space-y-12 pb-20"
         >
-          <!-- Spotlight -->
-          <div class="space-y-4">
+          <!-- Spotlight: Trending/Latest -->
+          <div 
+            v-if="latestModules.length > 0"
+            class="space-y-4"
+          >
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold text-[#F27D26] uppercase tracking-widest flex items-center gap-2">
-                <Zap class="w-3 h-3 fill-[#F27D26]" />
-                Curriculum Spotlight: Ready to Learn
+              <h3 class="text-xs font-bold text-[#F27D26] uppercase tracking-[0.2em] flex items-center gap-2">
+                <Sparkles class="w-3 h-3 fill-[#F27D26]" />
+                New & Featured Modules
               </h3>
+              <div class="flex items-center gap-2 text-[10px] text-white/20 font-mono">
+                <TrendingUp class="w-3 h-3" />
+                Latest Curriculum Drops
+              </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 tracking-tight">
               <div 
-                v-for="modId in Object.keys(CONTENT_MAP)" 
-                :key="modId"
-                class="bg-gradient-to-br from-[#F27D26]/20 to-transparent border border-[#F27D26]/30 p-4 rounded-xl hover:bg-[#F27D26]/10 transition-all cursor-pointer group relative overflow-hidden"
-                @click="startModule(phases.flatMap(p => p.modules).find(m => m.id === modId)!)"
+                v-for="mod in latestModules" 
+                :key="mod.id"
+                class="group relative bg-[#111] border border-white/5 rounded-2xl p-5 hover:border-[#F27D26]/40 transition-all cursor-pointer overflow-hidden shadow-2xl"
+                @click="startModule(mod)"
               >
-                <div class="absolute -right-2 -bottom-2 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <BookOpen class="w-16 h-16 text-[#F27D26]" />
-                </div>
-                <div class="text-[10px] font-mono text-[#F27D26] mb-1 font-bold">
-                  {{ modId }}
-                </div>
-                <h4 class="text-sm font-bold text-white/90 group-hover:text-white line-clamp-1 mb-1">
-                  {{ phases.flatMap(p => p.modules).find(m => m.id === modId)?.name }}
-                </h4>
-                <div class="flex items-center gap-1 text-[9px] font-bold text-[#F27D26]/60 uppercase tracking-tighter">
-                  Start Module <ChevronRight class="w-2.5 h-2.5" />
+                <!-- Glow Effect -->
+                <div class="absolute -inset-1 bg-gradient-to-r from-[#F27D26] to-[#ff8f3e] rounded-2xl opacity-0 group-hover:opacity-10 blur-xl transition-opacity animate-pulse" />
+                
+                <div class="relative z-10 space-y-3">
+                  <div class="flex justify-between items-start">
+                    <div class="text-[10px] font-mono text-[#F27D26] font-bold bg-[#F27D26]/10 px-2 py-0.5 rounded border border-[#F27D26]/20">
+                      {{ mod.id }}
+                    </div>
+                    <Zap class="w-3.5 h-3.5 text-[#F27D26] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <h4 class="text-base font-bold text-white group-hover:text-[#F27D26] transition-colors line-clamp-2 leading-tight">
+                    {{ mod.name }}
+                  </h4>
+                  <div class="flex items-center gap-1.5 text-[9px] font-black text-white/30 uppercase tracking-widest pt-2 border-t border-white/5 group-hover:text-[#F27D26]/60">
+                    Execute Training <ChevronRight class="w-3 h-3" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -304,7 +333,7 @@ function backToDashboard() {
                       v-for="mod in phase.modules" 
                       :key="mod.id"
                       class="aspect-square rounded-sm border border-white/5 transition-all duration-500"
-                      :class="CONTENT_MAP[mod.id] ? 'bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.4)]' : 'bg-white/5'"
+                      :class="allSlidesData[mod.id] ? 'bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.4)]' : 'bg-white/5'"
                       :title="mod.name"
                     />
                   </div>
@@ -341,14 +370,14 @@ function backToDashboard() {
                 v-for="mod in phase.modules" 
                 :key="mod.id"
                 class="p-3 text-[10px] text-left rounded-lg transition-all flex flex-col items-start gap-1 group border border-transparent shadow-inner"
-                :disabled="!(mod.id in CONTENT_MAP)"
-                :class="mod.id in CONTENT_MAP ? 'bg-white/5 hover:bg-[#F27D26]/10 hover:border-[#F27D26]/20 text-white/90' : 'opacity-20 cursor-not-allowed'"
-                @click="mod.id in CONTENT_MAP ? startModule(mod) : null"
+                :disabled="!allSlidesData[mod.id]"
+                :class="allSlidesData[mod.id] ? 'bg-white/5 hover:bg-[#F27D26]/10 hover:border-[#F27D26]/20 text-white/90' : 'opacity-20 cursor-not-allowed'"
+                @click="allSlidesData[mod.id] ? startModule(mod) : null"
               >
                 <div class="flex justify-between w-full opacity-40 group-hover:opacity-100 transition-opacity">
                   <span class="font-mono text-[8px]">{{ mod.id }}</span>
                   <Zap
-                    v-if="mod.id in CONTENT_MAP"
+                    v-if="allSlidesData[mod.id]"
                     class="w-2.5 h-2.5 text-[#F27D26] fill-[#F27D26]"
                   />
                 </div>
@@ -387,11 +416,11 @@ function backToDashboard() {
             v-for="(mod, idx) in selectedPhase?.modules" 
             :key="mod.id"
             class="relative group h-full"
-            @click="mod.id in CONTENT_MAP ? startModule(mod) : null"
+            @click="allSlidesData[mod.id] ? startModule(mod) : null"
           >
             <div 
               class="h-full bg-white/[0.02] border border-white/5 p-8 rounded-2xl transition-all duration-500 flex flex-col shadow-xl"
-              :class="mod.id in CONTENT_MAP ? 'hover:border-[#F27D26]/40 hover:bg-white/[0.05] cursor-pointer' : 'opacity-40 grayscale pointer-events-none'"
+              :class="allSlidesData[mod.id] ? 'hover:border-[#F27D26]/40 hover:bg-white/[0.05] cursor-pointer' : 'opacity-40 grayscale pointer-events-none'"
             >
               <div class="flex justify-between items-start mb-8">
                 <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-sm font-mono font-black text-[#F27D26] border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
@@ -412,12 +441,12 @@ function backToDashboard() {
               <div class="flex items-center justify-between pt-6 border-t border-white/5">
                 <span
                   class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300"
-                  :class="mod.id in CONTENT_MAP ? 'text-[#F27D26]' : 'text-white/20'"
+                  :class="allSlidesData[mod.id] ? 'text-[#F27D26]' : 'text-white/20'"
                 >
-                  {{ mod.id in CONTENT_MAP ? 'Launch Training' : 'In Backlog' }}
+                  {{ allSlidesData[mod.id] ? 'Launch Training' : 'In Backlog' }}
                 </span>
                 <ChevronRight
-                  v-if="mod.id in CONTENT_MAP"
+                  v-if="allSlidesData[mod.id]"
                   class="w-5 h-5 text-[#F27D26] translate-x-0 group-hover:translate-x-2 transition-transform"
                 />
               </div>

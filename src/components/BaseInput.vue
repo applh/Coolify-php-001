@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Search, X } from 'lucide-vue-next';
+import { type Component } from 'vue';
+import { X } from 'lucide-vue-next';
 
 defineProps<{
   modelValue: string | number;
   placeholder?: string;
   type?: string;
   label?: string;
-  icon?: any;
+  icon?: Component;
   error?: string;
   clearable?: boolean;
 }>();

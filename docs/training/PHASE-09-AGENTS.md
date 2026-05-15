@@ -26,6 +26,13 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Task**: Study the agentic refactoring process.
 - **Exercise**: Implement a simple agent task that renames variables in a PHP file.
 
+### 3. Dynamic Curriculum Discovery (20h)
+**Reference**: `src/views/TrainingCenter.vue`
+- **Goal**: Learn how to implement file-system-driven dynamic UI components.
+- **Task**: Analyze how `import.meta.glob` is used to index JSON modules without manual imports.
+- **Exercise**: Add a new JSON file to `docs/training/slides/` and verify it appears automatically in the 'Atlas' view.
+- **Complexity**: Phase 3 (Engineering Fundamentals)
+
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/ai-agents/ai-agents-roles-tasks.md`
