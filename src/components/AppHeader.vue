@@ -29,7 +29,10 @@ const isActive = (path: string) => {
 <template>
   <header class="border-b border-white/5 px-6 py-4 flex justify-between items-center bg-[#0D0D0D] sticky top-0 z-40 backdrop-blur-md bg-opacity-80">
     <div class="flex items-center gap-4">
-      <router-link to="/" class="flex items-center gap-3 group">
+      <router-link
+        to="/"
+        class="flex items-center gap-3 group"
+      >
         <div class="w-10 h-10 bg-[#FF3B30] rounded-xl flex items-center justify-center shadow-lg shadow-red-900/20 group-hover:rotate-12 transition-transform duration-300">
           <span class="text-xl">🍓</span>
         </div>
@@ -55,7 +58,10 @@ const isActive = (path: string) => {
           item.highlight && !isActive(item.path) ? 'text-[#F27D26]' : ''
         ]"
       >
-        <component :is="item.icon" :size="14" />
+        <component
+          :is="item.icon"
+          :size="14"
+        />
         {{ item.name }}
       </router-link>
     </nav>
@@ -64,12 +70,12 @@ const isActive = (path: string) => {
       <div class="flex flex-col items-end mr-2">
         <span class="text-[10px] font-mono opacity-40 uppercase tracking-tighter">System Status</span>
         <span class="flex items-center gap-1.5 text-[10px] font-bold text-green-500 uppercase tracking-wider">
-          <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
           Operational
         </span>
       </div>
       <div class="w-8 h-8 rounded-full border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden">
-        <div class="w-full h-full bg-gradient-to-br from-red-500/20 to-orange-500/20"></div>
+        <div class="w-full h-full bg-gradient-to-br from-red-500/20 to-orange-500/20" />
       </div>
     </div>
   </header>

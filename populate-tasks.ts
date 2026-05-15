@@ -1,4 +1,4 @@
-import db from './database.ts';
+import db from './database.js';
 
 const tasks = [
     {

@@ -13,11 +13,20 @@ defineProps<{
       hoverable ? 'hover:border-red-500/30 hover:bg-[#141414] cursor-pointer group' : ''
     ]"
   >
-    <div v-if="title || subtitle" class="mb-6">
-      <h3 v-if="title" class="font-serif italic text-xl text-white group-hover:text-red-500 transition-colors">
+    <div
+      v-if="title || subtitle"
+      class="mb-6"
+    >
+      <h3
+        v-if="title"
+        class="font-serif italic text-xl text-white group-hover:text-red-500 transition-colors"
+      >
         {{ title }}
       </h3>
-      <p v-if="subtitle" class="text-[10px] font-mono uppercase tracking-widest text-white/30 mt-1">
+      <p
+        v-if="subtitle"
+        class="text-[10px] font-mono uppercase tracking-widest text-white/30 mt-1"
+      >
         {{ subtitle }}
       </p>
     </div>

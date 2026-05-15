@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import AdmZip from 'adm-zip';
 import multer from 'multer';
-import db from './database.ts';
-import { initScheduler } from './scheduler.ts';
+import db from './database.js';
+import { initScheduler } from './scheduler.js';
 
 // Use DB for logging starts
 try {

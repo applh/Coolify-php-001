@@ -156,7 +156,7 @@ const deleteSite = async () => {
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-16">
       <div class="flex-1">
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-2 h-2 bg-[#FF3B30] rounded-full animate-pulse"></div>
+          <div class="w-2 h-2 bg-[#FF3B30] rounded-full animate-pulse" />
           <span class="text-[10px] font-mono uppercase tracking-[0.3em] opacity-40">Local Instance</span>
         </div>
         <h2 class="text-6xl font-serif italic mb-6 leading-none tracking-tighter">
@@ -165,13 +165,21 @@ const deleteSite = async () => {
         
         <div class="flex flex-wrap items-center gap-4">
           <div class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2">
-            <Layers :size="14" class="text-[#FF3B30]" />
+            <Layers
+              :size="14"
+              class="text-[#FF3B30]"
+            />
             <select 
               v-model="selectedRepo" 
-              @change="onRepoChange"
               class="bg-transparent text-white text-[11px] font-bold uppercase tracking-widest focus:outline-none cursor-pointer"
+              @change="onRepoChange"
             >
-              <option v-for="repo in repos" :key="repo" :value="repo" class="bg-[#0A0A0A]">
+              <option
+                v-for="repo in repos"
+                :key="repo"
+                :value="repo"
+                class="bg-[#0A0A0A]"
+              >
                 {{ repo.split('-')[1]?.toUpperCase() || repo.toUpperCase() }} ENVIRONMENT
               </option>
             </select>
@@ -182,14 +190,22 @@ const deleteSite = async () => {
         </div>
       </div>
       
-      <BaseButton variant="primary" @click="isAddingSite = true">
-        <template #icon><Plus :size="18" /></template>
+      <BaseButton
+        variant="primary"
+        @click="isAddingSite = true"
+      >
+        <template #icon>
+          <Plus :size="18" />
+        </template>
         Provision New Site
       </BaseButton>
     </div>
 
     <!-- Sites Grid -->
-    <div v-if="sites.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      v-if="sites.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
       <BaseCard
         v-for="site in sites" 
         :key="site"
@@ -199,37 +215,58 @@ const deleteSite = async () => {
         @click="openEditor(site)"
       >
         <template #icon>
-          <Globe :size="48" class="text-white" />
+          <Globe
+            :size="48"
+            class="text-white"
+          />
         </template>
 
         <div class="mt-8 flex flex-col gap-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              <span class="w-1.5 h-1.5 bg-green-500 rounded-full" />
               <span class="text-[9px] font-mono uppercase tracking-widest text-green-500/80 font-bold">Authenticated</span>
             </div>
-            <BaseButton variant="ghost" size="xs" @click.stop="siteToDelete = site">
-              <template #icon><Trash2 :size="12" /></template>
+            <BaseButton
+              variant="ghost"
+              size="xs"
+              @click.stop="siteToDelete = site"
+            >
+              <template #icon>
+                <Trash2 :size="12" />
+              </template>
               Purge
             </BaseButton>
           </div>
 
           <div class="flex items-center gap-2">
-            <BaseButton variant="outline" size="xs" @click.stop="downloadSite(site)">
-              <template #icon><Download :size="12" /></template>
+            <BaseButton
+              variant="outline"
+              size="xs"
+              @click.stop="downloadSite(site)"
+            >
+              <template #icon>
+                <Download :size="12" />
+              </template>
               Backup
             </BaseButton>
-            <BaseButton variant="outline" size="xs" @click.stop="triggerUpload(site)">
-              <template #icon><Upload :size="12" /></template>
+            <BaseButton
+              variant="outline"
+              size="xs"
+              @click.stop="triggerUpload(site)"
+            >
+              <template #icon>
+                <Upload :size="12" />
+              </template>
               Sync
             </BaseButton>
             <a 
               v-if="selectedRepo === 'repo-php'"
               :href="`/repo-php/public/index.php?__site=${site}`" 
               target="_blank"
-              @click.stop
               class="p-2 border border-white/10 rounded-lg hover:border-white/30 hover:bg-white/5 transition-all text-white/40 hover:text-[#FF3B30]"
               title="Launch Public View"
+              @click.stop
             >
               <ExternalLink :size="14" />
             </a>
@@ -237,7 +274,10 @@ const deleteSite = async () => {
 
           <div class="pt-4 border-t border-white/[0.03] flex justify-between items-center group-hover:translate-x-1 transition-transform">
             <span class="text-[10px] font-mono text-white/30 uppercase tracking-widest">Manage Instance</span>
-            <ChevronRight :size="16" class="text-[#FF3B30]" />
+            <ChevronRight
+              :size="16"
+              class="text-[#FF3B30]"
+            />
           </div>
         </div>
       </BaseCard>
@@ -249,21 +289,38 @@ const deleteSite = async () => {
       class="border border-dashed border-white/10 rounded-3xl py-32 text-center"
     >
       <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-        <Database :size="24" class="text-white/20" />
+        <Database
+          :size="24"
+          class="text-white/20"
+        />
       </div>
       <p class="text-white/40 italic font-serif text-lg">
         No active deployments found in the current registry.
       </p>
-      <BaseButton variant="outline" size="sm" class="mt-8" @click="isAddingSite = true">
+      <BaseButton
+        variant="outline"
+        size="sm"
+        class="mt-8"
+        @click="isAddingSite = true"
+      >
         Initialize First Stack
       </BaseButton>
     </div>
 
     <!-- Hidden Upload Input -->
-    <input type="file" accept=".zip" ref="uploadInput" class="hidden" @change="onFileSelected" />
+    <input
+      ref="uploadInput"
+      type="file"
+      accept=".zip"
+      class="hidden"
+      @change="onFileSelected"
+    >
 
     <!-- Modals -->
-    <BaseModal v-model="isAddingSite" title="Provision New Instance">
+    <BaseModal
+      v-model="isAddingSite"
+      title="Provision New Instance"
+    >
       <div class="space-y-6">
         <div>
           <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 mb-3">Domain / Instance ID</label>
@@ -280,7 +337,12 @@ const deleteSite = async () => {
         </div>
       </div>
       <template #footer>
-        <BaseButton variant="ghost" @click="isAddingSite = false">Discard</BaseButton>
+        <BaseButton
+          variant="ghost"
+          @click="isAddingSite = false"
+        >
+          Discard
+        </BaseButton>
         <BaseButton 
           variant="primary" 
           :loading="isSubmitting" 
@@ -292,17 +354,27 @@ const deleteSite = async () => {
       </template>
     </BaseModal>
 
-    <BaseModal v-model:modelValue="siteToDelete" :title="`Purge ${siteToDelete}`">
+    <BaseModal
+      v-model:model-value="siteToDelete"
+      :title="`Purge ${siteToDelete}`"
+    >
       <div class="mb-4">
         <div class="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl mb-6">
           <p class="text-sm text-red-200/70 leading-relaxed italic font-serif">
             Warning: This operation will permanently remove all source files, metadata, and linked assets for <span class="text-white font-mono not-italic">{{ siteToDelete }}</span>.
           </p>
         </div>
-        <p class="text-[10px] uppercase tracking-widest text-white/30 font-bold">Irreversible Backend Operation</p>
+        <p class="text-[10px] uppercase tracking-widest text-white/30 font-bold">
+          Irreversible Backend Operation
+        </p>
       </div>
       <template #footer>
-        <BaseButton variant="ghost" @click="siteToDelete = null">Abort</BaseButton>
+        <BaseButton
+          variant="ghost"
+          @click="siteToDelete = null"
+        >
+          Abort
+        </BaseButton>
         <BaseButton 
           variant="danger" 
           :loading="isDeleting"

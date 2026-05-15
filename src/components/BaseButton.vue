@@ -36,8 +36,14 @@ const sizeClasses = computed(() => {
     class="inline-flex items-center justify-center gap-2 rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
     :class="[variantClasses, sizeClasses]"
   >
-    <span v-if="loading" class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-    <slot v-else name="icon" />
+    <span
+      v-if="loading"
+      class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+    />
+    <slot
+      v-else
+      name="icon"
+    />
     <slot />
   </button>
 </template>

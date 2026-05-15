@@ -14,13 +14,25 @@
       <div class="flex gap-8">
         <div class="flex flex-col gap-3 font-mono">
           <span class="text-[10px] text-white/20 uppercase tracking-widest">Platform</span>
-          <a href="#" class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors">Documentation</a>
-          <a href="#" class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors">API Reference</a>
+          <a
+            href="#"
+            class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors"
+          >Documentation</a>
+          <a
+            href="#"
+            class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors"
+          >API Reference</a>
         </div>
         <div class="flex flex-col gap-3 font-mono">
           <span class="text-[10px] text-white/20 uppercase tracking-widest">Connect</span>
-          <a href="#" class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors">Support</a>
-          <a href="#" class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors">Community</a>
+          <a
+            href="#"
+            class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors"
+          >Support</a>
+          <a
+            href="#"
+            class="text-[10px] text-white/40 hover:text-[#FF3B30] uppercase tracking-wider transition-colors"
+          >Community</a>
         </div>
       </div>
 
@@ -32,7 +44,7 @@
           </div>
         </div>
         <div class="flex items-center gap-1.5">
-          <div class="w-1.5 h-1.5 bg-[#FF3B30] rounded-full"></div>
+          <div class="w-1.5 h-1.5 bg-[#FF3B30] rounded-full" />
           <span class="text-[9px] font-mono text-white/20 uppercase tracking-widest italic">Signal Stable</span>
         </div>
       </div>

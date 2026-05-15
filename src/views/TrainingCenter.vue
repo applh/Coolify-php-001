@@ -231,9 +231,9 @@ function backToDashboard() {
 
       <div class="flex gap-3 flex-wrap">
         <button 
-          @click="syncWithProd"
           :disabled="isSyncing"
           class="bg-[#F27D26]/20 border border-[#F27D26] px-5 py-3 rounded-lg flex flex-col items-center min-w-[120px] backdrop-blur-sm shadow-xl hover:bg-[#F27D26]/40 transition-colors text-[#F27D26] cursor-pointer"
+          @click="syncWithProd"
         >
           <span class="text-[9px] uppercase tracking-[0.1em] mb-1 font-bold">Prod Sync</span>
           <span class="text-lg font-mono font-bold">{{ isSyncing ? 'SYNCING...' : 'SYNC' }}</span>
@@ -549,20 +549,46 @@ function backToDashboard() {
                     v-html="currentSlide.content"
                   />
 
-                  <div v-if="currentSlide.svgContent" v-html="currentSlide.svgContent" class="my-8"></div>
+                  <div
+                    v-if="currentSlide.svgContent"
+                    class="my-8"
+                    v-html="currentSlide.svgContent"
+                  />
 
-                  <div v-if="currentSlide.studentPrompts?.length" class="mt-8 space-y-4">
-                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Student Prompts</h5>
+                  <div
+                    v-if="currentSlide.studentPrompts?.length"
+                    class="mt-8 space-y-4"
+                  >
+                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">
+                      Student Prompts
+                    </h5>
                     <ul class="list-disc list-inside text-white/60 space-y-2">
-                      <li v-for="(prompt, index) in currentSlide.studentPrompts" :key="index">{{ prompt }}</li>
+                      <li
+                        v-for="(prompt, index) in currentSlide.studentPrompts"
+                        :key="index"
+                      >
+                        {{ prompt }}
+                      </li>
                     </ul>
                   </div>
 
-                  <div v-if="currentSlide.links?.length" class="mt-8 space-y-4">
-                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Links</h5>
+                  <div
+                    v-if="currentSlide.links?.length"
+                    class="mt-8 space-y-4"
+                  >
+                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">
+                      Links
+                    </h5>
                     <ul class="space-y-2">
-                      <li v-for="(link, index) in currentSlide.links" :key="index">
-                        <a :href="link" target="_blank" class="text-[#F27D26] hover:underline text-sm">{{ link }}</a>
+                      <li
+                        v-for="(link, index) in currentSlide.links"
+                        :key="index"
+                      >
+                        <a
+                          :href="link"
+                          target="_blank"
+                          class="text-[#F27D26] hover:underline text-sm"
+                        >{{ link }}</a>
                       </li>
                     </ul>
                   </div>

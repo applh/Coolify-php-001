@@ -25,11 +25,20 @@ import BaseButton from '../components/BaseButton.vue';
 import BaseInput from '../components/BaseInput.vue';
 import BaseCard from '../components/BaseCard.vue';
 
+interface FileSystemItem {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size?: number;
+  extension?: string;
+  updatedAt?: string;
+}
+
 const currentPath = ref('');
 const selectedRepo = ref('repo-php');
 const repos = ref<string[]>([]);
 const viewMode = ref('directory'); // 'directory' or 'file'
-const items = ref<any[]>([]);
+const items = ref<FileSystemItem[]>([]);
 const fileContent = ref('');
 const currentFileName = ref('');
 const searchQuery = ref('');
@@ -98,7 +107,7 @@ const explore = async (pathStr: string) => {
     viewMode.value = data.type;
     
     if (data.type === 'directory') {
-      items.value = data.items.sort((a: any, b: any) => {
+      items.value = data.items.sort((a: FileSystemItem, b: FileSystemItem) => {
         if (a.isDirectory === b.isDirectory) {
            return a.name.localeCompare(b.name);
         }
@@ -113,7 +122,7 @@ const explore = async (pathStr: string) => {
   }
 };
 
-const handleItemClick = (item: any) => {
+const handleItemClick = (item: FileSystemItem) => {
   explore(item.path);
 };
 
@@ -134,7 +143,10 @@ watch(selectedRepo, () => {
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <div class="flex items-center gap-3 mb-4">
-            <HardDrive :size="14" class="text-white/20" />
+            <HardDrive
+              :size="14"
+              class="text-white/20"
+            />
             <span class="text-[10px] font-mono uppercase tracking-[0.3em] opacity-40">Filesystem Explorer</span>
           </div>
           <h2 class="text-5xl font-serif italic mb-2 tracking-tighter">
@@ -160,13 +172,13 @@ watch(selectedRepo, () => {
         <button 
           v-for="repo in repos" 
           :key="repo"
-          @click="selectRepo(repo)"
           :class="[
             'p-3 border rounded-xl transition-all flex flex-col items-center gap-2 group relative overflow-hidden',
             selectedRepo === repo 
               ? 'bg-white/5 border-[#FF3B30] shadow-lg shadow-red-900/10' 
               : 'bg-[#0F0F0F] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
           ]"
+          @click="selectRepo(repo)"
         >
           <component 
             :is="getRepoIcon(repo)" 
@@ -179,7 +191,10 @@ watch(selectedRepo, () => {
           >
             {{ repo.split('-')[1] || repo }}
           </span>
-          <div v-if="selectedRepo === repo" class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF3B30]"></div>
+          <div
+            v-if="selectedRepo === repo"
+            class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF3B30]"
+          />
         </button>
       </div>
     </div>
@@ -190,14 +205,21 @@ watch(selectedRepo, () => {
         class="flex items-center gap-2 cursor-pointer text-white/40 hover:text-white transition-colors flex-shrink-0"
         @click="explore('')"
       >
-        <component :is="getRepoIcon(selectedRepo)" :size="14" class="opacity-50" />
+        <component
+          :is="getRepoIcon(selectedRepo)"
+          :size="14"
+          class="opacity-50"
+        />
         <span class="text-[10px] font-mono uppercase tracking-widest">{{ selectedRepo }}</span>
       </div>
       <template
         v-for="(part, index) in pathParts"
         :key="index"
       >
-        <ChevronRight :size="10" class="opacity-20 flex-shrink-0" />
+        <ChevronRight
+          :size="10"
+          class="opacity-20 flex-shrink-0"
+        />
         <span 
           class="text-[10px] font-mono uppercase tracking-widest cursor-pointer text-white/40 hover:text-white transition-colors flex-shrink-0"
           @click="explore(getPathPrefix(index))"
@@ -216,7 +238,10 @@ watch(selectedRepo, () => {
       >
         <div class="bg-white/[0.03] border-b border-white/5 px-6 py-3 flex justify-between">
           <span class="text-[10px] uppercase tracking-[0.2em] font-black text-white/20">Name</span>
-          <span v-if="filteredItems.length > 0" class="text-[9px] font-mono text-white/20 uppercase">{{ filteredItems.length }} Objects found</span>
+          <span
+            v-if="filteredItems.length > 0"
+            class="text-[9px] font-mono text-white/20 uppercase"
+          >{{ filteredItems.length }} Objects found</span>
         </div>
         
         <div class="overflow-y-auto flex-grow custom-scrollbar">
@@ -242,8 +267,14 @@ watch(selectedRepo, () => {
                 class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
                 :class="item.isDirectory ? 'bg-[#FF3B30]/5 text-[#FF3B30]' : 'bg-white/5 text-white/30 group-hover:bg-white/10 group-hover:text-white/60'"
               >
-                <Folder v-if="item.isDirectory" :size="20" />
-                <FileText v-else :size="20" />
+                <Folder
+                  v-if="item.isDirectory"
+                  :size="20"
+                />
+                <FileText
+                  v-else
+                  :size="20"
+                />
               </div>
               
               <div class="flex-1 min-w-0">
@@ -258,7 +289,11 @@ watch(selectedRepo, () => {
                 </span>
               </div>
               
-              <ChevronRight v-if="item.isDirectory" :size="14" class="opacity-0 group-hover:opacity-30 transform group-hover:translate-x-1 transition-all" />
+              <ChevronRight
+                v-if="item.isDirectory"
+                :size="14"
+                class="opacity-0 group-hover:opacity-30 transform group-hover:translate-x-1 transition-all"
+              />
             </li>
             
             <!-- Empty Search -->
@@ -267,7 +302,10 @@ watch(selectedRepo, () => {
               class="py-24 text-center"
             >
               <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                <SearchX :size="24" class="text-white/10" />
+                <SearchX
+                  :size="24"
+                  class="text-white/10"
+                />
               </div>
               <p class="text-sm font-serif italic text-white/20">
                 No matching artifacts detected in the current scope.
@@ -288,11 +326,19 @@ watch(selectedRepo, () => {
               <FileText :size="20" />
             </div>
             <div>
-              <h3 class="text-sm font-mono font-black text-white leading-none mb-1">{{ currentFileName }}</h3>
-              <p class="text-[9px] font-mono text-white/20 tracking-tighter uppercase">{{ currentPath }}</p>
+              <h3 class="text-sm font-mono font-black text-white leading-none mb-1">
+                {{ currentFileName }}
+              </h3>
+              <p class="text-[9px] font-mono text-white/20 tracking-tighter uppercase">
+                {{ currentPath }}
+              </p>
             </div>
           </div>
-          <BaseButton variant="ghost" size="sm" @click="explore(getParentPath())">
+          <BaseButton
+            variant="ghost"
+            size="sm"
+            @click="explore(getParentPath())"
+          >
             Disconnect
           </BaseButton>
         </div>

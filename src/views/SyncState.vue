@@ -152,13 +152,28 @@ const pushToRemote = async () => {
     <div class="bg-[#181818] border-2 border-[#F27D26]/20 p-10 rounded-2xl">
       <div class="flex items-center gap-4 mb-8">
         <div class="p-3 bg-[#F27D26]/10 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#F27D26]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8 text-[#F27D26]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+            />
           </svg>
         </div>
         <div>
-          <h3 class="text-2xl font-semibold">Remote Push (Source of Truth)</h3>
-          <p class="text-sm text-[#777]">Instantly sync this environment to your production VPS.</p>
+          <h3 class="text-2xl font-semibold">
+            Remote Push (Source of Truth)
+          </h3>
+          <p class="text-sm text-[#777]">
+            Instantly sync this environment to your production VPS.
+          </p>
         </div>
       </div>
 
