@@ -114,6 +114,34 @@ async function createServer() {
     }
   })();
 
+  // Authentication Middleware
+  const adminPasskey = process.env.APP_ADMIN_PASSKEY;
+  
+  app.post('/api/auth/verify', (req, res) => {
+    const { passkey } = req.body;
+    if (!adminPasskey) {
+      return res.json({ success: true, noPasskey: true });
+    }
+    if (passkey === adminPasskey) {
+      return res.json({ success: true });
+    }
+    return res.status(401).json({ success: false, error: 'Invalid passkey' });
+  });
+
+  // Protect all API routes except auth
+  app.use('/api', (req, res, next) => {
+    if (req.path === '/auth/verify' || !adminPasskey) {
+      return next();
+    }
+    
+    const providedPasskey = req.headers['x-admin-passkey'] || req.query.passkey;
+    if (providedPasskey === adminPasskey) {
+      return next();
+    }
+    
+    res.status(401).json({ error: 'Unauthorized: Admin passkey required' });
+  });
+
   // API Routes
   app.get('/api/repos', async (req, res) => {
     try {

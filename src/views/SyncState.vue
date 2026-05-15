@@ -6,7 +6,8 @@ const importMessage = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const exportData = () => {
-  window.open('/api/sync/export', '_blank');
+  const p = sessionStorage.getItem('admin_passkey') || '';
+  window.open(`/api/sync/export?passkey=${p}`, '_blank');
 };
 
 const triggerImport = () => {

@@ -61,7 +61,8 @@ const openEditor = (site: string) => {
 };
 
 const downloadSite = (site: string) => {
-  window.open(`/api/sites/${site}/download?repo=${selectedRepo.value}`, '_blank');
+  const p = sessionStorage.getItem('admin_passkey') || '';
+  window.open(`/api/sites/${site}/download?repo=${selectedRepo.value}&passkey=${p}`, '_blank');
 };
 
 const triggerUpload = (site: string) => {
@@ -386,4 +387,3 @@ const deleteSite = async () => {
     </BaseModal>
   </div>
 </template>
-
