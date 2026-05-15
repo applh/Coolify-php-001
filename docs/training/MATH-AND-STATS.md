@@ -2,39 +2,59 @@
 
 Software engineering is often about logic, but AI Engineering and Data Visualization are about patterns, probability, and vectors.
 
-## 1. Linear Algebra & Embeddings (The AI Foundation)
-**Goal**: Understand how AI "sees" data as coordinates in multi-dimensional space.
+## 1. Linear Algebra, Matrices & Dimensionality (The AI Foundation)
+**Goal**: Understand how AI "sees" data as coordinates in multi-dimensional space, and how to manipulate these dimensions.
 
-- **Lab 1: The Distance Between Ideas**
-    - **Concept**: Cosine Similarity.
-    - **Task**: Read `docs/ai-agents/ai-refactoring-algorithm.md`.
+- **Practical Lab: The Distance Between Ideas**
+    - **Goal**: Master Cosine Similarity & Vectors.
+    - **Reference**: `docs/ai-agents/ai-refactoring-algorithm.md`
     - **Exercise**: Imagine three words: "Code", "Script", and "Apple". If "Code" is at (1,1) and "Script" is at (1.1, 1), where would "Apple" be? Use the [AI Student Prompts](./AI-STUDENT-PROMPTS.md) to calculate the "Distance" between these concepts.
-- **Lab 2: Scaling & Normalization**
-    - **Task**: Understand why we scale data between 0 and 1.
-    - **Exercise**: Take the benchmarking scores from `src/views/SiteBenchmarker.vue`. Write a JS function that normalizes these scores (0 to 100) so they can be compared fairly regardless of the unit (ms vs bytes).
+    - **Complexity**: Phase 9 (Advanced)
 
-## 2. Statistics for Performance Optimization
-**Goal**: Stop guessing and start measuring with confidence.
+- **Practical Lab: Matrix Operations**
+    - **Goal**: Understand matrices as transformations.
+    - **Reference**: `src/views/SiteBenchmarker.vue` 
+    - **Exercise**: Write a JS function that takes a 2D array representing a matrix and a 1D array representing a vector, and returns the dot product. Understand how multiplying a vector by a matrix translates, scales, or rotates it.
+    - **Complexity**: Phase 9 (Advanced)
 
-- **Lab 1: Mean, Median, and Outliers**
+- **Practical Lab: Principal Component Analysis (PCA) & Dimension Reduction**
+    - **Goal**: Learn to reduce the number of variables in a dataset while preserving as much information as possible.
+    - **Reference**: `docs/training/PRACTICAL-BUSINESS-DEVOPS.md`
+    - **Exercise**: Given a dataset with 5 dimensions (features) related to website performance, conceptualize how you would project this down to 2 dimensions for visualization using a PCA algorithm. Write down the conceptual steps emphasizing eigenvalue extraction.
+    - **Complexity**: Phase 10 (Advanced)
+
+## 2. Statistics & Data Cleanup
+**Goal**: Stop guessing, start measuring with confidence, and ensure your data is reliable.
+
+- **Practical Lab: Mean, Median, and Outliers**
+    - **Goal**: Learn descriptive statistics for performance evaluation.
     - **Reference**: `docs/devops/stack-performance-benchmarking.md`
-    - **Task**: Run 50 tests of the `repo-php` load time.
-    - **Exercise**: Calculate the **Mean** and the **99th Percentile (P99)**. Explain why P99 is more important for User Experience (UX) than the average.
-- **Lab 2: Probability in LLMs**
-    - **Task**: Understand "Temperature" and "Top-P" settings in the Gemini API.
+    - **Exercise**: Run 50 tests of the `repo-php` load time. Calculate the **Mean** and the **99th Percentile (P99)**. Explain why P99 is more important for User Experience (UX) than the average.
+    - **Complexity**: Phase 8 (Intermediate)
+
+- **Practical Lab: Probability in LLMs**
+    - **Goal**: Understand "Temperature" and "Top-P" settings in inference APIs.
+    - **Reference**: `docs/ai-agents/gemini-api-interactions.md`
     - **Exercise**: Experiment with the AI by asking it to complete a sentence with temperature 0.1 vs 0.9. Document how the statistical randomness changes the output.
+    - **Complexity**: Phase 9 (Advanced)
 
-## 3. Geometry for UI & Visualization
-**Goal**: Master the math of the screen.
-
-- **Lab 1: Responsive Calculations**
-    - **Task**: Look at `src/style.css`.
-    - **Exercise**: Calculate the Aspect Ratio of a hero banner that must stay consistent across mobile (375px wide) and desktop (1440px wide).
-- **Lab 2: Data Mapping with D3/Recharts**
+- **Practical Lab: Data Cleanup Techniques**
+    - **Goal**: Deal with missing values, normalization, and standardization to prevent "garbage in, garbage out".
     - **Reference**: `src/views/SiteDashboard.vue`
-    - **Task**: Study how a bar chart represents data.
-    - **Exercise**: Create a calculation that maps a range of "Number of Files" (0 to 5000) to a Pixel Height (0 to 300px) for a custom chart.
+    - **Exercise**: Write a script that takes an array of objects representing server requests, removes any objects with missing `responseTime` values, and standardizes the remaining numbers (Z-score normalization).
+    - **Complexity**: Phase 5 (Intermediate)
 
-## Complexity Levels
-- **Basic**: Mean/Median and UI Ratios.
-- **Advanced**: Cosine Similarity and Distribution Analysis.
+## 3. Geometry & Projections for UI & Visualization
+**Goal**: Master the math of the screen and 3D to 2D mapping.
+
+- **Practical Lab: Responsive Calculations & Basic Geometry**
+    - **Goal**: Master fluid scaling and aspect ratios.
+    - **Reference**: `src/style.css`
+    - **Exercise**: Calculate the Aspect Ratio of a hero banner that must stay consistent across mobile (375px wide) and desktop (1440px wide). Write the generic formula for proportional scaling.
+    - **Complexity**: Phase 2 (Basic)
+
+- **Practical Lab: Data Mapping & Projections**
+    - **Goal**: Map numeric domains to geometric ranges using visualization concepts.
+    - **Reference**: `src/views/SiteDashboard.vue`
+    - **Exercise**: Create a calculation that maps a range of "Number of Files" (0 to 5000) to a Pixel Height (0 to 300px) for a custom chart. Then, articulate how an orthographic projection differs from a perspective projection if we were to render this chart in 3D using coordinate transformation!
+    - **Complexity**: Phase 4 (Intermediate)
