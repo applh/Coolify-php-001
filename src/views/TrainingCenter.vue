@@ -510,9 +510,10 @@ function backToDashboard() {
               
               <div class="grid grid-cols-1 lg:grid-cols-4 gap-16">
                 <div class="lg:col-span-3 space-y-10">
-                  <div class="prose prose-invert max-w-none text-xl text-white/70 leading-relaxed font-light first-letter:text-5xl first-letter:font-serif first-letter:text-[#F27D26] first-letter:mr-3 first-letter:float-left">
-                    {{ currentSlide.content }}
-                  </div>
+                  <div 
+                    class="prose prose-invert max-w-none text-xl text-white/70 leading-relaxed font-light first-letter:text-5xl first-letter:font-serif first-letter:text-[#F27D26] first-letter:mr-3 first-letter:float-left whitespace-pre-line"
+                    v-html="currentSlide.content"
+                  />
 
                   <div
                     v-if="currentSlide.codeReferences.length > 0"
@@ -611,5 +612,12 @@ function backToDashboard() {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+:deep(svg) {
+  max-width: 400px;
+  height: auto;
+  margin: 2rem 0;
+  display: block;
 }
 </style>
