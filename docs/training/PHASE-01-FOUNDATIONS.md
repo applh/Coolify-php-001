@@ -67,6 +67,13 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 - **Exercise**: List 3 everyday applications that use TCP and 3 that use UDP based on your research.
 - **Complexity**: Phase 1
 
+### 9. AI Token Usage & Calculation (10h)
+**Reference**: `docs/training/slides/phase1/ai-token-usage-calculation.json`
+- **Goal**: Learn to estimate AI model token consumption and analyze API performance metrics.
+- **Task**: Analyze prompt/output token ratios and resource consumption.
+- **Exercise**: Create a test prompt in AI Studio, calculate the estimated token usage, compare it with the actual reported usage, and profile the Time-To-First-Token in the performance metrics.
+- **Complexity**: Phase 1
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `README.md`
