@@ -22,7 +22,7 @@ const verifyPasskey = async (p: string) => {
     const data = await res.json();
     if (data.success) {
       isAuthenticated.value = true;
-      sessionStorage.setItem('admin_passkey', p);
+      localStorage.setItem('admin_passkey', p);
     } else {
       error.value = data.error || 'Invalid passkey';
     }
@@ -33,13 +33,21 @@ const verifyPasskey = async (p: string) => {
   }
 };
 
+const logout = () => {
+  isAuthenticated.value = false;
+  localStorage.removeItem('admin_passkey');
+  passkey.value = '';
+};
+
 onMounted(async () => {
   window.addEventListener('admin-auth-failed', () => {
     isAuthenticated.value = false;
-    sessionStorage.removeItem('admin_passkey');
+    localStorage.removeItem('admin_passkey');
   });
 
-  const stored = sessionStorage.getItem('admin_passkey');
+  window.addEventListener('admin-logout', logout);
+
+  const stored = localStorage.getItem('admin_passkey');
   if (stored) {
     await verifyPasskey(stored);
   } else {

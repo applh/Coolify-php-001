@@ -6,10 +6,17 @@ import {
   Library as TrainingIcon,
   Search as ExplorerIcon,
   LayoutDashboard as DashboardIcon,
-  Clapperboard as MediaQueueIcon
+  Clapperboard as MediaQueueIcon,
+  LogOut as LogoutIcon
 } from 'lucide-vue-next';
 
 const route = useRoute();
+
+const handleLogout = () => {
+  if (confirm('Are you sure you want to logout?')) {
+    window.dispatchEvent(new CustomEvent('admin-logout'));
+  }
+};
 
 const navItems = [
   { name: 'Dashboard', path: '/', icon: DashboardIcon },
@@ -77,6 +84,13 @@ const isActive = (path: string) => {
       <div class="w-8 h-8 rounded-full border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden">
         <div class="w-full h-full bg-gradient-to-br from-red-500/20 to-orange-500/20" />
       </div>
+      <button 
+        @click="handleLogout"
+        class="w-8 h-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/40 hover:text-[#FF3B30] hover:bg-white/10 transition-all group"
+        title="Logout"
+      >
+        <LogoutIcon :size="16" />
+      </button>
     </div>
   </header>
 </template>

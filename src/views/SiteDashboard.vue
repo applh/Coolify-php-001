@@ -61,7 +61,7 @@ const openEditor = (site: string) => {
 };
 
 const downloadSite = (site: string) => {
-  const p = sessionStorage.getItem('admin_passkey') || '';
+  const p = localStorage.getItem('admin_passkey') || '';
   window.open(`/api/sites/${site}/download?repo=${selectedRepo.value}&passkey=${p}`, '_blank');
 };
 

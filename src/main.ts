@@ -13,7 +13,7 @@ import './style.css';
 // Global Fetch Override for Admin Protection
 const originalFetch = window.fetch;
 window.fetch = async (url, options: any = {}) => {
-  const passkey = sessionStorage.getItem('admin_passkey');
+  const passkey = localStorage.getItem('admin_passkey');
   if (passkey) {
     options.headers = {
       ...options.headers,

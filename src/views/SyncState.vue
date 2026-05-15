@@ -6,7 +6,7 @@ const importMessage = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const exportData = () => {
-  const p = sessionStorage.getItem('admin_passkey') || '';
+  const p = localStorage.getItem('admin_passkey') || '';
   window.open(`/api/sync/export?passkey=${p}`, '_blank');
 };
 
