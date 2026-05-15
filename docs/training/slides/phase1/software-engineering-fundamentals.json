@@ -1,7 +1,7 @@
 {
   "moduleId": "M010",
   "title": "Software Engineering Fundamentals",
-  "totalSlides": 100,
+  "totalSlides": 112,
   "bundleId": 1,
   "slides": [
     {
@@ -699,8 +699,92 @@
     },
     {
       "id": 100,
+      "title": "The Principle of Code Reuse",
+      "content": "Code reuse is the practice of using existing code for new software. In our project, the `repo-php/class/` directory serves as a library of reusable logic used across multiple demo sites.",
+      "tags": ["engineering", "reuse"],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": 101,
+      "title": "DRY: Don't Repeat Yourself",
+      "content": "The DRY principle aims to reduce repetition of software patterns. If you find yourself copying code between `site1.com` and `site2.com`, it should probably be moved to a shared component or class.",
+      "tags": ["engineering", "best-practices"],
+      "codeReferences": ["repo-php/class/Component.php"]
+    },
+    {
+      "id": 102,
+      "title": "Understanding Libraries",
+      "content": "A library is a collection of pre-written code that you can call. You are in control: you decide when to call the library. Example: `d3` for data visualization in our stack.",
+      "tags": ["ecosystem", "libraries"],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": 103,
+      "title": "Package Managers: NPM and Composer",
+      "content": "Package managers automate the process of installing, upgrading, and configuring libraries. Our `package.json` manages JavaScript dependencies for the entire workspace.",
+      "tags": ["tools", "ecosystem"],
+      "codeReferences": ["package.json"]
+    },
+    {
+      "id": 104,
+      "title": "Understanding Frameworks",
+      "content": "A framework provides a foundation for building applications. Unlike a library, a framework calls your code (Inversion of Control). Our `repo-react` and `repo-vue` folders demonstrate different framework architectures.",
+      "tags": ["ecosystem", "frameworks"],
+      "codeReferences": ["repo-react/src/App.tsx", "repo-vue/src/App.vue"]
+    },
+    {
+      "id": 105,
+      "title": "The Role of a CMS",
+      "content": "A Content Management System (CMS) allows non-technical users to manage website content. Our `repo-php` is a custom CMS that stores content in structured PHP files.",
+      "tags": ["cms", "architecture"],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": 106,
+      "title": "Headless vs Traditional CMS",
+      "content": "Traditional CMS (like our PHP demos) handles both content and presentation. A Headless CMS provides content via an API, which can then be consumed by frameworks like React.",
+      "tags": ["cms", "architecture"],
+      "codeReferences": ["docs/backend/node-cms-features.md"]
+    },
+    {
+      "id": 107,
+      "title": "Decoupled Architectures",
+      "content": "In a decoupled system, the backend (CMS) and frontend are independent. This allows us to use PHP for content management and React for the user interface.",
+      "tags": ["architecture", "modern-web"],
+      "codeReferences": ["repo-react/src/sites.json"]
+    },
+    {
+      "id": 108,
+      "title": "Open Source: A Collaborative Engine",
+      "content": "Open Source software has its source code available for anyone to inspect, modify, and enhance. Most of the tools we use (Node, PHP, Linux) are Open Source.",
+      "tags": ["open-source", "community"],
+      "codeReferences": ["LICENSE"]
+    },
+    {
+      "id": 109,
+      "title": "Open Source Licensing",
+      "content": "Licenses like MIT, Apache, and GPL define how code can be reused. Our project follows open principles to ensure developers can learn from and extend the architecture.",
+      "tags": ["open-source", "legal"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": 110,
+      "title": "Contributing to the Ecosystem",
+      "content": "Contributing isn't just writing code; it's also reporting bugs, improving documentation, and helping others. The `docs/` folder in this repo is a primary area for contribution.",
+      "tags": ["open-source", "collaboration"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": 111,
+      "title": "The Proprietary vs Open Source Debate",
+      "content": "Open source offers transparency and community support, while proprietary software often provides specialized support and controlled environments. We prioritize Open Source for maximum flexibility.",
+      "tags": ["open-source", "strategy"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": 112,
       "title": "Software Engineering: Lifetime Learning",
-      "content": "The field changes daily. Being a great engineer means never stopping your education. Congrats on finishing these 100 fundamentals!",
+      "content": "The field changes daily. Being a great engineer means never stopping your education. Congrats on finishing these 112 fundamentals!",
       "tags": ["engineering", "philosophy"],
       "codeReferences": ["docs/training/ROADMAP.md"]
     }

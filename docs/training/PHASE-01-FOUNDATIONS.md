@@ -45,6 +45,13 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 - **Exercise**: Create a new configuration file in `repo-python/` using the `.json` format to define a mock site property.
 - **Complexity**: Phase 1
 
+### 6. Ecosystem Explorer (10h)
+**Reference**: `docs/training/slides/phase1/software-engineering-fundamentals.json`
+- **Goal**: Differentiate between libraries and frameworks while understanding open-source structures.
+- **Task**: Identify 3 external libraries used in the root `package.json` vs 3 internal classes in `repo-php/class/`.
+- **Exercise**: Locate a file in `repo-react` that demonstrates "Inversion of Control" (Framework behavior) vs a file in `repo-php` that calls a utility (Library behavior).
+- **Complexity**: Phase 1
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `README.md`
