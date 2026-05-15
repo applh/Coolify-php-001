@@ -1,0 +1,148 @@
+{
+  "moduleId": "M001",
+  "title": "File Formats Across Polyglot Systems",
+  "totalSlides": 20,
+  "bundleId": 2,
+  "slides": [
+    {
+      "id": "FF-001",
+      "title": "Introduction to File Formats",
+      "content": "In a polyglot environment like ours, understanding how data is stored and interpreted across different languages (PHP, Python, Go, Rust) is crucial. A file extension is just a label; the internal format determines how the system processes it.",
+      "tags": ["fundamentals", "polyglot"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": "FF-002",
+      "title": "PHP: Hypertext Preprocessor (.php)",
+      "content": "PHP files are plain text scripts executed by the PHP interpreter. They can contain HTML, CSS, JavaScript, and server-side logic. In our CMS, these define the templates and core logic.",
+      "tags": ["php", "backend"],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": "FF-003",
+      "title": "JavaScript & TypeScript (.js, .ts, .tsx)",
+      "content": "JS is the language of the web. TS adds types. TSX/JSX allows HTML-like syntax inside scripts. Our Vue/React repos rely heavily on these formats for modern frontend development.",
+      "tags": ["javascript", "typescript", "frontend"],
+      "codeReferences": ["repo-react/src/App.tsx", "repo-vue/src/main.ts"]
+    },
+    {
+      "id": "FF-004",
+      "title": "JSON: JavaScript Object Notation (.json)",
+      "content": "The universal language for data exchange. Human-readable, lightweight, and used for everything from configuration to database mocks in our system.",
+      "tags": ["data", "config"],
+      "codeReferences": ["repo-php/content/site1.com/config.json", "repo-python/sites.json"]
+    },
+    {
+      "id": "FF-005",
+      "title": "YAML: Yet Another Markup Language (.yml, .yaml)",
+      "content": "Preferred for configuration files where readability is priority. It uses indentation to define structure. Crucial for our Docker and Flutter configurations.",
+      "tags": ["config", "devops"],
+      "codeReferences": ["docker-compose.yml", "repo-flutter/pubspec.yaml"]
+    },
+    {
+      "id": "FF-006",
+      "title": "Python Scripts (.py)",
+      "content": "Python uses indentations for code blocks. Our Python repo uses `.py` files to handle automated site generation and template rendering.",
+      "tags": ["python", "scripting"],
+      "codeReferences": ["repo-python/main.py"]
+    },
+    {
+      "id": "FF-007",
+      "title": "Go Source Files (.go, .mod)",
+      "content": "Go is a compiled language. `.go` files contain the logic, while `go.mod` manages dependencies and module metadata.",
+      "tags": ["go", "backend"],
+      "codeReferences": ["repo-go/main.go", "repo-go/go.mod"]
+    },
+    {
+      "id": "FF-008",
+      "title": "Rust Source Files (.rs, .toml)",
+      "content": "Rust focuses on safety and performance. `.rs` is the source code, and `Cargo.toml` is used for build configuration and dependency management.",
+      "tags": ["rust", "systems"],
+      "codeReferences": ["repo-rust/src/main.rs", "repo-rust/Cargo.toml"]
+    },
+    {
+      "id": "FF-009",
+      "title": "Markdown (.md)",
+      "content": "A lightweight markup language for documentation. This slide itself is indexed from metadata that describes our extensive documentation in `/docs/`.",
+      "tags": ["documentation", "content"],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": "FF-010",
+      "title": "Base64 Encoded Text (.txt)",
+      "content": "Sometimes we store binary data (like images) as text. Our CMS uses `.txt` files containing Base64 strings to represent images in a portable way.",
+      "tags": ["data", "media"],
+      "codeReferences": ["repo-php/content/babiblog.fr/b64/aW1nL29yZ2FuaXNhdGlvbi5qcGc.txt"]
+    },
+    {
+      "id": "FF-011",
+      "title": "Compressed Archives (.zip)",
+      "content": "Used to group and shrink files. In our repository, we use `.zip` for image assets within the site content folders to save space.",
+      "tags": ["storage", "compression"],
+      "codeReferences": ["repo-php/content/babiblog.fr/img/organisation.jpg.zip"]
+    },
+    {
+      "id": "FF-012",
+      "title": "HTML: HyperText Markup Language (.html)",
+      "content": "The structural backbone of every web page. Even in modern frameworks, everything eventually renders as HTML for the browser.",
+      "tags": ["frontend", "structure"],
+      "codeReferences": ["index.html", "repo-python/templates/site.html"]
+    },
+    {
+      "id": "FF-013",
+      "title": "CSS: Cascading Style Sheets (.css)",
+      "content": "Defines the visual presentation. We use Tailwind CSS, but the final output is standard CSS that the browser interprets.",
+      "tags": ["frontend", "style"],
+      "codeReferences": ["repo-php/public/css/style.css", "src/style.css"]
+    },
+    {
+      "id": "FF-014",
+      "title": "Environment Variable Files (.env, .env.example)",
+      "content": "Used to store sensitive configuration like API keys. We use `.env.example` as a template while keeping real secrets out of Git.",
+      "tags": ["security", "config"],
+      "codeReferences": [".env.example"]
+    },
+    {
+      "id": "FF-015",
+      "title": "Docker Configuration (Dockerfile, docker-compose.yml)",
+      "content": "These aren't just text files; they are infrastructure blueprints. `Dockerfile` builds the image, and `docker-compose.yml` orchestrates multiple containers.",
+      "tags": ["devops", "containers"],
+      "codeReferences": ["Dockerfile", "docker-compose.yml"]
+    },
+    {
+      "id": "FF-016",
+      "title": "Nginx Configuration (.conf)",
+      "content": "Directs web traffic. The `.conf` files specify how requests are routed to different services in our polyglot setup.",
+      "tags": ["networking", "server"],
+      "codeReferences": ["repo-php/nginx.conf"]
+    },
+    {
+      "id": "FF-017",
+      "title": "Shell Scripts (.sh)",
+      "content": "Automate command-line tasks. Our `entrypoint.sh` handles the startup sequence for our PHP container.",
+      "tags": ["automation", "devops"],
+      "codeReferences": ["repo-php/entrypoint.sh"]
+    },
+    {
+      "id": "FF-018",
+      "title": "Gradle Build Files (.gradle)",
+      "content": "Used in the Android ecosystem. `.gradle` files define common build logic, dependencies, and project properties using Groovy or Kotlin DSL.",
+      "tags": ["android", "build"],
+      "codeReferences": ["repo-android/build.gradle"]
+    },
+    {
+      "id": "FF-019",
+      "title": "Dart and Flutter (.dart)",
+      "content": "Dart is the language behind Flutter. `.dart` files contain the UI logic and widget trees for our multi-platform applications.",
+      "tags": ["mobile", "flutter"],
+      "codeReferences": ["repo-flutter/lib/main.dart"]
+    },
+    {
+      "id": "FF-020",
+      "title": "SVG: Scalable Vector Graphics (.svg)",
+      "content": "An XML-based image format for 2D graphics. Unlike pixel-based images, SVGs don't lose quality when resized. Used for our logos and icons.",
+      "tags": ["graphics", "frontend"],
+      "codeReferences": ["public/vite.svg"]
+    }
+  ]
+}

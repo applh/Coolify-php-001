@@ -38,6 +38,13 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 - **Exercise**: Refactor a repetitive block of code in `repo-php/content/site1.com/index.php`.
 - **Goal**: Achieve clean, non-repetitive code.
 
+### 5. Polyglot File Explorer (10h)
+**Reference**: `docs/training/slides/phase1/file-formats.json`
+- **Goal**: Understand the diversity of file formats in modern full-stack development.
+- **Task**: Explore different repository folders (`repo-*`) and identify unique file extensions used in each stack.
+- **Exercise**: Create a new configuration file in `repo-python/` using the `.json` format to define a mock site property.
+- **Complexity**: Phase 1
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `README.md`
