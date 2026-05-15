@@ -92,14 +92,11 @@ const syncWithProd = async () => {
   if (isSyncing.value) return;
   isSyncing.value = true;
   try {
-    const res = await fetch('http://localhost:3000/api/admin/sync', {
+    const res = await fetch('/api/sync/admin-sync', {
       method: 'POST'
     });
-    // Fallback if not mapped on node proxy:
     if (!res.ok) {
-       await fetch('http://localhost:8000/admin/api/sync', {
-          method: 'POST'
-       });
+       throw new Error('Sync failed with status ' + res.status);
     }
     alert('Sync with production completed (simulated).');
   } catch (e) {

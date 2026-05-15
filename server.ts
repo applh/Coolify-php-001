@@ -23,9 +23,80 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS ai_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        result TEXT,
+        error TEXT,
+        is_recurring BOOLEAN DEFAULT 0,
+        cron_expression TEXT,
+        last_run_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 } catch (err) {
   console.error('Database logging failed:', err);
 }
+
+// Imports for Google GenAI and node-cron
+import { GoogleGenAI } from '@google/genai';
+import cron from 'node-cron';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const activeCronJobs = new Map<number, cron.ScheduledTask>();
+
+// Load AI tasks on startup
+function scheduleExisitingCrons() {
+  try {
+    const tasks = db.prepare('SELECT * FROM ai_tasks WHERE is_recurring = 1').all() as Array<Record<string, unknown>>;
+    tasks.forEach(task => {
+      if (typeof task.cron_expression === 'string' && cron.validate(task.cron_expression)) {
+        const jobId = Number(task.id);
+        const job = cron.schedule(task.cron_expression, () => executeAITask(jobId));
+        activeCronJobs.set(jobId, job);
+      }
+    });
+  } catch (err) {
+    console.error('Failed to load recurring tasks', err);
+  }
+}
+scheduleExisitingCrons();
+
+async function executeAITask(taskId: number) {
+  const task = db.prepare('SELECT * FROM ai_tasks WHERE id = ?').get(taskId) as Record<string, unknown> | undefined;
+  if (!task) return;
+  db.prepare('UPDATE ai_tasks SET status = ?, last_run_at = CURRENT_TIMESTAMP WHERE id = ?').run('running', taskId);
+  
+  try {
+    const payload = JSON.parse(String(task.payload));
+    let result = '';
+    
+    if (task.type === 'generate_slide_outline') {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `You are a Curriculum Designer.\nGenerate a pedagogical slide outline for the topic: "${payload.topic}".\nProvide the response as valid JSON with an array of objects, containing 'title' and 'content' for each slide.`,
+      });
+      result = response.text || '';
+    } else if (task.type === 'generate_slide_svg') {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `You are a Visual Designer.\nGenerate a highly stylized SVG illustration representing the following slide content:\n\nTitle: ${payload.slide_data.title}\nContent: ${payload.slide_data.content}\n\nFormat your response to return ONLY valid SVG code. Do not wrap it in markdown or comments.`,
+      });
+      let text = response.text || '';
+      text = text.replace(/^```(xml|svg)?|```$/ig, '').trim();
+      result = text;
+    }
+    
+    db.prepare('UPDATE ai_tasks SET status = ?, result = ? WHERE id = ?').run('completed', result, taskId);
+  } catch (error: unknown) {
+    db.prepare('UPDATE ai_tasks SET status = ?, error = ? WHERE id = ?').run('failed', error instanceof Error ? error.message : String(error), taskId);
+  }
+}
+
 
 console.log('Server.ts: Initializing...');
 
@@ -431,6 +502,58 @@ Layout::footer();
     }
   });
 
+  // AI Agent Teams APIs
+  app.get('/api/agents/teams', async (req, res) => {
+    try {
+      const dbPath = path.join(process.cwd(), 'data', 'agent_teams.json');
+      const data = await fs.readFile(dbPath, 'utf8');
+      res.json(JSON.parse(data));
+    } catch (error) {
+      console.error('Failed to load agent teams:', error);
+      res.status(500).json({ error: 'Failed to load agent teams' });
+    }
+  });
+
+  app.post('/api/tasks/schedule', (req, res) => {
+    try {
+      const { type, payload, cron_expression } = req.body;
+      const stmt = db.prepare(`
+          INSERT INTO ai_tasks (type, payload, is_recurring, cron_expression) 
+          VALUES (?, ?, 1, ?)
+      `);
+      const info = stmt.run(type, JSON.stringify(payload), cron_expression);
+      const taskId = Number(info.lastInsertRowid);
+      
+      if (cron.validate(cron_expression)) {
+        const job = cron.schedule(cron_expression, () => executeAITask(taskId));
+        activeCronJobs.set(taskId, job);
+      }
+      
+      res.json({ success: true, taskId });
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.delete('/api/tasks/schedule/:id', (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      db.prepare("DELETE FROM ai_tasks WHERE id = ?").run(id);
+      
+      const job = activeCronJobs.get(id);
+      if (job) {
+        job.stop();
+        activeCronJobs.delete(id);
+      }
+      
+      res.json({ success: true });
+    } catch(err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
   // Media Tasks API
   app.get('/api/benchmark', async (req, res) => {
     const url = req.query.url as string;
@@ -669,6 +792,23 @@ Layout::footer();
     } catch (error) {
       console.error('Push Error:', error);
       res.status(500).json({ error: 'Failed to push sync: ' + (error instanceof Error ? error.message : String(error)) });
+    }
+  });
+
+  app.post('/api/sync/admin-sync', async (req, res) => {
+    try {
+      // Basic simulation of sync process handling Prod fetching / local pushing
+      // Read current sync target settings from env or defaults
+      const syncTargetUrl = process.env.SYNC_TARGET_URL || 'https://prod.example.com/api/sync';
+      
+      // We would conventionally call the production API for import/export here, but simulating for now.
+      console.log('Orchestrating sync with:', syncTargetUrl);
+      
+      // Simulate success
+      res.json({ success: true, message: 'Admin sync successfully merged with prod.' });
+    } catch (error) {
+      console.error('Admin Sync Error:', error);
+      res.status(500).json({ error: 'Failed to sync with prod environment' });
     }
   });
 

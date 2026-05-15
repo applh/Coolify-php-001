@@ -1,0 +1,22 @@
+{
+  "teams": [
+    {
+      "id": "training-generator-team",
+      "name": "Node Training Content Team",
+      "agents": [
+        {
+          "id": "node-slide-architect",
+          "role": "Curriculum Designer",
+          "skills": ["slide-content-structuring", "pedagogical-design"],
+          "commonSkills": ["gemini-interaction"]
+        },
+        {
+          "id": "node-svg-illustrator",
+          "role": "Visual Designer",
+          "skills": ["svg-generation", "illustration-styling"],
+          "commonSkills": ["gemini-interaction"]
+        }
+      ]
+    }
+  ]
+}

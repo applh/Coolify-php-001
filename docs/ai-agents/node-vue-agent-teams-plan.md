@@ -39,8 +39,9 @@ Create a JSON manifest `data/agent_teams.json` to define the AI teams.
 ## 2. Cron Tasks Management in `server.ts`
 
 - Add SQLite columns to `media_tasks` (or a separate `ai_tasks` table) for `is_recurring`, `cron_expression`, and `last_run_at`.
-- Instead of relying on a heartbeat request from the frontend, use Node.js's natural asynchronous capabilities. Write a simple polling loop in `server.ts` using `setInterval` (e.g., every 60 seconds) or configure `node-cron` package.
-- The interval loop parses the cron expressions and creates a new run for due tasks.
+- Install the `node-cron` package (`npm install node-cron`) to handle scheduled tasks cleanly.
+- Keep an in-memory map or array in `server.ts` of active cron jobs. When the app starts, query all recurring tasks from the database and call `cron.schedule(expression, callback)` for each.
+- Add endpoints like `/api/tasks/schedule` to let the UI create or cancel tasks, dynamically updating the active `node-cron` jobs.
 
 ## 3. Specialized Training Slide Generation Team via Gemini
 
@@ -60,5 +61,5 @@ Create a JSON manifest `data/agent_teams.json` to define the AI teams.
 ## Practical Lab: Phase 9 (Node.js Agents)
 **Goal:** Migrate and operate AI Agent team routines strictly within a Node server.
 **Reference:** `docs/ai-agents/node-vue-agent-teams-plan.md`
-**Exercise:** Extend `server.ts` schema to support `cron_expression` and build the `setInterval` dispatcher.
+**Exercise:** Extend `server.ts` schema to support `cron_expression` and build the `node-cron` dispatcher.
 **Complexity:** Phase 4
