@@ -14,7 +14,10 @@ interface Slide {
   id: string | number;
   title: string;
   content: string;
+  svgContent?: string;
   tags: string[];
+  links?: string[];
+  studentPrompts?: string[];
   codeReferences: string[];
 }
 
@@ -514,6 +517,24 @@ function backToDashboard() {
                     class="prose prose-invert max-w-none text-xl text-white/70 leading-relaxed font-light first-letter:text-5xl first-letter:font-serif first-letter:text-[#F27D26] first-letter:mr-3 first-letter:float-left whitespace-pre-line"
                     v-html="currentSlide.content"
                   />
+
+                  <div v-if="currentSlide.svgContent" v-html="currentSlide.svgContent" class="my-8"></div>
+
+                  <div v-if="currentSlide.studentPrompts?.length" class="mt-8 space-y-4">
+                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Student Prompts</h5>
+                    <ul class="list-disc list-inside text-white/60 space-y-2">
+                      <li v-for="(prompt, index) in currentSlide.studentPrompts" :key="index">{{ prompt }}</li>
+                    </ul>
+                  </div>
+
+                  <div v-if="currentSlide.links?.length" class="mt-8 space-y-4">
+                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Links</h5>
+                    <ul class="space-y-2">
+                      <li v-for="(link, index) in currentSlide.links" :key="index">
+                        <a :href="link" target="_blank" class="text-[#F27D26] hover:underline text-sm">{{ link }}</a>
+                      </li>
+                    </ul>
+                  </div>
 
                   <div
                     v-if="currentSlide.codeReferences.length > 0"
