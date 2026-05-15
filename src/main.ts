@@ -8,11 +8,12 @@ import AiMediaTasks from './views/AiMediaTasks.vue';
 import SiteBenchmarker from './views/SiteBenchmarker.vue';
 import SyncState from './views/SyncState.vue';
 import TrainingCenter from './views/TrainingCenter.vue';
+import AgentTeams from './views/AgentTeams.vue';
 import './style.css';
 
 // Global Fetch Override for Admin Protection
 const originalFetch = window.fetch;
-window.fetch = async (url, options: any = {}) => {
+window.fetch = async (url, options: RequestInit = {}) => {
   const passkey = localStorage.getItem('admin_passkey');
   if (passkey) {
     options.headers = {
@@ -34,6 +35,7 @@ const router = createRouter({
     { path: '/editor/:site', component: SiteEditor },
     { path: '/explorer', component: SiteExplorer },
     { path: '/ai-media', component: AiMediaTasks },
+    { path: '/agent-teams', component: AgentTeams },
     { path: '/benchmark', component: SiteBenchmarker },
     { path: '/sync', component: SyncState },
     { path: '/training', component: TrainingCenter },

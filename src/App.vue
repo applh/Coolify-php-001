@@ -26,7 +26,7 @@ const verifyPasskey = async (p: string) => {
     } else {
       error.value = data.error || 'Invalid passkey';
     }
-  } catch (err) {
+  } catch (_err) {
     error.value = 'Failed to verify passkey';
   } finally {
     isLoading.value = false;
@@ -62,7 +62,7 @@ onMounted(async () => {
       if (data.noPasskey) {
         isAuthenticated.value = true;
       }
-    } catch (err) {
+    } catch (_err) {
       console.error('Initial auth check failed');
     }
   }

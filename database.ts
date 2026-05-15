@@ -27,6 +27,47 @@ db.exec(`
     folder_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS agents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    skills TEXT,
+    status TEXT DEFAULT 'idle',
+    avatar_url TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS agent_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER,
+    title TEXT NOT NULL,
+    description TEXT,
+    input_data TEXT,
+    output_data TEXT,
+    status TEXT DEFAULT 'queued',
+    priority INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(agent_id) REFERENCES agents(id)
+  );
 `);
+
+// Seed default agents if none exist
+const agentsCount = db.prepare('SELECT COUNT(*) as count FROM agents').get() as { count: number };
+if (agentsCount.count === 0) {
+  const seedAgents = [
+    { name: 'Aria', role: 'System Architect', skills: JSON.stringify(['Architecture Design', 'Database Modeling', 'API Planning']) },
+    { name: 'Cypher', role: 'Security Analyst', skills: JSON.stringify(['Penetration Testing', 'Code Audit', 'Encryption']) },
+    { name: 'Lumina', role: 'UX/UI Specialist', skills: JSON.stringify(['Interface Design', 'Accessibility', 'Prototype']) },
+    { name: 'Kael', role: 'Full-stack Developer', skills: JSON.stringify(['React', 'Node.js', 'PostgreSQL']) },
+    { name: 'Echo', role: 'DevOps Engineer', skills: JSON.stringify(['CI/CD', 'Docker', 'Cloud Scaling']) },
+  ];
+
+  const insertStmt = db.prepare('INSERT INTO agents (name, role, skills) VALUES (?, ?, ?)');
+  for (const agent of seedAgents) {
+    insertStmt.run(agent.name, agent.role, agent.skills);
+  }
+  console.log('Seeded default AI agents.');
+}
 
 export default db;

@@ -7,6 +7,17 @@ import AdmZip from 'adm-zip';
 import multer from 'multer';
 import db from './database.ts';
 import { initScheduler } from './scheduler.ts';
+import { GoogleGenAI } from "@google/genai";
+
+// Initialize Gemini
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || '',
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    }
+  }
+});
 
 // Use DB for logging starts
 try {
@@ -539,6 +550,159 @@ Layout::footer();
       res.json({ success: true });
     } catch(err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  // AI Agents Team API
+  app.get('/api/agents', (req, res) => {
+    try {
+      const agents = db.prepare("SELECT * FROM agents").all();
+      res.json(agents);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.post('/api/agents', (req, res) => {
+    try {
+      const { name, role, skills, avatar_url } = req.body;
+      const stmt = db.prepare("INSERT INTO agents (name, role, skills, avatar_url) VALUES (?, ?, ?, ?)");
+      const info = stmt.run(name, role, JSON.stringify(skills), avatar_url || null);
+      res.json({ success: true, id: info.lastInsertRowid });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.put('/api/agents/:id', (req, res) => {
+    try {
+      const { name, role, skills, status, avatar_url } = req.body;
+      const stmt = db.prepare("UPDATE agents SET name = ?, role = ?, skills = ?, status = ?, avatar_url = ? WHERE id = ?");
+      stmt.run(name, role, JSON.stringify(skills), status, avatar_url || null, req.params.id);
+      res.json({ success: true });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.delete('/api/agents/:id', (req, res) => {
+    try {
+      db.prepare("DELETE FROM agents WHERE id = ?").run(req.params.id);
+      res.json({ success: true });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.get('/api/agent-tasks', (req, res) => {
+    try {
+      const tasks = db.prepare(`
+        SELECT t.*, a.name as agent_name 
+        FROM agent_tasks t 
+        LEFT JOIN agents a ON t.agent_id = a.id 
+        ORDER BY t.priority DESC, t.created_at DESC
+      `).all();
+      res.json(tasks);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.post('/api/agent-tasks', (req, res) => {
+    try {
+      const { agent_id, title, description, input_data, priority } = req.body;
+      const stmt = db.prepare(`
+        INSERT INTO agent_tasks (agent_id, title, description, input_data, priority) 
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      const info = stmt.run(agent_id || null, title, description || null, input_data || null, priority || 0);
+      res.json({ success: true, id: info.lastInsertRowid });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.put('/api/agent-tasks/:id', (req, res) => {
+    try {
+      const { status, output_data, agent_id } = req.body;
+      const stmt = db.prepare("UPDATE agent_tasks SET status = ?, output_data = ?, agent_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+      stmt.run(status, output_data || null, agent_id || null, req.params.id);
+      res.json({ success: true });
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errorMsg });
+    }
+  });
+
+  app.post('/api/agent-tasks/:id/run', async (req, res) => {
+    const taskId = req.params.id;
+    try {
+      const task = db.prepare(`
+        SELECT t.*, a.name as agent_name, a.role as agent_role, a.skills as agent_skills 
+        FROM agent_tasks t 
+        LEFT JOIN agents a ON t.agent_id = a.id 
+        WHERE t.id = ?
+      `).get(taskId) as { 
+        id: number; 
+        agent_id: number | null; 
+        title: string; 
+        description: string | null; 
+        input_data: string | null;
+        agent_name: string | null;
+        agent_role: string | null;
+        agent_skills: string | null;
+      } | undefined;
+
+      if (!task) return res.status(404).json({ error: 'Task not found' });
+
+      // Update status to in-progress
+      db.prepare("UPDATE agent_tasks SET status = 'in-progress', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(taskId);
+      if (task.agent_id) {
+        db.prepare("UPDATE agents SET status = 'working' WHERE id = ?").run(task.agent_id);
+      }
+
+      // Prepare prompt
+      const agentContext = task.agent_id ? 
+        `You are ${task.agent_name}, a ${task.agent_role} with skills: ${task.agent_skills}.` :
+        `You are a general AI agent.`;
+      
+      const prompt = `
+        ${agentContext}
+        
+        Objective: ${task.title}
+        Context: ${task.description || 'No additional context provided.'}
+        Input Data: ${task.input_data || 'None'}
+        
+        Please provide a detailed response or artifact as the result of this task.
+      `;
+
+      // Call Gemini
+      const result = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: prompt,
+      });
+
+      const output = result.text || 'No output generated.';
+
+      // Update task with result
+      db.prepare("UPDATE agent_tasks SET status = 'completed', output_data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(output, taskId);
+      if (task.agent_id) {
+        db.prepare("UPDATE agents SET status = 'idle' WHERE id = ?").run(task.agent_id);
+      }
+
+      res.json({ success: true, output });
+
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error('AI Task Execution failed:', errorMsg);
+      db.prepare("UPDATE agent_tasks SET status = 'failed', output_data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(errorMsg, taskId);
       res.status(500).json({ error: errorMsg });
     }
   });

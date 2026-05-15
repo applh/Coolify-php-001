@@ -7,6 +7,7 @@ import {
   Search as ExplorerIcon,
   LayoutDashboard as DashboardIcon,
   Clapperboard as MediaQueueIcon,
+  Users as TeamsIcon,
   LogOut as LogoutIcon
 } from 'lucide-vue-next';
 
@@ -22,6 +23,7 @@ const navItems = [
   { name: 'Dashboard', path: '/', icon: DashboardIcon },
   { name: 'Explorer', path: '/explorer', icon: ExplorerIcon },
   { name: 'AI Media', path: '/ai-media', icon: MediaQueueIcon },
+  { name: 'Agent Teams', path: '/agent-teams', icon: TeamsIcon },
   { name: 'Benchmarks', path: '/benchmark', icon: ChartIcon },
   { name: 'Sync', path: '/sync', icon: SyncIcon },
   { name: 'Training', path: '/training', icon: TrainingIcon, highlight: true },
