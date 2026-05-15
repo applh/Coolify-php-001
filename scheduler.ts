@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import db from './database.js';
+import db from './database.ts';
 
 export function initScheduler() {
     console.log('Initializing task scheduler...');
