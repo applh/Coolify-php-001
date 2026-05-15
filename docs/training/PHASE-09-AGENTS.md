@@ -33,6 +33,14 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Exercise**: Add a new JSON file to `docs/training/slides/` and verify it appears automatically in the 'Atlas' view.
 - **Complexity**: Phase 3 (Engineering Fundamentals)
 
+### 4. High-Fidelity Slide Engineering (10h)
+**Reference**: `AGENTS.md`, `docs/training/slides/phase1/module-intro.json`
+- **Goal**: Master the constraints for generating production-ready training content with AI.
+- **Task**: Review the 'Slide Generation Standards' in `AGENTS.md`.
+- **Exercise**: Take an existing slide from a manifest (e.g., `docs/training/slides/phase1/module-intro.json`) and expand its content beyond 500 characters, adding a relevant SVG illustration, official links, and student prompts.
+- **Goal**: Ensure training content provides deep value, visual grounding, and paths for further exploration.
+- **Complexity**: Phase 1 (Documentation & AI Orchestration)
+
 ## Recommended Reading
 - `docs/ai-agents/ai-coder-agent-guide.md`
 - `docs/ai-agents/ai-agents-roles-tasks.md`

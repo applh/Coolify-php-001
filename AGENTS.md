@@ -50,3 +50,10 @@ When generating or modifying sites within the `content/` directory, the AI agent
 ## 8. Training Content Hierarchy (60k Slides)
 - **Serialization**: Never create 1:1 files for slides. Use **JSON Manifests** (max 500 slides per file) to store slide metadata.
 - **Grounding**: Ensure any new architectural training content includes a `codeReferences` array in its JSON entry pointing to the physical file in `repo-*`.
+
+## 9. Slide Generation Standards
+When generating slides within the training JSON manifests, the AI agent MUST:
+- **SVG Illustrations**: Always include an `svgContent` property with a relevant, high-quality SVG illustration for the slide topics.
+- **Content Depth**: Ensure the primary `content` or `explanation` text for each slide is descriptive and exceeds 500 characters.
+- **Authoritative Resources**: Always include a `links` array containing URLs to official documentation, high-quality tutorials, and relevant case studies.
+- **Pedagogical Support**: Include a `studentPrompts` array with practical examples of prompts that students can use to explore the topic further with an LLM.

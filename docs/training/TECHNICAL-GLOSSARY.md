@@ -121,4 +121,27 @@ The automated sequence of steps that transforms developer-written code (TypeScri
 
 ---
 
-*Note: This glossary serves as a living document. As the FRAISE platform evolves and we add more specialized repositories (Go, Rust, Flutter), this glossary will be expanded to encompass the full breadth of modern engineering terminology.*
+## 7. Practical Labs
+
+### Lab 7.1: Semantic Glossary Expansion
+**Goal**: Learn how to extend the platform's training metadata by adding new technical terms with high-fidelity attributes (SVG, Links, Prompts).
+
+**Reference**: 
+- `/docs/training/slides/glossary/technical-terms-2.json`
+- `/docs/training/TECHNICAL-GLOSSARY.md`
+
+**Exercise**: 
+1. Open `/docs/training/slides/glossary/technical-terms-2.json`.
+2. Locate the end of the `slides` array and add a new entry for a term not yet covered (e.g., "WebSockets" or "GraphQL").
+3. Ensure the new entry follows the high-fidelity standard:
+   - `content`: Descriptive text > 500 characters.
+   - `svgContent`: A relevant, high-quality SVG illustration.
+   - `links`: At least 3 links to official documentation or top-tier tutorials.
+   - `studentPrompts`: 3 critical-thinking questions for students.
+4. Update the corresponding entry in this Markdown file (`TECHNICAL-GLOSSARY.md`) to keep the "Human-Readable" and "Machine-JSON" documentation in sync.
+
+**Complexity**: Phase 2 (Intermediate)
+
+---
+
+*Note: This glossary serves as a living document. As the FRAISE platform evolves and we add more specialized repositories (Go, Rust, Flutter), this glossary will be expanded to encompass the full breadth of modern engineering terminology. A new training lab is now available for the term expansion feature just developed.*
