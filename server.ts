@@ -6,6 +6,7 @@ import cors from 'cors';
 import AdmZip from 'adm-zip';
 import multer from 'multer';
 import db from './database.ts';
+import { initScheduler } from './scheduler.ts';
 
 // Use DB for logging starts
 try {
@@ -718,6 +719,8 @@ Layout::footer();
       });
     }
   }
+
+  initScheduler();
 
   const PORT = process.env.PORT || 3000;
   try {
