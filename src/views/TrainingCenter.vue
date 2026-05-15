@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { BookOpen, Search, Layers, Zap, Code, ShieldCheck, ChevronLeft, ChevronRight, X, ExternalLink, Filter } from 'lucide-vue-next';
+import { 
+  BookOpen, Search, Zap, Code, 
+  ChevronLeft, ChevronRight, X, ExternalLink, Filter,
+  Clock, Target, Grid3X3, List as ListIcon,
+  LayoutDashboard, Database
+} from 'lucide-vue-next';
 
+// Content URLs
 import glossary1Url from '../../docs/training/slides/glossary/technical-terms-1.json?url';
 import glossary2Url from '../../docs/training/slides/glossary/technical-terms-2.json?url';
 import moduleIntroUrl from '../../docs/training/slides/phase1/module-intro.json?url';
 import agileAiRolesUrl from '../../docs/training/slides/phase5/agile-ai-roles.json?url';
 import deploymentCoolifyUrl from '../../docs/training/slides/phase5/deployment-coolify.json?url';
+import taxonomyData from '../../docs/training/taxonomy.json';
 
 interface Slide {
   id: number;
@@ -24,83 +31,62 @@ interface SlideBundle {
   slides: Slide[];
 }
 
-interface TrainingPhase {
+interface Module {
   id: string;
-  title: string;
-  duration: string;
-  slides: number;
-  description: string;
-  repos: string[];
+  name: string;
+  hours: [number, number];
+  description?: string;
 }
 
-interface ModuleMeta {
+interface Phase {
   id: string;
-  title: string;
-  phaseId: string;
-  path: string;
-  description: string;
+  name: string;
+  hours: [number, number];
+  modules: Module[];
 }
 
-const MODULES: ModuleMeta[] = [
-  {
-    id: 'glossary-1',
-    title: 'Technical Glossary Vol 1',
-    phaseId: '1',
-    path: glossary1Url,
-    description: 'Core concepts of PHP, MVC, and web infrastructure.'
-  },
-  {
-    id: 'glossary-2',
-    title: 'Technical Glossary Vol 2',
-    phaseId: '1',
-    path: glossary2Url,
-    description: 'Advanced patterns and multi-tenant logic.'
-  },
-  {
-    id: 'module-intro',
-    title: 'Curriculum Introduction',
-    phaseId: '1',
-    path: moduleIntroUrl,
-    description: 'Overview of the 1000-hour mastery path.'
-  },
-  {
-    id: 'agile-ai',
-    title: 'Agile AI Agent Roles',
-    phaseId: '5',
-    path: agileAiRolesUrl,
-    description: 'Integrating humans and agents in the SDLC.'
-  },
-  {
-    id: 'coolify',
-    title: 'Deployment & Scaling',
-    phaseId: '5',
-    path: deploymentCoolifyUrl,
-    description: 'Using Coolify for self-hosted cloud scaling.'
-  }
-];
-
-const phases = ref<TrainingPhase[]>([
-  { id: '1', title: 'Web Fundamentals', duration: '175h', slides: 10500, description: 'HTML5, CSS3, Vanilla JS, and PHP core patterns.', repos: ['repo-php'] },
-  { id: '2', title: 'Modern Frontend', duration: '225h', slides: 13500, description: 'Reactive architecture with Vue 3 and React hooks.', repos: ['repo-react', 'repo-vue'] },
-  { id: '3', title: 'Backend Systems', duration: '275h', slides: 16500, description: 'Compiled vs Dynamic languages: Go, Rust, Python.', repos: ['repo-go', 'repo-rust', 'repo-python'] },
-  { id: '4', title: 'Multi-Platform', duration: '175h', slides: 10500, description: 'Mobile development with Flutter and Kotlin.', repos: ['repo-android', 'repo-flutter'] },
-  { id: '5', title: 'DevOps & AI Agents', duration: '150h', slides: 9000, description: 'Containerization, Nginx, and agentic workflows.', repos: ['docs/ai-agents'] },
-]);
-
-const stats = {
-  totalHours: 1000,
-  totalSlides: 60000,
-  totalData: "60MB",
-  density: "1 slide / min"
+// Map actual files to taxonomy modules
+const CONTENT_MAP: Record<string, string> = {
+  'M001': moduleIntroUrl,
+  'M009': glossary1Url, 
+  'M010': glossary2Url, 
+  'M085': agileAiRolesUrl, 
+  'M073': deploymentCoolifyUrl, 
 };
 
-// State for navigation
-const selectedPhase = ref<TrainingPhase | null>(null);
+const phases = ref<Phase[]>(taxonomyData.phases);
+const searchQuery = ref('');
+const activeView = ref<'atlas' | 'list'>('atlas');
+
+// Navigation State
+const selectedPhase = ref<Phase | null>(null);
+const selectedModule = ref<Module | null>(null);
 const currentBundle = ref<SlideBundle | null>(null);
 const currentSlideIndex = ref(0);
+const viewMode = ref<'dashboard' | 'phase' | 'reader'>('dashboard');
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-const viewMode = ref<'dashboard' | 'modules' | 'reader'>('dashboard');
+
+// Computed stats
+const stats = computed(() => {
+  const totalModules = phases.value.reduce((acc, p) => acc + p.modules.length, 0);
+  const totalContent = Object.keys(CONTENT_MAP).length;
+  return {
+    totalHours: 1000,
+    totalModules,
+    availableContent: `${totalContent}%`,
+    readyStatus: 'OPTIMIZED'
+  };
+});
+
+const filteredPhases = computed(() => {
+  if (!searchQuery.value) return phases.value;
+  const q = searchQuery.value.toLowerCase();
+  return phases.value.filter(p => 
+    p.name.toLowerCase().includes(q) || 
+    p.modules.some(m => m.name.toLowerCase().includes(q))
+  );
+});
 
 const currentSlide = computed(() => {
   if (!currentBundle.value || !currentBundle.value.slides.length) return null;
@@ -112,33 +98,30 @@ const progress = computed(() => {
   return ((currentSlideIndex.value + 1) / currentBundle.value.slides.length) * 100;
 });
 
-const phaseModules = computed(() => {
-  if (!selectedPhase.value) return [];
-  return MODULES.filter(m => m.phaseId === selectedPhase.value?.id);
-});
-
-async function openPhase(phase: TrainingPhase) {
+// Actions
+async function openPhase(phase: Phase) {
   selectedPhase.value = phase;
-  viewMode.value = 'modules';
+  viewMode.value = 'phase';
 }
 
-async function loadModule(moduleMeta: ModuleMeta) {
+async function startModule(module: Module) {
+  const path = CONTENT_MAP[module.id];
+  if (!path) return;
+
+  selectedModule.value = module;
   isLoading.value = true;
   error.value = null;
   currentSlideIndex.value = 0;
   
   try {
-    const response = await fetch(moduleMeta.path);
+    const response = await fetch(path);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     currentBundle.value = data;
     viewMode.value = 'reader';
   } catch (err) {
-    console.error('Failed to load slides:', err);
-    error.value = 'Could not load training content. This might be because the file is not served by Vite directly. Attempting alternative access...';
-    
-    // In a real scenario, we might retry or show a specific error
-    // For this simulation, we'll gracefully handle it if the path is wrong
+    console.error('Failed to load module:', err);
+    error.value = 'Could not load training content.';
   } finally {
     isLoading.value = false;
   }
@@ -157,7 +140,7 @@ function prevSlide() {
 }
 
 function closeReader() {
-  viewMode.value = 'modules';
+  viewMode.value = 'phase';
 }
 
 function backToDashboard() {
@@ -167,287 +150,437 @@ function backToDashboard() {
 </script>
 
 <template>
-  <div class="space-y-8 animate-in fade-in duration-700">
+  <div class="space-y-8 animate-in fade-in duration-700 max-w-[1400px] mx-auto px-4 md:px-8 py-8 min-h-screen">
+    <!-- Breadcrumbs / Back button -->
+    <div
+      v-if="viewMode !== 'dashboard' && viewMode !== 'reader'"
+      class="flex items-center gap-2 mb-4 animate-in slide-in-from-left duration-300"
+    >
+      <button
+        class="flex items-center gap-1 text-xs text-white/40 hover:text-[#F27D26] transition-colors uppercase tracking-widest font-bold"
+        @click="backToDashboard"
+      >
+        <LayoutDashboard class="w-3 h-3" />
+        Dashboard
+      </button>
+      <ChevronRight class="w-3 h-3 text-white/10" />
+      <span class="text-xs text-white/80 uppercase tracking-widest font-bold">{{ selectedPhase?.name }}</span>
+    </div>
+
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-white/10 pb-6">
-      <div class="space-y-1">
-        <div class="flex items-center gap-2 text-[#F27D26] text-xs font-bold tracking-widest uppercase">
-          <BookOpen class="w-4 h-4" />
-          Training Architecture
+    <div
+      v-if="viewMode !== 'reader'"
+      class="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-white/5 pb-8"
+    >
+      <div class="space-y-2">
+        <div class="flex items-center gap-2 text-[#F27D26] text-[10px] font-black tracking-[0.2em] uppercase">
+          <Target class="w-4 h-4" />
+          Engineering Mastery Path
         </div>
-        <h2 class="text-3xl font-serif italic text-white">Human x AI Skills Center</h2>
-        <p class="text-sm text-white/50 max-w-2xl">
-          Managing 60MB of training logic across 60,000 architectural slides.
-          This interface demonstrates how AI Studio optimizes polyglot stack transitions.
+        <h2 class="text-4xl font-serif italic text-white leading-tight">
+          Training Center
+        </h2>
+        <p class="text-sm text-white/40 max-w-xl">
+          A 1000-hour architecture curriculum indexed into 10 industrial phases. 
+          Use the Atlas to browse the entire stack from foundations to agentic orchestration.
         </p>
       </div>
 
-      <div class="flex gap-4">
-        <div v-for="(val, label) in stats" :key="label" class="bg-white/5 px-4 py-2 rounded border border-white/10 flex flex-col items-center min-w-[100px]">
-          <span class="text-[10px] text-white/40 uppercase tracking-tighter">{{ label }}</span>
-          <span class="text-lg font-mono font-bold">{{ val }}</span>
+      <div class="flex gap-3 flex-wrap">
+        <div
+          v-for="(val, label) in stats"
+          :key="label"
+          class="bg-white/[0.02] border border-white/5 px-5 py-3 rounded-lg flex flex-col items-center min-w-[120px] backdrop-blur-sm shadow-xl"
+        >
+          <span class="text-[9px] text-white/30 uppercase tracking-[0.1em] mb-1 font-bold">{{ label.replace(/([A-Z])/g, ' $1') }}</span>
+          <span class="text-xl font-mono font-bold text-white/90">{{ val }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Dashboard View -->
-    <div v-if="viewMode === 'dashboard'" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      
-      <!-- Left side: The Phases -->
-      <div class="lg:col-span-2 space-y-4">
-        <div class="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 flex justify-between">
-          <span>Curriculum Modules</span>
-          <span>Progressive Disclosure Pattern</span>
-        </div>
-        
-        <div 
-          v-for="phase in phases" 
-          :key="phase.id"
-          @click="openPhase(phase)"
-          class="bg-[#181818] border border-white/5 p-5 rounded-lg hover:border-[#F27D26]/30 transition-all group relative overflow-hidden cursor-pointer"
-        >
-          <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-[#F27D26]">
-             <BookOpen class="w-24 h-24" />
+    <!-- MAIN VIEWPORT -->
+    <div class="relative min-h-[600px]">
+      <!-- DASHBOARD -->
+      <div
+        v-if="viewMode === 'dashboard'"
+        class="space-y-8 animate-in fade-in duration-500"
+      >
+        <!-- Controls -->
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="relative w-full md:w-96 group">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-[#F27D26] transition-colors" />
+            <input 
+              v-model="searchQuery"
+              type="text" 
+              placeholder="Search 100 modules (e.g. 'Rust', 'Gemini', 'SQL')..."
+              class="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-[#F27D26]/50 focus:ring-1 focus:ring-[#F27D26]/20 transition-all font-mono"
+            >
           </div>
-          
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <div class="text-[10px] text-[#F27D26] font-bold mb-1">PHASE 0{{ phase.id }}</div>
-              <h3 class="text-xl font-bold group-hover:text-white transition-colors">{{ phase.title }}</h3>
-            </div>
-            <div class="text-right">
-              <div class="text-xs font-mono text-white/60">{{ phase.duration }}</div>
-              <div class="text-[10px] text-white/30">{{ phase.slides.toLocaleString() }} slides</div>
-            </div>
-          </div>
-          
-          <p class="text-sm text-white/60 mb-6 max-w-md">{{ phase.description }}</p>
-          
-          <div class="flex justify-between items-center">
-            <div class="flex flex-wrap gap-2">
-              <span v-for="repo in phase.repos" :key="repo" class="text-[9px] px-2 py-1 bg-white/5 border border-white/10 rounded flex items-center gap-1">
-                <Code class="w-3 h-3 text-white/40" />
-                {{ repo }}
-              </span>
-            </div>
-            <button class="text-[10px] font-bold text-[#F27D26] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-              Explore Content
+
+          <div class="flex gap-2">
+            <button 
+              v-for="view in (['atlas', 'list'] as const)" 
+              :key="view"
+              :class="[
+                'px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all border shadow-lg',
+                activeView === view ? 'bg-[#F27D26] text-black border-[#F27D26]' : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+              ]"
+              @click="activeView = view"
+            >
+              <Grid3X3
+                v-if="view === 'atlas'"
+                class="w-3.5 h-3.5"
+              />
+              <ListIcon
+                v-else
+                class="w-3.5 h-3.5"
+              />
+              {{ view }}
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Right side: AI Agent Optimization Strategy -->
-      <div class="space-y-6">
-        <div class="bg-[#1c1c1c] border border-white/10 rounded-xl p-6 relative">
-          <div class="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#F27D26] flex items-center justify-center">
-            <Zap class="w-4 h-4 text-black" />
-          </div>
-          <h4 class="text-lg font-bold mb-4">Agentic Optimization</h4>
-          <ul class="space-y-4">
-            <li class="flex gap-3">
-              <div class="mt-1"><Layers class="w-4 h-4 text-[#F27D26]" /></div>
-              <div>
-                <p class="text-sm font-bold">Bundle Ingestion</p>
-                <p class="text-xs text-white/50">Slides are bundled in 1MB JSON files to prevent context fragmentation.</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <div class="mt-1"><Search class="w-4 h-4 text-[#F27D26]" /></div>
-              <div>
-                <p class="text-sm font-bold">Vector Mapping</p>
-                <p class="text-xs text-white/50">Metadata indexes allow agents to perform selective retrieval instead of full-scans.</p>
-              </div>
-            </li>
-            <li class="flex gap-3">
-              <div class="mt-1"><ShieldCheck class="w-4 h-4 text-[#F27D26]" /></div>
-              <div>
-                <p class="text-sm font-bold">Code Grounding</p>
-                <p class="text-xs text-white/50">Every training slide is linked to at least one physical file in the multi-repo stack.</p>
-              </div>
-            </li>
-          </ul>
-          
-          <button class="w-full mt-8 py-3 bg-[#F27D26] text-black font-bold text-xs uppercase tracking-widest rounded hover:bg-[#ff8f3e] transition-colors">
-            Generate Training Index
-          </button>
-        </div>
-
-        <div class="border border-white/5 p-6 rounded-xl bg-gradient-to-br from-white/5 to-transparent">
-          <h4 class="text-xs font-bold uppercase tracking-widest text-[#F27D26] mb-3">AI Coder Agent Status</h4>
-          <div class="space-y-2">
-            <div class="flex justify-between text-xs">
-              <span class="opacity-50">Stack Recognition</span>
-              <span class="text-green-400">READY</span>
+        <!-- ATLAS View -->
+        <div
+          v-if="activeView === 'atlas'"
+          class="space-y-12 pb-20"
+        >
+          <!-- Spotlight -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-[#F27D26] uppercase tracking-widest flex items-center gap-2">
+                <Zap class="w-3 h-3 fill-[#F27D26]" />
+                Curriculum Spotlight: Ready to Learn
+              </h3>
             </div>
-            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-              <div class="w-full h-full bg-green-500"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 tracking-tight">
+              <div 
+                v-for="modId in Object.keys(CONTENT_MAP)" 
+                :key="modId"
+                class="bg-gradient-to-br from-[#F27D26]/20 to-transparent border border-[#F27D26]/30 p-4 rounded-xl hover:bg-[#F27D26]/10 transition-all cursor-pointer group relative overflow-hidden"
+                @click="startModule(phases.flatMap(p => p.modules).find(m => m.id === modId)!)"
+              >
+                <div class="absolute -right-2 -bottom-2 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <BookOpen class="w-16 h-16 text-[#F27D26]" />
+                </div>
+                <div class="text-[10px] font-mono text-[#F27D26] mb-1 font-bold">
+                  {{ modId }}
+                </div>
+                <h4 class="text-sm font-bold text-white/90 group-hover:text-white line-clamp-1 mb-1">
+                  {{ phases.flatMap(p => p.modules).find(m => m.id === modId)?.name }}
+                </h4>
+                <div class="flex items-center gap-1 text-[9px] font-bold text-[#F27D26]/60 uppercase tracking-tighter">
+                  Start Module <ChevronRight class="w-2.5 h-2.5" />
+                </div>
+              </div>
             </div>
           </div>
-          <div class="space-y-2 mt-4">
-            <div class="flex justify-between text-xs">
-              <span class="opacity-50">Slide Ingestion Speed</span>
-              <span class="text-[#F27D26]">OPTIMIZED (via JSON)</span>
-            </div>
-            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-              <div class="w-[85%] h-full bg-[#F27D26]"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Module Selection View -->
-    <div v-else-if="viewMode === 'modules'" class="space-y-6">
-      <button @click="backToDashboard" class="flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors">
-        <ChevronLeft class="w-4 h-4" />
-        Back to Dashboard
-      </button>
-
-      <div class="bg-white/5 border border-white/10 rounded-xl p-8">
-        <div class="flex justify-between items-start mb-8">
-          <div>
-            <div class="text-[10px] text-[#F27D26] font-bold mb-1 uppercase tracking-widest">Phase 0{{ selectedPhase?.id }}</div>
-            <h3 class="text-3xl font-bold">{{ selectedPhase?.title }}</h3>
-            <p class="text-white/50 mt-2">{{ selectedPhase?.description }}</p>
+          <!-- Roadmap -->
+          <div class="space-y-4">
+            <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest">
+              Full Curriculum Roadmap
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div 
+                v-for="phase in filteredPhases" 
+                :key="phase.id"
+                class="space-y-3 group"
+              >
+                <div 
+                  class="flex flex-col p-4 bg-white/[0.03] border border-white/5 rounded-xl hover:border-[#F27D26]/40 transition-all cursor-pointer relative overflow-hidden shadow-2xl"
+                  @click="openPhase(phase)"
+                >
+                  <div class="flex justify-between items-center mb-4">
+                    <span class="text-[9px] font-mono text-[#F27D26] font-bold">{{ phase.id }}</span>
+                    <span class="text-[9px] font-mono text-white/20">{{ phase.hours[0] }}-{{ phase.hours[1] }}H</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white/80 group-hover:text-white mb-2 leading-tight h-8 line-clamp-2 uppercase tracking-tight">
+                    {{ phase.name }}
+                  </h3>
+                  
+                  <div class="grid grid-cols-5 gap-1 pt-2">
+                    <div 
+                      v-for="mod in phase.modules" 
+                      :key="mod.id"
+                      class="aspect-square rounded-sm border border-white/5 transition-all duration-500"
+                      :class="CONTENT_MAP[mod.id] ? 'bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.4)]' : 'bg-white/5'"
+                      :title="mod.name"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div v-if="phaseModules.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div 
-            v-for="module in phaseModules" 
-            :key="module.id"
-            @click="loadModule(module)"
-            class="bg-black/40 border border-white/5 p-6 rounded-lg hover:border-[#F27D26]/50 transition-all cursor-pointer group"
+        <!-- LIST View -->
+        <div
+          v-else
+          class="space-y-4 pb-20"
+        >
+          <div
+            v-for="phase in filteredPhases"
+            :key="phase.id"
+            class="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]"
           >
-            <div class="flex justify-between items-start mb-4">
-              <div class="p-3 bg-[#F27D26]/10 rounded shadow-inner">
-                <Layers class="w-6 h-6 text-[#F27D26]" />
+            <div
+              class="p-6 bg-white/5 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-colors"
+              @click="openPhase(phase)"
+            >
+              <div class="flex items-center gap-4">
+                <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ phase.id }}</span>
+                <h3 class="font-bold text-base tracking-tight uppercase">
+                  {{ phase.name }}
+                </h3>
               </div>
-              <div class="text-[10px] text-white/20 font-mono">MODULE ID: {{ module.id.toUpperCase() }}</div>
+              <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ phase.modules.length }} MODULES</span>
             </div>
-            <h4 class="text-lg font-bold mb-2 group-hover:text-[#F27D26] transition-colors">{{ module.title }}</h4>
-            <p class="text-sm text-white/40 mb-6">{{ module.description }}</p>
-            <div class="flex items-center gap-2 text-xs font-bold text-[#F27D26] uppercase tracking-tighter">
-              Start Learning
-              <ChevronRight class="w-3 h-3 translate-x-0 group-hover:translate-x-1 transition-transform" />
+            <div class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 bg-black/20">
+              <button 
+                v-for="mod in phase.modules" 
+                :key="mod.id"
+                class="p-3 text-[10px] text-left rounded-lg transition-all flex flex-col items-start gap-1 group border border-transparent shadow-inner"
+                :disabled="!(mod.id in CONTENT_MAP)"
+                :class="mod.id in CONTENT_MAP ? 'bg-white/5 hover:bg-[#F27D26]/10 hover:border-[#F27D26]/20 text-white/90' : 'opacity-20 cursor-not-allowed'"
+                @click="mod.id in CONTENT_MAP ? startModule(mod) : null"
+              >
+                <div class="flex justify-between w-full opacity-40 group-hover:opacity-100 transition-opacity">
+                  <span class="font-mono text-[8px]">{{ mod.id }}</span>
+                  <Zap
+                    v-if="mod.id in CONTENT_MAP"
+                    class="w-2.5 h-2.5 text-[#F27D26] fill-[#F27D26]"
+                  />
+                </div>
+                <span class="line-clamp-1 font-bold group-hover:text-[#F27D26] transition-colors uppercase tracking-tighter">{{ mod.name }}</span>
+              </button>
             </div>
           </div>
         </div>
-        <div v-else class="text-center py-20 bg-black/20 rounded border border-dashed border-white/10">
-          <BookOpen class="w-12 h-12 text-white/10 mx-auto mb-4" />
-          <p class="text-white/40">No interactive modules available for this phase yet.</p>
-          <p class="text-[10px] text-white/20 mt-1 uppercase">Indexing in progress...</p>
-        </div>
       </div>
-    </div>
 
-    <!-- Slide Reader View -->
-    <div v-else-if="viewMode === 'reader'" class="fixed inset-0 z-50 bg-black flex flex-col pt-[60px]">
-      <!-- Reader Header -->
-      <div class="absolute top-0 left-0 right-0 h-[60px] border-b border-white/10 flex items-center justify-between px-6 bg-black/90 backdrop-blur">
-        <div class="flex items-center gap-4">
-          <button @click="closeReader" class="p-2 hover:bg-white/5 rounded transition-colors text-white/60">
-            <X class="w-5 h-5" />
-          </button>
-          <div class="h-6 w-[1px] bg-white/10"></div>
-          <div>
-            <div class="text-[10px] text-[#F27D26] font-bold uppercase tracking-widest leading-none mb-1">
-              {{ currentBundle?.moduleId }} • Bundle {{ currentBundle?.bundleId }}
+      <!-- PHASE VIEW -->
+      <div
+        v-else-if="viewMode === 'phase'"
+        class="space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-20"
+      >
+        <div class="relative bg-gradient-to-br from-[#F27D26]/10 via-[#F27D26]/5 to-transparent border border-[#F27D26]/20 p-10 rounded-3xl overflow-hidden shadow-2xl">
+          <div class="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 pointer-events-none">
+            <Database class="w-64 h-64 text-[#F27D26]" />
+          </div>
+          <div class="relative z-10 space-y-6">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F27D26] text-black rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+              <Clock class="w-3.5 h-3.5" />
+              {{ selectedPhase?.hours[1]! - selectedPhase?.hours[0]! + 1 }} Hours of Deep Flow
             </div>
-            <h4 class="text-sm font-bold leading-none">{{ currentBundle?.title }}</h4>
+            <h1 class="text-5xl font-serif italic text-white max-w-2xl drop-shadow-lg">
+              {{ selectedPhase?.name }}
+            </h1>
+            <p class="text-white/50 max-w-xl text-sm leading-relaxed">
+              Master the core architectural concepts of this phase through 10 focused modules. This section of the 🍓 FRAISE curriculum transitions you closer to agentic autonomy.
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-4">
-           <div class="text-xs font-mono text-white/40">
-             Slide {{ currentSlideIndex + 1 }} / {{ currentBundle?.slides.length }}
-           </div>
-           <div class="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
-             <div class="h-full bg-[#F27D26] transition-all duration-300" :style="{ width: progress + '%' }"></div>
-           </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="(mod, idx) in selectedPhase?.modules" 
+            :key="mod.id"
+            class="relative group h-full"
+            @click="mod.id in CONTENT_MAP ? startModule(mod) : null"
+          >
+            <div 
+              class="h-full bg-white/[0.02] border border-white/5 p-8 rounded-2xl transition-all duration-500 flex flex-col shadow-xl"
+              :class="mod.id in CONTENT_MAP ? 'hover:border-[#F27D26]/40 hover:bg-white/[0.05] cursor-pointer' : 'opacity-40 grayscale pointer-events-none'"
+            >
+              <div class="flex justify-between items-start mb-8">
+                <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-sm font-mono font-black text-[#F27D26] border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
+                  {{ String(idx + 1).padStart(2, '0') }}
+                </div>
+                <div class="text-[9px] font-mono text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5 uppercase tracking-widest">
+                  Ref: {{ mod.id }}
+                </div>
+              </div>
+
+              <h3 class="text-xl font-bold mb-4 leading-tight text-white group-hover:text-[#F27D26] transition-colors">
+                {{ mod.name }}
+              </h3>
+              <p class="text-xs text-white/40 mb-10 leading-relaxed flex-1">
+                Engineering deep-dive covering advanced patterns in this domain over a {{ mod.hours[1] - mod.hours[0] + 1 }} hour focused window.
+              </p>
+
+              <div class="flex items-center justify-between pt-6 border-t border-white/5">
+                <span
+                  class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300"
+                  :class="mod.id in CONTENT_MAP ? 'text-[#F27D26]' : 'text-white/20'"
+                >
+                  {{ mod.id in CONTENT_MAP ? 'Launch Training' : 'In Backlog' }}
+                </span>
+                <ChevronRight
+                  v-if="mod.id in CONTENT_MAP"
+                  class="w-5 h-5 text-[#F27D26] translate-x-0 group-hover:translate-x-2 transition-transform"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Reader Body -->
-      <div class="flex-1 overflow-auto bg-[#0a0a0a]">
-        <div class="max-w-4xl mx-auto py-12 px-6">
-          <div v-if="currentSlide" class="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            <h1 class="text-4xl md:text-5xl font-serif italic text-white">{{ currentSlide.title }}</h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div class="md:col-span-2 space-y-6">
-                <div class="prose prose-invert max-w-none text-lg text-white/80 leading-relaxed">
-                  {{ currentSlide.content }}
+      <!-- READER OVERLAY -->
+      <div
+        v-if="viewMode === 'reader'"
+        class="fixed inset-0 z-[100] bg-black flex flex-col pt-[70px] animate-in fade-in duration-500"
+      >
+        <div class="absolute top-0 left-0 right-0 h-[70px] border-b border-white/10 flex items-center justify-between px-8 bg-black/90 backdrop-blur-xl">
+          <div class="flex items-center gap-6">
+            <button
+              class="p-3 hover:bg-white/5 rounded-full transition-all text-white/60 hover:text-white border border-transparent hover:border-white/10 shadow-lg group"
+              @click="closeReader"
+            >
+              <X class="w-5 h-5 group-hover:rotate-90 transition-transform" />
+            </button>
+            <div class="h-8 w-[1px] bg-white/10" />
+            <div class="flex flex-col">
+              <div class="text-[10px] text-[#F27D26] font-black uppercase tracking-[0.3em] leading-none mb-2">
+                {{ selectedModule?.id }} • {{ selectedPhase?.name }}
+              </div>
+              <h4 class="text-lg font-bold leading-none text-white/90 uppercase tracking-tight">
+                {{ selectedModule?.name }}
+              </h4>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-8">
+            <div class="flex flex-col items-end gap-1">
+              <div class="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                Progress
+              </div>
+              <div class="text-xs font-mono text-[#F27D26] font-bold">
+                Slide {{ currentSlideIndex + 1 }} of {{ currentBundle?.slides.length }}
+              </div>
+            </div>
+            <div class="w-48 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/10 group shadow-inner">
+              <div
+                class="h-full bg-[#F27D26] transition-all duration-500 shadow-[0_0_15px_rgba(242,125,38,0.5)]"
+                :style="{ width: progress + '%' }"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-auto bg-[#050505] relative">
+          <div class="max-w-5xl mx-auto py-20 px-8">
+            <div
+              v-if="currentSlide"
+              :key="currentSlideIndex"
+              class="space-y-12 animate-in slide-in-from-bottom-8 duration-500"
+            >
+              <h1 class="text-5xl md:text-7xl font-serif italic text-white drop-shadow-2xl leading-tight">
+                {{ currentSlide.title }}
+              </h1>
+              
+              <div class="grid grid-cols-1 lg:grid-cols-4 gap-16">
+                <div class="lg:col-span-3 space-y-10">
+                  <div class="prose prose-invert max-w-none text-xl text-white/70 leading-relaxed font-light first-letter:text-5xl first-letter:font-serif first-letter:text-[#F27D26] first-letter:mr-3 first-letter:float-left">
+                    {{ currentSlide.content }}
+                  </div>
+
+                  <div
+                    v-if="currentSlide.codeReferences.length > 0"
+                    class="space-y-6 pt-12 border-t border-white/10"
+                  >
+                    <h5 class="text-xs font-black text-white/40 uppercase tracking-[0.3em] flex items-center gap-3">
+                      <Code class="w-5 h-5 text-[#F27D26]" />
+                      Code Grounding Matrix
+                    </h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div 
+                        v-for="refPath in currentSlide.codeReferences" 
+                        :key="refPath"
+                        class="p-4 bg-white/[0.02] border border-white/5 rounded-xl text-[11px] font-mono flex items-center justify-between group hover:border-[#F27D26]/40 hover:bg-white/[0.05] transition-all cursor-help shadow-lg"
+                      >
+                        <span class="text-white/60 group-hover:text-white transition-colors truncate shrink">{{ refPath }}</span>
+                        <ExternalLink class="w-3.5 h-3.5 text-[#F27D26] opacity-30 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div v-if="currentSlide.codeReferences.length > 0" class="space-y-3 pt-6 border-t border-white/10">
-                  <h5 class="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                    <Code class="w-4 h-4" />
-                    Code Grounding
-                  </h5>
-                  <div class="flex flex-wrap gap-2">
-                    <div 
-                      v-for="refPath in currentSlide.codeReferences" 
-                      :key="refPath"
-                      class="px-3 py-2 bg-black border border-white/10 rounded text-[11px] font-mono flex items-center gap-2 hover:border-[#F27D26]/50 transition-colors cursor-help"
-                    >
-                      <span class="text-white/70">{{ refPath }}</span>
-                      <ExternalLink class="w-3 h-3 text-white/20" />
+                <div class="space-y-8">
+                  <div class="bg-white/5 border border-white/10 p-8 rounded-3xl shadow-2xl">
+                    <h5 class="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                      <Filter class="w-4 h-4 text-[#F27D26]" />
+                      Taxonomy
+                    </h5>
+                    <div class="flex flex-wrap gap-2">
+                      <span 
+                        v-for="tag in currentSlide.tags" 
+                        :key="tag"
+                        class="px-3 py-1.5 bg-[#F27D26]/10 text-[#F27D26] border border-[#F27D26]/20 rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-inner"
+                      >
+                        {{ tag }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="p-8 border border-white/5 rounded-3xl bg-gradient-to-br from-white/5 to-transparent shadow-xl">
+                    <div class="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">
+                      Architectural Tier
+                    </div>
+                    <div class="flex gap-1.5 h-1.5 mb-2">
+                      <div 
+                        v-for="i in 10" 
+                        :key="i" 
+                        class="flex-1 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(242,125,38,0.2)]" 
+                        :class="i <= (parseInt(selectedPhase?.id.replace('P', '') || '1')) ? 'bg-[#F27D26]' : 'bg-white/10'"
+                      />
+                    </div>
+                    <div class="flex justify-between items-center text-[8px] font-black text-white/10 uppercase tracking-widest">
+                      <span>Foundation</span>
+                      <span>Enterprise</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div class="space-y-6">
-                <div class="bg-white/5 border border-white/10 p-6 rounded-lg">
-                  <h5 class="text-xs font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Filter class="w-4 h-4" />
-                    Taxonomy
-                  </h5>
-                  <div class="flex flex-wrap gap-2">
-                    <span 
-                      v-for="tag in currentSlide.tags" 
-                      :key="tag"
-                      class="px-2 py-1 bg-[#F27D26]/10 text-[#F27D26] border border-[#F27D26]/20 rounded text-[10px] font-bold uppercase"
-                    >
-                      {{ tag }}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="p-6 border border-white/5 rounded-lg bg-gradient-to-br from-white/5 to-transparent">
-                  <div class="text-[10px] text-white/30 uppercase mb-2">Architectural Level</div>
-                  <div class="flex gap-1">
-                    <div v-for="i in 5" :key="i" class="flex-1 h-1 rounded-full" :class="i <= (parseInt(selectedPhase?.id || '1')) ? 'bg-[#F27D26]' : 'bg-white/10'"></div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Reader Navigation -->
-      <div class="h-[80px] bg-black border-t border-white/10 flex items-center justify-center gap-4 px-6">
-        <button 
-          @click="prevSlide" 
-          :disabled="currentSlideIndex === 0"
-          class="flex items-center gap-2 px-6 py-3 rounded border border-white/10 hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-        >
-          <ChevronLeft class="w-5 h-5" />
-          <span class="text-xs font-bold uppercase tracking-widest">Previous Slide</span>
-        </button>
+        <div class="h-[100px] bg-black/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-center gap-8 px-8">
+          <button 
+            :disabled="currentSlideIndex === 0" 
+            class="group flex items-center gap-4 px-8 py-4 rounded-2xl border border-white/10 hover:bg-white/5 hover:border-white/20 disabled:opacity-10 disabled:cursor-not-allowed transition-all shadow-xl"
+            @click="prevSlide"
+          >
+            <ChevronLeft class="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+            <span class="text-xs font-black uppercase tracking-[0.2em]">Previous</span>
+          </button>
 
-        <button 
-          @click="nextSlide" 
-          :disabled="currentSlideIndex === (currentBundle?.slides.length || 0) - 1"
-          class="flex items-center gap-2 px-12 py-3 bg-[#F27D26] text-black rounded hover:bg-[#ff8f3e] disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-        >
-          <span class="text-xs font-bold uppercase tracking-widest">Next Slide</span>
-          <ChevronRight class="w-5 h-5" />
-        </button>
+          <button 
+            :disabled="currentSlideIndex === (currentBundle?.slides.length || 0) - 1" 
+            class="group flex items-center gap-6 px-16 py-4 bg-[#F27D26] text-black rounded-2xl hover:bg-[#ff8f3e] disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-[0_0_30px_rgba(242,125,38,0.3)] hover:shadow-[0_0_40px_rgba(242,125,38,0.5)]"
+            @click="nextSlide"
+          >
+            <span class="text-xs font-black uppercase tracking-[0.2em]">Continue</span>
+            <ChevronRight class="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
