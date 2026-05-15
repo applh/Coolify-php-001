@@ -1,176 +1,4 @@
-<template>
-  <div class="max-w-6xl mx-auto flex flex-col h-full gap-4">
-    <!-- Header with Repo Switcher -->
-    <div class="flex flex-col gap-6">
-      <div class="flex justify-between items-end">
-        <div>
-          <h2 class="text-3xl font-serif tracking-tight mb-1">
-            Repository Explorer
-          </h2>
-          <p class="text-xs font-mono opacity-40 uppercase tracking-widest">
-            Selected: <span class="text-[#F27D26]">{{ selectedRepo }}</span>
-          </p>
-        </div>
-        
-        <div class="flex items-center gap-3">
-          <div class="relative">
-            <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 opacity-30" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search files..."
-              class="bg-[#181818] border border-[#2A2A2A] rounded px-10 py-2 text-xs focus:outline-none focus:border-[#F27D26] w-48 transition-all focus:w-64"
-            >
-          </div>
-        </div>
-      </div>
-
-      <!-- Repo Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-        <div 
-          v-for="repo in repos" 
-          :key="repo"
-          @click="selectRepo(repo)"
-          :class="[
-            'cursor-pointer p-3 border rounded transition-all flex flex-col items-center gap-2 group',
-            selectedRepo === repo 
-              ? 'bg-[#1F1F1F] border-[#F27D26] shadow-[0_0_15px_rgba(242,125,38,0.1)]' 
-              : 'bg-[#181818] border-[#2A2A2A] hover:border-white/20'
-          ]"
-        >
-          <component 
-            :is="getRepoIcon(repo)" 
-            :size="20" 
-            :class="selectedRepo === repo ? 'text-[#F27D26]' : 'text-white/30 group-hover:text-white/60'"
-          />
-          <span 
-            class="text-[10px] font-mono tracking-tighter truncate w-full text-center"
-            :class="selectedRepo === repo ? 'text-white font-bold' : 'text-white/40'"
-          >
-            {{ repo.replace('repo-', '') }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Breadcrumbs -->
-    <div class="bg-[#181818] p-3 rounded border border-[#2A2A2A] flex items-center gap-2 text-sm text-[#A0A0A0]">
-      <div 
-        class="flex items-center gap-1 cursor-pointer hover:text-white"
-        @click="explore('')"
-      >
-        <component :is="getRepoIcon(selectedRepo)" :size="14" class="opacity-50" />
-        <span>{{ selectedRepo }}</span>
-      </div>
-      <template
-        v-for="(part, index) in pathParts"
-        :key="index"
-      >
-        <ChevronRight :size="14" class="opacity-30" />
-        <span 
-          class="cursor-pointer hover:text-white"
-          @click="explore(getPathPrefix(index))"
-        >
-          {{ part }}
-        </span>
-      </template>
-    </div>
-
-    <!-- Main Views -->
-    <div class="flex-grow flex gap-4 min-h-[500px]">
-      <!-- List View -->
-      <div
-        v-if="viewMode === 'directory'"
-        class="flex-grow bg-[#181818] rounded border border-[#2A2A2A] overflow-hidden flex flex-col"
-      >
-        <div class="bg-[#202020] border-b border-[#2A2A2A] p-2 flex justify-between text-[10px] uppercase tracking-widest opacity-40 font-mono">
-          <span>Name</span>
-          <span v-if="filteredItems.length > 0">{{ filteredItems.length }} items</span>
-        </div>
-        <ul class="flex flex-col">
-          <li 
-            v-if="currentPath" 
-            class="p-3 border-b border-[#2A2A2A] hover:bg-[#202020] cursor-pointer flex items-center gap-3 text-sm"
-            @click="explore(getParentPath())"
-          >
-            <FolderUp
-              :size="16"
-              class="text-white/50"
-            />
-            <span class="text-white/50 font-mono">..</span>
-          </li>
-          
-          <li 
-            v-for="item in filteredItems" 
-            :key="item.path"
-            class="p-3 border-b border-[#2A2A2A] hover:bg-[#202020] cursor-pointer flex items-center gap-3 text-sm group"
-            @click="handleItemClick(item)"
-          >
-            <Folder
-              v-if="item.isDirectory"
-              :size="16"
-              class="text-[#F27D26] opacity-70 group-hover:opacity-100"
-            />
-            <FileText
-              v-else
-              :size="16"
-              class="text-[#888] group-hover:text-[#AAA]"
-            />
-            <span 
-              class="truncate flex-1"
-              :class="{ 'font-semibold text-white/90': item.isDirectory, 'text-gray-400': !item.isDirectory }"
-            >
-              {{ item.name }}
-            </span>
-            <ChevronRight v-if="item.isDirectory" :size="14" class="opacity-0 group-hover:opacity-30" />
-          </li>
-          
-          <li
-            v-if="filteredItems.length === 0"
-            class="p-12 text-center text-gray-500 text-sm flex flex-col items-center gap-4"
-          >
-            <SearchX :size="32" class="opacity-20" />
-            <span>No matching files found</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- File View -->
-      <div
-        v-if="viewMode === 'file'"
-        class="flex-grow bg-[#181818] rounded border border-[#2A2A2A] flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300"
-      >
-        <div class="flex items-center justify-between p-3 border-b border-[#2A2A2A] bg-[#202020]">
-          <div class="flex items-center gap-3">
-            <FileText
-              :size="16"
-              class="text-[#F27D26]"
-            />
-            <div class="flex flex-col">
-              <span class="text-xs font-bold font-mono text-white/90">{{ currentFileName }}</span>
-              <span class="text-[9px] font-mono opacity-30">{{ currentPath }}</span>
-            </div>
-          </div>
-          <button 
-            @click="explore(getParentPath())"
-            class="text-[10px] uppercase tracking-widest bg-[#2A2A2A] px-2 py-1 rounded hover:bg-[#333] transition-all"
-          >
-            Close
-          </button>
-        </div>
-        <div class="flex-grow relative">
-          <textarea
-            v-model="fileContent"
-            class="w-full h-full p-6 bg-[#121212] font-mono text-sm resize-none outline-none text-[#D4D4D4] leading-relaxed"
-            readonly
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { 
   Folder, 
@@ -190,14 +18,18 @@ import {
   Box,
   Library,
   FileCode,
-  Globe
+  Globe,
+  HardDrive
 } from 'lucide-vue-next';
+import BaseButton from '../components/BaseButton.vue';
+import BaseInput from '../components/BaseInput.vue';
+import BaseCard from '../components/BaseCard.vue';
 
 const currentPath = ref('');
 const selectedRepo = ref('repo-php');
-const repos = ref([]);
+const repos = ref<string[]>([]);
 const viewMode = ref('directory'); // 'directory' or 'file'
-const items = ref([]);
+const items = ref<any[]>([]);
 const fileContent = ref('');
 const currentFileName = ref('');
 const searchQuery = ref('');
@@ -212,7 +44,7 @@ const filteredItems = computed(() => {
   return items.value.filter(item => item.name.toLowerCase().includes(q));
 });
 
-const getRepoIcon = (repo) => {
+const getRepoIcon = (repo: string) => {
   if (repo.includes('php')) return Code;
   if (repo.includes('python')) return Terminal;
   if (repo.includes('react')) return Layers;
@@ -227,7 +59,7 @@ const getRepoIcon = (repo) => {
   return Box;
 };
 
-const getPathPrefix = (index) => {
+const getPathPrefix = (index: number) => {
   return pathParts.value.slice(0, index + 1).join('/');
 };
 
@@ -243,16 +75,20 @@ const getParentPath = () => {
 };
 
 const fetchRepos = async () => {
-  const res = await fetch('/api/repos');
-  repos.value = await res.json();
+  try {
+    const res = await fetch('/api/repos');
+    repos.value = await res.json();
+  } catch (err) {
+    console.error(err);
+  }
 };
 
-const selectRepo = (repo) => {
+const selectRepo = (repo: string) => {
   selectedRepo.value = repo;
   explore('');
 };
 
-const explore = async (pathStr) => {
+const explore = async (pathStr: string) => {
   try {
     const res = await fetch(`/api/explorer?repo=${selectedRepo.value}&path=${encodeURIComponent(pathStr)}`);
     if (!res.ok) throw new Error('Failed to fetch');
@@ -262,7 +98,7 @@ const explore = async (pathStr) => {
     viewMode.value = data.type;
     
     if (data.type === 'directory') {
-      items.value = data.items.sort((a, b) => {
+      items.value = data.items.sort((a: any, b: any) => {
         if (a.isDirectory === b.isDirectory) {
            return a.name.localeCompare(b.name);
         }
@@ -270,14 +106,14 @@ const explore = async (pathStr) => {
       });
     } else {
       fileContent.value = data.content;
-      currentFileName.value = pathStr.split('/').pop();
+      currentFileName.value = pathStr.split('/').pop() || '';
     }
   } catch (err) {
     console.error(err);
   }
 };
 
-const handleItemClick = (item) => {
+const handleItemClick = (item: any) => {
   explore(item.path);
 };
 
@@ -290,3 +126,211 @@ watch(selectedRepo, () => {
   searchQuery.value = '';
 });
 </script>
+
+<template>
+  <div class="max-w-7xl mx-auto p-8 flex flex-col h-[calc(100vh-160px)] gap-8">
+    <!-- Header with Repo Switcher -->
+    <div class="flex flex-col gap-8">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <HardDrive :size="14" class="text-white/20" />
+            <span class="text-[10px] font-mono uppercase tracking-[0.3em] opacity-40">Filesystem Explorer</span>
+          </div>
+          <h2 class="text-5xl font-serif italic mb-2 tracking-tighter">
+            Environment Assets
+          </h2>
+          <p class="text-[10px] font-mono opacity-30 uppercase tracking-[0.2em]">
+            Navigating root cluster: <span class="text-[#FF3B30]">{{ selectedRepo }}</span>
+          </p>
+        </div>
+        
+        <div class="w-full md:w-80">
+          <BaseInput 
+            v-model="searchQuery" 
+            placeholder="Global asset search..."
+            :icon="Search"
+            clearable
+          />
+        </div>
+      </div>
+
+      <!-- Repo Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-3">
+        <button 
+          v-for="repo in repos" 
+          :key="repo"
+          @click="selectRepo(repo)"
+          :class="[
+            'p-3 border rounded-xl transition-all flex flex-col items-center gap-2 group relative overflow-hidden',
+            selectedRepo === repo 
+              ? 'bg-white/5 border-[#FF3B30] shadow-lg shadow-red-900/10' 
+              : 'bg-[#0F0F0F] border-white/5 hover:border-white/10 hover:bg-white/[0.02]'
+          ]"
+        >
+          <component 
+            :is="getRepoIcon(repo)" 
+            :size="18" 
+            :class="selectedRepo === repo ? 'text-[#FF3B30]' : 'text-white/20 group-hover:text-white/40'"
+          />
+          <span 
+            class="text-[9px] font-mono uppercase tracking-widest truncate w-full text-center"
+            :class="selectedRepo === repo ? 'text-white font-black' : 'text-white/30'"
+          >
+            {{ repo.split('-')[1] || repo }}
+          </span>
+          <div v-if="selectedRepo === repo" class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF3B30]"></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <div class="bg-[#0F0F0F] px-5 py-3 rounded-xl border border-white/5 flex items-center gap-3 overflow-x-auto no-scrollbar">
+      <div 
+        class="flex items-center gap-2 cursor-pointer text-white/40 hover:text-white transition-colors flex-shrink-0"
+        @click="explore('')"
+      >
+        <component :is="getRepoIcon(selectedRepo)" :size="14" class="opacity-50" />
+        <span class="text-[10px] font-mono uppercase tracking-widest">{{ selectedRepo }}</span>
+      </div>
+      <template
+        v-for="(part, index) in pathParts"
+        :key="index"
+      >
+        <ChevronRight :size="10" class="opacity-20 flex-shrink-0" />
+        <span 
+          class="text-[10px] font-mono uppercase tracking-widest cursor-pointer text-white/40 hover:text-white transition-colors flex-shrink-0"
+          @click="explore(getPathPrefix(index))"
+        >
+          {{ part }}
+        </span>
+      </template>
+    </div>
+
+    <!-- Main Views -->
+    <div class="flex-grow flex gap-4 overflow-hidden">
+      <!-- Directory Content View -->
+      <BaseCard
+        v-if="viewMode === 'directory'"
+        class="flex-grow !p-0 overflow-hidden flex flex-col"
+      >
+        <div class="bg-white/[0.03] border-b border-white/5 px-6 py-3 flex justify-between">
+          <span class="text-[10px] uppercase tracking-[0.2em] font-black text-white/20">Name</span>
+          <span v-if="filteredItems.length > 0" class="text-[9px] font-mono text-white/20 uppercase">{{ filteredItems.length }} Objects found</span>
+        </div>
+        
+        <div class="overflow-y-auto flex-grow custom-scrollbar">
+          <ul class="flex flex-col">
+            <li 
+              v-if="currentPath" 
+              class="px-6 py-4 border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer flex items-center gap-4 group transition-colors"
+              @click="explore(getParentPath())"
+            >
+              <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/20 group-hover:text-white/40 transition-colors">
+                <FolderUp :size="16" />
+              </div>
+              <span class="text-xs font-mono text-white/40 group-hover:text-white/60 transition-colors italic">Parent Directory</span>
+            </li>
+            
+            <li 
+              v-for="item in filteredItems" 
+              :key="item.path"
+              class="px-6 py-4 border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer flex items-center gap-4 group transition-colors"
+              @click="handleItemClick(item)"
+            >
+              <div 
+                class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
+                :class="item.isDirectory ? 'bg-[#FF3B30]/5 text-[#FF3B30]' : 'bg-white/5 text-white/30 group-hover:bg-white/10 group-hover:text-white/60'"
+              >
+                <Folder v-if="item.isDirectory" :size="20" />
+                <FileText v-else :size="20" />
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <span 
+                  class="block truncate text-sm transition-colors"
+                  :class="item.isDirectory ? 'font-serif italic text-white group-hover:text-[#FF3B30]' : 'font-mono text-white/70 group-hover:text-white'"
+                >
+                  {{ item.name }}
+                </span>
+                <span class="block text-[9px] font-mono opacity-20 uppercase tracking-tighter mt-0.5">
+                  {{ item.isDirectory ? 'System Collection' : 'Source Manifest' }}
+                </span>
+              </div>
+              
+              <ChevronRight v-if="item.isDirectory" :size="14" class="opacity-0 group-hover:opacity-30 transform group-hover:translate-x-1 transition-all" />
+            </li>
+            
+            <!-- Empty Search -->
+            <div
+              v-if="filteredItems.length === 0"
+              class="py-24 text-center"
+            >
+              <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                <SearchX :size="24" class="text-white/10" />
+              </div>
+              <p class="text-sm font-serif italic text-white/20">
+                No matching artifacts detected in the current scope.
+              </p>
+            </div>
+          </ul>
+        </div>
+      </BaseCard>
+
+      <!-- File Content View -->
+      <BaseCard
+        v-if="viewMode === 'file'"
+        class="flex-grow !p-0 overflow-hidden flex flex-col border-[#FF3B30]/30 shadow-2xl shadow-red-900/5 animate-in fade-in slide-in-from-right-4 duration-500"
+      >
+        <div class="bg-white/[0.03] border-b border-white/5 px-6 py-4 flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-[#FF3B30] rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-900/20">
+              <FileText :size="20" />
+            </div>
+            <div>
+              <h3 class="text-sm font-mono font-black text-white leading-none mb-1">{{ currentFileName }}</h3>
+              <p class="text-[9px] font-mono text-white/20 tracking-tighter uppercase">{{ currentPath }}</p>
+            </div>
+          </div>
+          <BaseButton variant="ghost" size="sm" @click="explore(getParentPath())">
+            Disconnect
+          </BaseButton>
+        </div>
+        
+        <div class="flex-grow overflow-hidden relative">
+          <div class="absolute inset-0 bg-[#0A0A0A] overflow-auto custom-scrollbar">
+            <pre 
+              class="p-8 font-mono text-xs leading-relaxed text-white/70 select-text"
+              style="tab-size: 2;"
+            ><code>{{ fileContent }}</code></pre>
+          </div>
+        </div>
+      </BaseCard>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+</style>
+

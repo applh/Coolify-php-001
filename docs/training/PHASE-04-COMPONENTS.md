@@ -26,5 +26,14 @@ Build reusable, accessible, and high-performance component libraries.
 - **Task**: See how Recharts or D3 is used to plot performance.
 - **Exercise**: Add a custom chart to the Site Dashboard.
 
+### 3. Evolutionary Component Refactoring (30h) 🍓 NEW
+**Goal**: Learn how to transition from monolithic views to an atomic design system with polished UX.
+**Reference**: `/src/components/`, `src/App.vue`, `src/views/SiteDashboard.vue`
+**Exercise**: 
+- **Step 1**: Analyze the abstraction of `BaseCard.vue` and `BaseButton.vue`.
+- **Step 2**: Implement a `BaseInput.vue` component that supports validation states and clearable actions.
+- **Step 3**: Replace the raw inputs in `SiteExplorer.vue` with your new `BaseInput.vue`.
+**Complexity**: Phase 2 (Design & Reactivity)
+
 ## Recommended Reading
 - `docs/frontend/admin-component-reference.md`
