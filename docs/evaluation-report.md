@@ -46,8 +46,34 @@ To keep every platform in sync without high costs:
 3. **Client Platforms (Multi-Repo)**:
     - Android/Flutter apps should point their `BASE_URL` to the **VPS instance** (persistent) rather than the AI Studio preview (transient).
 
-## 4. Next Steps
+## 4. Evaluation: SVG Storage Strategies for Training Slides
+
+This evaluates the best way to handle thousands of educational illustrations within the automated slide generation framework.
+
+### Option 1: Embedded SVG in JSON Manifests
+- **Pros**:
+    - **Atomic Updates**: Slides and their illustrations are updated in a single file write, ensuring zero drift.
+    - **Zero Path Drift**: No risk of broken image paths during Git sync.
+    - **Simplified Rendering**: The frontend (Vue/React) can directly inject the SVG string, reducing HTTP requests.
+    - **Compliance**: Matches `AGENTS.md` Rule #8: "Serialization: Never create 1:1 files for slides."
+- **Cons**:
+    - **Manifest Size**: JSON files grow significantly with complex paths (mitigated by gzipping).
+    - **Dev Experience**: Editing SVG code inside a JSON string is error-prone.
+
+### Option 2: Separate SVG Files (`/assets/slides/*.svg`)
+- **Pros**:
+    - **Reusability**: One illustration can be referenced by multiple slides.
+    - **Standard Tooling**: Designers can edit `.svg` files in Inkscape/Figma directly.
+- **Cons**:
+    - **Fragmentation**: Violates Rule #8 principles and increases the number of managed files.
+    - **Sync Complexity**: Requires ensuring binary/vector assets are uploaded correctly alongside JSON metadata.
+
+### Recommendation: Embedded SVG (Option 1)
+For educational slides where each illustration is typically specific to the slide's text and context, **embedding the SVG code directly in the JSON manifest** is the most robust solution for a "headless" training system that must sync across unreliable environments.
+
+## 5. Next Steps
 1. Add `SYNC_SECRET_KEY` to `.env.example`.
 2. Update `server.ts` to support authenticated imports.
 3. Update `SyncState.vue` to support the "Push to Production" workflow.
 4. Document the "Cloud-First Sync" architecture for the AI Agents.
+5. Standardize the SVG-in-JSON template for Math/Stats modules.

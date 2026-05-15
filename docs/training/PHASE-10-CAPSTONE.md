@@ -25,6 +25,12 @@ Synthesize all skills into a final engineering masterpiece.
 - **Goal**: Build a cross-platform, AI-enhanced, multi-service application.
 - **Reference**: The entire repository.
 
+### 3. Mathematical Visualization (10h)
+- **Goal**: Render complex datasets using inline SVG within JSON manifests.
+- **Reference**: `/docs/training/slides/phase10/math-and-stats.json`
+- **Exercise**: Add a "Matrix Heatmap" slide to the Math module with a dynamically generated SVG grid.
+- **Complexity**: Phase 4 (Integration)
+
 ## Recommended Reading
 - `docs/benchmarking-guide.md`
 - `docs/evaluation-report.md`
