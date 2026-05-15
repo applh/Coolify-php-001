@@ -52,6 +52,21 @@ This phase focuses on the "classic" web stack. You will learn to build responsiv
 - **Exercise**: Locate a file in `repo-react` that demonstrates "Inversion of Control" (Framework behavior) vs a file in `repo-php` that calls a utility (Library behavior).
 - **Complexity**: Phase 1
 
+### 7. Terminal & System Vitals (10h)
+**Reference**: `docs/training/slides/phase1/computer-fundamentals.json`
+- **Goal**: Master the basic CLI environment and understand hardware constraints.
+- **Task**: Study the relationship between CPU, RAM, and Persistence.
+- **Exercise**: Open the terminal and use the pipe (`|`) and `grep` command to search for the word 'PHP' within the file tree (`file_list.txt`).
+- **Goal**: Understand how to pipe data between tools.
+- **Complexity**: Phase 1
+
+### 8. Networking & Connectivity (10h)
+**Reference**: `docs/training/slides/phase1/computer-fundamentals.json`
+- **Goal**: Understand how computers talk to each other across the globe.
+- **Task**: Identify common ports used in `docker-compose.yml` and explain the difference between TCP and UDP.
+- **Exercise**: List 3 everyday applications that use TCP and 3 that use UDP based on your research.
+- **Complexity**: Phase 1
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `README.md`

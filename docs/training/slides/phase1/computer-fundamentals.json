@@ -1,0 +1,113 @@
+{
+  "moduleId": "M001",
+  "title": "Computer & Internet Fundamentals",
+  "totalSlides": 15,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": "CF-01",
+      "title": "The Big Three: OS Ecosystems",
+      "content": "Operating Systems (OS) manage hardware and software. \n- **Linux**: The engine of the web (Servers, Android, Docker).\n- **Windows**: The backbone of Enterprise and Gaming.\n- **macOS**: Unix-based polish for creative and dev workflows.",
+      "tags": ["os", "linux", "windows", "macos"],
+      "codeReferences": ["README.md"]
+    },
+    {
+      "id": "CF-02",
+      "title": "Mobile Giants: Android & iOS",
+      "content": "Smartphones follow the same logic as desktops but optimized for touch and power.\n- **Android**: Linux-based, open ecosystem, Java/Kotlin primary.\n- **iOS**: XNU-based (Unix), closed garden, Swift/Obj-C primary.",
+      "tags": ["mobile", "android", "ios"],
+      "codeReferences": ["repo-android/Dockerfile", "repo-flutter/lib/main.dart"]
+    },
+    {
+      "id": "CF-03",
+      "title": "The Hardware Trinity: CPU, RAM, Disk",
+      "content": "Computers process data in cycles:\n- **CPU (Central Processing Unit)**: The 'Brain' executing instructions.\n- **RAM (Random Access Memory)**: Fast, volatile 'Desk Space' for active tasks.\n- **Storage (HDD/SSD)**: 'Warehouse' for persistent data and code.",
+      "tags": ["hardware", "cpu", "ram", "storage"],
+      "codeReferences": []
+    },
+    {
+      "id": "CF-04",
+      "title": "Persistence & The Hard Disk",
+      "content": "Unlike RAM, hard disks are **non-volatile**. Even when power is lost, data remains. In modern engineering, we optimize for **I/O (Input/Output)** speeds, where SSDs (Solid State Drives) outperform rotating HDDs.",
+      "tags": ["hardware", "persistence", "ssd"],
+      "codeReferences": ["database.ts"]
+    },
+    {
+      "id": "CF-05",
+      "title": "The Command Line Interface (CLI)",
+      "content": "The Terminal is the text-based entrance to the OS. It is faster and more powerful for automation than a GUI. Common commands include `ls` (list), `cd` (change directory), `mkdir` (make directory).",
+      "tags": ["terminal", "cli"],
+      "codeReferences": ["repo-php/entrypoint.sh"]
+    },
+    {
+      "id": "CF-06",
+      "title": "Pipes & Redirection: The Unix Philosophy",
+      "content": "One of the most powerful CLI concepts is the **Pipe (`|`)**. It takes the output of one command and sends it as input to another. \n- `grep` searches text.\n- `ps aux | grep node` finds running Node processes.",
+      "tags": ["cli", "terminal", "pipe"],
+      "codeReferences": ["repo-php/entrypoint.sh"]
+    },
+    {
+      "id": "CF-07",
+      "title": "Processes vs. Threads",
+      "content": "- **Process**: An instance of a program in execution (isolated memory).\n- **Thread**: A 'sub-task' within a process (shared memory). \nMultithreading allows a program to do multiple things at once (e.g., UI and background sync).",
+      "tags": ["os", "processes", "threads"],
+      "codeReferences": ["server.ts"]
+    },
+    {
+      "id": "CF-08",
+      "title": "Memory Management & Virtual RAM",
+      "content": "The OS manages RAM so programs don't crash into each other. **Virtual Memory** uses disk space to simulate more RAM than physically available (Paging/Swapping).",
+      "tags": ["os", "memory-management", "ram"],
+      "codeReferences": []
+    },
+    {
+      "id": "CF-09",
+      "title": "I/O Redirection: Save Your Output",
+      "content": "Use `>` to overwrite a file with command output, and `>>` to append to it. \nExample: `echo 'Hello' > hello.txt` creates a file. `ls >> file_list.txt` saves your current directory state.",
+      "tags": ["cli", "redirection"],
+      "codeReferences": ["file_list.txt"]
+    },
+    {
+      "id": "CF-10",
+      "title": "Filesystem & File Descriptors",
+      "content": "In Unix/Linux, **'Everything is a file'**. A **File Descriptor (FD)** is an integer representing an open file, socket, or pipe. Standard FDs: \n- `0`: stdin (Keyboard)\n- `1`: stdout (Screen)\n- `2`: stderr (Errors)",
+      "tags": ["os", "filesystem", "fd"],
+      "codeReferences": []
+    },
+    {
+      "id": "CF-11",
+      "title": "Networking: The OSI 7-Layer Model",
+      "content": "Data travels in layers, from physical wires to application code. \n- **L3 (Network)**: Routing (IP).\n- **L4 (Transport)**: Reliable delivery (TCP/UDP).\n- **L7 (Application)**: Logic (HTTP, SSH, DNS).",
+      "tags": ["networking", "osi"],
+      "codeReferences": ["server.ts"]
+    },
+    {
+      "id": "CF-12",
+      "title": "TCP vs. UDP: Reliability vs. Speed",
+      "content": "- **TCP (Transmission Control Protocol)**: Handshakes, checks for missing data. Used for Web (HTTP), Email, SSH.\n- **UDP (User Datagram Protocol)**: Sends data and forgets. Used for Streaming, Gaming, Voice Calls.",
+      "tags": ["networking", "tcp", "udp"],
+      "codeReferences": []
+    },
+    {
+      "id": "CF-13",
+      "title": "Ports: The Logical Doors",
+      "content": "Think of an IP as a building and a **Port** as an apartment number. \n- **80/443**: HTTP/HTTPS (Web).\n- **22**: SSH (Remote Access).\n- **8080/3000**: Common Dev Server ports.",
+      "tags": ["networking", "ports"],
+      "codeReferences": ["docker-compose.yml", "server.ts"]
+    },
+    {
+      "id": "CF-14",
+      "title": "SSH: Secure Shell",
+      "content": "SSH is the standard protocol for managing servers remotely. It uses asymmetric encryption. `ssh user@host` allows you to open a terminal on a machine halfway across the world securely.",
+      "tags": ["networking", "ssh", "security"],
+      "codeReferences": []
+    },
+    {
+      "id": "CF-15",
+      "title": "DNS: The Phonebook of the Internet",
+      "content": "Computers communicate via IPs (e.g., `142.250.190.46`), but humans use names (`google.com`). **DNS (Domain Name System)** translates names into IP addresses.",
+      "tags": ["networking", "dns"],
+      "codeReferences": ["repo-php/nginx.conf"]
+    }
+  ]
+}
