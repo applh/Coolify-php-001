@@ -1,0 +1,78 @@
+{
+  "moduleId": "PHASE-9-AGENTS",
+  "title": "Agent Orchestration & Evaluation",
+  "totalSlides": 5,
+  "bundleId": 9,
+  "slides": [
+    {
+      "id": "S009-03",
+      "title": "Agent Automation & Task Queues",
+      "content": "Automation in agentic systems relies on robust task queuing and scheduling mechanisms that transition from reactive responses to proactive background workflows. In our architecture, the `AITaskManager` coordinates with the `Scheduler` to manage a persistent queue (e.g., `ai_tasks.json`), where tasks are assigned statuses like 'pending', 'processing', or 'completed'. A heartbeat mechanism—triggered via `/api/heartbeat` through server cron jobs—polls this queue at regular intervals, invoking the `AIAgent` to execute pending work. This pattern enables complex, long-running operations like full-site SEO audits or recurring content generation to occur asynchronously without blocking the user interface. By introducing `is_recurring` flags and `cron_expression` metadata into the task schema, developers can build 'invisible' agents that maintain system health, optimize performance, and update content automatically, effectively transforming the platform into a self-evolving ecosystem driven by scheduled intelligence.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><circle cx='80' cy='100' r='30' fill='#22c55e' fill-opacity='0.2'/><path d='M110 100 L290 100' stroke='#22c55e' stroke-width='2' stroke-dasharray='4'/><rect x='300' y='70' width='60' height='60' rx='8' fill='#16a34a' fill-opacity='0.2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#166534'>Asynchronous Agent Task Queue</text></svg>",
+      "tags": ["automation", "scheduler", "queues", "tasks"],
+      "links": ["https://en.wikipedia.org/wiki/Task_queue"],
+      "studentPrompts": [
+        "How does a heartbeat endpoint solve the problem of triggering AI tasks in a standard PHP environment?",
+        "Design a JSON schema for a recurring agent task that performs a weekly accessibility audit.",
+        "What are the risks of 'infinite loops' in autonomous agent schedulers, and how can they be mitigated?"
+      ],
+      "codeReferences": ["repo-php/class/AITaskManager.php", "repo-php/class/Scheduler.php"]
+    },
+    {
+      "id": "S009-04",
+      "title": "Team Orchestration: Roles & Selection",
+      "content": "Moving beyond single-agent setups requires a 'Team Manager' approach where multiple specialized agents collaborate on shared objectives. The `AgentTeamManager` acts as the orchestrator, matching incoming high-level goals with specific agent personas based on their defined `role` and `skills`. For instance, a 'Training Content Team' might consist of a 'Slide Architect' focused on pedagogical structure and an 'SVG Illustrator' specialized in visual data representation. Orchestration involves parsing a master goal into discrete sub-tasks, selecting the most qualified agent for each job from an `agent_teams.json` manifest, and managing the state transfer between them. This division of labor not only improves output quality by allowing agents to operate within narrower, more focused contexts but also enables parallel execution and complex multi-disciplinary workflows that mimic human engineering teams.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><circle cx='200' cy='100' r='40' fill='#3b82f6' fill-opacity='0.1'/><circle cx='140' cy='60' r='20' fill='#3b82f6' fill-opacity='0.3'/><circle cx='260' cy='60' r='20' fill='#3b82f6' fill-opacity='0.3'/><circle cx='140' cy='140' r='20' fill='#3b82f6' fill-opacity='0.3'/><circle cx='260' cy='140' r='20' fill='#3b82f6' fill-opacity='0.3'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af'>Agent Team Manager Topology</text></svg>",
+      "tags": ["teams", "orchestration", "multi-agent", "roles"],
+      "links": ["docs/ai-agents/agent-teams-implementation-plan.md"],
+      "studentPrompts": [
+        "Why is it better to have two specialized agents (e.g., Coder and Reviewer) instead of one generalist agent?",
+        "How does the AgentTeamManager use 'skills' to filter the pool of available agents?",
+        "Identify a task in the CMS that would benefit from a three-agent relay: Researcher -> Writer -> SEO Optimizer."
+      ],
+      "codeReferences": ["repo-php/class/AgentTeamManager.php", "repo-php/class/AIAgent.php"]
+    },
+    {
+      "id": "S009-05",
+      "title": "Evaluation & Success Metrics",
+      "content": "Determining whether an agent successfully completed its mission requires quantitative and qualitative evaluation frameworks. In an automated pipeline, success isn't just a valid JSON response; it's the fulfillment of the task's technical and creative constraints. We implement 'Quality Gates' that run automated tests—such as linter checks for code agents or WCAG scans for UI agents—to verify output integrity before it reaches production. Evaluation loops can also include 'Scoreboards' where agents are graded on latency, token efficiency, and user feedback (e.g., 'Apply' vs. 'Discard' signals in the UI). By tracking these metrics in a persistent log, the system can identify underperforming personas or 'corrupt' prompts, enabling a data-driven approach to agent refinement. Continuous evaluation ensures that as the model evolves, the agent's performance remains stable and reliable within the boundaries of the application's requirements.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fffbeb'/><rect x='100' y='60' width='200' height='20' rx='4' fill='#fcd34d'/><rect x='100' y='90' width='150' height='20' rx='4' fill='#fbbf24'/><rect x='100' y='120' width='180' height='20' rx='4' fill='#f59e0b'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#92400e'>Agent Success & Performance Metrics</text></svg>",
+      "tags": ["testing", "evaluation", "metrics", "quality"],
+      "links": ["https://ai.google.dev/gemini-api/docs/model-alignment"],
+      "studentPrompts": [
+        "Design a feedback mechanism where an agent learns from a user's manual edits to its suggested code.",
+        "What metrics would you use to evaluate if an SEO Specialist agent is actually improving site visibility?",
+        "How can automated unit tests be integrated into an agent's 'self-critique' loop?"
+      ],
+      "codeReferences": ["docs/evaluation-report.md", "src/views/SiteBenchmarker.vue"]
+    },
+    {
+      "id": "S009-06",
+      "title": "Dynamic Prompt & Task Generation",
+      "content": "The most advanced agent systems don't just react to static tasks; they dynamically generate their own instructions based on real-time environment state. This 'Meta-Tasking' involves the agent scanning a codebase or content repository, identifying deficiencies (e.g., missing tests, outdated text, or security holes), and programmatically creating new units of work for the queue. Prompt generation also becomes dynamic through 'Context Injectors' that pull relevant local files, recent git commits, or analytics data into the LLM's system prompt. By treating prompts as code that can be assembled at runtime, agents gain situational awareness, allowing them to tailor their reasoning to the specific site, framework, or user intention they are currently processing. This capability is the foundation of 'Auto-Dev' workflows where the initial human request triggers a cascade of dynamically generated sub-tasks that collectively fulfill a complex feature request.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#faf5ff'/><path d='M100 60 Q200 20 300 60 L300 140 Q200 180 100 140 Z' fill='#a855f7' fill-opacity='0.1' stroke='#a855f7' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#6b21a8'>Dynamic Task Generation & Meta-Prompting</text></svg>",
+      "tags": ["prompts", "task-generation", "dynamic-context", "meta-ai"],
+      "links": ["docs/ai-agents/ai-coder-agent-guide.md"],
+      "studentPrompts": [
+        "Explain how an agent can 'discover' its own tasks by scanning a file tree.",
+        "What are the benefits of assembly-line prompt construction over static multi-paragraph prompts?",
+        "Implement a simple logic gate that decides whether to generate a 'refactoring' task or an 'SEO' task based on a file's extension."
+      ],
+      "codeReferences": ["repo-php/class/AIAgent.php", "src/views/SiteEditor.vue"]
+    },
+    {
+      "id": "S009-07",
+      "title": "The Feedback Loop & Continuous Sync",
+      "content": "The final stage of agentic maturity is the implementation of a continuous feedback loop that synchronizes state across environments and refines model behavior through iterative interaction. In our 'Sync' architecture, changes from the local AI Studio preview are pushed to production, while production performance data is pulled back to ground the agents in reality. This creates a 'Flywheel Effect': agents generate content, humans review and refine it, the system logs the delta, and that delta becomes context for the next generation. This loop is closed by 'Environment Syncing'—ensuring that agents are always working on the most recent version of the truth. Mastering this loop transforms AI from an external tool into an integral, learning component of the software development lifecycle, capable of adapting to specific project conventions and developer preferences over time.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><path d='M200 60 A60 60 0 1 1 200 180 A60 60 0 1 1 200 60' fill='none' stroke='#db2777' stroke-width='4' stroke-dasharray='10 5'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9d174d'>The Agentic Feedback Loop</text></svg>",
+      "tags": ["feedback", "sync", "learning", "state"],
+      "links": ["docs/devops/git-sync-feature.md"],
+      "studentPrompts": [
+        "How does the 'Environment Sync' process prevent agents from hallucinating about non-existent files?",
+        "Identify the point in the CMS workflow where a 'Human-in-the-Loop' (HITL) check is most critical.",
+        "How can we use 'diffs' between human-corrected text and AI-generated text to improve future prompts?"
+      ],
+      "codeReferences": ["src/views/SyncState.vue", "repo-php/class/DB.php"]
+    }
+  ]
+}

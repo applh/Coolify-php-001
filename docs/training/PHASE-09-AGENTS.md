@@ -51,3 +51,10 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Task**: Analyze the `AgentTeamManager` and `Scheduler` classes in the PHP backend.
 - **Exercise**: Create a new automated agent in `agent_teams.json` and set up a recurring cron task for it.
 - **Complexity**: Phase 3
+
+### 6. Agent Performance & Evaluation (10h)
+**Reference**: `docs/evaluation-report.md`, `src/views/SiteBenchmarker.vue`
+- **Goal**: Implement quality gates and evaluation metrics for agentic workflows.
+- **Task**: Analyze how the `SiteBenchmarker` component evaluates site performance and UX.
+- **Exercise**: Add a custom 'Success Metric' for an AI task that verifies if the generated HTML is WCAG compliant.
+- **Complexity**: Phase 4 (Component Systems)
