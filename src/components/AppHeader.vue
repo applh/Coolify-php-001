@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { 
   BarChart3 as ChartIcon, 
@@ -10,13 +11,19 @@ import {
   Users as TeamsIcon,
   LogOut as LogoutIcon
 } from 'lucide-vue-next';
+import BaseModal from './BaseModal.vue';
+import BaseButton from './BaseButton.vue';
 
 const route = useRoute();
+const showLogoutConfirm = ref(false);
 
 const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    window.dispatchEvent(new CustomEvent('admin-logout'));
-  }
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = () => {
+  window.dispatchEvent(new CustomEvent('admin-logout'));
+  showLogoutConfirm.value = false;
 };
 
 const navItems = [
@@ -94,5 +101,33 @@ const isActive = (path: string) => {
         <LogoutIcon :size="16" />
       </button>
     </div>
+
+    <!-- Logout Confirmation Modal -->
+    <BaseModal
+      v-model="showLogoutConfirm"
+      title="Confirm Termination"
+    >
+      <div class="flex flex-col items-center text-center p-4">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+          <LogoutIcon class="text-[#FF3B30] w-8 h-8" />
+        </div>
+        <p class="text-white/60 font-serif italic text-lg mb-2">Are you sure you wish to disconnect?</p>
+        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">Session tokens and local state will be purged.</p>
+      </div>
+      <template #footer>
+        <BaseButton
+          variant="ghost"
+          @click="showLogoutConfirm = false"
+        >
+          Cancel
+        </BaseButton>
+        <BaseButton 
+          variant="primary" 
+          @click="confirmLogout"
+        >
+          Disconnect Now
+        </BaseButton>
+      </template>
+    </BaseModal>
   </header>
 </template>

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
-import { Lock, Unlock, AlertCircle, Loader2 } from 'lucide-vue-next';
+import { Unlock, AlertCircle, Loader2 } from 'lucide-vue-next';
 
 const isAuthenticated = ref(false);
 const passkey = ref('');
@@ -26,8 +26,9 @@ const verifyPasskey = async (p: string) => {
     } else {
       error.value = data.error || 'Invalid passkey';
     }
-  } catch (_err) {
+  } catch (err) {
     error.value = 'Failed to verify passkey';
+    console.error(err);
   } finally {
     isLoading.value = false;
   }
@@ -62,8 +63,8 @@ onMounted(async () => {
       if (data.noPasskey) {
         isAuthenticated.value = true;
       }
-    } catch (_err) {
-      console.error('Initial auth check failed');
+    } catch (err) {
+      console.error('Initial auth check failed', err);
     }
   }
   isChecking.value = false;
@@ -86,16 +87,22 @@ const handleLogin = () => {
 
     <template v-else-if="!isAuthenticated">
       <div class="fixed inset-0 flex items-center justify-center bg-[#0A0A0A] z-[9999] px-4">
-        <div class="w-full max-w-md bg-[#161616] border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <div class="flex flex-col items-center mb-8">
-            <div class="w-16 h-16 bg-[#1F1F1F] rounded-full flex items-center justify-center mb-4">
-              <Lock class="w-8 h-8 text-[#FF3B30]" />
+        <div class="w-full max-w-md bg-[#161616] border border-white/10 rounded-3xl p-10 shadow-2xl relative overflow-hidden group">
+          <!-- Background glow decoration -->
+          <div class="absolute -top-24 -left-24 w-48 h-48 bg-[#FF3B30]/10 blur-[80px] rounded-full group-hover:bg-[#FF3B30]/20 transition-all duration-700" />
+          <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-[#FF3B30]/5 blur-[80px] rounded-full" />
+          
+          <div class="relative z-10 flex flex-col items-center mb-10">
+            <div class="w-20 h-20 bg-[#1F1F1F] rounded-2xl flex items-center justify-center mb-6 border border-white/5 shadow-inner group-hover:scale-105 transition-transform duration-500">
+              <span class="text-3xl">🍓</span>
             </div>
-            <h1 class="text-2xl font-bold tracking-tight">Admin Area Protected</h1>
-            <p class="text-white/40 text-sm mt-1">Please enter the administrator passkey</p>
+            <h1 class="text-3xl font-serif italic tracking-tighter font-black text-white leading-none mb-2">
+              FRAISE
+            </h1>
+            <p class="text-white/30 text-[10px] uppercase tracking-[0.3em] font-bold">Secure Infrastructure Ops</p>
           </div>
 
-          <form @submit.prevent="handleLogin" class="space-y-4">
+          <form @submit.prevent="handleLogin" class="space-y-6 relative z-10">
             <div>
               <input
                 v-model="passkey"

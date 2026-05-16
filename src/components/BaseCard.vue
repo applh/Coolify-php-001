@@ -3,13 +3,18 @@ defineProps<{
   title?: string;
   subtitle?: string;
   hoverable?: boolean;
+  variant?: 'default' | 'glass';
 }>();
 </script>
 
 <template>
   <div 
-    class="relative overflow-hidden bg-[#0F0F0F] border border-white/5 p-6 rounded-2xl transition-all duration-300"
+    class="relative overflow-hidden border transition-all duration-300"
     :class="[
+      variant === 'glass' 
+        ? 'bg-white/[0.03] backdrop-blur-xl border-white/10' 
+        : 'bg-[#0F0F0F] border-white/5',
+      'p-6 rounded-2xl',
       hoverable ? 'hover:border-red-500/30 hover:bg-[#141414] cursor-pointer group' : ''
     ]"
   >

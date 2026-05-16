@@ -1,6 +1,6 @@
 {
   "name": "🍓 FRAISE",
-  "description": "The Ultimate Fullstack AI Software Engineer platform – building, managing, and scaling multi-stack applications with high-fidelity automation and benchmarking.",
+  "description": "FRAISE: The Sovereign AI Intelligence Ops platform. Advanced multi-stack orchestration, high-fidelity automation, and real-time environment benchmarking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

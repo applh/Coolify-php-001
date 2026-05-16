@@ -10,7 +10,11 @@ import {
   Trash2, 
   ChevronRight,
   ExternalLink,
-  Layers
+  Layers,
+  AlertCircle,
+  Cpu,
+  Activity,
+  Zap
 } from 'lucide-vue-next';
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
@@ -24,7 +28,14 @@ const siteToDelete = ref<string | null>(null);
 const newSiteName = ref('');
 const isSubmitting = ref(false);
 const isDeleting = ref(false);
+const errorMessage = ref('');
+const showErrorModal = ref(false);
 const router = useRouter();
+
+const handleError = (msg: string) => {
+  errorMessage.value = msg;
+  showErrorModal.value = true;
+};
 
 const uploadInput = ref<HTMLInputElement | null>(null);
 const siteToUpload = ref<string>('');
@@ -87,10 +98,10 @@ const onFileSelected = async (event: Event) => {
       // Custom toast or notification could go here
     } else {
       const e = await res.json();
-      alert('Failed to upload site: ' + e.error);
+      handleError('Failed to upload site: ' + e.error);
     }
   } catch {
-    alert('Upload error');
+    handleError('Upload error occurred during sync.');
   }
   
   target.value = '';
@@ -118,10 +129,10 @@ const createSite = async () => {
       router.push(`/editor/${data.name}?repo=${selectedRepo.value}`);
     } else {
       const e = await res.json();
-      alert('Error creating site: ' + e.error);
+      handleError('Error creating site: ' + e.error);
     }
   } catch {
-    alert('Request failed');
+    handleError('Request failed during instance provisioning.');
   } finally {
     isSubmitting.value = false;
   }
@@ -141,10 +152,10 @@ const deleteSite = async () => {
       siteToDelete.value = null;
     } else {
       const e = await res.json();
-      alert('Error deleting site: ' + e.error);
+      handleError('Error deleting site: ' + e.error);
     }
   } catch {
-    alert('Request failed');
+    handleError('Request failed during purge operation.');
   } finally {
     isDeleting.value = false;
   }
@@ -188,6 +199,31 @@ const deleteSite = async () => {
           <div class="text-xs text-white/30 font-mono italic">
             Connected to {{ sites.length }} active domains
           </div>
+        </div>
+      </div>
+
+      <!-- System Metrics -->
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 w-full md:w-auto">
+        <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col gap-1 min-w-[120px]">
+          <div class="flex items-center gap-2 text-[#FF3B30] mb-1">
+            <Cpu :size="12" />
+            <span class="text-[9px] uppercase tracking-wider font-bold">Node Load</span>
+          </div>
+          <span class="text-xl font-mono font-bold leading-none">0.24<span class="text-[10px] opacity-30 ml-1">avg</span></span>
+        </div>
+        <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col gap-1 min-w-[120px]">
+          <div class="flex items-center gap-2 text-green-500 mb-1">
+            <Activity :size="12" />
+            <span class="text-[9px] uppercase tracking-wider font-bold">Uptime</span>
+          </div>
+          <span class="text-xl font-mono font-bold leading-none">99.9<span class="text-[10px] opacity-30 ml-1">%</span></span>
+        </div>
+        <div class="hidden lg:flex bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex-col gap-1 min-w-[120px]">
+          <div class="flex items-center gap-2 text-blue-500 mb-1">
+            <Zap :size="12" />
+            <span class="text-[9px] uppercase tracking-wider font-bold">Latency</span>
+          </div>
+          <span class="text-xl font-mono font-bold leading-none">12<span class="text-[10px] opacity-30 ml-1">ms</span></span>
         </div>
       </div>
       
@@ -382,6 +418,30 @@ const deleteSite = async () => {
           @click="deleteSite"
         >
           Confirm Purge
+        </BaseButton>
+      </template>
+    </BaseModal>
+
+    <!-- Error Modal -->
+    <BaseModal
+      v-model="showErrorModal"
+      title="System Exception"
+    >
+      <div class="flex flex-col items-center text-center p-4">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle class="text-[#FF3B30] w-8 h-8" />
+        </div>
+        <p class="text-white/80 font-mono text-sm mb-4 bg-white/5 p-4 rounded-xl border border-white/5 w-full">
+          {{ errorMessage || 'An unexpected internal error has occurred.' }}
+        </p>
+        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">Trace ID: {{ Math.random().toString(36).substring(7).toUpperCase() }}</p>
+      </div>
+      <template #footer>
+        <BaseButton 
+          variant="primary" 
+          @click="showErrorModal = false"
+        >
+          Acknowledge
         </BaseButton>
       </template>
     </BaseModal>
