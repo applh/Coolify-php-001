@@ -58,3 +58,10 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Task**: Analyze how the `SiteBenchmarker` component evaluates site performance and UX.
 - **Exercise**: Add a custom 'Success Metric' for an AI task that verifies if the generated HTML is WCAG compliant.
 - **Complexity**: Phase 4 (Component Systems)
+
+### 7. Parallel Orchestration & Concurrency (10h)
+**Reference**: `docs/training/slides/phase9/parallel-orchestration.json`, `docs/ai-agents/gemini-api-interactions.md`
+- **Goal**: Master the implementation of parallel tool calling in AI Studio.
+- **Task**: Review the theoretical model of parallel orchestration in the slides.
+- **Exercise**: Implement a script that uses the Gemini SDK to call two different tools (e.g., `list_dir` and `read_file`) in a single turn using parallel function calling.
+- **Complexity**: Phase 5 (Backend Mastery)
