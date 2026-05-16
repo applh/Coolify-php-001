@@ -31,6 +31,12 @@ Synthesize all skills into a final engineering masterpiece.
 - **Exercise**: Add a "Matrix Heatmap" slide to the Math module with a dynamically generated SVG grid.
 - **Complexity**: Phase 4 (Integration)
 
+### 4. AI Scalability & Cost Calculation (10h)
+**Goal**: Calculate and optimize the token cost for a massive 60,000-slide generation task.
+**Reference**: `/docs/training/slides/phase10/ai-scale-costs.json`
+**Exercise**: Create a Python or Node.js script that simulates the batch generation of 120 JSON manifests, calculating the total input/output tokens using Gemini Flash pricing.
+**Complexity**: Phase 5 (Orchestration)
+
 ## Recommended Reading
 - `docs/benchmarking-guide.md`
 - `docs/evaluation-report.md`
