@@ -9,9 +9,14 @@ ENV PATH $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/plat
 RUN yes | sdkmanager --licenses && \
     sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
+RUN wget https://services.gradle.org/distributions/gradle-8.2-bin.zip -P /tmp && \
+    unzip -d /opt/gradle /tmp/gradle-8.2-bin.zip && \
+    rm /tmp/gradle-8.2-bin.zip
+ENV PATH $PATH:/opt/gradle/gradle-8.2/bin
+
 WORKDIR /app
 COPY . .
-RUN ./gradlew assembleDebug
+RUN gradle assembleDebug --no-daemon
 
 FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
