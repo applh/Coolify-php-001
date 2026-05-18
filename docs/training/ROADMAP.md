@@ -16,7 +16,7 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 | Part | Duration | Focus | Key Repositories |
 |-------|----------|-------|------------------|
-| [P01: Web Foundations](./PHASE-01-FOUNDATIONS.md) | 100h | HTML, CSS, JS, PHP Basics, Glossary | `repo-php/content` |
+| [P01: CS basics](./PART-01-FOUNDATIONS.md) | 100h | HTML, CSS, JS, PHP Basics, Glossary | `repo-php/content` |
 | [P02: Adv Styling](./PHASE-02-STYLING.md) | 100h | Tailwind, Responsive, Animation | `public/css` |
 | [P03: Orchestration](./PHASE-03-ORCHESTRATION.md) | 100h | React, Vue 3, State Management | `repo-react`, `repo-vue` |
 | [P04: Component Systems](./PHASE-04-COMPONENTS.md) | 100h | Design Systems, Shadcn, D3 | `src/components` |

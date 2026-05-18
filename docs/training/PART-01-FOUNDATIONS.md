@@ -1,9 +1,21 @@
-# Part 1: Web Foundations (100 Hours)
+# Part 1: CS basics (100 Hours)
 
 This part focuses on the "classic" web stack. You will learn to build responsive landing pages and simple dynamic sites using PHP.
 
 ## Modules (10 Hours Each)
-- M001: Computer & Internet Fundamentals
+
+### M001: Computer basics, hardware, software
+1. **H1: Hardware** - CPU, RAM, and Storage Architecture.
+2. **H2: Software** - System vs Application Software paradigms.
+3. **H3: OS** - Kernels, Processes, and Threads management.
+4. **H4: Script** - Automation and CLI Fundamentals.
+5. **H5: Application** - Web, Desktop, and Native architectures.
+6. **H6: Internet** - Protocols (TCP/IP), DNS, and Networking.
+7. **H7: Server** - Principles of Hosting and Cloud Infrastructure.
+8. **H8: Client** - Browsers, Rendering Engines, and User Agents.
+9. **H9: Mobile** - Native vs Hybrid and Mobile OS Ecosystems.
+10. **H10: Convergence** - Synthesizing the Full Stack.
+
 - M002: HTML5 Semantic Web
 - M003: CSS3 Foundations & Bio-Design
 - M004: Vanilla JavaScript ES6+

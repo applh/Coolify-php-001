@@ -5,7 +5,7 @@
   "parts": [
     {
       "id": "P01",
-      "name": "Web Foundations",
+      "name": "CS basics",
       "hours": [
         0,
         99
@@ -13,72 +13,72 @@
       "modules": [
         {
           "id": "M001",
-          "name": "Computer & Internet Fundamentals",
+          "name": "Computer basics, hardware, software",
           "hours": [
             0,
             9
           ],
-          "description": "Module M001 focuses on Computer & Internet Fundamentals. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M001 provides a deep dive into the physical and logical layers of computing. From hardware components and operating systems to the structure of the internet and the distinction between client and server architectures, this module builds the mental model required for professional engineering.",
           "hoursList": [
             {
               "id": "M001-H1",
               "hour": 0,
-              "title": "Hour 1: Core concepts of Computer & Internet Fundamentals - Part 1",
-              "description": "Hour 1 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Hardware: CPU, RAM, and Storage Architecture",
+              "description": "Exploration of the physical components of a computer. Understanding Von Neumann architecture, Moore's Law, and how binary data travels through buses and registers."
             },
             {
               "id": "M001-H2",
               "hour": 1,
-              "title": "Hour 2: Core concepts of Computer & Internet Fundamentals - Part 2",
-              "description": "Hour 2 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Software: System vs Application Software",
+              "description": "Differentiating between the logic that manages hardware (drivers, firmware) and the logic that serves users. Basics of compilers, interpreters, and binary execution."
             },
             {
               "id": "M001-H3",
               "hour": 2,
-              "title": "Hour 3: Core concepts of Computer & Internet Fundamentals - Part 3",
-              "description": "Hour 3 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Operating Systems: Kernels, Processes, and Threads",
+              "description": "How the OS orchestrates hardware resources. Understanding process scheduling, memory allocation, and the transition from kernel space to user space."
             },
             {
               "id": "M001-H4",
               "hour": 3,
-              "title": "Hour 4: Core concepts of Computer & Internet Fundamentals - Part 4",
-              "description": "Hour 4 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Scripts: Automation and CLI Fundamentals",
+              "description": "Introduction to scripting languages and the shell. Learning to automate repetitive tasks using Bash or PowerShell in a Unix-like environment."
             },
             {
               "id": "M001-H5",
               "hour": 4,
-              "title": "Hour 5: Core concepts of Computer & Internet Fundamentals - Part 5",
-              "description": "Hour 5 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Applications: Web, Desktop, and Native Paradigms",
+              "description": "Analyzing the different delivery models for software. Comparing thick clients (desktop) with thin clients (web) and the rise of progressive web apps."
             },
             {
               "id": "M001-H6",
               "hour": 5,
-              "title": "Hour 6: Core concepts of Computer & Internet Fundamentals - Part 6",
-              "description": "Hour 6 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Internet: Protocols, DNS, and IP Addressing",
+              "description": "How computers talk to each other globally. Breaking down the OSI model, TCP/IP stack, and the journey of a packet across the network."
             },
             {
               "id": "M001-H7",
               "hour": 6,
-              "title": "Hour 7: Core concepts of Computer & Internet Fundamentals - Part 7",
-              "description": "Hour 7 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Server: Hosting, Cloud Infrastructure, and Data Centers",
+              "description": "Understanding the 'Always-On' machine. Principles of virtualization, cloud providers (AWS, GCP), and the role of servers in the modern web."
             },
             {
               "id": "M001-H8",
               "hour": 7,
-              "title": "Hour 8: Core concepts of Computer & Internet Fundamentals - Part 8",
-              "description": "Hour 8 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Client: Browsers, Rendering Engines, and User Agents",
+              "description": "The engineer's view of the browser. How HTML/CSS/JS is parsed and painted, and the role of the client in a distributed system."
             },
             {
               "id": "M001-H9",
               "hour": 8,
-              "title": "Hour 9: Core concepts of Computer & Internet Fundamentals - Part 9",
-              "description": "Hour 9 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Mobile: Native vs Hybrid and Mobile OS Ecosystems",
+              "description": "Mobile-specific constraints: power consumption, touch interfaces, and app stores. Bridging the gap between iOS, Android, and web standards."
             },
             {
               "id": "M001-H10",
               "hour": 9,
-              "title": "Hour 10: Core concepts of Computer & Internet Fundamentals - Part 10",
-              "description": "Hour 10 of Computer & Internet Fundamentals covers practical exercises and theoretical instruction on the specific intricacies of the topic. Students will complete hands-on labs and review best practices."
+              "title": "Full Stack Convergence: From Transistor to Cloud",
+              "description": "Synthesizing the module. A walk-through of the entire stack, from a voltage change in a transistor to a rendered pixel in a mobile application."
             }
           ]
         },
@@ -89,7 +89,7 @@
             10,
             19
           ],
-          "description": "Module M002 focuses on HTML5 Semantic Web. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M002 focuses on HTML5 Semantic Web. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M002-H1",
@@ -160,7 +160,7 @@
             20,
             29
           ],
-          "description": "Module M003 focuses on CSS3 Foundations & Bio-Design. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M003 focuses on CSS3 Foundations & Bio-Design. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M003-H1",
@@ -231,7 +231,7 @@
             30,
             39
           ],
-          "description": "Module M004 focuses on Vanilla JavaScript ES6+. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M004 focuses on Vanilla JavaScript ES6+. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M004-H1",
@@ -302,7 +302,7 @@
             40,
             49
           ],
-          "description": "Module M005 focuses on PHP Basics & Scripting. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M005 focuses on PHP Basics & Scripting. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M005-H1",
@@ -373,7 +373,7 @@
             50,
             59
           ],
-          "description": "Module M006 focuses on SQL & Relational Knowledge. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M006 focuses on SQL & Relational Knowledge. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M006-H1",
@@ -444,7 +444,7 @@
             60,
             69
           ],
-          "description": "Module M007 focuses on HTTP, DNS & Web Servers. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M007 focuses on HTTP, DNS & Web Servers. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M007-H1",
@@ -515,7 +515,7 @@
             70,
             79
           ],
-          "description": "Module M008 focuses on Git & Version Control. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M008 focuses on Git & Version Control. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M008-H1",
@@ -586,7 +586,7 @@
             80,
             89
           ],
-          "description": "Module M009 focuses on Technical Glossary. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M009 focuses on Technical Glossary. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M009-H1",
@@ -657,7 +657,7 @@
             90,
             99
           ],
-          "description": "Module M010 focuses on Software Engineering Fundamentals. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of Web Foundations. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
+          "description": "Module M010 focuses on Software Engineering Fundamentals. Throughout these 10 hours, you will explore core concepts, practical applications, and advanced techniques required to master this specific component within the broader scope of CS basics. Detailed step-by-step guidance, code exercises, and theoretical breakdowns are included.",
           "hoursList": [
             {
               "id": "M010-H1",
@@ -722,7 +722,7 @@
           ]
         }
       ],
-      "description": "Part 1: Web Foundations provides a comprehensive deep dive into this architectural stage. Covering exactly 100 hours of intensive engineering training, this part brings you from conceptual foundations to production-grade implementation, preparing you for real-world scenarios across its 10 focused modules."
+      "description": "Part 1: CS basics provides a comprehensive deep dive into this architectural stage. Covering exactly 100 hours of intensive engineering training, this part brings you from conceptual foundations to production-grade implementation, preparing you for real-world scenarios across its 10 focused modules."
     },
     {
       "id": "P02",

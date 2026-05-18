@@ -10,7 +10,7 @@ The training hierarchy is split into two distinct environments:
 ## 2. The 10x10x10 Structure
 
 To achieve this, the curriculum is structured as:
-- **10 Parts** (100 hours each): Broad disciplinary tracks (e.g., Web Foundations, Frontend Orchestration).
+- **10 Parts** (100 hours each): Broad disciplinary tracks (e.g., CS basics, Frontend Orchestration).
 - **10 Modules per Part** (10 hours each): Specific subjects within the track.
 - **10 Hours per Module** (1 hour each): The finest granular level stored in AI Studio. Each hour holds the metadata and AI instructions required to generate 60 slides.
 
