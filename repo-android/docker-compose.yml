@@ -3,4 +3,4 @@ services:
   android-builder:
     build: .
     ports:
-      - "3005:3000"
+      - "3000:3000"
