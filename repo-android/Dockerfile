@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-focal
 ENV ANDROID_SDK_ROOT /opt/android-sdk
 RUN apt-get update && apt-get install -y wget unzip
 RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
