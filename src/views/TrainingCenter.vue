@@ -34,18 +34,21 @@ interface Module {
   name: string;
   hours: [number, number];
   description?: string;
+  lessons?: Lesson[];
 }
 
 interface Lesson {
   id: string;
   hour: number;
   title: string;
+  description?: string;
 }
 
 interface Phase {
   id: string;
   name: string;
   hours: [number, number];
+  description?: string;
   modules: Module[];
 }
 
@@ -163,6 +166,9 @@ const progress = computed(() => {
 
 const moduleLessons = computed(() => {
   if (!selectedModule.value) return [];
+  if (selectedModule.value.lessons && selectedModule.value.lessons.length > 0) {
+    return selectedModule.value.lessons;
+  }
   const lessons: Lesson[] = [];
   const startHour = selectedModule.value.hours[0];
   const endHour = selectedModule.value.hours[1];
@@ -491,7 +497,7 @@ function backToDashboard() {
               {{ selectedPhase?.name }}
             </h1>
             <p class="text-white/50 max-w-xl text-sm leading-relaxed">
-              Master the core architectural concepts of this phase through 10 focused modules. This section of the 🍓 FRAISE curriculum transitions you closer to agentic autonomy.
+              {{ selectedPhase?.description || 'Master the core architectural concepts of this phase through 10 focused modules. This section of the 🍓 FRAISE curriculum transitions you closer to agentic autonomy.' }}
             </p>
           </div>
         </div>
@@ -519,8 +525,8 @@ function backToDashboard() {
               <h3 class="text-xl font-bold mb-4 leading-tight text-white group-hover:text-[#F27D26] transition-colors">
                 {{ mod.name }}
               </h3>
-              <p class="text-xs text-white/40 mb-10 leading-relaxed flex-1">
-                Engineering deep-dive covering advanced patterns in this domain over a {{ mod.hours[1] - mod.hours[0] + 1 }} hour focused window.
+              <p class="text-xs text-white/40 mb-10 leading-relaxed flex-1 line-clamp-3">
+                {{ mod.description || `Engineering deep-dive covering advanced patterns in this domain over a ${mod.hours[1] - mod.hours[0] + 1} hour focused window.` }}
               </p>
 
               <div class="flex items-center justify-between pt-6 border-t border-white/5">
@@ -558,7 +564,7 @@ function backToDashboard() {
               {{ selectedModule?.name }}
             </h1>
             <p class="text-white/50 max-w-xl text-sm leading-relaxed">
-              This module contains 10 hours of deeply structured lessons. AI Studio handles generation down to this 1-hour lesson granularity, from which 60 slides are produced for deployment.
+              {{ selectedModule?.description || 'This module contains 10 hours of deeply structured lessons. AI Studio handles generation down to this 1-hour lesson granularity, from which 60 slides are produced for deployment.' }}
             </p>
           </div>
         </div>
@@ -586,7 +592,7 @@ function backToDashboard() {
                 {{ lesson.title }}
               </h3>
               <p class="text-xs text-white/40 mb-6 leading-relaxed flex-1">
-                Generates 60+ fully grounded slides matching our AI training hierarchy. Level 3 abstraction.
+                {{ lesson.description || 'Generates 60+ fully grounded slides matching our AI training hierarchy. Level 3 abstraction.' }}
               </p>
 
               <div class="flex items-center justify-between pt-4 border-t border-white/5">
