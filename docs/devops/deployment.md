@@ -33,6 +33,7 @@ We have prepared detailed setup instructions for each technology stack. Select t
 - **[React Frontend Stack](./coolify-setup-react.md)**: Vite-based React deployment using a Node.js serve container.
 - **[Vue Frontend Stack](./coolify-setup-vue.md)**: Vite-based Vue deployment with specialized static serving.
 - **[Python API Stack](./coolify-setup-python.md)**: FastAPI deployment using Uvicorn with worker scaling tips.
+- **[Android Companion App](./android-build-guide.md)**: Information on how and when the Android APK is built and served.
 
 ## 4. General Docker Compose Setup (Coolify / VPS)
 

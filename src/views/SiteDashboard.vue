@@ -253,11 +253,9 @@ const downloadApk = () => {
     </div>
 
     <!-- Sites Grid -->
-    <div
-      v-if="sites.length > 0"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-    >
-      <BaseCard
+    <template v-if="sites.length > 0">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <BaseCard
         v-for="site in sites" 
         :key="site"
         :title="site"
@@ -397,6 +395,7 @@ const downloadApk = () => {
         </div>
       </div>
     </div>
+    </template>
 
     <!-- Empty State -->
     <div

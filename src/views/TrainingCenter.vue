@@ -36,6 +36,12 @@ interface Module {
   description?: string;
 }
 
+interface Lesson {
+  id: string;
+  hour: number;
+  title: string;
+}
+
 interface Phase {
   id: string;
   name: string;
@@ -54,9 +60,10 @@ const activeView = ref<'atlas' | 'list'>('atlas');
 // Navigation State
 const selectedPhase = ref<Phase | null>(null);
 const selectedModule = ref<Module | null>(null);
+const selectedLesson = ref<Lesson | null>(null);
 const currentBundle = ref<SlideBundle | null>(null);
 const currentSlideIndex = ref(0);
-const viewMode = ref<'dashboard' | 'phase' | 'reader'>('dashboard');
+const viewMode = ref<'dashboard' | 'phase' | 'module' | 'reader'>('dashboard');
 const isLoading = ref(false);
 const isSyncing = ref(false);
 const error = ref<string | null>(null);
@@ -154,10 +161,36 @@ const progress = computed(() => {
   return ((currentSlideIndex.value + 1) / currentBundle.value.slides.length) * 100;
 });
 
+const moduleLessons = computed(() => {
+  if (!selectedModule.value) return [];
+  const lessons: Lesson[] = [];
+  const startHour = selectedModule.value.hours[0];
+  const endHour = selectedModule.value.hours[1];
+  for (let i = startHour; i <= endHour; i++) {
+    lessons.push({
+      id: `${selectedModule.value.id}-L${i - startHour + 1}`,
+      hour: i,
+      title: `Lesson ${i - startHour + 1}: Detailed Content for Hour ${i}`
+    });
+  }
+  return lessons;
+});
+
 // Actions
 async function openPhase(phase: Phase) {
   selectedPhase.value = phase;
   viewMode.value = 'phase';
+}
+
+async function startLesson(lesson: Lesson) {
+  if (!selectedModule.value) return;
+  const bundle = allSlidesData.value[selectedModule.value.id];
+  if (!bundle) return;
+
+  selectedLesson.value = lesson;
+  currentSlideIndex.value = 0;
+  currentBundle.value = bundle;
+  viewMode.value = 'reader';
 }
 
 async function startModule(module: Module) {
@@ -165,9 +198,8 @@ async function startModule(module: Module) {
   if (!bundle) return;
 
   selectedModule.value = module;
-  currentSlideIndex.value = 0;
-  currentBundle.value = bundle;
-  viewMode.value = 'reader';
+  // Route to the new module view instead of going straight to reader
+  viewMode.value = 'module';
 }
 
 function nextSlide() {
@@ -183,12 +215,20 @@ function prevSlide() {
 }
 
 function closeReader() {
+  viewMode.value = 'module';
+}
+
+function backToPhase() {
   viewMode.value = 'phase';
+  selectedModule.value = null;
+  selectedLesson.value = null;
 }
 
 function backToDashboard() {
   viewMode.value = 'dashboard';
   selectedPhase.value = null;
+  selectedModule.value = null;
+  selectedLesson.value = null;
 }
 </script>
 
@@ -197,17 +237,28 @@ function backToDashboard() {
     <!-- Breadcrumbs / Back button -->
     <div
       v-if="viewMode !== 'dashboard' && viewMode !== 'reader'"
-      class="flex items-center gap-2 mb-4 animate-in slide-in-from-left duration-300"
+      class="flex flex-wrap items-center gap-2 mb-4 animate-in slide-in-from-left duration-300"
     >
       <button
-        class="flex items-center gap-1 text-xs text-white/40 hover:text-[#F27D26] transition-colors uppercase tracking-widest font-bold"
+        class="flex items-center gap-1 text-xs text-white/40 hover:text-[#F27D26] transition-colors uppercase tracking-widest font-bold whitespace-nowrap"
         @click="backToDashboard"
       >
         <LayoutDashboard class="w-3 h-3" />
         Dashboard
       </button>
-      <ChevronRight class="w-3 h-3 text-white/10" />
-      <span class="text-xs text-white/80 uppercase tracking-widest font-bold">{{ selectedPhase?.name }}</span>
+      <ChevronRight class="w-3 h-3 text-white/10 shrink-0" />
+      <button
+        v-if="viewMode === 'module'"
+        class="text-xs text-white/40 hover:text-[#F27D26] transition-colors uppercase tracking-widest font-bold whitespace-nowrap"
+        @click="backToPhase"
+      >
+        {{ selectedPhase?.name }}
+      </button>
+      <span v-else class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedPhase?.name }}</span>
+      <template v-if="viewMode === 'module'">
+        <ChevronRight class="w-3 h-3 text-white/10 shrink-0" />
+        <span class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedModule?.name }}</span>
+      </template>
     </div>
 
     <!-- Header -->
@@ -477,12 +528,72 @@ function backToDashboard() {
                   class="text-[10px] font-black uppercase tracking-widest transition-colors duration-300"
                   :class="allSlidesData[mod.id] ? 'text-[#F27D26]' : 'text-white/20'"
                 >
-                  {{ allSlidesData[mod.id] ? 'Launch Training' : 'In Backlog' }}
+                  {{ allSlidesData[mod.id] ? 'Explore Modules' : 'In Backlog' }}
                 </span>
                 <ChevronRight
                   v-if="allSlidesData[mod.id]"
                   class="w-5 h-5 text-[#F27D26] translate-x-0 group-hover:translate-x-2 transition-transform"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODULE VIEW (Lessons) -->
+      <div
+        v-else-if="viewMode === 'module'"
+        class="space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-20"
+      >
+        <div class="relative bg-gradient-to-tr from-white/5 via-white/[0.02] to-transparent border border-white/10 p-10 rounded-3xl overflow-hidden shadow-2xl">
+          <div class="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-[-12deg] pointer-events-none">
+            <Code class="w-64 h-64 text-[#F27D26]" />
+          </div>
+          <div class="relative z-10 space-y-6">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+              <Code class="w-3.5 h-3.5" />
+              10x10x10 Granularity
+            </div>
+            <h1 class="text-4xl md:text-5xl font-serif italic text-white max-w-2xl drop-shadow-lg">
+              {{ selectedModule?.name }}
+            </h1>
+            <p class="text-white/50 max-w-xl text-sm leading-relaxed">
+              This module contains 10 hours of deeply structured lessons. AI Studio handles generation down to this 1-hour lesson granularity, from which 60 slides are produced for deployment.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          <div 
+            v-for="(lesson, idx) in moduleLessons" 
+            :key="lesson.id"
+            class="relative group h-full"
+            @click="startLesson(lesson)"
+          >
+            <div 
+              class="h-full bg-white/[0.02] border border-white/5 p-6 rounded-2xl transition-all duration-300 flex flex-col shadow-xl hover:border-[#F27D26]/40 hover:bg-white/[0.05] cursor-pointer"
+            >
+              <div class="flex justify-between items-start mb-6">
+                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-sm font-mono font-black text-[#F27D26] border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
+                  H{{ String(idx).padStart(2, '0') }}
+                </div>
+                <div class="text-[9px] font-mono text-white/20 bg-white/5 px-2 py-1 rounded-full border border-white/5 uppercase tracking-widest leading-none flex items-center h-6">
+                  {{ lesson.id }}
+                </div>
+              </div>
+
+              <h3 class="text-lg font-bold mb-3 leading-tight text-white group-hover:text-[#F27D26] transition-colors">
+                {{ lesson.title }}
+              </h3>
+              <p class="text-xs text-white/40 mb-6 leading-relaxed flex-1">
+                Generates 60+ fully grounded slides matching our AI training hierarchy. Level 3 abstraction.
+              </p>
+
+              <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                <span class="text-[10px] font-black uppercase tracking-widest text-[#F27D26]">
+                  Launch 60 Slides
+                </span>
+                <ChevronRight class="w-4 h-4 text-[#F27D26] translate-x-0 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>
@@ -505,10 +616,10 @@ function backToDashboard() {
             <div class="h-8 w-[1px] bg-white/10" />
             <div class="flex flex-col">
               <div class="text-[10px] text-[#F27D26] font-black uppercase tracking-[0.3em] leading-none mb-2">
-                {{ selectedModule?.id }} • {{ selectedPhase?.name }}
+                {{ selectedModule?.id }} • {{ selectedLesson?.id || selectedPhase?.name }}
               </div>
               <h4 class="text-lg font-bold leading-none text-white/90 uppercase tracking-tight">
-                {{ selectedModule?.name }}
+                {{ selectedLesson?.title || selectedModule?.name }}
               </h4>
             </div>
           </div>
