@@ -707,6 +707,16 @@ Layout::footer();
     }
   });
 
+  app.get('/api/android/download', async (req, res) => {
+    const apkPath = path.join(rootDir, 'repo-android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+    try {
+      await fs.access(apkPath);
+      res.download(apkPath, 'CameraXApp-debug.apk');
+    } catch {
+      res.status(404).json({ error: 'APK build not found. Please run build in repo-android.' });
+    }
+  });
+
   // Base64 Save endpoint
   app.post('/api/media/save-base64', async (req, res) => {
     try {

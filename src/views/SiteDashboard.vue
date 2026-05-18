@@ -14,8 +14,11 @@ import {
   AlertCircle,
   Cpu,
   Activity,
-  Zap
+  Zap,
+  Smartphone,
+  QrCode
 } from 'lucide-vue-next';
+import QrcodeVue from 'qrcode.vue';
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import BaseModal from '../components/BaseModal.vue';
@@ -159,6 +162,17 @@ const deleteSite = async () => {
   } finally {
     isDeleting.value = false;
   }
+};
+
+const apkDownloadUrl = ref('');
+
+onMounted(() => {
+  const url = new URL(window.location.href);
+  apkDownloadUrl.value = `${url.origin}/api/android/download`;
+});
+
+const downloadApk = () => {
+  window.open(apkDownloadUrl.value, '_blank');
 };
 </script>
 
@@ -320,6 +334,70 @@ const deleteSite = async () => {
       </BaseCard>
     </div>
     
+    <!-- Android Application Section -->
+    <div class="mt-24 border-t border-white/5 pt-16">
+      <div class="flex items-center gap-3 mb-8">
+        <Smartphone class="text-[#FF3B30]" :size="20" />
+        <h3 class="text-2xl font-serif italic text-white/80">Companion Experience</h3>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white/[0.02] border border-white/5 rounded-[40px] p-12 overflow-hidden relative">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-[#FF3B30]/5 blur-[120px] -mr-32 -mt-32" />
+        
+        <div class="relative z-10 flex flex-col justify-center">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="px-3 py-1 bg-[#FF3B30]/10 text-[#FF3B30] text-[9px] font-mono font-bold rounded-full uppercase tracking-widest">Build v1.0.0</span>
+            <span class="text-[10px] text-white/20 font-mono uppercase tracking-widest">CameraX Native</span>
+          </div>
+          
+          <h4 class="text-4xl font-serif italic mb-6 leading-tight max-w-md">
+            Download the CameraX Native Companion App
+          </h4>
+          
+          <p class="text-white/40 text-sm leading-relaxed mb-10 max-w-sm font-serif italic">
+            Capture assets directly from your mobile device and sync them instantly to your creative repositories. 
+            Engineered with modern Jetpack Compose and high-performance CameraX bindings.
+          </p>
+
+          <div class="flex items-center gap-6">
+            <BaseButton 
+              variant="outline" 
+              class="group"
+              @click="downloadApk"
+            >
+              <template #icon>
+                <Download :size="16" />
+              </template>
+              Manual APK Download
+            </BaseButton>
+          </div>
+        </div>
+
+        <div class="relative z-10 flex flex-col items-center justify-center lg:items-end">
+          <div class="bg-white p-6 rounded-[32px] shadow-2xl shadow-black/50 hover:scale-105 transition-transform duration-500 cursor-help group">
+            <QrcodeVue 
+              :value="apkDownloadUrl" 
+              :size="180" 
+              level="H"
+              render-as="svg"
+              class="w-full h-full"
+            />
+            <div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors rounded-[32px]" />
+          </div>
+          <div class="mt-6 flex flex-col items-center lg:items-end gap-2 pr-4">
+            <div class="flex items-center gap-2 text-white/30">
+              <QrCode :size="14" />
+              <span class="text-[10px] font-mono uppercase tracking-widest font-bold">Scan to Provision</span>
+            </div>
+            <p class="text-[9px] text-white/10 font-mono uppercase text-right leading-loose">
+              Direct connection to build node<br/>
+              Target: debug/app-debug.apk
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Empty State -->
     <div
       v-else
