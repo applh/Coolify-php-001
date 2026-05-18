@@ -40,7 +40,7 @@
         <div class="flex items-center gap-3">
           <span class="text-[10px] text-white/20 uppercase tracking-[0.2em]">© 2026 FRAISE INC.</span>
           <div class="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[9px] font-mono text-white/40 uppercase tracking-tighter">
-            v1.2.0-PRO
+            v1.2.1-PRO
           </div>
         </div>
         <div class="flex items-center gap-1.5">

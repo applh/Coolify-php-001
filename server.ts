@@ -925,6 +925,8 @@ Layout::footer();
   initScheduler();
 
   const PORT = process.env.PORT || 3000;
+  // NOTE: In this sandboxed environment, port 3000 is the ONLY externally accessible port.
+  // Ensure the public URL used for callbacks or external access includes this port correctly.
   try {
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`CMS Server successfully started and listening at http://0.0.0.0:${PORT}`);
