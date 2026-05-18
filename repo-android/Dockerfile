@@ -22,13 +22,13 @@ RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477
 
 # Accept licenses and install platform components
 RUN yes | sdkmanager --licenses && \
-    sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+    sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
 # Install Gradle
-RUN wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip -P /tmp && \
-    unzip -q -d /opt/gradle /tmp/gradle-8.2-bin.zip && \
-    rm /tmp/gradle-8.2-bin.zip
-ENV PATH $PATH:/opt/gradle/gradle-8.2/bin
+RUN wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -P /tmp && \
+    unzip -q -d /opt/gradle /tmp/gradle-8.7-bin.zip && \
+    rm /tmp/gradle-8.7-bin.zip
+ENV PATH $PATH:/opt/gradle/gradle-8.7/bin
 
 WORKDIR /app
 COPY . .
