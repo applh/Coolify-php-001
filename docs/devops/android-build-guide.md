@@ -10,7 +10,7 @@ The web dashboard provides a direct download link and a QR code for the compiled
 
 ## 2. When is the APK Built?
 
-Due to the heavy resource requirements of the Android SDK and Gradle, the APK is not built dynamically during Node.js server startup. Instead, it should be built during one of the following phases:
+Due to the heavy resource requirements of the Android SDK and Gradle, the APK is not built dynamically during Node.js server startup. Instead, it should be built during one of the following parts:
 
 1.  **Local Development:** Manually built by developers before committing or testing the download endpoint.
 2.  **CI/CD Pipeline (Recommended):** Built via GitHub Actions (or similar) prior to deploying the Docker container.

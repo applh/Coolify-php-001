@@ -7,7 +7,7 @@ Learn to build software that is fast, reliable, and verified.
 
 - **Lab 1: Manual Test Logs**
     - **Task**: Create a `docs/training/TEST-LOG.md`.
-    - **Exercise**: For every feature you build in Phase 2, write 5 manual test cases (e.g., "Clicking 'Save' without input shows error").
+    - **Exercise**: For every feature you build in Part 2, write 5 manual test cases (e.g., "Clicking 'Save' without input shows error").
 - **Lab 2: Unit Testing Logic**
     - **Reference**: `repo-php/class/Router.php`
     - **Task**: Identify a method that is easy to test (no external dependencies).

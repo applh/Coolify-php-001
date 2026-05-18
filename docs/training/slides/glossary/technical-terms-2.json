@@ -56,7 +56,7 @@
         "Explain the term 'Serialization' and 'Deserialization' in the context of passing a PHP object to a Vue frontend.",
         "How can a 'JSON Schema' be used to validate complex configuration files before they are saved to the database?"
       ],
-      "codeReferences": ["repo-react/src/sites.json", "docs/training/slides/phase1/module-intro.json"]
+      "codeReferences": ["repo-react/src/sites.json", "docs/training/slides/part1/module-intro.json"]
     },
     {
       "id": "H081-04",
@@ -385,7 +385,7 @@
     {
       "id": "H081-22",
       "title": "Type Safety",
-      "content": "Type Safety is the logical guarantee that a program will not attempt to perform operations on data that are incompatible with its defined type. In our FRAISE stack, we leverage the power of TypeScript on the frontend and Type Hinting in PHP to catch 'Type Mismatch' errors—like trying to perform arithmetic on a boolean or passing an array where a string is expected—during the development phase. This 'Early Detection' is vital for building robust systems; it turns runtime 'Crashes' into compile-time 'Corrections.' A type-safe codebase is essentially self-documenting, as the types themselves describe how data flows through the system. By committing to a type-safe architecture, we significantly reduce the 'Cognitive Load' on developers and ensuring that our multi-tenant platform remains stable, predictable, and remarkably easy to refactor as we introduce advanced AI-driven features and complex data models.",
+      "content": "Type Safety is the logical guarantee that a program will not attempt to perform operations on data that are incompatible with its defined type. In our FRAISE stack, we leverage the power of TypeScript on the frontend and Type Hinting in PHP to catch 'Type Mismatch' errors—like trying to perform arithmetic on a boolean or passing an array where a string is expected—during the development part. This 'Early Detection' is vital for building robust systems; it turns runtime 'Crashes' into compile-time 'Corrections.' A type-safe codebase is essentially self-documenting, as the types themselves describe how data flows through the system. By committing to a type-safe architecture, we significantly reduce the 'Cognitive Load' on developers and ensuring that our multi-tenant platform remains stable, predictable, and remarkably easy to refactor as we introduce advanced AI-driven features and complex data models.",
       "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><rect x='150' y='60' width='100' height='80' rx='10' fill='#0ea5e9' fill-opacity='0.1' stroke='#0ea5e9' stroke-width='3'/><path d='M175 100 L185 110 L220 80' fill='#0ea5e9' stroke='#0ea5e9' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#075985' font-weight='600'>Proactive Logical Constraint Verification</text></svg>",
       "tags": ["programming", "best-practices"],
       "links": [

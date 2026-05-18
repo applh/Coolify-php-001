@@ -58,8 +58,8 @@ Create a JSON manifest `data/agent_teams.json` to define the AI teams.
 - In the Vue frontend (`TrainingCenter.vue`), make sure `syncWithProd()` calls the local `/api/sync/admin-sync` using standard absolute paths without relying on hardcoded localhost ports.
 
 ---
-## Practical Lab: Phase 9 (Node.js Agents)
+## Practical Lab: Part 9 (Node.js Agents)
 **Goal:** Migrate and operate AI Agent team routines strictly within a Node server.
 **Reference:** `docs/ai-agents/node-vue-agent-teams-plan.md`
 **Exercise:** Extend `server.ts` schema to support `cron_expression` and build the `node-cron` dispatcher.
-**Complexity:** Phase 4
+**Complexity:** Part 4

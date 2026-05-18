@@ -4,7 +4,7 @@ To maximize productivity in Google AI Studio, it is critical to match the **Task
 
 ## 🚀 Development Timeline & Model Selection
 
-| Phase | Model Recommendation | Agent Role | Priority |
+| Part | Model Recommendation | Agent Role | Priority |
 | :--- | :--- | :--- | :--- |
 | **1. Brainstorming & Architecture** | **Gemini 1.5 Pro** | Product Architect | Deep Reasoning |
 | **2. Scaffolding & Initial Code** | **Gemini 1.5 Flash** | Rapid Developer | Speed / Cost |

@@ -1,0 +1,368 @@
+{
+  "moduleId": "M010-DRY",
+  "title": "DRY Principles & Refactoring Techniques",
+  "totalSlides": 20,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": "DRY-01",
+      "title": "Introduction to DRY",
+      "content": "DRY stands for 'Don't Repeat Yourself,' a core principle of software engineering introduced by Andy Hunt and Dave Thomas in The Pragmatic Programmer. The goal of DRY is to ensure that every piece of knowledge or logic within a system has a single, unambiguous, and authoritative representation. Duplication of logic is the root of all evil in software maintenance; when you repeat the same pattern in multiple places, you create a 'sync maintenance' nightmare. If a bug is found in one instance, it must be found and fixed in all others. By replacing repeating patterns with abstractions—such as shared functions, classes, or data normalization—you create a system that is far easier to understand, test, and evolve. In our FRAISE architecture, we strictly apply DRY by centralizing shared logic in the `repo-php/class/` directory, ensuring that our multi-tenant sites don't reinvent the wheel with every new deployment.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><circle cx='120' cy='100' r='30' fill='#ef4444' fill-opacity='0.1' stroke='#ef4444' stroke-width='2'/><circle cx='200' cy='100' r='30' fill='#ef4444' fill-opacity='0.1' stroke='#ef4444' stroke-width='2'/><circle cx='280' cy='100' r='40' fill='#22c55e' fill-opacity='0.2' stroke='#16a34a' stroke-width='2'/><path d='M140 100 H170' stroke='#64748b' stroke-width='2' stroke-dasharray='4'/><path d='M230 100 H240' stroke='#64748b' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#64748b'>Unification of Dispersed Logic</text></svg>",
+      "tags": ["philosophy", "fundamentals"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Don%27t_repeat_yourself",
+        "https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/",
+        "https://dzone.com/articles/is-your-code-dry-or-wet"
+      ],
+      "studentPrompts": [
+        "Why is duplication in a codebase considered a security risk as well as a maintenance burden?",
+        "Explain the difference between 'Structural Duplication' and 'Conceptual Duplication.' When should you actually repeat code?",
+        "How does the DRY principle relate to the concept of a 'Single Source of Truth' in database design?"
+      ],
+      "codeReferences": ["repo-php/class/Component.php"]
+    },
+    {
+      "id": "DRY-02",
+      "title": "The Dangers of WET Code",
+      "content": "WET stands for 'Write Everything Twice' (or 'We Enjoy Typing'), and it is the direct opposite of the DRY principle. WET code is a ticking time bomb for any long-lived software project. When you copy-paste a block of logic to save time in the short term, you are effectively taking out a high-interest technical debt loan. Every time that duplicated logic needs to change—whether to fix a bug, improve performance, or adapt to a new requirement—you increase the probability of introducing an 'Inconsistency Bug.' An engineer might fix the issue in two places but forget the third, leading to subtle, hard-to-track errors that only appear in specific production edge cases. In the context of a multi-tenant CMS like FRAISE, WET code at the core level could result in inconsistent behavior across thousands of sites, making the platform fragile and unpredictable as it scales into the enterprise realm.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff1f2'/><rect x='80' y='60' width='80' height='40' rx='4' fill='#e11d48' fill-opacity='0.1' stroke='#e11d48' stroke-width='2'/><rect x='240' y='60' width='80' height='40' rx='4' fill='#e11d48' fill-opacity='0.1' stroke='#e11d48' stroke-width='2'/><path d='M160 120 L240 120' stroke='#e11d48' stroke-width='2' stroke-dasharray='4'/><circle cx='200' cy='120' r='10' fill='#e11d48'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#881337'>WET Code: The Maintenance Bomb</text></svg>",
+      "tags": ["quality", "maintenance"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Don%27t_repeat_yourself#WET",
+        "https://blog.codinghorror.com/the-dry-principle/",
+        "https://dev.to/the_one_who_codes/dry-vs-wet-code-a-comprehensive-guide-2l1d"
+      ],
+      "studentPrompts": [
+        "Describe a scenario where a 'Fast Fix' in a WET codebase led to a regression in a seemingly unrelated part of the system.",
+        "How does WET code impact the 'Cognitive Load' of a new developer joining a project?",
+        "Discuss the relationship between code duplication and the violation of the 'Single Responsibility Principle' (SRP)."
+      ],
+      "codeReferences": ["repo-php/public/index.php"]
+    },
+    {
+      "id": "DRY-03",
+      "title": "When to Refactor: The Rule of Three",
+      "content": "One of the most challenging aspects of software engineering is knowing **when** to abstract. Abstracting too early (Premature Abstraction) can lead to complex, over-engineered code that is hard to change. The 'Rule of Three' provides a practical heuristic: the first time you write a piece of logic, you just write it. The second time you do something similar, you might wince at the duplication, but you allow it to exist to ensure the pattern is truly recurring. The third time you find yourself writing the same logic, you have gathered enough context to design a robust, reusable abstraction. This approach ensures that your abstractions are based on real-world usage patterns rather than theoretical projections. In the FRAISE project, we apply this by watching our demo sites: if three different sites require the same custom form handler, that logic is immediately promoted from the site level to a shared plugin or core class.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><circle cx='80' cy='100' r='20' fill='#22c55e' fill-opacity='0.1' stroke='#22c55e' stroke-width='1'/><circle cx='160' cy='100' r='20' fill='#16a34a' fill-opacity='0.2' stroke='#16a34a' stroke-width='1'/><circle cx='280' cy='100' r='40' fill='#15803d' fill-opacity='0.3' stroke='#15803d' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#14532d'>The Rule of Three: Pattern Recognition</text></svg>",
+      "tags": ["refactoring", "strategy"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Rule_of_three_(computer_programming)",
+        "https://blog.codinghorror.com/rule-of-three/",
+        "https://martinfowler.com/bliki/ThreeStrikesAndYouRefactor.html"
+      ],
+      "studentPrompts": [
+        "Why is it sometimes better to have 'two copies' of a piece of logic instead of a 'wrong abstraction'?",
+        "Explain how the 'Rule of Three' balances development speed with long-term code quality.",
+        "How can code reviews be used to identify when a piece of logic has reached the 'Third Strike' and needs refactoring?"
+      ],
+      "codeReferences": ["repo-php/class/View.php"]
+    },
+    {
+      "id": "DRY-04",
+      "title": "Abstraction as a Solution",
+      "content": "Abstraction is the primary tool an engineer uses to solve the problem of complexity. It involves pulling out specific, recurring behaviors into a generalized form that can be reused across the system. For example, in our `repo-php` core, the `DB.php` class abstracts the entire process of connecting to a database, handling errors, and executing queries. Instead of repeating the same 20 lines of connection logic in every Model, we simply call a single static method. This not only makes our Models cleaner but also ensures that if we decide to change our database from SQLite to PostgreSQL, we only have to update a single file. Abstraction is about hiding the 'How' so you can focus on the 'What.' By building a library of high-quality abstractions, you create a tailored language or Framework that allows you to express your site's unique features with minimal repetition and maximum clarity.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='100' y='60' width='200' height='80' rx='8' fill='#3b82f6' fill-opacity='0.1' stroke='#3b82f6' stroke-width='2'/><path d='M130 100 H270' stroke='#3b82f6' stroke-width='2' stroke-linecap='round'/><path d='M150 80 V120' stroke='#3b82f6' stroke-width='1' stroke-dasharray='4'/><text x='200' y='170' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af'>Clean Interfaces over Hidden Complexity</text></svg>",
+      "tags": ["oop", "reusability"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Abstraction_(computer_science)",
+        "https://www.freecodecamp.org/news/what-is-abstraction-in-computer-science/",
+        "https://stackify.com/oop-concept-abstraction/"
+      ],
+      "studentPrompts": [
+        "Explain the difference between 'Data Abstraction' and 'Procedural Abstraction.'",
+        "How does a 'Leaky Abstraction' fail to protect the developer from underlying complexity?",
+        "Discuss the relationship between Abstraction and the 'Open-Closed Principle' (OCP)."
+      ],
+      "codeReferences": ["repo-php/class/DB.php"]
+    },
+    {
+      "id": "DRY-05",
+      "title": "Refactoring: Definition",
+      "content": "Refactoring is a disciplined technique for restructuring an existing body of code, altering its internal structure without changing its external behavior. As Martin Fowler, the author of the seminal book on the subject, puts it: 'Refactoring is the process of changing a software system in such a way that it does not alter the external behavior of the code yet improves its internal structure.' This is a critical distinction—if you are adding features or fixing bugs, you are not refactoring. Refactoring is purely about cleaning the 'kitchen' of your codebase so that adding future features becomes faster and safer. In the modern ERA, AI agents like our refactoring algorithm in `docs/ai-agents/` can assist in this process by identifying patterns and suggesting structural improvements that maintain the exact same functionality while significantly increasing the code's readability and maintainability.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><path d='M100 100 Q200 40 300 100 T100 100' stroke='#a21caf' stroke-width='2' fill='none' stroke-dasharray='5'/><rect x='180' y='80' width='40' height='40' rx='4' fill='#a21caf' fill-opacity='0.1' stroke='#a21caf' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75'>Structural Evolution, Constant Behavior</text></svg>",
+      "tags": ["refactoring", "quality"],
+      "links": [
+        "https://refactoring.com/",
+        "https://martinfowler.com/books/refactoring.html",
+        "https://en.wikipedia.org/wiki/Code_refactoring"
+      ],
+      "studentPrompts": [
+        "Why is it essential to have a robust suite of tests before beginning a major refactoring session?",
+        "Compare 'Boy Scout Rule' refactoring (continuous) with 'Scheduled' refactoring (big chunks). Which is more effective?",
+        "How can you prove to a non-technical stakeholder that refactoring is a valuable use of engineering time?"
+      ],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": "DRY-06",
+      "title": "The Refactoring Cycle",
+      "content": "Effective refactoring is performed in small, verifiable steps, often following the 'Red-Green-Refactor' cycle derived from Test-Driven Development (TDD). First, you ensure you have a failing test that describes the missing behavior (Red). Then, you write the minimal amount of code required to make the test pass (Green). Finally, and most importantly for this module, you **Refactor** the passing code to remove duplication, improve naming, and simplify the logic, while ensuring that the tests stay 'Green' the entire time. This cycle provides a safety net that allows you to aggressively clean up your codebase without the fear of breaking production. In our training, the `TESTING-AND-OPTIMIZATION.md` guide outlines how to apply this cycle to the complex hierarchy and plugin logic of our multi-tenant CMS, ensuring that every architectural improvement is backed by 100% confidence in its correctness.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><circle cx='120' cy='100' r='30' fill='#ef4444' fill-opacity='0.2' stroke='#ef4444' stroke-width='2'/><circle cx='200' cy='100' r='30' fill='#22c55e' fill-opacity='0.2' stroke='#16a34a' stroke-width='2'/><circle cx='280' cy='100' r='30' fill='#3b82f6' fill-opacity='0.2' stroke='#2563eb' stroke-width='2'/><path d='M150 100 H170 M230 100 H250' stroke='#64748b' stroke-width='2' stroke-linecap='round'/><text x='120' y='150' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#ef4444'>Red</text><text x='200' y='150' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#16a34a'>Green</text><text x='280' y='150' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#2563eb'>Refactor</text></svg>",
+      "tags": ["testing", "workflow"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Test-driven_development",
+        "https://www.freecodecamp.org/news/test-driven-development-tutorial-how-to-write-unit-tests/",
+        "https://martinfowler.com/bliki/RedGreenRefactor.html"
+      ],
+      "studentPrompts": [
+        "How does the 'Refactor' step in Red-Green-Refactor differ from simply 'fixing' a bug?",
+        "Describe the risk of skipping the 'Refactor' part in a high-pressure development environment.",
+        "How can automated CI/CD pipelines enforce the 'Green' state during a collaborative refactoring sprint?"
+      ],
+      "codeReferences": ["docs/training/TESTING-AND-OPTIMIZATION.md"]
+    },
+    {
+      "id": "DRY-07",
+      "title": "Extract Method",
+      "content": "'Extract Method' is the most common and powerful refactoring technique in an engineer's arsenal. It is the process of taking a fragment of code inside a large function that can be grouped together, and turning it into a separate method with a name that clearly explains its purpose. This technique serves two vital goals: it significantly improves readability by turning 'opaque' code blocks into 'declarative' method calls, and it exposes logic that can now be reused by other parts of the class. For example, in our `CMS.php` orchestrator, we might have a massive block of logic that resolves a site's unique configuration from the filesystem. By extracting this into a method called `resolveSiteConfig()`, we make the main execution path easier to follow and create a reusable utility for our benchmarking and AI tools. If you find yourself writing a comment to describe a block of code, that block is a perfect candidate for an 'Extract Method' refactoring.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><rect x='80' y='40' width='120' height='120' rx='4' fill='#0ea5e9' fill-opacity='0.05' stroke='#0ea5e9' stroke-width='2'/><path d='M100 70 H180 M100 90 H180' stroke='#38bdf8' stroke-width='2' stroke-dasharray='4'/><rect x='240' y='80' width='100' height='40' rx='4' fill='#0ea5e9' fill-opacity='0.2' stroke='#0ea5e9' stroke-width='2'/><path d='M180 80 L240 100' stroke='#0ea5e9' stroke-width='1.5' stroke-dasharray='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#075985'>Naming Logic Fragments</text></svg>",
+      "tags": ["refactoring", "technique"],
+      "links": [
+        "https://refactoring.guru/extract-method",
+        "https://www.refactoring.com/catalog/extractMethod.html",
+        "https://sourcemaking.com/refactoring/extract-method"
+      ],
+      "studentPrompts": [
+        "What are the criteria for a 'Successful' method extraction? What should the name represent?",
+        "Explain the benefit of extracting methods even if they are only called in one place.",
+        "How do you handle local variables when extracting a block of code into a new method?"
+      ],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": "DRY-08",
+      "title": "Inline Method",
+      "content": "While extraction is the most common path, sometimes we encounter 'Over-Engineering' where logic has been sliced into too many tiny, unneeded pieces. 'Inline Method' is the opposite of Extract Method—if a method's body is just as clear as its name, you should put the method's body directly into its callers and remove the method entirely. This technique is used to simplify systems where developers have created 'Wrapper Methods' that provide no additional abstraction or logic, only adding unnecessary layers of indirect calls that make the code harder to follow. In our `Controller.php` architecture, we use Inlining to remove redundant pass-through methods that were once used for legacy compatibility, ensuring that our execution stack remains lean and our logic flows directly from source to destination without unneeded detours.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><rect x='80' y='40' width='120' height='120' rx='4' fill='#a21caf' fill-opacity='0.1' stroke='#a21caf' stroke-width='2'/><rect x='240' y='80' width='100' height='40' rx='4' fill='#a21caf' fill-opacity='0.05' stroke='#a21caf' stroke-width='1' stroke-dasharray='4'/><path d='M240 100 L200 100' stroke='#a21caf' stroke-width='2' stroke-dasharray='4'><animate attributeName='stroke-dashoffset' from='0' to='10' dur='1s' repeatCount='indefinite'/></path><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75'>Collapsing Redundant Abstractions</text></svg>",
+      "tags": ["refactoring", "clean-code"],
+      "links": [
+        "https://refactoring.guru/inline-method",
+        "https://www.refactoring.com/catalog/inlineMethod.html",
+        "https://sourcemaking.com/refactoring/inline-method"
+      ],
+      "studentPrompts": [
+        "In what scenario does an abstraction become a 'Hindrance' rather than a 'Help'?",
+        "Explain the relationship between 'Inline Method' and the 'YAGNI' (You Ain't Gonna Need It) principle.",
+        "How can you identify methods that have been extracted 'Prematurely' and are candidates for inlining?"
+      ],
+      "codeReferences": ["repo-php/class/Controller.php"]
+    },
+    {
+      "id": "DRY-09",
+      "title": "Replace Temp with Query",
+      "content": "Temporary variables (temps) often make a function difficult to understand by adding state that must be tracked across the function's lifecycle. 'Replace Temp with Query' is a technique where you replace a temporary variable with a call to a method (the query). This is particularly effective when the temp is holding the result of an expression that is used multiple times. By extracting the expression into a method, you make the logic available to the rest of the class and eliminate the need for the variable. In our `Model.php` implementation, instead of storing a database connection string in a temp, we use a `getDsn()` query method. This ensures that the DSN is always recalculated (or fetched from a safe cache) correctly every time it is needed, preventing 'State Drift' bugs where a temp variable becomes stale after a configuration change.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fffbeb'/><rect x='100' y='40' width='100' height='30' fill='#d97706' fill-opacity='0.1' stroke='#d97706' stroke-width='1' stroke-dasharray='4'/><path d='M200 55 L250 55' stroke='#d97706' stroke-width='3'/><circle cx='270' cy='55' r='10' fill='#d97706' fill-opacity='0.2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#92400e'>Eliminating Ephemeral Variable State</text></svg>",
+      "tags": ["refactoring", "logic"],
+      "links": [
+        "https://refactoring.guru/replace-temp-with-query",
+        "https://www.refactoring.com/catalog/replaceTempWithQuery.html",
+        "https://sourcemaking.com/refactoring/replace-temp-with-query"
+      ],
+      "studentPrompts": [
+        "Discuss the performance implications of 'Replace Temp with Query.' Is it always worth the extra method call?",
+        "How does eliminating temp variables simplify the 'Extract Method' refactoring process?",
+        "Describe a case where a temp variable is actually better than a query (e.g., highly expensive calculations)."
+      ],
+      "codeReferences": ["repo-php/class/Model.php"]
+    },
+    {
+      "id": "DRY-10",
+      "title": "Decomposing Conditionals",
+      "content": "Conditional logic is one of the most common places for complexity to hide and bugs to thrive. Large `if-then-else` blocks with complex boolean expressions are often difficult to read and even harder to debug. 'Decomposing Conditionals' involves extracting the 'condition' part of the block, as well as the 'then' and 'else' bodies, into separate methods with descriptive names. This transforms a block of arcane logic into a narrative that reads like a story: `if (isSiteActive()) { loadProductionTheme(); } else { redirectToMaintenance(); }`. In our `Router.php`, this technique is essential for handling the complex overlapping rules of site resolution and plugin hooks, ensuring that even the most intricate routing logic remains transparent and maintainable for any engineer who reads the code.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf2f8'/><path d='M100 60 L140 100 L100 140' stroke='#be185d' stroke-width='3' fill='none'/><rect x='160' y='50' width='120' height='30' rx='4' fill='#be185d' fill-opacity='0.1' stroke='#be185d' stroke-width='1'/><rect x='160' y='120' width='120' height='30' rx='4' fill='#be185d' fill-opacity='0.05' stroke='#be185d' stroke-width='1' stroke-dasharray='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#831843'>Narrative Conditional Logic</text></svg>",
+      "tags": ["refactoring", "readability"],
+      "links": [
+        "https://refactoring.guru/decompose-conditional",
+        "https://www.refactoring.com/catalog/decomposeConditional.html",
+        "https://sourcemaking.com/refactoring/decompose-conditional"
+      ],
+      "studentPrompts": [
+        "Why is it better to have an `isAuthorized()` method instead of a complex check against `$_SESSION['user_role'] === 'admin'` inline?",
+        "Explain how decomposing conditionals helps in preventing 'Logical Errors' during complex state transitions.",
+        "How can this technique be used to improve the accessibility of your codebase for junior developers?"
+      ],
+      "codeReferences": ["repo-php/class/Router.php"]
+    },
+    {
+      "id": "DRY-11",
+      "title": "Consolidate Duplicate Conditional Fragments",
+      "content": "Sometimes you find the exact same fragment of code in all branches of a conditional expression. This is a classic violation of the DRY principle that often occurs as code evolved over time and developers 'safely' added the same logic to every branch of an `if-else` block. 'Consolidate Duplicate Conditional Fragments' simply means moving that common logic outside of the conditional expression entirely. This not only reduces the total number of lines but, more importantly, it makes it clear that this logic is *always* executed regardless of the condition. In our `App.php` bootstrap, we discovered that various environment checks were all manually initializing the Log, so we consolidated that into a single call before the branching logic, ensuring a predictable system state for the entire execution lifecycle.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdfa'/><path d='M100 80 Q200 40 300 80' stroke='#0d9488' stroke-width='1' stroke-dasharray='4'/><path d='M100 120 Q200 160 300 120' stroke='#0d9488' stroke-width='1' stroke-dasharray='4'/><rect x='150' y='90' width='100' height='20' fill='#0d9488' fill-opacity='0.2' stroke='#0d9488' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#115e59'>Hoisting Commonalities</text></svg>",
+      "tags": ["dry", "logic"],
+      "links": [
+        "https://refactoring.guru/consolidate-duplicate-conditional-fragments",
+        "https://www.refactoring.com/catalog/consolidateDuplicateConditionalFragments.html",
+        "https://sourcemaking.com/refactoring/consolidate-duplicate-conditional-fragments"
+      ],
+      "studentPrompts": [
+        "Explain why duplicated code inside an `if-else` block is harder to maintain than the same code outside the block.",
+        "How can this refactoring reveal deeper architectural flaws in how conditions were designed?",
+        "Discuss the impact of this technique on code coverage and testing requirements."
+      ],
+      "codeReferences": ["repo-php/class/App.php"]
+    },
+    {
+      "id": "DRY-12",
+      "title": "Replace Magic Number with Symbolic Constant",
+      "content": "A 'Magic Number' is a literal number with a special, non-obvious meaning that appears directly in the code. For example, seeing `if ($count > 10)` leaves the next developer wondering: 'Why 10? What happens if it's 11?'. 'Replace Magic Number with Symbolic Constant' is the process of replacing these literals with named constants that provide context and a single point of change. Instead of 10, we use `const MAX_SYNC_SITES = 10;`. This simple change makes the code 'Self-Documenting.' In our Python automated site generator (`repo-python/sites.json`), we use this technique extensively to define timeout limits, retry counts, and layout constraints, ensuring that our AI agents understand the 'Rules' of the system as clearly as our human developers do.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><text x='100' y='100' font-family='monospace' font-size='24' fill='#a21caf'>42</text><path d='M150 90 L200 90' stroke='#a21caf' stroke-width='2' stroke-dasharray='4'/><text x='210' y='100' font-family='monospace' font-size='18' fill='#701a75'>THE_ANSWER</text><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#701a75'>Meaning through Names</text></svg>",
+      "tags": ["clean-code", "standards"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Magic_number_(programming)",
+        "https://refactoring.guru/replace-magic-number-with-symbolic-constant",
+        "https://sourcemaking.com/refactoring/replace-magic-number-with-symbolic-constant"
+      ],
+      "studentPrompts": [
+        "Why is it better to define a constant like `STATUS_ACTIVE = 1` instead of using the number 1 throughout your codebase?",
+        "Explain the benefit of using constants for strings (Enums) in addition to numbers.",
+        "How can defining magic numbers as constants help in the translation or internationalization (i18n) of an application?"
+      ],
+      "codeReferences": ["repo-python/sites.json"]
+    },
+    {
+      "id": "DRY-13",
+      "title": "Smell: Long Method",
+      "content": "The 'Long Method' is one of the most common and damaging 'Code Smells.' A method that spans hundreds of lines is effectively a black box of hidden state and complex logic that is incredibly difficult for any human (or AI) to reason about. As a general heuristic, any method longer than 20-30 lines should be looked at with suspicion. Long methods usually violate the **Single Responsibility Principle (SRP)** by trying to do too much at once—fetching data, validating it, transforming it, and rendering it. By decomposing these giants into smaller, focused sub-methods, you make your code modular, testable, and significantly easier to evolve. In our `Layout.php` class, we once had a massive `render()` method that we've since refactored into focused pieces like `renderHeader()`, `renderSidebar()`, and `renderFooter()`, turning a monolith into a manageable system.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='150' y='20' width='100' height='160' rx='4' fill='#3b82f6' fill-opacity='0.1' stroke='#3b82f6' stroke-width='2' stroke-dasharray='4'/><path d='M160 40 H240 M160 60 H240 M160 80 H240 M160 100 H240 M160 120 H240' stroke='#3b82f6' stroke-width='1'/><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#1e40af'>Opaque Monolith</text></svg>",
+      "tags": ["code-smell", "architecture"],
+      "links": [
+        "https://refactoring.guru/smells/long-method",
+        "https://sourcemaking.com/refactoring/smells/long-method",
+        "https://blog.codinghorror.com/code-smells/"
+      ],
+      "studentPrompts": [
+        "In your own words, why is 'Long Method' the root cause of many other code smells like 'Long Parameter List'?",
+        "What is the 'Rule of Thumb' for determining if a method is 'too long'?",
+        "How can the use of 'Sub-methods' improve the performance of an application through focused caching?"
+      ],
+      "codeReferences": ["repo-php/class/Layout.php"]
+    },
+    {
+      "id": "DRY-14",
+      "title": "Smell: Large Class",
+      "content": "A 'Large Class' is the architectural equivalent of a Long Method—it is a class that has taken on too many responsibilities and 'knows' too much about the rest of the system. These 'God Objects' become centralization points that every other part of the app depends on, making them a major bottleneck for both development and performance. Large classes often show up as having a massive number of instance variables and methods that seem unrelated. The solution is to identify cohesive 'Clusters' of logic within the large class and extract them into their own separate, focused classes. For example, our `CMS.php` orchestrator is a candidate for this—as it grows, we might extract its 'Template Resolution' logic into a separate `Hierarchy` class and its 'Plugin Loading' logic into a `PluginManager`, keeping the core core lean and focused on high-level orchestration only.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fefce8'/><circle cx='200' cy='80' r='60' fill='#eab308' fill-opacity='0.1' stroke='#eab308' stroke-width='3'/><path d='M100 100 Q150 150 200 100 T300 100' stroke='#eab308' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#854d0e'>The God Object Bottleneck</text></svg>",
+      "tags": ["code-smell", "srp"],
+      "links": [
+        "https://refactoring.guru/smells/large-class",
+        "https://sourcemaking.com/refactoring/smells/large-class",
+        "https://en.wikipedia.org/wiki/God_object"
+      ],
+      "studentPrompts": [
+        "Explain the 'Single Responsibility Principle' (SRP) and how a Large Class violates it.",
+        "How can 'Delegation' be used to slim down a Large Class without breaking its existing API?",
+        "Discuss the impact of 'God Objects' on a team's ability to perform parallel development."
+      ],
+      "codeReferences": ["repo-php/class/CMS.php"]
+    },
+    {
+      "id": "DRY-15",
+      "title": "Refactoring Tool: ESLint",
+      "content": "Refactoring doesn't have to be a purely manual process. Linters like ESLint act as automated code reviewers that can 'smell' technical debt before it even reaches your repository. By defining a set of rules (in `eslint.config.js`), you can force the system to warn you whenever a method exceeds a certain length, whenever a variable is shadowed, or whenever a complex conditional could be simplified. In our FRAISE environment, ESLint is our first line of defense; it ensures that every line of TypeScript or Vue code we write adheres to a consistent, professional standard. Many of these rules can even be 'auto-fixed,' allowing the linter to perform hundreds of minor refactorings across your codebase in milliseconds, freeing you to focus on high-level architectural improvements.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><rect x='150' y='50' width='100' height='100' rx='10' fill='#7c3aed' fill-opacity='0.1' stroke='#7c3aed' stroke-width='2'/><path d='M170 80 L190 100 L230 70' stroke='#7c3aed' stroke-width='3' fill='none'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6'>Automated Static Quality Gate</text></svg>",
+      "tags": ["tools", "automation"],
+      "links": [
+        "https://eslint.org/",
+        "https://developer.mozilla.org/en-US/docs/Glossary/Linter",
+        "https://modernweb.com/what-is-linting-and-why-is-it-important/"
+      ],
+      "studentPrompts": [
+        "How can a Linter help a team maintain a consistent 'Shape' to their code even with multiple contributors?",
+        "Explain the difference between a 'Warning' and an 'Error' in a linter configuration.",
+        "How would you configure a linter to automatically detect 'Long Methods' that exceed 50 lines?"
+      ],
+      "codeReferences": ["eslint.config.js"]
+    },
+    {
+      "id": "DRY-16",
+      "title": "Refactoring Tool: IDE Refactoring",
+      "content": "Modern Integrated Development Environments (IDEs) like VS Code or JetBrains provide a suite of built-in refactoring tools that are far safer and faster than manual text editing. Features like 'Global Rename', 'Extract Method', and 'Change Signature' use a deep understanding of the program's Abstract Syntax Tree (AST) to ensure that a change is applied correctly across the entire project. If you rename a class in `CMS.php`, the IDE will automatically find and update all references in `Router.php`, `App.php`, and every demo site instance instantly. This drastically reduces the risk of 'Broken Link' bugs and allows you to perform major structural reorganizations with confidence. Learning to use these 'Shortcuts to Quality' is a hallmark of an expert engineer who values their focus and refuses to spend time on repetitive, error-prone manual labor.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><path d='M100 100 L300 100' stroke='#3b82f6' stroke-width='4' stroke-linecap='round'/><path d='M280 80 L300 100 L280 120' fill='none' stroke='#3b82f6' stroke-width='4'/><rect x='120' y='40' width='160' height='120' rx='8' fill='#3b82f6' fill-opacity='0.05' stroke='#3b82f6' stroke-width='1'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af'>AST-Aware structural transformations</text></svg>",
+      "tags": ["tools", "dx"],
+      "links": [
+        "https://code.visualstudio.com/docs/editor/refactoring",
+        "https://www.jetbrains.com/help/idea/refactoring-source-code.html",
+        "https://en.wikipedia.org/wiki/Abstract_syntax_tree"
+      ],
+      "studentPrompts": [
+        "Why is it safer to use an IDE's 'Rename Symbol' tool compared to a global 'Find and Replace'?",
+        "Describe how an IDE's 'Extract to Method' feature handles the scope of local variables automatically.",
+        "How can you use 'Move File' refactoring to reorganize your directory structure without breaking imports?"
+      ],
+      "codeReferences": ["tsconfig.json"]
+    },
+    {
+      "id": "DRY-17",
+      "title": "Technical Debt vs. Refactoring",
+      "content": "Technical Debt is a metaphor for the long-term cost of taking shortcuts during software development. Like financial debt, technical debt isn't always bad—sometimes you must 'borrow' time by writing imperfect code to hit a critical market deadline. However, just like financial debt, you must pay 'Interest' in the form of slower development cycles, more bugs, and increased fragility. Refactoring is the act of 'Paying Down the Principal' of your technical debt. Regular, incremental refactoring prevents the interest from ballooning into a state of 'Technical Bankruptcy,' where the codebase becomes so messy that it is no longer profitable to change it. In the FRAISE project, our AI-assisted refactoring algorithm provided in `docs/ai-agents/` is designed to help engineers identify the most expensive areas of debt and perform automated 'Structural Payments' to keep the system lean and profitable for the long term.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fef2f2'/><path d='M100 160 L100 60 M100 160 H300' stroke='#ef4444' stroke-width='2'/><path d='M100 140 Q200 140 300 40' stroke='#ef4444' stroke-width='4' fill='none' stroke-linecap='round'/><path d='M300 40 L280 40 M300 40 L300 60' stroke='#ef4444' stroke-width='3' fill='none'/><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#7f1d1d'>The Compounding Interest of Chaos</text></svg>",
+      "tags": ["engineering", "management"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Technical_debt",
+        "https://martinfowler.com/bliki/TechnicalDebtQuadrant.html",
+        "https://www.productplan.com/glossary/technical-debt/"
+      ],
+      "studentPrompts": [
+        "Describe the 'Technical Debt Quadrant.' What is the difference between 'Reckless' and 'Prudent' debt?",
+        "Explain how the 'Interest' on technical debt manifests in a real-world engineering team's daily velocity.",
+        "How can a team track their technical debt levels to ensure they don't reach 'Bankruptcy'?"
+      ],
+      "codeReferences": ["docs/ai-agents/ai-refactoring-algorithm.md"]
+    },
+    {
+      "id": "DRY-18",
+      "title": "Premature Abstraction",
+      "content": "'Premature Abstraction' is the dark mirror of the DRY principle. It happens when an engineer tries to build complex, generalized solutions for problems that haven't actually materialized yet. This often leads to 'Indirect' and 'Overly-Generic' code that is significantly harder to understand and change than the simple, duplicated code it replaced. As Sandi Metz famously said: 'A little duplication is better than a wrong abstraction.' The 'Wrong Abstraction' creates a rigid framework that forces future requirements into a shape they don't fit, leading to 'Dirty Hacks' and even more technical debt. In our `Store.php` class, we maintain a very simple file-system abstraction—we avoid adding complex cloud-syncing or multi-region support until our tenants actually require it, ensuring that our code remains grounded in real-world needs and easy for anyone to extend when the time comes.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><rect x='100' y='60' width='200' height='80' rx='8' fill='#64748b' fill-opacity='0.1' stroke='#64748b' stroke-width='2'/><path d='M100 40 L150 60 M250 60 L300 40' stroke='#64748b' stroke-width='1' stroke-dasharray='4'/><text x='200' y='170' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#334155'>The Trap of Theoretical Complexity</text></svg>",
+      "tags": ["philosophy", "strategy"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Overengineering",
+        "https://www.sandimetz.com/blog/2016/1/20/the-wrong-abstraction",
+        "https://thoughtbot.com/blog/benchmarking-premature-abstraction"
+      ],
+      "studentPrompts": [
+        "Why is it harder to undo a 'Wrong Abstraction' than it is to refactor duplicated code?",
+        "Explain the 'YAGNI' (You Ain't Gonna Need It) principle in the context of library design.",
+        "How can a team differentiate between a 'Necessary Foundation' and 'Premature Abstraction'?"
+      ],
+      "codeReferences": ["repo-php/class/Store.php"]
+    },
+    {
+      "id": "DRY-19",
+      "title": "DRY in CSS: Variable Usage",
+      "content": "The DRY principle applies just as much to visual design as it does to backend logic. In a large project, repeating the same hex code (like `#3b82f6`) or spacing value (like `16px`) hundreds of times in separate CSS files is a maintenance nightmare. If the brand color changes, you must perform a massive, error-prone global search and replace. The solution is to use CSS Variables or a utility-first framework like Tailwind CSS (which we use in `repo-php/public/css/style.css`). By defining a single, authoritative 'Design System'—a set of variables for colors, typography, and spacing—you ensure that any change to the brand or layout can be applied across the entire system by updating a single configuration. This ensures that the sites `site1.com`, `site2.com`, and the central dashboard all share a perfectly synchronized, professional visual identity with minimal effort.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#eff6ff'/><rect x='50' y='80' width='30' height='30' rx='4' fill='#3b82f6'/><rect x='100' y='80' width='30' height='30' rx='4' fill='#3b82f6'/><rect x='150' y='80' width='30' height='30' rx='4' fill='#3b82f6'/><path d='M230 95 H300' stroke='#3b82f6' stroke-width='2' stroke-dasharray='4'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#1e40af'>A Single Authoritative Brand Color</text></svg>",
+      "tags": ["frontend", "dry"],
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties",
+        "https://tailwindcss.com/docs/reusing-styles",
+        "https://scrimba.com/articles/dry-css-variables/"
+      ],
+      "studentPrompts": [
+        "Describe how Tailwind's 'Utility Classes' implement the DRY principle without traditional CSS inheritance.",
+        "What are the benefits of using CSS variables over just Hard-Coding values in a small project?",
+        "How can a Design System help bridge the communication gap between designers and developers?"
+      ],
+      "codeReferences": ["repo-php/public/css/style.css"]
+    },
+    {
+      "id": "DRY-20",
+      "title": "Summary: The Goal of Refactoring",
+      "content": "The ultimate goal of refactoring and the DRY principle is not to achieve 'Perfect Code'—a theoretical impossibility—but to achieve 'Healthy Code.' Healthy code is easy to understand, easy to change, and resilient to errors. It is a codebase where the relationship between components is clear, where logic is not hidden in duplication, and where new features can be added without the fear of cascading failures. By mastering the techniques outlined in this module—from 'Extract Method' to 'Replace Magic Number'—you have transformed yourself from someone who just 'writes scripts' into a professional Software Engineer who can design and maintain long-lived, high-quality architectural ecosystems. As you continue on the FRAISE roadmap, always remember to look for duplication, value simplicity over cleverness, and treat your codebase with the care it deserves to remain a powerful tool for your creativity.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><circle cx='200' cy='100' r='60' fill='#22c55e' fill-opacity='0.1' stroke='#16a34a' stroke-width='2'/><path d='M170 100 L190 120 L230 80' stroke='#16a34a' stroke-width='4' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#166534' font-weight='600'>Engineering for Longevity</text></svg>",
+      "tags": ["summary", "philosophy"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Software_quality",
+        "https://martinfowler.com/books/refactoring.html",
+        "https://www.oreilly.com/library/view/clean-code-a/9780136083238/"
+      ],
+      "studentPrompts": [
+        "What was the most surprising refactoring technique you learned in this module and why?",
+        "How has your perspective on 'Code Quality' shifted after learning about the long-term impact of Technical Debt?",
+        "Discuss a piece of code you recently wrote—how would you apply the DRY principle to it differently today?"
+      ],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    }
+  ]
+}

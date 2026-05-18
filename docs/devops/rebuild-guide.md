@@ -4,7 +4,7 @@ This tutorial provides a step-by-step roadmap to rebuild and deploy this Multi-S
 
 ---
 
-## phase 1: Infrastructure & Accounts
+## part 1: Infrastructure & Accounts
 
 ### 1.1 Google Account & AI Studio
 1. **Create a Gmail Account**: If you don't have one, create a new Google account.
@@ -27,7 +27,7 @@ This tutorial provides a step-by-step roadmap to rebuild and deploy this Multi-S
 
 ---
 
-## Phase 2: Server Setup (Coolify)
+## Part 2: Server Setup (Coolify)
 
 ### 2.1 Install Coolify
 1. **SSH into your VPS**: `ssh root@your-vps-ip`
@@ -45,7 +45,7 @@ This tutorial provides a step-by-step roadmap to rebuild and deploy this Multi-S
 
 ---
 
-## Phase 3: Project Deployment
+## Part 3: Project Deployment
 
 ### 3.1 Deploying the Management Dashboard (Node.js)
 1. **Create New Application**: In Coolify, select **New Service** -> **Application**.
@@ -63,7 +63,7 @@ For each stack (e.g., `repo-php`, `repo-react`):
 
 ---
 
-## Phase 4: Maintenance & Iteration
+## Part 4: Maintenance & Iteration
 
 ### 4.1 Syncing AI Studio Changes
 When you make changes in Google AI Studio:

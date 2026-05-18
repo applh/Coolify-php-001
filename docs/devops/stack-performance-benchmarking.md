@@ -47,29 +47,29 @@ A critical component of the benchmark is how effectively an AI agent can proacti
 | **React/Vue** | `Vitest` / `Playwright` | Visual regression testing and DOM-based validation for UX consistency. |
 | **Python** | `pytest` | Extremely readable tracebacks that allow AI to pinpoint logic errors in async code. |
 
-## 5. Implementation Phases
+## 5. Implementation Parts
 
-### Phase 1: Baseline Environment Setup
+### Part 1: Baseline Environment Setup
 - Deploy all four stacks using the provided `docker-compose.yml` configurations on identical hardware (e.g., a single Coolify node).
 - Ensure all services are running without debug mode enabled (e.g., `APP_DEBUG=false` for PHP, `production` builds for JS).
 
-### Phase 2: Synthetic Load Testing
+### Part 2: Synthetic Load Testing
 Using **k6**, we will run scripts simulating concentrated traffic:
 - **Scenario A (Static)**: Fetching the index page 500 times with 50 virtual users.
 - **Scenario B (API)**: Fetching a 1MB JSON payload (simulated in PHP via `Model` and Python via `FastAPI`).
 - **Scenario C (Stress)**: Gradually increasing users until the service returns 5xx errors or latency exceeds 2 seconds.
 
-### Phase 3: AI Agent Efficiency Simulation
+### Part 3: AI Agent Efficiency Simulation
 We will execute identical refactoring tasks across all stacks (e.g., "Add a JWT-protected secret endpoint") and measure:
 - **Success Rate**: Did the agent produce functional code on the first attempt?
 - **Revision Count**: How many turns did the agent need to fix linting/syntax errors?
 - **Speed of Implementation**: Time elapsed for the agent to complete the task.
 
-### Phase 4: Automated Data Collection
+### Part 4: Automated Data Collection
 - Create a `benchmark-runner.sh` script to execute the tests sequentially.
 - Export results to a central `benchmarks/results.json`.
 
-### Phase 5: Analysis & Reporting
+### Part 5: Analysis & Reporting
 - Generate comparison charts (using `d3` or `recharts` in the CMS dashboard).
 - Document "Sweet Spots" for each technology.
 

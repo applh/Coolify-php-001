@@ -1,0 +1,45 @@
+{
+  "moduleId": "PHASE-1-INTRO",
+  "title": "Welcome to Full-Stack Engineering",
+  "totalSlides": 1000,
+  "bundleId": 1,
+  "slides": [
+    {
+      "id": "H000-01",
+      "title": "The Nature of Information Density",
+      "content": "In the modern era of software engineering, we are no longer just writing code; we are orchestrating vast amounts of structural logic and information density. In this program, you will process approximately 60MB of pure architectural data across multiple stacks. To put this in perspective, every single minute of the 1,000-hour total curriculum is equivalent to transmitting 1KB of high-fidelity engineering patterns directly into your cognitive framework. This density requires a shift from 'learning syntax' to 'understanding architectural flows'—where the relationship between files is as important as the code within them. By mastering this flow, you gain the ability to navigate complex polyglot environments where PHP, Go, Rust, and Python coexist within a single unified infrastructure. This course is designed to transition you from a developer who 'makes things work' to an architect who 'designs systems that scale' by focusing on the underlying patterns that remain constant across all programming languages, environments, and technologies.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><circle cx='200' cy='100' r='50' fill='#3b82f6' fill-opacity='0.2'/><path d='M150 100 Q200 50 250 100 T350 100' stroke='#3b82f6' stroke-width='2' fill='none'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#64748b'>Information Density Flow</text></svg>",
+      "tags": ["philosophy", "roadmap"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Information_theory",
+        "https://martinfowler.com/architecture/",
+        "https://www.cleanarch.com/"
+      ],
+      "studentPrompts": [
+        "Explain the concept of information density in the context of software architecture and how it differs from simple code complexity.",
+        "How does a polyglot environment improve a system's resilience to high information density requirements?",
+        "Compare the 'Library' vs 'Framework' approach to managing structural logic in a 1,000-hour curriculum."
+      ],
+      "codeReferences": ["docs/training/ROADMAP.md"]
+    },
+    {
+      "id": "H000-02",
+      "title": "Anatomy of the FRAISE * AI Software Engineer",
+      "content": "The FRAISE architecture represents a sophisticated hybrid approach to modern web development, bridging the gap between legacy reliability and cutting-edge performance. At its core, the system utilizes a robust PHP-based CMS (found in repo-php) which handles core logic, hierarchy management, and flexible templating. However, the ecosystem extends into specialized repositories for more intensive tasks: Go is utilized for high-concurrency operations, Rust for memory-safe systems programming, and Python for advanced AI and data processing workflows. Understanding the 'Glue'—the integration layer that allows these disparate stacks to communicate via standardized protocols—is the primary objective of this module. You will learn how to orchestrate a multi-stack environment where each language is chosen for its specific strengths, resulting in a system that is greater than the sum of its parts. This approach mirrors real-world enterprise architectures where engineers must navigate complex dependencies and maintain cohesion across diverse technical landscapes, preparing you for the most demanding roles in the AI-driven software industry.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fff7ed'/><path d='M100 50 L300 50 L300 150 L100 150 Z' fill='#fb923c' fill-opacity='0.1' stroke='#fb923c' stroke-width='2'/><circle cx='200' cy='100' r='30' fill='#ea580c' fill-opacity='0.2'/><path d='M200 70 V130 M170 100 H230' stroke='#ea580c' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#9a3412'>Modular Architecture Glue</text></svg>",
+      "tags": ["architecture", "polyglot"],
+      "links": [
+        "https://www.php.net/",
+        "https://go.dev/",
+        "https://www.rust-lang.org/",
+        "https://www.python.org/"
+      ],
+      "studentPrompts": [
+        "Analyze the trade-offs of using PHP for CMS logic vs using a modern language like Go for the same purpose.",
+        "How does the FRAISE architecture handle inter-process communication between the PHP core and the Python AI services?",
+        "Discuss the security implications of a multi-stack architecture and how to mitigate risks at the 'Glue' layer."
+      ],
+      "codeReferences": ["repo-php/class/CMS.php", "repo-go/main.go"]
+    }
+  ]
+}

@@ -44,7 +44,7 @@ When generating or modifying sites within the `content/` directory, the AI agent
     - **Goal**: What the student will learn.
     - **Reference**: The specific files/folders modified.
     - **Exercise**: A hands-on task to extend or debug the new feature.
-    - **Complexity**: Assign it to Phase 1 through 5 based on difficulty.
+    - **Complexity**: Assign it to Part 1 through 5 based on difficulty.
 - **Student Prompting**: Always remind the user that a new training lab is available for the feature just developed.
 
 ## 8. Training Content Hierarchy (60k Slides)

@@ -1,0 +1,96 @@
+{
+  "moduleId": "M073",
+  "title": "Coolify Setup & Deployment",
+  "slides": [
+    {
+      "id": "H720-01",
+      "title": "Modernizing the Deployment Cycle",
+      "content": "Traditional software deployments were notoriously slow, error-prone journeys that often involved manual FTP file transfers or the risky 'SSH + Git Pull' workflow directly on production servers. Modern engineering has evolved past these manual bottlenecks by treating Infrastructure as Code (IaC) and automating the entire lifecycle. At the heart of this transformation is CD (Continuous Deployment), where every push to a specific branch triggers an automated build and deployment process. We embrace Immutable Infrastructure, meaning instead of patching a running server, we build a completely new, hermetically sealed container image and swap the old one out. This approach, combined with Deep Observability—real-time logging and health checks—ensures that our FRAISE platform remains stable, predictable, and ready for rapid scaling across the global network.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f8fafc\"/><path d=\"M50 100 H150\" stroke=\"#3b82f6\" stroke-width=\"4\" stroke-dasharray=\"8\"><animate attributeName=\"stroke-dashoffset\" from=\"16\" to=\"0\" dur=\"1s\" repeatCount=\"indefinite\"/></path><circle cx=\"200\" cy=\"100\" r=\"40\" fill=\"#3b82f6\" fill-opacity=\"0.1\" stroke=\"#3b82f6\" stroke-width=\"2\"/><path d=\"M250 100 H350\" stroke=\"#22c55e\" stroke-width=\"4\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#64748b\">The Automated CI/CD Lifecycle</text></svg>",
+      "tags": ["devops", "deployment", "automation"],
+      "links": [
+        "https://en.wikipedia.org/wiki/Continuous_deployment",
+        "https://martinfowler.com/articles/continuousIntegration.html",
+        "https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment"
+      ],
+      "studentPrompts": [
+        "Explain the benefit of 'Immutable Infrastructure' compared to the traditional 'Mutable' server patching approach.",
+        "What is a 'Deployment Pipeline' and how does it catch errors before they reach a live user?",
+        "Discuss the importance of 'Rollback' capabilities in a professional Continuous Deployment environment."
+      ],
+      "codeReferences": ["docs/devops/deployment.md"]
+    },
+    {
+      "id": "H720-02",
+      "title": "Coolify: The Self-Hosted Heroku Alternative",
+      "content": "Coolify is a revolutionary open-source platform that brings the simplicity of a PaaS (Platform as a Service) to your own private infrastructure. It acts as a sophisticated orchestrator for Docker and Docker Compose, providing a polished web interface for managing complex, multi-service stacks without the overhead of Kubernetes. Coolify automates the most difficult parts of DevOps: it auto-detects changes in your GitHub or GitLab repositories, configures the Traefik reverse proxy for instant SSL and custom domain routing, and provides built-in health monitoring and log streaming. In our FRAISE ecosystem, Coolify allows us to manage our disparate PHP, Go, and Python services on a single node with enterprise-grade stability, providing a unified dashboard for orchestrating the entire lifecycle of our modular, AI-powered CMS.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#eff6ff\"/><rect x=\"100\" y=\"60\" width=\"200\" height=\"80\" rx=\"8\" fill=\"#2563eb\" fill-opacity=\"0.1\" stroke=\"#2563eb\" stroke-width=\"2\"/><circle cx=\"200\" cy=\"100\" r=\"20\" fill=\"#2563eb\" fill-opacity=\"0.2\"/><path d=\"M180 100 H220 M200 80 V120\" stroke=\"#2563eb\" stroke-width=\"2\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#1e40af\">Coolify: The Orchestration Command Center</text></svg>",
+      "tags": ["tools", "coolify", "paas"],
+      "links": [
+        "https://coolify.io/",
+        "https://docs.coolify.io/",
+        "https://github.com/coollabsio/coolify"
+      ],
+      "studentPrompts": [
+        "Compare 'Self-Hosted' PaaS like Coolify with managed alternatives like Heroku or Vercel. What are the trade-offs?",
+        "Explain how Coolify uses Docker and Docker Compose 'under the hood' to manage isolated application environments.",
+        "How does a Reverse Proxy like Traefik automatically manage SSL certificates for your custom domains in Coolify?"
+      ],
+      "codeReferences": ["docs/devops/rebuild-guide.md"]
+    },
+    {
+      "id": "H720-03",
+      "title": "Automating with Coolify Webhooks",
+      "content": "One of the most powerful features of Coolify is its 'Deploy Webhook' system, which allows external systems to trigger a full redeployment of an application programmatically. By sending a simple POST request to a unique API endpoint, we can integrate the deployment cycle directly into our own administrative tools or external CI/CD pipelines. For example, our FRAISE CMS manager can trigger a 'Force Redeploy' after a user performs a major structural update to their site core, ensuring that the latest changes are instantly reflected in the containerized environment. This event-driven approach eliminates the need for manual intervention and provides a high degree of integration between our application logic and our infrastructure orchestration, enabling a truly autonomous and responsive engineering ecosystem.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#fdf2f8\"/><path d=\"M50 100 H150\" stroke=\"#db2777\" stroke-width=\"2\" stroke-dasharray=\"4\"/><rect x=\"150\" y=\"80\" width=\"100\" height=\"40\" rx=\"4\" fill=\"#db2777\" fill-opacity=\"0.1\" stroke=\"#db2777\" stroke-width=\"2\"/><path d=\"M250 100 H350\" stroke=\"#db2777\" stroke-width=\"2\" stroke-dasharray=\"4\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#831843\">The Webhook: Event-Driven Infrastructure Control</text></svg>",
+      "tags": ["api", "automation", "integration"],
+      "links": [
+        "https://docs.coolify.io/automated-deployments/webhooks",
+        "https://en.wikipedia.org/wiki/Webhook",
+        "https://webhook.site/#!/ (For testing purposes)"
+      ],
+      "studentPrompts": [
+        "How does a 'Webhook' differ from a standard REST API call in terms of control flow?",
+        "Explain the security considerations of exposing a 'Deploy Webhook' to the public internet. How can you protect it?",
+        "Describe a scenario where a manual 'Deploy Now' button is superior to an fully-automated Git-push trigger."
+      ],
+      "codeReferences": ["docs/devops/coolify-setup-php.md", "repo-php/public/index.php", "repo-php/class/Router.php"]
+    },
+    {
+      "id": "H720-04",
+      "title": "Self-Updating Stacks via ZIP Archives",
+      "content": "While Git-based deployments are the gold standard for core code changes, certain scenarios—like rapid CMS site updates—require immediate 'Self-Updates' that bypass the full container rebuild cycle. Our Node.js stack utilizes the **adm-zip** library to implement a lightning-fast 'Hot Update' workflow. When a user uploads a ZIP archive of their site's assets or templates, our server extracts it directly into the active persistent storage directory. Because our PHP Router dynamically resolves files from this directory, the changes are live in milliseconds. This hybrid strategy allows us to maintain the security and consistency of Dockerized containers for the core engine while providing the extreme flexibility and speed of a traditional shared hosting environment for the client's unique content and assets.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f8fafc\"/><rect x=\"140\" y=\"60\" width=\"120\" height=\"80\" rx=\"4\" fill=\"#64748b\" fill-opacity=\"0.1\" stroke=\"#64748b\" stroke-width=\"2\"/><path d=\"M200 60 V140\" stroke=\"#64748b\" stroke-width=\"1\"/><path d=\"M170 100 L200 130 L230 100\" fill=\"none\" stroke=\"#64748b\" stroke-width=\"2\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#334155\">Hot-Update: ZIP-Based Rapid Content Sync</text></svg>",
+      "tags": ["zip", "performance", "cms"],
+      "links": [
+        "https://www.npmjs.com/package/adm-zip",
+        "https://en.wikipedia.org/wiki/Zip_(file_format)",
+        "https://developer.mozilla.org/en-US/docs/Web/API/File_and_Directory_Entries_API"
+      ],
+      "studentPrompts": [
+        "Why is it faster to update a site via a ZIP upload than to rebuild the entire Docker container?",
+        "Discuss the security risks of allowing a user to upload and extract a ZIP file directly onto the server's filesystem.",
+        "How can you ensure that a ZIP-based update doesn't accidentally overwrite critical core system files?"
+      ],
+      "codeReferences": ["docs/backend/node-cms-features.md", "server.ts"]
+    },
+    {
+      "id": "H720-05",
+      "title": "Persistence & Volume Injection Strategies",
+      "content": "In the world of containerization, actual data persistence is achieved through Docker **Volumes**. We utilize two distinct strategies to manage the balance between stability and flexibility. Our Standard Volumes map critical directories like `my-data` to the host's filesystem, ensuring that user content persists indefinitely even if the container is destroyed. In contrast, we use 'Volume Injection' (controlled by the `APP_DATA_RESET` environment variable) to allow our `entrypoint.sh` script to detect a fresh deployment. When this variable is set to true, the system selectively wipes or re-syncs specific site data from our repository's templates. This is a vital best practice for managing 'Template Updates,' ensuring that all client sites receive the latest core structural fixes and performance optimizations from the main repository without requiring manual file-by-file intervention.",
+      "svgContent": "<svg viewBox=\"0 0 400 200\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"100%\" height=\"100%\" fill=\"#f0fdf4\"/><rect x=\"100\" y=\"60\" width=\"200\" height=\"80\" rx=\"8\" fill=\"#22c55e\" fill-opacity=\"0.1\" stroke=\"#22c55e\" stroke-width=\"2\"/><path d=\"M200 60 V140\" stroke=\"#22c55e\" stroke-width=\"2\" stroke-dasharray=\"4\"/><text x=\"200\" y=\"180\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"12\" fill=\"#166534\">Volumes: Anchoring the Volatile Cloud</text></svg>",
+      "tags": ["docker", "persistence", "devops"],
+      "links": [
+        "https://docs.docker.com/storage/volumes/",
+        "https://www.digitalocean.com/community/tutorials/how-to-share-data-between-docker-containers",
+        "https://en.wikipedia.org/wiki/Persistence_(computer_science)"
+      ],
+      "studentPrompts": [
+        "What is the difference between a 'Bind Mount' and a 'Named Volume' in Docker?",
+        "Explain why a database should almost always live in a Docker Volume rather than inside the container's own writable layer.",
+        "How does the `APP_DATA_RESET` pattern help in managing a multi-tenant platform with thousands of unique site instances?"
+      ],
+      "codeReferences": ["repo-php/entrypoint.sh", "docs/devops/coolify-setup-php.md"]
+    }
+  ]
+}

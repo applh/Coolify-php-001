@@ -89,15 +89,15 @@ To mimic the "AI Studio" experience within the CMS Dashboard, we will implement 
 
 ## 5. Architectural Roadmap
 
-| Phase | Milestone | Priority |
+| Part | Milestone | Priority |
 | :--- | :--- | :--- |
-| **Phase 1** | Implement `POST /api/sites` and "Add Site" UI | High [DONE] |
-| **Phase 2** | Abstract Shared Components in PHP `class/` | Medium [DONE] |
-| **Phase 3** | Implement Site Deletion and Domain Mapping UI | High [DONE] |
-| **Phase 4** | Multi-Stack Support (React, Vue, Python FastAPI) | High [DONE] |
-| **Phase 5** | Exhaustive Deployment & Rebuild Documentation | High [DONE] |
-| **Phase 6** | Gemini-powered AI Chat Copilot Integration | High |
-| **Phase 7** | Multi-Page Routing & JSON Content Schema | High |
-| **Phase 8** | Component-based visual block editor | Medium |
-| **Phase 9** | Bulk publishing & SEO optimization tools | Low |
-| **Phase 10** | **Git Sync Feature (Remote Persistence)** | High |
+| **Part 1** | Implement `POST /api/sites` and "Add Site" UI | High [DONE] |
+| **Part 2** | Abstract Shared Components in PHP `class/` | Medium [DONE] |
+| **Part 3** | Implement Site Deletion and Domain Mapping UI | High [DONE] |
+| **Part 4** | Multi-Stack Support (React, Vue, Python FastAPI) | High [DONE] |
+| **Part 5** | Exhaustive Deployment & Rebuild Documentation | High [DONE] |
+| **Part 6** | Gemini-powered AI Chat Copilot Integration | High |
+| **Part 7** | Multi-Page Routing & JSON Content Schema | High |
+| **Part 8** | Component-based visual block editor | Medium |
+| **Part 9** | Bulk publishing & SEO optimization tools | Low |
+| **Part 10** | **Git Sync Feature (Remote Persistence)** | High |

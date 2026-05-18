@@ -1,0 +1,36 @@
+{
+  "moduleId": "PHASE-2-STYLING",
+  "title": "Advanced Styling & Responsive Design",
+  "totalSlides": 2,
+  "bundleId": 2,
+  "slides": [
+    {
+      "id": "S002-01",
+      "title": "Tailwind Utility-First Paradigm",
+      "content": "The utility-first paradigm in Tailwind CSS shifts the developer approach from writing custom CSS classes in separate files to applying pre-defined, granular utility classes directly within the HTML markup. Each class represents a single, highly reusable style property, such as spacing, color, sizing, or flexbox/grid layout parameters. By combining these atomic classes directly on elements, developers can achieve rapid prototyping and maintain highly consistent design systems without the overhead of naming conventions or dealing with specificity conflicts found in larger traditional CSS architectures. This approach ensures that the design language remains strictly coupled to the component's structure, allowing teams to iterate on visual styles faster while reducing the risk of global style regressions. Furthermore, since utilities are applied explicitly, it becomes immediately clear which styles are active on any given element, making code easier to read and maintain as the UI scales. Mastering utility-first CSS is fundamental for high-speed frontend development in modern web engineering.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><rect x='50' y='50' width='100' height='30' rx='5' fill='#8b5cf6' fill-opacity='0.2'/><rect x='50' y='90' width='150' height='30' rx='5' fill='#8b5cf6' fill-opacity='0.4'/><rect x='50' y='130' width='80' height='30' rx='5' fill='#8b5cf6' fill-opacity='0.6'/><text x='250' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6'>Consistent Atomic Utility Classes</text></svg>",
+      "tags": ["tailwind", "styling", "frontend"],
+      "links": ["https://tailwindcss.com/docs"],
+      "studentPrompts": [
+        "How does utility-first CSS differ from traditional CSS architectures?",
+        "What are the benefits of atomic CSS for design system consistency?",
+        "Describe how to manage complex responsive layouts using only Tailwind utility classes."
+      ],
+      "codeReferences": ["src/style.css"]
+    },
+    {
+      "id": "S002-02",
+      "title": "Responsive Bio-Layouts & Breakpoints",
+      "content": "Responsive design requires a mobile-first approach where layout adjustments are defined using media queries mapping to break points. Tailwind allows developers to inject responsive behavior seamlessly by prefixing utility classes with specific mobile-defined or desktop-defined screen breakpoints (sm, md, lg, xl, 2xl). By defining a base layout for mobile smaller screens, and then layering, overriding, or dramatically restructuring that layout for medium (tablet) and large (desktop) displays, developers create highly fluid user interfaces that adapt naturally to different screen geometries and aspect ratios. The 'bio-layout' concept emphasizes creating intuitive interfaces that feel organic and user-friendly, mimicking the natural eye movement of the user by carefully arranging content hierarchy across these responsive tiers. This structured approach ensures accessibility, usability, and visual comfort simultaneously, regardless of whether the application is viewed on a smartphone, tablet, or ultrawide desktop monitor. Adopting a modular, responsive strategy prevents the common pitfall of disjointed mobile/desktop layouts and enhances the overall application experience through intentional, responsive, and seamless design shifts.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#ecfdf5'/><path d='M80 40 H320 V160 H80 Z' fill='#fff' stroke='#059669' stroke-width='2'/><path d='M80 60 H320' stroke='#059669' stroke-width='2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#065f46'>Responsive Mobile-First UI</text></svg>",
+      "tags": ["responsive", "css", "layout"],
+      "links": ["https://tailwindcss.com/docs/responsive-design"],
+      "studentPrompts": [
+        "Why is a mobile-first design strategy important in modern web application development?",
+        "How can Tailwind breakpoints be used to radically restructure a dashboard layout?",
+        "Explain the importance of fluid grid systems over fixed-container designs in responsive layouts."
+      ],
+      "codeReferences": ["src/style.css"]
+    }
+  ]
+}

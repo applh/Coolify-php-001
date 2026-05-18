@@ -416,7 +416,7 @@
         "Explain the role of Traefik in a Coolify-managed environment for handling SSL and routing.",
         "How does Coolify achieve 'Zero-Downtime' deployments for a multi-tenant Docker application?"
       ],
-      "codeReferences": ["docs/devops/coolify-setup-php.md", "docs/training/slides/phase5/deployment-coolify.json"]
+      "codeReferences": ["docs/devops/coolify-setup-php.md", "docs/training/slides/part5/deployment-coolify.json"]
     },
     {
       "id": "H080-24",

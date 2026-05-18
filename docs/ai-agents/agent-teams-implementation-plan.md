@@ -57,8 +57,8 @@ We will introduce `agent_teams.json` to define teams and their agents.
 - Use a secure token-based authentication for the sync process between endpoints.
 
 ---
-## Practical Lab: Phase 9 (Teams & Automations)
+## Practical Lab: Part 9 (Teams & Automations)
 Goal: Learn to implement team-based AI agent task execution.
 Reference: `/docs/ai-agents/agent-teams-implementation-plan.md`
 Exercise: Implement the `AgentTeamManager` and a basic recurring task.
-Complexity: Phase 3
+Complexity: Part 3

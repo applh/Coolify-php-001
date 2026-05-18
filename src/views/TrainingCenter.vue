@@ -2,8 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { 
   Search, Zap, Code, 
-  ChevronLeft, ChevronRight, X, ExternalLink, Filter,
-  Clock, Target, Grid3X3, List as ListIcon,
+  ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Filter,
+  Clock, Target, Grid3X3, List as ListIcon, FolderTree, FileText,
   LayoutDashboard, Database, Sparkles, TrendingUp
 } from 'lucide-vue-next';
 
@@ -34,17 +34,17 @@ interface Module {
   name: string;
   hours: [number, number];
   description?: string;
-  lessons?: Lesson[];
+  hoursList?: Hour[];
 }
 
-interface Lesson {
+interface Hour {
   id: string;
   hour: number;
   title: string;
   description?: string;
 }
 
-interface Phase {
+interface Part {
   id: string;
   name: string;
   hours: [number, number];
@@ -56,17 +56,44 @@ interface Phase {
 const allSlidesData = ref<Record<string, SlideBundle>>({});
 
 // Dynamic Module Discovery
-const phases = ref<Phase[]>(taxonomyData.phases);
+const parts = ref<Part[]>(taxonomyData.parts);
 const searchQuery = ref('');
-const activeView = ref<'atlas' | 'list'>('atlas');
+const activeView = ref<'atlas' | 'list' | 'tree'>('tree');
+
+// Tree State
+const expandedParts = ref<Record<string, boolean>>({});
+const expandedModules = ref<Record<string, boolean>>({});
+
+function togglePart(partId: string) {
+  expandedParts.value[partId] = !expandedParts.value[partId];
+}
+
+function toggleModule(moduleId: string) {
+  expandedModules.value[moduleId] = !expandedModules.value[moduleId];
+}
+
+function getHoursForModule(module: Module): Hour[] {
+  if (module.hoursList && module.hoursList.length > 0) return module.hoursList;
+  const hours: Hour[] = [];
+  const startHour = module.hours[0];
+  const endHour = module.hours[1];
+  for (let i = startHour; i <= endHour; i++) {
+    hours.push({
+      id: `${module.id}-H${i - startHour + 1}`,
+      hour: i,
+      title: `Hour ${i - startHour + 1}: Detailed Content for Hour ${i}`
+    });
+  }
+  return hours;
+}
 
 // Navigation State
-const selectedPhase = ref<Phase | null>(null);
+const selectedPart = ref<Part | null>(null);
 const selectedModule = ref<Module | null>(null);
-const selectedLesson = ref<Lesson | null>(null);
+const selectedHour = ref<Hour | null>(null);
 const currentBundle = ref<SlideBundle | null>(null);
 const currentSlideIndex = ref(0);
-const viewMode = ref<'dashboard' | 'phase' | 'module' | 'reader'>('dashboard');
+const viewMode = ref<'dashboard' | 'part' | 'module' | 'reader'>('dashboard');
 const isLoading = ref(false);
 const isSyncing = ref(false);
 const error = ref<string | null>(null);
@@ -122,7 +149,7 @@ const syncWithProd = async () => {
 
 // Computed stats
 const stats = computed(() => {
-  const totalModules = phases.value.reduce((acc, p) => acc + p.modules.length, 0);
+  const totalModules = parts.value.reduce((acc, p) => acc + p.modules.length, 0);
   const availableContentCount = Object.keys(allSlidesData.value).length;
   const coverage = Math.round((availableContentCount / totalModules) * 100);
   return {
@@ -134,21 +161,21 @@ const stats = computed(() => {
 });
 
 const latestModules = computed(() => {
-  // Sort modules by bundleId descending, or just pick the ones we have content for and take the last few phases
+  // Sort modules by bundleId descending, or just pick the ones we have content for and take the last few parts
   const available = Object.keys(allSlidesData.value);
   
   // Flatten all modules and filter by availability
-  const allFlattened = phases.value.flatMap(p => p.modules);
+  const allFlattened = parts.value.flatMap(p => p.modules);
   const availableObjects = allFlattened.filter(m => available.includes(m.id));
   
   // Sort by ID descending (usually newer modules have higher numbers)
   return availableObjects.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 4);
 });
 
-const filteredPhases = computed(() => {
-  if (!searchQuery.value) return phases.value;
+const filteredParts = computed(() => {
+  if (!searchQuery.value) return parts.value;
   const q = searchQuery.value.toLowerCase();
-  return phases.value.filter(p => 
+  return parts.value.filter(p => 
     p.name.toLowerCase().includes(q) || 
     p.modules.some(m => m.name.toLowerCase().includes(q))
   );
@@ -164,36 +191,48 @@ const progress = computed(() => {
   return ((currentSlideIndex.value + 1) / currentBundle.value.slides.length) * 100;
 });
 
-const moduleLessons = computed(() => {
+const moduleHours = computed(() => {
   if (!selectedModule.value) return [];
-  if (selectedModule.value.lessons && selectedModule.value.lessons.length > 0) {
-    return selectedModule.value.lessons;
+  if (selectedModule.value.hoursList && selectedModule.value.hoursList.length > 0) {
+    return selectedModule.value.hoursList;
   }
-  const lessons: Lesson[] = [];
+  const hours: Hour[] = [];
   const startHour = selectedModule.value.hours[0];
   const endHour = selectedModule.value.hours[1];
   for (let i = startHour; i <= endHour; i++) {
-    lessons.push({
-      id: `${selectedModule.value.id}-L${i - startHour + 1}`,
+    hours.push({
+      id: `${selectedModule.value.id}-H${i - startHour + 1}`,
       hour: i,
-      title: `Lesson ${i - startHour + 1}: Detailed Content for Hour ${i}`
+      title: `Hour ${i - startHour + 1}: Detailed Content for Hour ${i}`
     });
   }
-  return lessons;
+  return hours;
 });
 
 // Actions
-async function openPhase(phase: Phase) {
-  selectedPhase.value = phase;
-  viewMode.value = 'phase';
+async function openPart(part: Part) {
+  selectedPart.value = part;
+  viewMode.value = 'part';
 }
 
-async function startLesson(lesson: Lesson) {
+async function startHourDirect(module: Module, hour: Hour) {
+  const bundle = allSlidesData.value[module.id];
+  if (!bundle) return;
+
+  selectedPart.value = parts.value.find(p => p.modules.some(m => m.id === module.id)) || null;
+  selectedModule.value = module;
+  selectedHour.value = hour;
+  currentSlideIndex.value = 0;
+  currentBundle.value = bundle;
+  viewMode.value = 'reader';
+}
+
+async function startHour(hour: Hour) {
   if (!selectedModule.value) return;
   const bundle = allSlidesData.value[selectedModule.value.id];
   if (!bundle) return;
 
-  selectedLesson.value = lesson;
+  selectedHour.value = hour;
   currentSlideIndex.value = 0;
   currentBundle.value = bundle;
   viewMode.value = 'reader';
@@ -224,17 +263,17 @@ function closeReader() {
   viewMode.value = 'module';
 }
 
-function backToPhase() {
-  viewMode.value = 'phase';
+function backToPart() {
+  viewMode.value = 'part';
   selectedModule.value = null;
-  selectedLesson.value = null;
+  selectedHour.value = null;
 }
 
 function backToDashboard() {
   viewMode.value = 'dashboard';
-  selectedPhase.value = null;
+  selectedPart.value = null;
   selectedModule.value = null;
-  selectedLesson.value = null;
+  selectedHour.value = null;
 }
 </script>
 
@@ -256,11 +295,11 @@ function backToDashboard() {
       <button
         v-if="viewMode === 'module'"
         class="text-xs text-white/40 hover:text-[#F27D26] transition-colors uppercase tracking-widest font-bold whitespace-nowrap"
-        @click="backToPhase"
+        @click="backToPart"
       >
-        {{ selectedPhase?.name }}
+        {{ selectedPart?.name }}
       </button>
-      <span v-else class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedPhase?.name }}</span>
+      <span v-else class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedPart?.name }}</span>
       <template v-if="viewMode === 'module'">
         <ChevronRight class="w-3 h-3 text-white/10 shrink-0" />
         <span class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedModule?.name }}</span>
@@ -281,7 +320,7 @@ function backToDashboard() {
           Training Center
         </h2>
         <p class="text-sm text-white/40 max-w-xl">
-          A 1000-hour architecture curriculum indexed into 10 industrial phases. 
+          A 1000-hour architecture curriculum indexed into 10 industrial parts. 
           Use the Atlas to browse the entire stack from foundations to agentic orchestration.
         </p>
       </div>
@@ -327,7 +366,7 @@ function backToDashboard() {
 
           <div class="flex gap-2">
             <button 
-              v-for="view in (['atlas', 'list'] as const)" 
+              v-for="view in (['atlas', 'list', 'tree'] as const)" 
               :key="view"
               :class="[
                 'px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all border shadow-lg',
@@ -340,6 +379,10 @@ function backToDashboard() {
                 class="w-3.5 h-3.5"
               />
               <ListIcon
+                v-else-if="view === 'list'"
+                class="w-3.5 h-3.5"
+              />
+              <FolderTree
                 v-else
                 class="w-3.5 h-3.5"
               />
@@ -403,25 +446,25 @@ function backToDashboard() {
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div 
-                v-for="phase in filteredPhases" 
-                :key="phase.id"
+                v-for="part in filteredParts" 
+                :key="part.id"
                 class="space-y-3 group"
               >
                 <div 
                   class="flex flex-col p-4 bg-white/[0.03] border border-white/5 rounded-xl hover:border-[#F27D26]/40 transition-all cursor-pointer relative overflow-hidden shadow-2xl"
-                  @click="openPhase(phase)"
+                  @click="openPart(part)"
                 >
                   <div class="flex justify-between items-center mb-4">
-                    <span class="text-[9px] font-mono text-[#F27D26] font-bold">{{ phase.id }}</span>
-                    <span class="text-[9px] font-mono text-white/20">{{ phase.hours[0] }}-{{ phase.hours[1] }}H</span>
+                    <span class="text-[9px] font-mono text-[#F27D26] font-bold">{{ part.id }}</span>
+                    <span class="text-[9px] font-mono text-white/20">{{ part.hours[0] }}-{{ part.hours[1] }}H</span>
                   </div>
                   <h3 class="text-sm font-bold text-white/80 group-hover:text-white mb-2 leading-tight h-8 line-clamp-2 uppercase tracking-tight">
-                    {{ phase.name }}
+                    {{ part.name }}
                   </h3>
                   
                   <div class="grid grid-cols-5 gap-1 pt-2">
                     <div 
-                      v-for="mod in phase.modules" 
+                      v-for="mod in part.modules" 
                       :key="mod.id"
                       class="aspect-square rounded-sm border border-white/5 transition-all duration-500"
                       :class="allSlidesData[mod.id] ? 'bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.4)]' : 'bg-white/5'"
@@ -436,29 +479,29 @@ function backToDashboard() {
 
         <!-- LIST View -->
         <div
-          v-else
+          v-else-if="activeView === 'list'"
           class="space-y-4 pb-20"
         >
           <div
-            v-for="phase in filteredPhases"
-            :key="phase.id"
+            v-for="part in filteredParts"
+            :key="part.id"
             class="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]"
           >
             <div
               class="p-6 bg-white/5 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-colors"
-              @click="openPhase(phase)"
+              @click="openPart(part)"
             >
               <div class="flex items-center gap-4">
-                <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ phase.id }}</span>
+                <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ part.id }}</span>
                 <h3 class="font-bold text-base tracking-tight uppercase">
-                  {{ phase.name }}
+                  {{ part.name }}
                 </h3>
               </div>
-              <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ phase.modules.length }} MODULES</span>
+              <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ part.modules.length }} MODULES</span>
             </div>
             <div class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 bg-black/20">
               <button 
-                v-for="mod in phase.modules" 
+                v-for="mod in part.modules" 
                 :key="mod.id"
                 class="p-3 text-[10px] text-left rounded-lg transition-all flex flex-col items-start gap-1 group border border-transparent shadow-inner"
                 :disabled="!allSlidesData[mod.id]"
@@ -477,11 +520,69 @@ function backToDashboard() {
             </div>
           </div>
         </div>
+
+        <!-- TREE View -->
+        <div
+          v-else-if="activeView === 'tree'"
+          class="space-y-4 pb-20"
+        >
+          <div v-for="part in filteredParts" :key="part.id" class="border border-white/5 bg-white/[0.01] rounded-xl overflow-hidden">
+            <div 
+              class="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
+              @click="togglePart(part.id)"
+            >
+               <div class="flex items-center gap-3">
+                 <ChevronRight v-if="!expandedParts[part.id]" class="w-4 h-4 text-white/40" />
+                 <ChevronDown v-else class="w-4 h-4 text-[#F27D26]" />
+                 <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ part.id }}</span>
+                 <h3 class="font-bold text-sm tracking-tight uppercase text-white/90">{{ part.name }}</h3>
+               </div>
+               <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ part.modules.length }} MODULES</span>
+            </div>
+            
+            <div v-if="expandedParts[part.id]" class="border-t border-white/5">
+               <div 
+                  v-for="mod in part.modules" 
+                  :key="mod.id"
+                  class="border-b last:border-b-0 border-white/5"
+               >
+                 <div 
+                    class="flex items-center justify-between p-3 pl-12 hover:bg-white/5 cursor-pointer transition-colors"
+                    @click="toggleModule(mod.id)"
+                 >
+                    <div class="flex items-center gap-3">
+                      <ChevronRight v-if="!expandedModules[mod.id]" class="w-4 h-4 text-white/40" />
+                      <ChevronDown v-else class="w-4 h-4 text-[#F27D26]" />
+                      <span class="font-mono text-[10px] text-white/40">{{ mod.id }}</span>
+                      <span class="font-bold text-xs text-white/80 uppercase tracking-tight">{{ mod.name }}</span>
+                      <Zap v-if="allSlidesData[mod.id]" class="w-3.5 h-3.5 text-[#F27D26] fill-[#F27D26]" />
+                    </div>
+                    <span class="text-[10px] text-white/30 font-mono">{{ mod.hours[1] - mod.hours[0] + 1 }} HOURS</span>
+                 </div>
+                 
+                 <div v-if="expandedModules[mod.id]" class="pl-[4.5rem] bg-black/40 py-2 space-y-1">
+                    <div 
+                       v-for="(hour, idx) in getHoursForModule(mod)" 
+                       :key="hour.id"
+                       class="flex items-center gap-3 py-2 px-3 mx-2 rounded-lg cursor-pointer group transition-colors"
+                       :class="allSlidesData[mod.id] ? 'hover:bg-[#F27D26]/10' : 'opacity-40 grayscale cursor-not-allowed'"
+                       @click="allSlidesData[mod.id] ? startHourDirect(mod, hour) : null"
+                    >
+                      <FileText class="w-3.5 h-3.5 text-white/30 group-hover:text-[#F27D26]" />
+                      <span class="font-mono text-[9px] text-white/40 group-hover:text-[#F27D26]">H{{ String(idx + 1).padStart(2, '0') }}</span>
+                      <span class="text-xs text-white/60 group-hover:text-white line-clamp-1">{{ hour.title }}</span>
+                      <ChevronRight class="w-3 h-3 text-[#F27D26] ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- PHASE VIEW -->
       <div
-        v-else-if="viewMode === 'phase'"
+        v-else-if="viewMode === 'part'"
         class="space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-20"
       >
         <div class="relative bg-gradient-to-br from-[#F27D26]/10 via-[#F27D26]/5 to-transparent border border-[#F27D26]/20 p-10 rounded-3xl overflow-hidden shadow-2xl">
@@ -491,20 +592,20 @@ function backToDashboard() {
           <div class="relative z-10 space-y-6">
             <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-[#F27D26] text-black rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
               <Clock class="w-3.5 h-3.5" />
-              {{ selectedPhase?.hours[1]! - selectedPhase?.hours[0]! + 1 }} Hours of Deep Flow
+              {{ selectedPart?.hours[1]! - selectedPart?.hours[0]! + 1 }} Hours of Deep Flow
             </div>
             <h1 class="text-5xl font-serif italic text-white max-w-2xl drop-shadow-lg">
-              {{ selectedPhase?.name }}
+              {{ selectedPart?.name }}
             </h1>
             <p class="text-white/50 max-w-xl text-sm leading-relaxed">
-              {{ selectedPhase?.description || 'Master the core architectural concepts of this phase through 10 focused modules. This section of the 🍓 FRAISE curriculum transitions you closer to agentic autonomy.' }}
+              {{ selectedPart?.description || 'Master the core architectural concepts of this part through 10 focused modules. This section of the 🍓 FRAISE curriculum transitions you closer to agentic autonomy.' }}
             </p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
-            v-for="(mod, idx) in selectedPhase?.modules" 
+            v-for="(mod, idx) in selectedPart?.modules" 
             :key="mod.id"
             class="relative group h-full"
             @click="allSlidesData[mod.id] ? startModule(mod) : null"
@@ -546,7 +647,7 @@ function backToDashboard() {
         </div>
       </div>
 
-      <!-- MODULE VIEW (Lessons) -->
+      <!-- MODULE VIEW (Hours) -->
       <div
         v-else-if="viewMode === 'module'"
         class="space-y-8 animate-in slide-in-from-bottom-8 duration-500 pb-20"
@@ -564,17 +665,17 @@ function backToDashboard() {
               {{ selectedModule?.name }}
             </h1>
             <p class="text-white/50 max-w-xl text-sm leading-relaxed">
-              {{ selectedModule?.description || 'This module contains 10 hours of deeply structured lessons. AI Studio handles generation down to this 1-hour lesson granularity, from which 60 slides are produced for deployment.' }}
+              {{ selectedModule?.description || 'This module contains 10 hours of deeply structured hours. AI Studio handles generation down to this 1-hour hour granularity, from which 60 slides are produced for deployment.' }}
             </p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           <div 
-            v-for="(lesson, idx) in moduleLessons" 
-            :key="lesson.id"
+            v-for="(hour, idx) in moduleHours" 
+            :key="hour.id"
             class="relative group h-full"
-            @click="startLesson(lesson)"
+            @click="startHour(hour)"
           >
             <div 
               class="h-full bg-white/[0.02] border border-white/5 p-6 rounded-2xl transition-all duration-300 flex flex-col shadow-xl hover:border-[#F27D26]/40 hover:bg-white/[0.05] cursor-pointer"
@@ -584,15 +685,15 @@ function backToDashboard() {
                   H{{ String(idx).padStart(2, '0') }}
                 </div>
                 <div class="text-[9px] font-mono text-white/20 bg-white/5 px-2 py-1 rounded-full border border-white/5 uppercase tracking-widest leading-none flex items-center h-6">
-                  {{ lesson.id }}
+                  {{ hour.id }}
                 </div>
               </div>
 
               <h3 class="text-lg font-bold mb-3 leading-tight text-white group-hover:text-[#F27D26] transition-colors">
-                {{ lesson.title }}
+                {{ hour.title }}
               </h3>
               <p class="text-xs text-white/40 mb-6 leading-relaxed flex-1">
-                {{ lesson.description || 'Generates 60+ fully grounded slides matching our AI training hierarchy. Level 3 abstraction.' }}
+                {{ hour.description || 'Generates 60+ fully grounded slides matching our AI training hierarchy. Level 3 abstraction.' }}
               </p>
 
               <div class="flex items-center justify-between pt-4 border-t border-white/5">
@@ -622,10 +723,10 @@ function backToDashboard() {
             <div class="h-8 w-[1px] bg-white/10" />
             <div class="flex flex-col">
               <div class="text-[10px] text-[#F27D26] font-black uppercase tracking-[0.3em] leading-none mb-2">
-                {{ selectedModule?.id }} • {{ selectedLesson?.id || selectedPhase?.name }}
+                {{ selectedModule?.id }} • {{ selectedHour?.id || selectedPart?.name }}
               </div>
               <h4 class="text-lg font-bold leading-none text-white/90 uppercase tracking-tight">
-                {{ selectedLesson?.title || selectedModule?.name }}
+                {{ selectedHour?.title || selectedModule?.name }}
               </h4>
             </div>
           </div>
@@ -757,7 +858,7 @@ function backToDashboard() {
                         v-for="i in 10" 
                         :key="i" 
                         class="flex-1 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(242,125,38,0.2)]" 
-                        :class="i <= (parseInt(selectedPhase?.id.replace('P', '') || '1')) ? 'bg-[#F27D26]' : 'bg-white/10'"
+                        :class="i <= (parseInt(selectedPart?.id.replace('P', '') || '1')) ? 'bg-[#F27D26]' : 'bg-white/10'"
                       />
                     </div>
                     <div class="flex justify-between items-center text-[8px] font-black text-white/10 uppercase tracking-widest">

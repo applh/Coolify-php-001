@@ -17,16 +17,16 @@ This module moves beyond code to the systems and strategies that make software s
 
 - **Lab 1: The Markdown Backlog**
     - **Task**: Create a file `docs/training/MY-SRE-BACKLOG.md`. 
-    - **Exercise**: Translate the tasks from Phase 1 into 10 "User Stories" with clear Acceptance Criteria.
+    - **Exercise**: Translate the tasks from Part 1 into 10 "User Stories" with clear Acceptance Criteria.
 - **Lab 2: The "Sprint" Review**
-    - **Task**: After completing any Phase lab, write a "Post-Mortem" in your backlog.
+    - **Task**: After completing any Part lab, write a "Post-Mortem" in your backlog.
     - **Exercise**: Document what was difficult, what you would automate next time, and how long it actually took vs. estimated.
 
 ## 3. Agile Roles in the AI Era
 **Goal**: Understand how AI shifts the responsibilities of traditional software teams.
 
 - **Lab 1: AI-Driven Backlog Grooming**
-    - **Task**: Review the slides in `docs/training/slides/phase5/agile-ai-roles.json`.
+    - **Task**: Review the slides in `docs/training/slides/part5/agile-ai-roles.json`.
     - **Exercise**: Take your `MY-SRE-BACKLOG.md` and use the AI agent to generate 3 alternative technical approaches for one of your user stories. Identify which tasks could be delegated to the `Agent Coder` vs. which require human oversight.
 - **Lab 2: The Virtual Scrum Master**
     - **Task**: Study `docs/ai-agents/ai-agents-roles-tasks.md`.

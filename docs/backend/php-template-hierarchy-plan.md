@@ -72,8 +72,8 @@ To avoid **Prop Drilling** (passing data through multiple nested layers), we've 
 
 ## 7. Roadmap Update
 
--   [x] **Phase 1**: Create `repo-php/class/Component.php` with basic prop and slot support.
--   [x] **Phase 2**: Implement `repo-php/class/Store.php` for global state management.
--   [ ] **Phase 3**: Update `Layout.php` to use the new Component system and Store.
--   [x] **Phase 4**: Implement the `/api/render-component` endpoint and client-side "async" loader.
--   [x] **Phase 5**: Migrate `babiblog.fr` or `sambazen.net` to the new hierarchy.
+-   [x] **Part 1**: Create `repo-php/class/Component.php` with basic prop and slot support.
+-   [x] **Part 2**: Implement `repo-php/class/Store.php` for global state management.
+-   [ ] **Part 3**: Update `Layout.php` to use the new Component system and Store.
+-   [x] **Part 4**: Implement the `/api/render-component` endpoint and client-side "async" loader.
+-   [x] **Part 5**: Migrate `babiblog.fr` or `sambazen.net` to the new hierarchy.

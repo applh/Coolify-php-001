@@ -14,7 +14,7 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 ## Program Overview
 
-| Phase | Duration | Focus | Key Repositories |
+| Part | Duration | Focus | Key Repositories |
 |-------|----------|-------|------------------|
 | [P01: Web Foundations](./PHASE-01-FOUNDATIONS.md) | 100h | HTML, CSS, JS, PHP Basics, Glossary | `repo-php/content` |
 | [P02: Adv Styling](./PHASE-02-STYLING.md) | 100h | Tailwind, Responsive, Animation | `public/css` |
@@ -37,7 +37,7 @@ This program isn't just about reading; it's about the transmission of 60MB of st
 
 ## Advanced Engineering Tracks (Cross-Cutting Skills)
 
-While progressing through the phases, complete these specialized modules to deepen your expertise:
+While progressing through the parts, complete these specialized modules to deepen your expertise:
 
 - **Architecture**: [Software Architecture: OOP & Design Patterns](./SOFTWARE-ARCHITECTURE.md)
 - **AI Engine**: [AI Engineering: Building with LLMs](./AI-ENGINEERING.md)

@@ -25,7 +25,7 @@ Modern fullstack development now includes a "Fourth Layer": The AI Layer. This m
     - **Task**: See how the AI identifies when it needs to call a tool (like `generate_image`).
     - **Exercise**: Map out a "Tool Definition" for the `CMS.php` class that would allow an AI to create a new blog post directly.
 - **Lab 3: Parallel Orchestration**
-    - **Reference**: `docs/training/slides/phase9/parallel-orchestration.json`
+    - **Reference**: `docs/training/slides/part9/parallel-orchestration.json`
     - **Goal**: Understand how to execute multiple AI tool calls simultaneously to reduce latency.
     - **Task**: Review the theoretical benefits of parallel execution in AI Studio vs. traditional sequential loops.
     - **Exercise**: Create a mock implementation of a parallel tool call using `Promise.all` that triggers three separate 'file linting' tasks at once.
@@ -51,5 +51,5 @@ Modern fullstack development now includes a "Fourth Layer": The AI Layer. This m
     - **Exercise**: Add a "Verify & Apply" step where the AI suggests a change, but the user must click a button to execute the file edit.
 
 ## Complexity Levels
-- **Phase 3 Integration**: Prompt Engineering & API Basics.
-- **Phase 5 Integration**: Tool Calling & RAG Architecture.
+- **Part 3 Integration**: Prompt Engineering & API Basics.
+- **Part 5 Integration**: Tool Calling & RAG Architecture.

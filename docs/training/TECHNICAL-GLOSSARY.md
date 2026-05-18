@@ -140,7 +140,7 @@ The automated sequence of steps that transforms developer-written code (TypeScri
    - `studentPrompts`: 3 critical-thinking questions for students.
 4. Update the corresponding entry in this Markdown file (`TECHNICAL-GLOSSARY.md`) to keep the "Human-Readable" and "Machine-JSON" documentation in sync.
 
-**Complexity**: Phase 2 (Intermediate)
+**Complexity**: Part 2 (Intermediate)
 
 ---
 

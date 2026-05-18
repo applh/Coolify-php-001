@@ -31,7 +31,7 @@ CMD ["serve", "-s", "dist", "-l", "3000"]
 
 ## 3. Environment Variables
 
-While the React app is purely static, you might want to inject environment variables for API endpoints during the build phase:
+While the React app is purely static, you might want to inject environment variables for API endpoints during the build part:
 
 | Variable | Description |
 | :--- | :--- |

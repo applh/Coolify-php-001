@@ -1,0 +1,36 @@
+{
+  "moduleId": "PHASE-9-AGENTS",
+  "title": "Parallel Agent Orchestration",
+  "totalSlides": 2,
+  "bundleId": 9,
+  "slides": [
+    {
+      "id": "S009-08",
+      "title": "Parallelism in AI Studio Environments",
+      "content": "Is parallel orchestration possible within the AI Studio ecosystem? The answer is a definitive yes. AI Studio's architecture is built for high-concurrency developer workflows. This is achieved through two primary vectors: 1. **Parallel Tool Invocation**: The core agent engine can generate and execute multiple tool calls (e.g., file reads, shell commands, or external API requests) in a single turn, significantly reducing the bottleneck of sequential execution. 2. **Background Task Management**: Using tools like `run_command` with asynchronous flags, agents can initiate long-running background processes (like building a production-ready application or running a suite of integration tests) while simultaneously processing other user requests or performing secondary monitoring tasks. This 'non-blocking' execution model allows developers to orchestrate multiple specialized agents that work on different parts of a project at once, mimicking a real-world engineering team where development, testing, and documentation happen in parallel rather than as a strict linear sequence.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0f9ff'/><path d='M50 100 L120 60 M50 100 L120 100 M50 100 L120 140' stroke='#0ea5e9' stroke-width='3' fill='none'/><rect x='130' y='45' width='80' height='30' rx='4' fill='#0284c7' fill-opacity='0.2'/><rect x='130' y='85' width='80' height='30' rx='4' fill='#0284c7' fill-opacity='0.2'/><rect x='130' y='125' width='80' height='30' rx='4' fill='#0284c7' fill-opacity='0.2'/><circle cx='50' cy='100' r='15' fill='#0ea5e9'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#0369a1'>Parallel Execution Streams in AI Studio</text></svg>",
+      "tags": ["concurrency", "ai-studio", "orchestration", "async"],
+      "links": ["https://ai.google.dev/gemini-api/docs/function-calling"],
+      "studentPrompts": [
+        "What are the primary differences between sequential and parallel tool calls in an AI agent turn?",
+        "How would you design a prompt that encourages an agent to perform three directory scans in parallel instead of one by one?",
+        "Explain the benefit of using background command execution for a build-and-deploy workflow."
+      ],
+      "codeReferences": ["docs/ai-agents/workflow-recommendations.md"]
+    },
+    {
+      "id": "S009-09",
+      "title": "Tutorial: API Implementation of Parallel Function Calling",
+      "content": "To implement parallel orchestration via the Gemini API, developers leverage the `tools` configuration and the model's ability to return multiple `functionCall` objects in a single response header. The process follows a structured loop: First, provide a list of function declarations to the model within the `tools` array. Second, when the model responds with multiple calls, use a `Promise.all()` (in Node.js/TypeScript) or similar concurrent structures to execute the corresponding local functions. For example, if the model wants to 'read file A' and 'read file B' simultaneously, your code handles both requests at once. Finally, aggregate the results into a series of `functionResponse` objects—one for each call—and send them back to the model in the next turn using the `TOOL` role. This handshake ensures the model receives all parallel outputs consistently, allowing it to synthesize a final answer based on multiple concurrent data points. This implementation pattern is essential for high-performance agents that need to cross-reference data from multiple disparate sources quickly.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fdf4ff'/><rect x='40' y='40' width='320' height='120' rx='8' fill='#d946ef' fill-opacity='0.05' stroke='#d946ef' stroke-width='1'/><text x='60' y='70' font-family='monospace' font-size='10' fill='#701a75'>const results = await Promise.all([</text><text x='80' y='90' font-family='monospace' font-size='10' fill='#701a75'>  callTool(callA),</text><text x='80' y='110' font-family='monospace' font-size='10' fill='#701a75'>  callTool(callB)</text><text x='60' y='130' font-family='monospace' font-size='10' fill='#701a75'>]);</text><text x='200' y='185' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#86198f'>Promise.all Pattern for Tool Responses</text></svg>",
+      "tags": ["api", "tutorial", "promise-all", "function-calling"],
+      "links": ["docs/ai-agents/gemini-api-interactions.md"],
+      "studentPrompts": [
+        "Write a TypeScript code snippet that takes an array of Gemini function calls and executes them in parallel using Promise.all.",
+        "What happens if one of the parallel tool calls fails? How should the orchestrator handle this partial failure?",
+        "Why is it important to return the tool responses in the correct order or with matching IDs in the next API turn?"
+      ],
+      "codeReferences": ["docs/ai-agents/gemini-api-interactions.md"]
+    }
+  ]
+}
