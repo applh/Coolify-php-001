@@ -21,9 +21,7 @@ RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477
     rm /tmp/cmdline-tools.zip
 
 # Accept licenses and install platform components
-# Using quiet mode where possible to reduce log noise
 RUN yes | sdkmanager --licenses && \
-    sdkmanager --update && \
     sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
 # Install Gradle
@@ -36,10 +34,7 @@ WORKDIR /app
 COPY . .
 
 # Build APK with memory optimizations and quiet output
-# --no-daemon is critical for Docker builds
-# --max-workers 1 reduces memory overhead
-# -Dorg.gradle.jvmargs is already set in gradle.properties, but we reinforce it here
-RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace
+RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace --info
 
 FROM nginx:alpine
 
