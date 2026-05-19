@@ -13,6 +13,7 @@ Bridge the gap between web and mobile with Android and Flutter.
 - M068: App Publishing & Distribution
 - M069: Embedded Systems Intro
 - M070: Project: Cross-Platform App
+- M071: Android Build, Gradle & Coolify Deployment
 
 ## Practical Labs
 
@@ -25,6 +26,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 **Reference**: `repo-android/`
 - **Task**: Trace an Activity lifecycle.
 - **Exercise**: Implement a simple notification trigger in the Android app.
+
+### 3. Android Compiling & Coolify Deployment (30h)
+**Reference**: `repo-android/Dockerfile`, `repo-android/build.gradle`
+- **Goal**: Understand how to compile a Java/Kotlin Android project using Gradle and deploy it as a standalone containerized app via Coolify.
+- **Exercise**: Modify the Android Dockerfile to adjust Gradle heap sizes and deploy the container to distribute the APK.
+- **Complexity**: Part 4
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
