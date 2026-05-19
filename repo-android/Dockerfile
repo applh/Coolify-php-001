@@ -6,8 +6,8 @@ ENV ANDROID_HOME /opt/android-sdk
 ENV PATH $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
 
 # Install dependencies with retries and quiet mode
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget unzip curl ca-certificates libstdc++6 lib64z1 && \
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends wget unzip curl ca-certificates libstdc++6 zlib1g && \
     rm -rf /var/lib/apt/lists/*
 
 # Set up Android SDK
