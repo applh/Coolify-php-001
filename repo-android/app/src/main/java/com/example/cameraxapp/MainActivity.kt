@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route ?: "hub"
                 
                 val applets = listOf(
-                    AppletInfo("Hub", "hub", Icons.Default.Home, "Main Hub"),
+                    AppletInfo("Home", "hub", Icons.Default.Home, "Main Hub"),
                     AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
                     AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
                         ModalDrawerSheet {
                             Spacer(Modifier.height(16.dp))
                             Text(
-                                text = "App Hub",
+                                text = "🍓FRAISE",
                                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.titleLarge
                             )
@@ -93,12 +93,16 @@ class MainActivity : ComponentActivity() {
                                     onClick = {
                                         scope.launch { drawerState.close() }
                                         if (currentRoute != applet.route) {
-                                            navController.navigate(applet.route) {
-                                                popUpTo("hub") {
-                                                    saveState = true
+                                            if (applet.route == "hub") {
+                                                navController.popBackStack("hub", inclusive = false)
+                                            } else {
+                                                navController.navigate(applet.route) {
+                                                    popUpTo("hub") {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
                                                 }
-                                                launchSingleTop = true
-                                                restoreState = true
                                             }
                                         }
                                     },
@@ -176,7 +180,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Multi-App Hub") },
+                title = { Text("🍓FRAISE") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
