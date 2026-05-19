@@ -26,17 +26,17 @@ RUN wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -P /tmp
     unzip -q -d /opt/gradle /tmp/gradle-8.7-bin.zip && \
     rm /tmp/gradle-8.7-bin.zip
 ENV PATH $PATH:/opt/gradle/gradle-8.7/bin
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx1536m -XX:MaxMetaspaceSize=512m\""
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx1024m -XX:MaxMetaspaceSize=256m\""
 
 WORKDIR /app
 COPY . .
 
 # Build APK with memory optimizations and verbose output for debugging
-RUN java -version
-RUN gradle --version
-RUN free -m && df -h
-RUN pwd && ls -laR .
-RUN gradle assembleDebug --no-daemon --max-workers 1 --info --stacktrace --console=plain
+RUN java -version && gradle --version && free -m && df -h && pwd && ls -laR .
+RUN sdkmanager --list_installed
+RUN gradle projects --console=plain
+# Run build and capture output to show it on failure
+RUN gradle assembleDebug --no-daemon --max-workers 1 --info --stacktrace --console=plain > build.log 2>&1 || (cat build.log && exit 1)
 
 FROM nginx:alpine
 
