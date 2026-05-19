@@ -85,6 +85,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     
     var captureMode by remember { mutableStateOf("PHOTO") }
     var recording by remember { mutableStateOf<Recording?>(null) }
+    var recordingDurationNanos by remember { mutableStateOf(0L) }
     
     var lensFacing by remember { mutableStateOf(if (initialLensFacing == 1) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT) }
     var flashModeState by remember { mutableStateOf(initialFlashMode) } // 0: Off, 1: On, 2: Auto
@@ -148,6 +149,25 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 captureMode = captureMode,
                 lensFacing = lensFacing
             )
+
+            if (recording != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                        .background(Color.Red.copy(alpha = 0.7f), androidx.compose.foundation.shape.CircleShape)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    val minutes = java.util.concurrent.TimeUnit.NANOSECONDS.toMinutes(recordingDurationNanos)
+                    val seconds = java.util.concurrent.TimeUnit.NANOSECONDS.toSeconds(recordingDurationNanos) -
+                                  java.util.concurrent.TimeUnit.MINUTES.toSeconds(minutes)
+                    Text(
+                        text = String.format(Locale.US, "%02d:%02d", minutes, seconds),
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
 
             if (showGrid) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -218,9 +238,19 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 recording?.stop()
                                 recording = null
                             } else {
-                                recording = startVideoRecording(context, videoCapture, ContextCompat.getMainExecutor(context), storageLocation, enableAudio) { uri ->
-                                    lastCapturedImageUri = uri
-                                }
+                                recording = startVideoRecording(
+                                    context, 
+                                    videoCapture, 
+                                    ContextCompat.getMainExecutor(context), 
+                                    storageLocation, 
+                                    enableAudio,
+                                    onVideoSaved = { uri ->
+                                        lastCapturedImageUri = uri
+                                    },
+                                    onDurationUpdate = { nanos ->
+                                        recordingDurationNanos = nanos
+                                    }
+                                )
                             }
                         }
                     },
@@ -262,7 +292,8 @@ private fun startVideoRecording(
     executor: Executor,
     storageLocation: Int,
     enableAudio: Boolean,
-    onVideoSaved: (Uri) -> Unit
+    onVideoSaved: (Uri) -> Unit,
+    onDurationUpdate: (Long) -> Unit
 ): Recording {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
     
@@ -302,6 +333,10 @@ private fun startVideoRecording(
         when (recordEvent) {
             is VideoRecordEvent.Start -> {
                 Log.d("CameraScreen", "Video recording started")
+                onDurationUpdate(0L)
+            }
+            is VideoRecordEvent.Status -> {
+                onDurationUpdate(recordEvent.recordingStats.recordedDurationNanos)
             }
             is VideoRecordEvent.Finalize -> {
                 if (!recordEvent.hasError()) {

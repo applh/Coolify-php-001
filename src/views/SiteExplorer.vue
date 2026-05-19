@@ -284,9 +284,17 @@ watch(selectedRepo, () => {
                 >
                   {{ item.name }}
                 </span>
-                <span class="block text-[9px] font-mono opacity-20 uppercase tracking-tighter mt-0.5">
-                  {{ item.isDirectory ? 'System Collection' : 'Source Manifest' }}
-                </span>
+                <div class="flex items-center gap-3 mt-0.5">
+                  <span class="block text-[9px] font-mono opacity-20 uppercase tracking-tighter">
+                    {{ item.isDirectory ? 'System Collection' : 'Source Manifest' }}
+                  </span>
+                  <span v-if="!item.isDirectory && item.size !== undefined" class="block text-[9px] font-mono opacity-20 uppercase tracking-tighter">
+                    • {{ item.size < 1024 ? item.size + ' B' : (item.size < 1024 * 1024 ? (item.size / 1024).toFixed(1) + ' KB' : (item.size / (1024 * 1024)).toFixed(1) + ' MB') }}
+                  </span>
+                  <span v-if="item.updatedAt" class="block text-[9px] font-mono opacity-20 uppercase tracking-tighter">
+                    • {{ new Date(item.updatedAt).toLocaleString() }}
+                  </span>
+                </div>
               </div>
               
               <ChevronRight

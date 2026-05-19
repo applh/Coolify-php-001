@@ -272,6 +272,21 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                             )
                                         }
                                     }
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .fillMaxWidth()
+                                            .background(Color.Black.copy(alpha = 0.5f))
+                                            .padding(4.dp)
+                                    ) {
+                                        val sizeRaw = file.length()
+                                        val sizeStr = if (sizeRaw < 1024) "$sizeRaw B" else if (sizeRaw < 1024 * 1024) "${sizeRaw / 1024} KB" else "${sizeRaw / (1024 * 1024)} MB"
+                                        Text(
+                                            text = "${file.name}\n$sizeStr",
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
                                     if (isSelected) {
                                         Icon(
                                             imageVector = Icons.Filled.CheckCircle,
@@ -350,7 +365,15 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(file.name) },
+                title = { 
+                    Column {
+                        Text(file.name, style = MaterialTheme.typography.titleMedium)
+                        val sizeRaw = file.length()
+                        val sizeStr = if (sizeRaw < 1024) "$sizeRaw B" else if (sizeRaw < 1024 * 1024) "${sizeRaw / 1024} KB" else "${sizeRaw / (1024 * 1024)} MB"
+                        val dateStr = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.US).format(java.util.Date(file.lastModified()))
+                        Text("$sizeStr • $dateStr", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha=0.7f))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
