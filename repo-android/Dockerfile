@@ -32,11 +32,12 @@ WORKDIR /app
 COPY . .
 
 # Build APK with memory optimizations and verbose output for debugging
-RUN java -version && gradle --version && free -m && df -h && pwd && ls -laR .
+RUN env && java -version && gradle --version && free -m && df -h && pwd && ls -laR .
+RUN cat /proc/meminfo && cat /proc/cpuinfo
 RUN sdkmanager --list_installed
 RUN gradle projects --console=plain
-# Run build and capture output to show it on failure
-RUN gradle assembleDebug --no-daemon --max-workers 1 --info --stacktrace --console=plain > build.log 2>&1 || (cat build.log && exit 1)
+# Run build with verbose output directly to stdout/stderr
+RUN gradle assembleDebug --no-daemon --max-workers 1 --info --stacktrace --console=plain
 
 FROM nginx:alpine
 
