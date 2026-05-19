@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -26,8 +27,10 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cameraxapp.ui.theme.CameraXAppTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -58,36 +61,84 @@ class MainActivity : ComponentActivity() {
             CameraXAppTheme(darkTheme = useDarkTheme) {
                 val navController = rememberNavController()
                 val isGranted by permissionsGranted
+                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val scope = rememberCoroutineScope()
+                
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route ?: "hub"
+                
+                val applets = listOf(
+                    AppletInfo("Hub", "hub", Icons.Default.Home, "Main Hub"),
+                    AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
+                    AppletInfo("Explorer", "explorer", Icons.AutoMirrored.Filled.List, "Browse local files"),
+                    AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
+                )
 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    NavHost(navController = navController, startDestination = "hub") {
-                        composable("hub") {
-                            HubScreen(navController)
-                        }
-                        composable("camera") {
-                            if (isGranted) {
-                                CameraScreen(onBack = { navController.popBackStack() })
-                            } else {
-                                PermissionRequestScreen(
-                                    onRequestPermission = {
-                                        permissionsLauncher.launch(
-                                            arrayOf(
-                                                Manifest.permission.CAMERA,
-                                                Manifest.permission.RECORD_AUDIO
-                                            )
-                                        )
-                                    }
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet {
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = "App Hub",
+                                modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            applets.forEach { applet ->
+                                NavigationDrawerItem(
+                                    icon = { Icon(applet.icon, contentDescription = null) },
+                                    label = { Text(applet.name) },
+                                    selected = currentRoute == applet.route,
+                                    onClick = {
+                                        scope.launch { drawerState.close() }
+                                        if (currentRoute != applet.route) {
+                                            navController.navigate(applet.route) {
+                                                popUpTo("hub") {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                 )
                             }
                         }
-                        composable("explorer") {
-                            ExplorerScreen(onBack = { navController.popBackStack() })
-                        }
-                        composable("settings") {
-                            SettingsScreen(onBack = { navController.popBackStack() })
+                    }
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        NavHost(navController = navController, startDestination = "hub") {
+                            composable("hub") {
+                                HubScreen(navController, onOpenDrawer = { scope.launch { drawerState.open() } })
+                            }
+                            composable("camera") {
+                                if (isGranted) {
+                                    CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                } else {
+                                    PermissionRequestScreen(
+                                        onRequestPermission = {
+                                            permissionsLauncher.launch(
+                                                arrayOf(
+                                                    Manifest.permission.CAMERA,
+                                                    Manifest.permission.RECORD_AUDIO
+                                                )
+                                            )
+                                        },
+                                        onOpenDrawer = { scope.launch { drawerState.open() } }
+                                    )
+                                }
+                            }
+                            composable("explorer") {
+                                ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                            }
+                            composable("settings") {
+                                SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                            }
                         }
                     }
                 }
@@ -115,7 +166,7 @@ data class AppletInfo(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HubScreen(navController: NavController) {
+fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
     val applets = listOf(
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
         AppletInfo("Explorer", "explorer", Icons.AutoMirrored.Filled.List, "Browse local files"),
@@ -124,22 +175,31 @@ fun HubScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Multi-App Hub") })
+            TopAppBar(
+                title = { Text("Multi-App Hub") },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                    }
+                }
+            )
         }
     ) { padding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(applets) { applet ->
-                AppletCard(applet) {
-                    navController.navigate(applet.route)
+        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
+            val cols = if (maxWidth > 600.dp) 3 else 2
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(cols),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(applets) { applet ->
+                    AppletCard(applet) {
+                        navController.navigate(applet.route)
+                    }
                 }
             }
         }
@@ -187,23 +247,38 @@ fun AppletCard(applet: AppletInfo, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PermissionRequestScreen(onRequestPermission: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Camera and Audio permissions are required to use this app.",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 16.dp),
-            textAlign = TextAlign.Center
-        )
-        Button(onClick = onRequestPermission) {
-            Text("Grant Permission")
+fun PermissionRequestScreen(onRequestPermission: () -> Unit, onOpenDrawer: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Camera Permission") },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Camera and Audio permissions are required to use this app.",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(bottom = 16.dp),
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onRequestPermission) {
+                Text("Grant Permission")
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExplorerScreen(onBack: () -> Unit) {
+fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
@@ -63,71 +63,94 @@ fun ExplorerScreen(onBack: () -> Unit) {
     var files by remember(storageLocation) { mutableStateOf(queryFiles()) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
 
-    if (selectedFile != null) {
-        FullScreenMedia(
-            file = selectedFile!!,
-            onClose = { selectedFile = null },
-            onDelete = {
-                it.delete()
-                files = queryFiles()
-                selectedFile = null
-            }
-        )
-        return
-    }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isDualPane = maxWidth > 600.dp
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Explorer") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+        if (selectedFile != null && !isDualPane) {
+            FullScreenMedia(
+                file = selectedFile!!,
+                onClose = { selectedFile = null },
+                onDelete = {
+                    it.delete()
+                    files = queryFiles()
+                    selectedFile = null
                 }
             )
+            return@BoxWithConstraints
         }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            if (files.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No photos found in this directory")
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 100.dp),
-                    contentPadding = PaddingValues(4.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(files) { file ->
-                        Box(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .aspectRatio(1f)
-                                .clickable { selectedFile = file }
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Explorer") },
+                    navigationIcon = {
+                        Row {
+                            IconButton(onClick = onOpenDrawer) {
+                                Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                            }
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Row(modifier = Modifier.padding(padding).fillMaxSize()) {
+                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    if (files.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No photos found in this directory")
+                        }
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 100.dp),
+                            contentPadding = PaddingValues(4.dp),
+                            modifier = Modifier.fillMaxSize()
                         ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(model = file),
-                                contentDescription = file.name,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            if (file.extension == "mp4") {
+                            items(files) { file ->
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Color.Black.copy(alpha = 0.3f)),
-                                    contentAlignment = Alignment.Center
+                                        .padding(4.dp)
+                                        .aspectRatio(1f)
+                                        .background(if (isDualPane && selectedFile == file) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                                        .clickable { selectedFile = file }
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.PlayArrow,
-                                        contentDescription = "Video",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(48.dp)
+                                    Image(
+                                        painter = rememberAsyncImagePainter(model = file),
+                                        contentDescription = file.name,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
                                     )
+                                    if (file.extension == "mp4") {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.3f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.PlayArrow,
+                                                contentDescription = "Video",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
+                    }
+                }
+
+                if (isDualPane && selectedFile != null) {
+                    Box(modifier = Modifier.weight(1.5f).fillMaxHeight()) {
+                        FullScreenMedia(
+                            file = selectedFile!!,
+                            onClose = { selectedFile = null },
+                            onDelete = {
+                                it.delete()
+                                files = queryFiles()
+                                selectedFile = null
+                            }
+                        )
                     }
                 }
             }

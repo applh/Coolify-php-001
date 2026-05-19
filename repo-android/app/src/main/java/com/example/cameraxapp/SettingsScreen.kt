@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     val coroutineScope = rememberCoroutineScope()
@@ -33,8 +33,10 @@ fun SettingsScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Row {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                        }
                     }
                 }
             )

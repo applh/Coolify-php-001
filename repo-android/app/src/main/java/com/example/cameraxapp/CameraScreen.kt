@@ -55,7 +55,7 @@ import java.util.concurrent.Executor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CameraScreen(onBack: () -> Unit) {
+fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     
@@ -100,8 +100,10 @@ fun CameraScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = { Text(if (captureMode == "PHOTO") "Camera" else "Video") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Row {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                        }
                     }
                 },
                 actions = {
