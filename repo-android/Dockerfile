@@ -32,7 +32,8 @@ WORKDIR /app
 COPY . .
 
 # Build APK with memory optimizations and quiet output
-RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace --info
+# Running with --no-daemon and limited workers to stay within container limits
+RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace
 
 FROM nginx:alpine
 
