@@ -4,11 +4,10 @@ FROM eclipse-temurin:17-jdk-jammy AS builder
 ENV ANDROID_SDK_ROOT /opt/android-sdk
 ENV ANDROID_HOME /opt/android-sdk
 ENV PATH $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=512m\""
 
 # Install dependencies with retries and quiet mode
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget unzip curl ca-certificates && \
+    apt-get install -y --no-install-recommends wget unzip curl ca-certificates libstdc++6 lib64z1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Set up Android SDK
@@ -20,13 +19,14 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
 
 # Accept licenses and install platform components
 RUN yes | sdkmanager --licenses && \
-    sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 # Install Gradle
 RUN wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -P /tmp && \
     unzip -q -d /opt/gradle /tmp/gradle-8.7-bin.zip && \
     rm /tmp/gradle-8.7-bin.zip
 ENV PATH $PATH:/opt/gradle/gradle-8.7/bin
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx2048m -XX:MaxMetaspaceSize=512m\""
 
 WORKDIR /app
 COPY . .
