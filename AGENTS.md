@@ -20,6 +20,8 @@ When generating or modifying sites within the `content/` directory, the AI agent
 - Provide clear Call-To-Action (CTA) elements.
 - Maintain sufficient color contrast (WCAG compliance) to ensure readability for everyone.
 - Add subtle, purposeful animations or hover states for interactive feedback.
+- Always include a navigation drawer on the left side of the layout.
+- Always include a vertical floating menu bar on the right side of the layout.
 
 ## 4. Security
 - Sanitize and validate all user inputs (if form handling or query params are used).
