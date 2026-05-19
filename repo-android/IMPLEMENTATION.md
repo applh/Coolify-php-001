@@ -78,8 +78,43 @@ This document outlines the detailed implementation plan for the core features in
   - Expand the `SettingsScreen` to offer "SD Card" as a storage location choice when an external volume is mounted.
   - Use `ContextCompat.getExternalFilesDirs` to retrieve paths to removable media, and handle permissions/SAF (Storage Access Framework) interactions if writing outside app-specific directories.
 
+## 5. Common UX and Responsive Design
+
+**Objective**: Ensure a professional, cohesive user experience across all applets with responsive layouts that adapt to window resizes (e.g., split-screen, tablets, ChromeOS, foldables).
+
+**Implementation Steps**:
+- **Modal Navigation Drawer for All Applets**:
+  - Implement a `ModalNavigationDrawer` at the root of the app that provides centralized access to the Camera, File Explorer, and Settings screens.
+  - Remove standard bottom navigation bars in favor of the drawer to maintain consistency and save vertical screen estate, particularly on landscape or resizable window orientations.
+- **Responsive Layout Design**:
+  - Use `WindowSizeClass` (Compact, Medium, Expanded) to adapt the UI dynamically as the window resizes.
+  - Automatically adjust grid columns in the File Explorer (e.g., 3 on Compact, 5 on Medium, 7 on Expanded).
+  - On larger screens (Medium/Expanded), consider showing the drawer persistently (`PermanentNavigationDrawer`) or side-by-side with content for better space utilization.
+  - Maximize the Camera preview surface contextually, avoiding cropped areas on unusual aspect ratios.
+
+## 6. Professional Features
+
+**Objective**: Elevate the functionality of each applet to professional-grade standards suitable for power users.
+
+**Implementation Steps**:
+- **Camera Applet (`CameraScreen.kt`)**: 
+  - Add manual focus, exposure compensation, and white balance locks.
+  - Implement grid lines (rule of thirds, golden ratio), histogram, and level indicator overlays.
+  - Enable RAW capture support (DNG) alongside JPEG.
+  - Add barcode/QR scanning integration and face detection overlays.
+- **File Explorer Applet (`ExplorerScreen.kt`)**: 
+  - Introduce crumb-trail navigation and a dual-pane layout option for expanding screen real estate (tablets/foldables).
+  - Enable ZIP creation/extraction, secure file deletion, and batch operations (rename, move, copy).
+  - Add regex-based search, sorting by meta-attributes (EXIF data, size, extension), and hidden file toggles.
+  - Integrate SMB/FTP access for remote file management.
+- **Settings Applet (`SettingsScreen.kt`)**: 
+  - Provide deep theming options (Material You dynamic colors, custom accent hex codes) and font scale overrides.
+  - Implement biometric lock (fingerprint/face) for accessing specific applets or sensitive settings.
+  - Allow exporting and importing of app configurations as JSON files.
+  - Provide built-in developer options including readable crash logs, storage usage breakdowns, and performance profiling toggles.
+
 ## General Architectural Guidelines
 
 - **UI Architecture**: Adopt the **MVI (Model-View-Intent)** or **MVVM** pattern. Each screen should have a distinct `ViewModel` to process user actions and emit immutable UI state data classes.
-- **Navigation**: utilize **Jetpack Navigation Compose**. The `MainActivity` should host a `NavHost` bridging the three top-level destinations, optionally wrapped with a `BottomNavigation` bar.
+- **Navigation**: utilize **Jetpack Navigation Compose**. The `MainActivity` should host a `NavHost` bridging the top-level destinations, integrating smoothly with the global Navigation Drawer.
 - **Dependency Injection**: Consider using **Hilt** (or equivalent) to wire the view models with their respective repositories (Camera, Storage, User Preferences) seamlessly.
