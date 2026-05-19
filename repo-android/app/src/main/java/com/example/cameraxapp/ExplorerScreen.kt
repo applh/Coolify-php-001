@@ -10,7 +10,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
@@ -86,7 +87,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     navigationIcon = {
                         Row {
                             IconButton(onClick = onOpenDrawer) {
-                                Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                                Icon(Icons.Default.Menu, contentDescription = "Menu")
                             }
                         }
                     }
@@ -204,7 +205,7 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                 title = { Text(file.name) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {

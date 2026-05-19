@@ -12,8 +12,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
                 val applets = listOf(
                     AppletInfo("Hub", "hub", Icons.Default.Home, "Main Hub"),
                     AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-                    AppletInfo("Explorer", "explorer", Icons.AutoMirrored.Filled.List, "Browse local files"),
+                    AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
 
@@ -169,7 +169,7 @@ data class AppletInfo(
 fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
     val applets = listOf(
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-        AppletInfo("Explorer", "explorer", Icons.AutoMirrored.Filled.List, "Browse local files"),
+        AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 
@@ -179,7 +179,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
                 title = { Text("Multi-App Hub") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
                 }
             )
@@ -256,7 +256,7 @@ fun PermissionRequestScreen(onRequestPermission: () -> Unit, onOpenDrawer: () ->
                 title = { Text("Camera Permission") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
                 }
             )

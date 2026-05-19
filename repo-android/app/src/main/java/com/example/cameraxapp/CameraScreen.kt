@@ -30,7 +30,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
@@ -102,7 +102,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 navigationIcon = {
                     Row {
                         IconButton(onClick = onOpenDrawer) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
                     }
                 },
