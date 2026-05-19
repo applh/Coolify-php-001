@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,7 +75,7 @@ fun CameraScreen(onBack: () -> Unit) {
                 )
             ) {
                 Icon(
-                    Icons.Filled.CameraAlt,
+                    Icons.Filled.Add,
                     contentDescription = "Capture",
                     modifier = Modifier.size(40.dp)
                 )

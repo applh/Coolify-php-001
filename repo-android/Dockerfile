@@ -31,13 +31,8 @@ ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gra
 WORKDIR /app
 COPY . .
 
-# Build APK with memory optimizations and verbose output for debugging
-RUN env && java -version && gradle --version && free -m && df -h && pwd && ls -laR .
-RUN cat /proc/meminfo && cat /proc/cpuinfo
-RUN sdkmanager --list_installed
-RUN gradle projects --console=plain
-# Run build and capture output, on failure print the last 150 lines to bypass Coolify log truncation
-RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace --console=plain > build.log 2>&1 || (echo "=== GRADLE ERROR ===" && tail -n 150 build.log && echo "=== END GRADLE ERROR ===" && exit 1)
+# Build APK with memory optimizations
+RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace --console=plain
 
 FROM nginx:alpine
 
