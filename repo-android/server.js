@@ -6,6 +6,7 @@ const path = require('path');
 const port = 3000;
 let buildStatus = 'Building'; // 'Building', 'Success', 'Failed'
 let logContent = '';
+let buildTimestamp = null;
 
 // Spawn the gradle build in the background
 const buildProcess = spawn('gradle', ['assembleDebug', '--no-daemon', '--max-workers', '1', '--stacktrace', '--console=plain'], { cwd: '/app' });
@@ -23,6 +24,7 @@ buildProcess.stderr.on('data', (data) => {
 buildProcess.on('close', (code) => {
     if (code === 0) {
         buildStatus = 'Success';
+        buildTimestamp = new Date().toLocaleString();
     } else {
         buildStatus = 'Failed';
     }
@@ -37,6 +39,7 @@ const server = http.createServer((req, res) => {
             <html>
             <head>
                 <title>Android Build Server</title>
+                                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
                 <style>
                     body { font-family: monospace; background: #1e1e1e; color: #fff; padding: 20px; line-height: 1.5; }
                     .status { padding: 15px; margin-bottom: 20px; border-radius: 5px; font-weight: bold; font-size: 1.2em; }
@@ -44,21 +47,50 @@ const server = http.createServer((req, res) => {
                     .Success { background: #059669; }
                     .Failed { background: #dc2626; }
                     pre { background: #000; padding: 20px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
-                    a.button { display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-bottom: 20px; }
+                    .download-area { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+                    a.button { display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
                     a.button:hover { background: #1d4ed8; }
+                    #qrcode { padding: 10px; background: white; border-radius: 5px; }
+                    .timestamp { color: #9ca3af; font-size: 0.9em; margin-bottom: 20px; }
                 </style>
             </head>
             <body>
                 <h1>Android Build Panel</h1>
                 <div id="status-div" class="status ${buildStatus}">Status: ${buildStatus}</div>
-                <div id="download-container">
-                    ${buildStatus === 'Success' ? '<a href="/app.apk" class="button">Download APK</a>' : ''}
+                <div id="timestamp-container" class="timestamp">${buildTimestamp ? 'Build Timestamp: ' + buildTimestamp : ''}</div>
+                <div id="download-container" class="download-area">
+                    ${buildStatus === 'Success' ? '<a href="/app.apk" class="button">Download APK</a><div id="qrcode"></div>' : ''}
                 </div>
                 <h2>Build Logs:</h2>
                 <p><i>Logs are automatically updated via AJAX.</i></p>
                 <pre id="logs-pre">${logContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
                 
                 <script>
+                    function generateQRCode() {
+                        const qrContainer = document.getElementById('qrcode');
+                        if (qrContainer && !qrContainer.hasChildNodes()) {
+                            let apkUrl = window.location.href.split('?')[0].split('#')[0];
+                            if (!apkUrl.endsWith('/')) {
+                                apkUrl = apkUrl.substring(0, apkUrl.lastIndexOf('/') + 1);
+                            }
+                            apkUrl += 'app.apk';
+
+                            new QRCode(qrContainer, {
+                                text: apkUrl,
+                                width: 100,
+                                height: 100,
+                                colorDark : "#000000",
+                                colorLight : "#ffffff",
+                                correctLevel : QRCode.CorrectLevel.H
+                            });
+                        }
+                    }
+
+                    // Attempt generation immediately in case it's already successful
+                    if ('${buildStatus}' === 'Success') {
+                        generateQRCode();
+                    }
+
                     async function fetchStatus() {
                         try {
                             const res = await fetch('/status');
@@ -69,6 +101,11 @@ const server = http.createServer((req, res) => {
                             statusDiv.textContent = 'Status: ' + data.buildStatus;
                             statusDiv.className = 'status ' + data.buildStatus;
                             
+                            const timestampDiv = document.getElementById('timestamp-container');
+                            if (data.buildTimestamp) {
+                                timestampDiv.textContent = 'Build Timestamp: ' + data.buildTimestamp;
+                            }
+
                             const logsPre = document.getElementById('logs-pre');
                             logsPre.textContent = data.logContent;
                             
@@ -80,7 +117,8 @@ const server = http.createServer((req, res) => {
                             const downloadContainer = document.getElementById('download-container');
                             if (data.buildStatus === 'Success') {
                                 if (downloadContainer.innerHTML.trim() === '') {
-                                    downloadContainer.innerHTML = '<a href="/app.apk" class="button">Download APK</a>';
+                                    downloadContainer.innerHTML = '<a href="/app.apk" class="button">Download APK</a><div id="qrcode"></div>';
+                                    generateQRCode();
                                 }
                             } else {
                                 downloadContainer.innerHTML = '';
@@ -105,7 +143,7 @@ const server = http.createServer((req, res) => {
         `);
     } else if (req.url === '/status') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ buildStatus, logContent }));
+        res.end(JSON.stringify({ buildStatus, logContent, buildTimestamp }));
     } else if (req.url === '/app.apk' && buildStatus === 'Success') {
         const apkPath = path.join(__dirname, 'app/build/outputs/apk/debug/app-debug.apk');
         if (fs.existsSync(apkPath)) {

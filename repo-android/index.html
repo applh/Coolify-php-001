@@ -15,20 +15,21 @@
         </div>
         
         <div class="p-8 flex flex-col items-center">
-            <div id="qrcode" class="mb-8 p-4 bg-white rounded-xl shadow-sm border border-slate-200"></div>
-            
             <p class="text-slate-500 mb-6 text-center text-sm">Scan the QR code with your Android device or click the button below to download the app directly.</p>
             
-            <a href="app.apk" 
-               class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download APK
-            </a>
+            <div class="flex flex-row items-center justify-center w-full space-x-6">
+                <a href="app.apk" 
+                   class="flex-1 flex items-center justify-center py-3.5 px-6 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download APK
+                </a>
+                <div id="qrcode" class="p-2 bg-white rounded-xl shadow-sm border border-slate-200 shrink-0"></div>
+            </div>
         </div>
         
-        <div class="bg-slate-50 p-4 text-center text-xs text-slate-400 border-t border-slate-100">
+        <div id="build-timestamp" class="bg-slate-50 p-4 text-center text-xs text-slate-400 border-t border-slate-100">
             Latest build available
         </div>
     </div>
@@ -44,12 +45,15 @@
 
             new QRCode(document.getElementById("qrcode"), {
                 text: apkUrl,
-                width: 200,
-                height: 200,
+                width: 64,
+                height: 64,
                 colorDark : "#0f172a",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
+            
+            const now = new Date().toLocaleString();
+            document.getElementById('build-timestamp').innerText = 'Build Timestamp: ' + now;
         };
     </script>
 </body>
