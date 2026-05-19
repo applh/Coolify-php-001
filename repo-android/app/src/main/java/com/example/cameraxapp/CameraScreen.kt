@@ -13,6 +13,15 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.MediaStoreOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
+import androidx.camera.video.FileOutputOptions
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -50,9 +59,19 @@ fun CameraScreen(onBack: () -> Unit) {
     
     val initialLensFacing = runBlocking { repository.defaultLensFacing.first() }
     val initialFlashMode = runBlocking { repository.defaultFlashMode.first() }
-    val saveToPublic by repository.saveToPublic.collectAsState(initial = false)
+    val storageLocation by repository.storageLocation.collectAsState(initial = 0)
 
     val imageCapture = remember { ImageCapture.Builder().build() }
+    val videoCapture = remember {
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
+            .build()
+        VideoCapture.withOutput(recorder)
+    }
+    
+    var captureMode by remember { mutableStateOf("PHOTO") }
+    var recording by remember { mutableStateOf<Recording?>(null) }
+    
     var lensFacing by remember { mutableStateOf(if (initialLensFacing == 1) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT) }
     var flashModeState by remember { mutableStateOf(initialFlashMode) } // 0: Off, 1: On, 2: Auto
     var lastCapturedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -68,13 +87,19 @@ fun CameraScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Camera") },
+                title = { Text(if (captureMode == "PHOTO") "Camera" else "Video") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
+                    IconButton(onClick = { captureMode = if (captureMode == "PHOTO") "VIDEO" else "PHOTO" }) {
+                        Text(
+                            text = if (captureMode == "PHOTO") "🎥" else "📷",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                     IconButton(onClick = { flashModeState = (flashModeState + 1) % 3 }) {
                         Text(
                             text = when(flashModeState) {
@@ -96,6 +121,8 @@ fun CameraScreen(onBack: () -> Unit) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 imageCapture = imageCapture,
+                videoCapture = videoCapture,
+                captureMode = captureMode,
                 lensFacing = lensFacing
             )
 
@@ -127,13 +154,24 @@ fun CameraScreen(onBack: () -> Unit) {
                 // Shutter Button
                 IconButton(
                     onClick = {
-                        takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), saveToPublic) { uri ->
-                            lastCapturedImageUri = uri
+                        if (captureMode == "PHOTO") {
+                            takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation) { uri ->
+                                lastCapturedImageUri = uri
+                            }
+                        } else {
+                            if (recording != null) {
+                                recording?.stop()
+                                recording = null
+                            } else {
+                                recording = startVideoRecording(context, videoCapture, ContextCompat.getMainExecutor(context), storageLocation) { uri ->
+                                    lastCapturedImageUri = uri
+                                }
+                            }
                         }
                     },
                     modifier = Modifier.size(80.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = if (recording != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
                     Icon(
@@ -163,18 +201,79 @@ fun CameraScreen(onBack: () -> Unit) {
     }
 }
 
+private fun startVideoRecording(
+    context: Context,
+    videoCapture: VideoCapture<Recorder>,
+    executor: Executor,
+    storageLocation: Int,
+    onVideoSaved: (Uri) -> Unit
+): Recording {
+    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
+    
+    var tempFile: File? = null
+
+    val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.mp4")
+            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraXApp")
+        }
+        MediaStoreOutputOptions.Builder(
+            context.contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        ).setContentValues(contentValues).build()
+    } else {
+        val dir = when (storageLocation) {
+            1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)!!
+            2 -> {
+                val dirs = ContextCompat.getExternalFilesDirs(context, null)
+                if (dirs.size > 1) dirs[1] else context.filesDir
+            }
+            else -> context.filesDir
+        }
+        tempFile = File(dir, "$name.mp4")
+        FileOutputOptions.Builder(tempFile).build()
+    }
+
+    val pendingRecording = videoCapture.output
+        .prepareRecording(context, outputOptions)
+
+    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        pendingRecording.withAudioEnabled()
+    }
+
+    return pendingRecording.start(executor) { recordEvent ->
+        when (recordEvent) {
+            is VideoRecordEvent.Start -> {
+                Log.d("CameraScreen", "Video recording started")
+            }
+            is VideoRecordEvent.Finalize -> {
+                if (!recordEvent.hasError()) {
+                    val msg = "Video saved successfully"
+                    Log.d("CameraScreen", msg)
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    val uri = recordEvent.outputResults.outputUri
+                    onVideoSaved(uri)
+                } else {
+                    Log.e("CameraScreen", "Video recording error: ${recordEvent.error}")
+                }
+            }
+        }
+    }
+}
+
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
     executor: Executor,
-    saveToPublic: Boolean,
+    storageLocation: Int,
     onImageSaved: (Uri) -> Unit
 ) {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
     
     var tempFile: File? = null
 
-    val outputOptions = if (saveToPublic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
@@ -186,10 +285,13 @@ private fun takePhoto(
             contentValues
         ).build()
     } else {
-        val dir = if (saveToPublic) {
-            context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
-        } else {
-            context.filesDir
+        val dir = when (storageLocation) {
+            1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
+            2 -> {
+                val dirs = ContextCompat.getExternalFilesDirs(context, null)
+                if (dirs.size > 1) dirs[1] else context.filesDir
+            }
+            else -> context.filesDir
         }
         tempFile = File(dir, "$name.jpg")
         ImageCapture.OutputFileOptions.Builder(tempFile).build()
@@ -219,6 +321,8 @@ private fun takePhoto(
 fun CameraPreview(
     modifier: Modifier = Modifier,
     imageCapture: ImageCapture,
+    videoCapture: androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>?,
+    captureMode: String,
     lensFacing: Int = CameraSelector.LENS_FACING_BACK,
     scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER
 ) {
@@ -229,14 +333,15 @@ fun CameraPreview(
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
-            val previewView = PreviewView(ctx).apply {
+            PreviewView(ctx).apply {
                 this.scaleType = scaleType
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
-
+        },
+        update = { previewView ->
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
                 val preview = Preview.Builder().build().also {
@@ -249,18 +354,25 @@ fun CameraPreview(
 
                 try {
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageCapture
-                    )
+                    if (captureMode == "PHOTO") {
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageCapture
+                        )
+                    } else if (captureMode == "VIDEO" && videoCapture != null) {
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            videoCapture
+                        )
+                    }
                 } catch (exc: Exception) {
                     Log.e("CameraPreview", "Use case binding failed", exc)
                 }
             }, ContextCompat.getMainExecutor(context))
-
-            previewView
         }
     )
 }

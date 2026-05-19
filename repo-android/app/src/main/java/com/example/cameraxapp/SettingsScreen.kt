@@ -21,7 +21,9 @@ fun SettingsScreen(onBack: () -> Unit) {
     val themeMode by repository.themeMode.collectAsState(initial = 0)
     val lensFacing by repository.defaultLensFacing.collectAsState(initial = 1)
     val flashMode by repository.defaultFlashMode.collectAsState(initial = 2)
-    val saveToPublic by repository.saveToPublic.collectAsState(initial = false)
+    val storageLocation by repository.storageLocation.collectAsState(initial = 0)
+
+    val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
     Scaffold(
         topBar = {
@@ -94,12 +96,18 @@ fun SettingsScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             ListItem(
-                headlineContent = { Text("Save to Public Directory") },
-                supportingContent = { Text("Make photos accessible to other apps") },
-                trailingContent = {
-                    Switch(checked = saveToPublic, onCheckedChange = { 
-                        coroutineScope.launch { repository.setSaveToPublic(it) } 
+                headlineContent = { Text("Storage Location") },
+                supportingContent = { 
+                    Text(when(storageLocation) {
+                        0 -> "Internal App Storage"
+                        1 -> "Public Shared Directory"
+                        2 -> "SD Card (External Storage)"
+                        else -> "Internal App Storage"
                     })
+                },
+                modifier = Modifier.clickable {
+                    val maxVal = if (hasSdCard) 2 else 1
+                    coroutineScope.launch { repository.setStorageLocation((storageLocation + 1) % (maxVal + 1)) }
                 }
             )
         }

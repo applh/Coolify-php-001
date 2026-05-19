@@ -58,6 +58,26 @@ This document outlines the detailed implementation plan for the core features in
   - Use standard Compose list components (row items with icons, text, and trailing controls like `Switch` or dropdown icons).
   - Sub-dialogs for multiple-choice selections.
 
+## 4. Next Implementation Phase
+
+**Objective**: Extend the application with advanced camera capabilities and robust file management.
+
+**Implementation Steps**:
+- **Video Recording**:
+  - Integrate CameraX `VideoCapture` and `Recorder` APIs to support video capture alongside image capture in `CameraScreen.kt`.
+  - Update the Shutter Button to handle both short taps (photo) and long presses or toggle modes (video).
+  - Ensure necessary `RECORD_AUDIO` permissions are requested if audio is required.
+- **Enhanced File Explorer View (Zoom & Pan)**:
+  - Add pinch-to-zoom and pan functionality to the full-screen image view in `ExplorerScreen.kt` using Compose's `transformable` modifier or dedicated zoomable libraries (e.g., `Telephoto`).
+  - For videos, integrate `ExoPlayer` within the full-screen view with standard playback controls (play, pause, seek), allowing users to properly preview video recordings.
+- **Full CRUD on File Explorer**:
+  - **Create/Read**: Already partially implemented via capturing and viewing. Read needs to be expanded to support grouping or sorting.
+  - **Update**: Implement file renaming functionality (e.g., via a dialog) and potentially basic image editing intents if required.
+  - **Delete**: Support batch deletion by enabling a multi-select mode in the grid view.
+- **SD Card Storage Integration**:
+  - Expand the `SettingsScreen` to offer "SD Card" as a storage location choice when an external volume is mounted.
+  - Use `ContextCompat.getExternalFilesDirs` to retrieve paths to removable media, and handle permissions/SAF (Storage Access Framework) interactions if writing outside app-specific directories.
+
 ## General Architectural Guidelines
 
 - **UI Architecture**: Adopt the **MVI (Model-View-Intent)** or **MVVM** pattern. Each screen should have a distinct `ViewModel` to process user actions and emit immutable UI state data classes.

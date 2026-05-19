@@ -31,13 +31,15 @@ import com.example.cameraxapp.ui.theme.CameraXAppTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        cameraPermissionGranted.value = isGranted
+    private val permissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
+        val audioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
+        permissionsGranted.value = cameraGranted && audioGranted
     }
 
-    private val cameraPermissionGranted = mutableStateOf(false)
+    private val permissionsGranted = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +57,7 @@ class MainActivity : ComponentActivity() {
 
             CameraXAppTheme(darkTheme = useDarkTheme) {
                 val navController = rememberNavController()
-                val isGranted by cameraPermissionGranted
+                val isGranted by permissionsGranted
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -71,7 +73,12 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 PermissionRequestScreen(
                                     onRequestPermission = {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        permissionsLauncher.launch(
+                                            arrayOf(
+                                                Manifest.permission.CAMERA,
+                                                Manifest.permission.RECORD_AUDIO
+                                            )
+                                        )
                                     }
                                 )
                             }
@@ -89,10 +96,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updatePermissionState() {
-        cameraPermissionGranted.value = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.CAMERA
+        val cameraGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
+        val audioGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        permissionsGranted.value = cameraGranted && audioGranted
     }
 }
 
@@ -187,9 +197,10 @@ fun PermissionRequestScreen(onRequestPermission: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Camera permission is required to use this app.",
+            text = "Camera and Audio permissions are required to use this app.",
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
+            textAlign = TextAlign.Center
         )
         Button(onClick = onRequestPermission) {
             Text("Grant Permission")
