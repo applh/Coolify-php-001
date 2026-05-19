@@ -81,7 +81,7 @@ const handleLogin = () => {
   <div class="min-h-screen flex flex-col bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FF3B30] selection:text-white">
     <template v-if="isChecking">
       <div class="fixed inset-0 flex items-center justify-center bg-[#0A0A0A] z-[9999]">
-         <Loader2 class="w-8 h-8 animate-spin text-[#FF3B30]" />
+        <Loader2 class="w-8 h-8 animate-spin text-[#FF3B30]" />
       </div>
     </template>
 
@@ -99,10 +99,15 @@ const handleLogin = () => {
             <h1 class="text-3xl font-serif italic tracking-tighter font-black text-white leading-none mb-2">
               FRAISE
             </h1>
-            <p class="text-white/30 text-[10px] uppercase tracking-[0.3em] font-bold">Secure Infrastructure Ops</p>
+            <p class="text-white/30 text-[10px] uppercase tracking-[0.3em] font-bold">
+              Secure Infrastructure Ops
+            </p>
           </div>
 
-          <form @submit.prevent="handleLogin" class="space-y-6 relative z-10">
+          <form
+            class="space-y-6 relative z-10"
+            @submit.prevent="handleLogin"
+          >
             <div>
               <input
                 v-model="passkey"
@@ -111,10 +116,13 @@ const handleLogin = () => {
                 class="w-full bg-[#1F1F1F] border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#FF3B30]/50 focus:ring-1 focus:ring-[#FF3B30]/50 transition-all text-center tracking-widest"
                 required
                 autofocus
-              />
+              >
             </div>
             
-            <p v-if="error" class="text-[#FF3B30] text-sm flex items-center justify-center gap-2">
+            <p
+              v-if="error"
+              class="text-[#FF3B30] text-sm flex items-center justify-center gap-2"
+            >
               <AlertCircle class="w-4 h-4" />
               {{ error }}
             </p>
@@ -124,7 +132,10 @@ const handleLogin = () => {
               :disabled="isLoading"
               class="w-full bg-[#FF3B30] hover:bg-[#E6352B] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              <Loader2 v-if="isLoading" class="w-5 h-5 animate-spin" />
+              <Loader2
+                v-if="isLoading"
+                class="w-5 h-5 animate-spin"
+              />
               <template v-else>
                 <Unlock class="w-5 h-5" />
                 Access Dashboard
@@ -133,7 +144,7 @@ const handleLogin = () => {
           </form>
 
           <p class="mt-8 text-center text-[10px] uppercase tracking-widest text-white/20">
-            Secure Infrastructure / Auth v1.2
+            Secure Infrastructure / Auth v1.3
           </p>
         </div>
       </div>

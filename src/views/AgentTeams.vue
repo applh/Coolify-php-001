@@ -184,9 +184,13 @@ const getStatusColor = (status: string) => {
           <div class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
             <Users class="w-4 h-4 text-[#FF3B30]" />
           </div>
-          <h1 class="text-3xl font-serif italic text-white tracking-tight">AI Agents Team</h1>
+          <h1 class="text-3xl font-serif italic text-white tracking-tight">
+            AI Agents Team
+          </h1>
         </div>
-        <p class="text-white/40 font-mono text-[10px] uppercase tracking-[0.2em]">Deployment Management / Autonomous Personnel</p>
+        <p class="text-white/40 font-mono text-[10px] uppercase tracking-[0.2em]">
+          Deployment Management / Autonomous Personnel
+        </p>
       </div>
       <div class="flex gap-3">
         <BaseButton 
@@ -244,8 +248,8 @@ const getStatusColor = (status: string) => {
                 <span class="text-[10px] font-mono text-white/40 uppercase tracking-widest truncate">{{ agent.status }}</span>
               </div>
               <button 
-                @click="deleteAgent(agent.id)"
                 class="text-white/20 hover:text-red-500 transition-colors p-1"
+                @click="deleteAgent(agent.id)"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
@@ -269,11 +273,13 @@ const getStatusColor = (status: string) => {
             v-for="task in tasks" 
             :key="task.id"
             class="bg-[#0F0F0F] border border-white/5 rounded-xl p-4 group hover:bg-[#141414] transition-all"
-            @click="task.status === 'completed' ? viewTaskOutput(task) : null"
             :class="task.status === 'completed' ? 'cursor-pointer' : ''"
+            @click="task.status === 'completed' ? viewTaskOutput(task) : null"
           >
             <div class="flex justify-between items-start mb-2">
-              <h4 class="text-xs font-bold text-white uppercase tracking-wider">{{ task.title }}</h4>
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider">
+                {{ task.title }}
+              </h4>
               <span 
                 class="px-2 py-0.5 rounded text-[8px] font-bold tracking-[0.1em] uppercase"
                 :class="getStatusColor(task.status)"
@@ -294,17 +300,17 @@ const getStatusColor = (status: string) => {
               <div class="flex gap-2">
                 <button 
                   v-if="task.status === 'completed'"
-                  @click.stop="viewTaskOutput(task)"
                   class="w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-green-500 hover:bg-white/5 transition-all"
                   title="View Output"
+                  @click.stop="viewTaskOutput(task)"
                 >
                   <ExternalLink class="w-3 h-3" />
                 </button>
                 <button 
                   v-if="task.status === 'queued'"
-                  @click.stop="runTask(task)"
                   class="w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-[#FF3B30] hover:bg-white/5 transition-all"
                   title="Run Task"
+                  @click.stop="runTask(task)"
                 >
                   <Play class="w-3 h-3" />
                 </button>
@@ -312,18 +318,26 @@ const getStatusColor = (status: string) => {
             </div>
           </div>
 
-          <div v-if="tasks.length === 0" class="text-center py-12 border border-dashed border-white/5 rounded-2xl">
+          <div
+            v-if="tasks.length === 0"
+            class="text-center py-12 border border-dashed border-white/5 rounded-2xl"
+          >
             <div class="flex justify-center mb-4">
               <Clock class="w-8 h-8 text-white/10" />
             </div>
-            <p class="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em]">Queue Empty</p>
+            <p class="text-[10px] font-mono text-white/20 uppercase tracking-[0.2em]">
+              Queue Empty
+            </p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Modals -->
-    <BaseModal v-model="isAgentModalOpen" title="Recruit New AI Operative">
+    <BaseModal
+      v-model="isAgentModalOpen"
+      title="Recruit New AI Operative"
+    >
       <div class="space-y-6">
         <BaseInput 
           v-model="newAgent.name"
@@ -347,12 +361,22 @@ const getStatusColor = (status: string) => {
         />
       </div>
       <template #footer>
-        <BaseButton variant="secondary" @click="isAgentModalOpen = false">Abort</BaseButton>
-        <BaseButton @click="createAgent">Commit Recruitment</BaseButton>
+        <BaseButton
+          variant="secondary"
+          @click="isAgentModalOpen = false"
+        >
+          Abort
+        </BaseButton>
+        <BaseButton @click="createAgent">
+          Commit Recruitment
+        </BaseButton>
       </template>
     </BaseModal>
 
-    <BaseModal v-model="isTaskModalOpen" title="Register Assignment">
+    <BaseModal
+      v-model="isTaskModalOpen"
+      title="Register Assignment"
+    >
       <div class="space-y-6">
         <BaseInput 
           v-model="newTask.title"
@@ -365,7 +389,7 @@ const getStatusColor = (status: string) => {
             v-model="newTask.description"
             class="w-full bg-[#1A1A1A] border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#FF3B30]/30 transition-all text-sm text-white placeholder:text-white/10 min-h-[100px]"
             placeholder="Detailed description of the task..."
-          ></textarea>
+          />
         </div>
         <div class="flex flex-col gap-1.5">
           <label class="text-[10px] font-mono uppercase tracking-[0.2em] text-white/30">Assign Operative</label>
@@ -373,33 +397,52 @@ const getStatusColor = (status: string) => {
             v-model="newTask.agent_id"
             class="w-full bg-[#1A1A1A] border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#FF3B30]/30 transition-all text-sm text-white"
           >
-            <option :value="null">Unassigned (Queue for first available)</option>
-            <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+            <option :value="null">
+              Unassigned (Queue for first available)
+            </option>
+            <option
+              v-for="agent in agents"
+              :key="agent.id"
+              :value="agent.id"
+            >
               {{ agent.name }} ({{ agent.role }})
             </option>
           </select>
         </div>
       </div>
       <template #footer>
-        <BaseButton variant="secondary" @click="isTaskModalOpen = false">Discard</BaseButton>
-        <BaseButton @click="createTask">Deploy Task</BaseButton>
+        <BaseButton
+          variant="secondary"
+          @click="isTaskModalOpen = false"
+        >
+          Discard
+        </BaseButton>
+        <BaseButton @click="createTask">
+          Deploy Task
+        </BaseButton>
       </template>
     </BaseModal>
 
-    <BaseModal v-model="isOutputModalOpen" :title="selectedTask?.title || 'Task Output'">
+    <BaseModal
+      v-model="isOutputModalOpen"
+      :title="selectedTask?.title || 'Task Output'"
+    >
       <div class="space-y-4">
         <div>
-          <h4 class="text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mb-2">Intelligence Result</h4>
+          <h4 class="text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mb-2">
+            Intelligence Result
+          </h4>
           <div class="bg-[#0A0A0A] border border-white/5 rounded-xl p-6 font-mono text-sm text-white/80 leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
             {{ selectedTask?.output_data || 'No output data available.' }}
           </div>
         </div>
       </div>
       <template #footer>
-        <BaseButton @click="isOutputModalOpen = false">Dismiss</BaseButton>
+        <BaseButton @click="isOutputModalOpen = false">
+          Dismiss
+        </BaseButton>
       </template>
     </BaseModal>
-
   </div>
 </template>
 

@@ -13,20 +13,24 @@ import './style.css';
 
 // Global Fetch Override for Admin Protection
 const originalFetch = window.fetch;
-window.fetch = async (url, options: RequestInit = {}) => {
-  const passkey = localStorage.getItem('admin_passkey');
-  if (passkey) {
-    options.headers = {
-      ...options.headers,
-      'x-admin-passkey': passkey
-    };
-  }
-  const response = await originalFetch(url, options);
-  if (response.status === 401 && !url.toString().includes('/api/auth/verify')) {
-    window.dispatchEvent(new CustomEvent('admin-auth-failed'));
-  }
-  return response;
-};
+Object.defineProperty(window, 'fetch', {
+  value: async (url: RequestInfo | URL, options: RequestInit = {}) => {
+    const passkey = localStorage.getItem('admin_passkey');
+    if (passkey) {
+      options.headers = {
+        ...options.headers,
+        'x-admin-passkey': passkey
+      };
+    }
+    const response = await originalFetch(url, options);
+    if (response.status === 401 && !url.toString().includes('/api/auth/verify')) {
+      window.dispatchEvent(new CustomEvent('admin-auth-failed'));
+    }
+    return response;
+  },
+  configurable: true,
+  writable: true
+});
 
 const router = createRouter({
   history: createWebHashHistory(),

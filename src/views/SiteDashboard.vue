@@ -256,145 +256,150 @@ const downloadApk = () => {
     <template v-if="sites.length > 0">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <BaseCard
-        v-for="site in sites" 
-        :key="site"
-        :title="site"
-        :subtitle="`/${selectedRepo}/content/${site}`"
-        hoverable
-        @click="openEditor(site)"
-      >
-        <template #icon>
-          <Globe
-            :size="48"
-            class="text-white"
-          />
-        </template>
+          v-for="site in sites" 
+          :key="site"
+          :title="site"
+          :subtitle="`/${selectedRepo}/content/${site}`"
+          hoverable
+          @click="openEditor(site)"
+        >
+          <template #icon>
+            <Globe
+              :size="48"
+              class="text-white"
+            />
+          </template>
 
-        <div class="mt-8 flex flex-col gap-6">
-          <div class="flex items-center justify-between">
+          <div class="mt-8 flex flex-col gap-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                <span class="text-[9px] font-mono uppercase tracking-widest text-green-500/80 font-bold">Authenticated</span>
+              </div>
+              <BaseButton
+                variant="ghost"
+                size="xs"
+                @click.stop="siteToDelete = site"
+              >
+                <template #icon>
+                  <Trash2 :size="12" />
+                </template>
+                Purge
+              </BaseButton>
+            </div>
+
             <div class="flex items-center gap-2">
-              <span class="w-1.5 h-1.5 bg-green-500 rounded-full" />
-              <span class="text-[9px] font-mono uppercase tracking-widest text-green-500/80 font-bold">Authenticated</span>
+              <BaseButton
+                variant="outline"
+                size="xs"
+                @click.stop="downloadSite(site)"
+              >
+                <template #icon>
+                  <Download :size="12" />
+                </template>
+                Backup
+              </BaseButton>
+              <BaseButton
+                variant="outline"
+                size="xs"
+                @click.stop="triggerUpload(site)"
+              >
+                <template #icon>
+                  <Upload :size="12" />
+                </template>
+                Sync
+              </BaseButton>
+              <a 
+                v-if="selectedRepo === 'repo-php'"
+                :href="`/repo-php/public/index.php?__site=${site}`" 
+                target="_blank"
+                class="p-2 border border-white/10 rounded-lg hover:border-white/30 hover:bg-white/5 transition-all text-white/40 hover:text-[#FF3B30]"
+                title="Launch Public View"
+                @click.stop
+              >
+                <ExternalLink :size="14" />
+              </a>
             </div>
-            <BaseButton
-              variant="ghost"
-              size="xs"
-              @click.stop="siteToDelete = site"
-            >
-              <template #icon>
-                <Trash2 :size="12" />
-              </template>
-              Purge
-            </BaseButton>
-          </div>
 
-          <div class="flex items-center gap-2">
-            <BaseButton
-              variant="outline"
-              size="xs"
-              @click.stop="downloadSite(site)"
-            >
-              <template #icon>
-                <Download :size="12" />
-              </template>
-              Backup
-            </BaseButton>
-            <BaseButton
-              variant="outline"
-              size="xs"
-              @click.stop="triggerUpload(site)"
-            >
-              <template #icon>
-                <Upload :size="12" />
-              </template>
-              Sync
-            </BaseButton>
-            <a 
-              v-if="selectedRepo === 'repo-php'"
-              :href="`/repo-php/public/index.php?__site=${site}`" 
-              target="_blank"
-              class="p-2 border border-white/10 rounded-lg hover:border-white/30 hover:bg-white/5 transition-all text-white/40 hover:text-[#FF3B30]"
-              title="Launch Public View"
-              @click.stop
-            >
-              <ExternalLink :size="14" />
-            </a>
+            <div class="pt-4 border-t border-white/[0.03] flex justify-between items-center group-hover:translate-x-1 transition-transform">
+              <span class="text-[10px] font-mono text-white/30 uppercase tracking-widest">Manage Instance</span>
+              <ChevronRight
+                :size="16"
+                class="text-[#FF3B30]"
+              />
+            </div>
           </div>
-
-          <div class="pt-4 border-t border-white/[0.03] flex justify-between items-center group-hover:translate-x-1 transition-transform">
-            <span class="text-[10px] font-mono text-white/30 uppercase tracking-widest">Manage Instance</span>
-            <ChevronRight
-              :size="16"
-              class="text-[#FF3B30]"
-            />
-          </div>
-        </div>
-      </BaseCard>
-    </div>
+        </BaseCard>
+      </div>
     
-    <!-- Android Application Section -->
-    <div class="mt-24 border-t border-white/5 pt-16">
-      <div class="flex items-center gap-3 mb-8">
-        <Smartphone class="text-[#FF3B30]" :size="20" />
-        <h3 class="text-2xl font-serif italic text-white/80">Companion Experience</h3>
-      </div>
+      <!-- Android Application Section -->
+      <div class="mt-24 border-t border-white/5 pt-16">
+        <div class="flex items-center gap-3 mb-8">
+          <Smartphone
+            class="text-[#FF3B30]"
+            :size="20"
+          />
+          <h3 class="text-2xl font-serif italic text-white/80">
+            Companion Experience
+          </h3>
+        </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white/[0.02] border border-white/5 rounded-[40px] p-12 overflow-hidden relative">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-[#FF3B30]/5 blur-[120px] -mr-32 -mt-32" />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white/[0.02] border border-white/5 rounded-[40px] p-12 overflow-hidden relative">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-[#FF3B30]/5 blur-[120px] -mr-32 -mt-32" />
         
-        <div class="relative z-10 flex flex-col justify-center">
-          <div class="flex items-center gap-3 mb-6">
-            <span class="px-3 py-1 bg-[#FF3B30]/10 text-[#FF3B30] text-[9px] font-mono font-bold rounded-full uppercase tracking-widest">Build v1.0.0</span>
-            <span class="text-[10px] text-white/20 font-mono uppercase tracking-widest">CameraX Native</span>
-          </div>
-          
-          <h4 class="text-4xl font-serif italic mb-6 leading-tight max-w-md">
-            Download the CameraX Native Companion App
-          </h4>
-          
-          <p class="text-white/40 text-sm leading-relaxed mb-10 max-w-sm font-serif italic">
-            Capture assets directly from your mobile device and sync them instantly to your creative repositories. 
-            Engineered with modern Jetpack Compose and high-performance CameraX bindings.
-          </p>
-
-          <div class="flex items-center gap-6">
-            <BaseButton 
-              variant="outline" 
-              class="group"
-              @click="downloadApk"
-            >
-              <template #icon>
-                <Download :size="16" />
-              </template>
-              Manual APK Download
-            </BaseButton>
-          </div>
-        </div>
-
-        <div class="relative z-10 flex flex-col items-center justify-center lg:items-end">
-          <div class="bg-white p-6 rounded-[32px] shadow-2xl shadow-black/50 hover:scale-105 transition-transform duration-500 cursor-help group">
-            <QrcodeVue 
-              :value="apkDownloadUrl" 
-              :size="180" 
-              level="H"
-              render-as="svg"
-              class="w-full h-full"
-            />
-            <div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors rounded-[32px]" />
-          </div>
-          <div class="mt-6 flex flex-col items-center lg:items-end gap-2 pr-4">
-            <div class="flex items-center gap-2 text-white/30">
-              <QrCode :size="14" />
-              <span class="text-[10px] font-mono uppercase tracking-widest font-bold">Scan to Provision</span>
+          <div class="relative z-10 flex flex-col justify-center">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="px-3 py-1 bg-[#FF3B30]/10 text-[#FF3B30] text-[9px] font-mono font-bold rounded-full uppercase tracking-widest">Build v1.0.0</span>
+              <span class="text-[10px] text-white/20 font-mono uppercase tracking-widest">CameraX Native</span>
             </div>
-            <p class="text-[9px] text-white/10 font-mono uppercase text-right leading-loose">
-              Direct connection to build node<br/>
-              Target: debug/app-debug.apk
+          
+            <h4 class="text-4xl font-serif italic mb-6 leading-tight max-w-md">
+              Download the CameraX Native Companion App
+            </h4>
+          
+            <p class="text-white/40 text-sm leading-relaxed mb-10 max-w-sm font-serif italic">
+              Capture assets directly from your mobile device and sync them instantly to your creative repositories. 
+              Engineered with modern Jetpack Compose and high-performance CameraX bindings.
             </p>
+
+            <div class="flex items-center gap-6">
+              <BaseButton 
+                variant="outline" 
+                class="group"
+                @click="downloadApk"
+              >
+                <template #icon>
+                  <Download :size="16" />
+                </template>
+                Manual APK Download
+              </BaseButton>
+            </div>
+          </div>
+
+          <div class="relative z-10 flex flex-col items-center justify-center lg:items-end">
+            <div class="bg-white p-6 rounded-[32px] shadow-2xl shadow-black/50 hover:scale-105 transition-transform duration-500 cursor-help group">
+              <QrcodeVue 
+                :value="apkDownloadUrl" 
+                :size="180" 
+                level="H"
+                render-as="svg"
+                class="w-full h-full"
+              />
+              <div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors rounded-[32px]" />
+            </div>
+            <div class="mt-6 flex flex-col items-center lg:items-end gap-2 pr-4">
+              <div class="flex items-center gap-2 text-white/30">
+                <QrCode :size="14" />
+                <span class="text-[10px] font-mono uppercase tracking-widest font-bold">Scan to Provision</span>
+              </div>
+              <p class="text-[9px] text-white/10 font-mono uppercase text-right leading-loose">
+                Direct connection to build node<br>
+                Target: debug/app-debug.apk
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </template>
 
     <!-- Empty State -->
@@ -511,7 +516,9 @@ const downloadApk = () => {
         <p class="text-white/80 font-mono text-sm mb-4 bg-white/5 p-4 rounded-xl border border-white/5 w-full">
           {{ errorMessage || 'An unexpected internal error has occurred.' }}
         </p>
-        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">Trace ID: {{ Math.random().toString(36).substring(7).toUpperCase() }}</p>
+        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">
+          Trace ID: {{ Math.random().toString(36).substring(7).toUpperCase() }}
+        </p>
       </div>
       <template #footer>
         <BaseButton 

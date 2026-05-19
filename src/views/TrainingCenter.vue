@@ -299,7 +299,10 @@ function backToDashboard() {
       >
         {{ selectedPart?.name }}
       </button>
-      <span v-else class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedPart?.name }}</span>
+      <span
+        v-else
+        class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap"
+      >{{ selectedPart?.name }}</span>
       <template v-if="viewMode === 'module'">
         <ChevronRight class="w-3 h-3 text-white/10 shrink-0" />
         <span class="text-xs text-white/80 uppercase tracking-widest font-bold whitespace-nowrap">{{ selectedModule?.name }}</span>
@@ -526,55 +529,82 @@ function backToDashboard() {
           v-else-if="activeView === 'tree'"
           class="space-y-4 pb-20"
         >
-          <div v-for="part in filteredParts" :key="part.id" class="border border-white/5 bg-white/[0.01] rounded-xl overflow-hidden">
+          <div
+            v-for="part in filteredParts"
+            :key="part.id"
+            class="border border-white/5 bg-white/[0.01] rounded-xl overflow-hidden"
+          >
             <div 
               class="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
               @click="togglePart(part.id)"
             >
-               <div class="flex items-center gap-3">
-                 <ChevronRight v-if="!expandedParts[part.id]" class="w-4 h-4 text-white/40" />
-                 <ChevronDown v-else class="w-4 h-4 text-[#F27D26]" />
-                 <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ part.id }}</span>
-                 <h3 class="font-bold text-sm tracking-tight uppercase text-white/90">{{ part.name }}</h3>
-               </div>
-               <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ part.modules.length }} MODULES</span>
+              <div class="flex items-center gap-3">
+                <ChevronRight
+                  v-if="!expandedParts[part.id]"
+                  class="w-4 h-4 text-white/40"
+                />
+                <ChevronDown
+                  v-else
+                  class="w-4 h-4 text-[#F27D26]"
+                />
+                <span class="text-xs font-mono text-[#F27D26] font-extrabold">{{ part.id }}</span>
+                <h3 class="font-bold text-sm tracking-tight uppercase text-white/90">
+                  {{ part.name }}
+                </h3>
+              </div>
+              <span class="text-[10px] text-white/20 font-mono tracking-widest">{{ part.modules.length }} MODULES</span>
             </div>
             
-            <div v-if="expandedParts[part.id]" class="border-t border-white/5">
-               <div 
-                  v-for="mod in part.modules" 
-                  :key="mod.id"
-                  class="border-b last:border-b-0 border-white/5"
-               >
-                 <div 
-                    class="flex items-center justify-between p-3 pl-12 hover:bg-white/5 cursor-pointer transition-colors"
-                    @click="toggleModule(mod.id)"
-                 >
-                    <div class="flex items-center gap-3">
-                      <ChevronRight v-if="!expandedModules[mod.id]" class="w-4 h-4 text-white/40" />
-                      <ChevronDown v-else class="w-4 h-4 text-[#F27D26]" />
-                      <span class="font-mono text-[10px] text-white/40">{{ mod.id }}</span>
-                      <span class="font-bold text-xs text-white/80 uppercase tracking-tight">{{ mod.name }}</span>
-                      <Zap v-if="allSlidesData[mod.id]" class="w-3.5 h-3.5 text-[#F27D26] fill-[#F27D26]" />
-                    </div>
-                    <span class="text-[10px] text-white/30 font-mono">{{ mod.hours[1] - mod.hours[0] + 1 }} HOURS</span>
-                 </div>
+            <div
+              v-if="expandedParts[part.id]"
+              class="border-t border-white/5"
+            >
+              <div 
+                v-for="mod in part.modules" 
+                :key="mod.id"
+                class="border-b last:border-b-0 border-white/5"
+              >
+                <div 
+                  class="flex items-center justify-between p-3 pl-12 hover:bg-white/5 cursor-pointer transition-colors"
+                  @click="toggleModule(mod.id)"
+                >
+                  <div class="flex items-center gap-3">
+                    <ChevronRight
+                      v-if="!expandedModules[mod.id]"
+                      class="w-4 h-4 text-white/40"
+                    />
+                    <ChevronDown
+                      v-else
+                      class="w-4 h-4 text-[#F27D26]"
+                    />
+                    <span class="font-mono text-[10px] text-white/40">{{ mod.id }}</span>
+                    <span class="font-bold text-xs text-white/80 uppercase tracking-tight">{{ mod.name }}</span>
+                    <Zap
+                      v-if="allSlidesData[mod.id]"
+                      class="w-3.5 h-3.5 text-[#F27D26] fill-[#F27D26]"
+                    />
+                  </div>
+                  <span class="text-[10px] text-white/30 font-mono">{{ mod.hours[1] - mod.hours[0] + 1 }} HOURS</span>
+                </div>
                  
-                 <div v-if="expandedModules[mod.id]" class="pl-[4.5rem] bg-black/40 py-2 space-y-1">
-                    <div 
-                       v-for="(hour, idx) in getHoursForModule(mod)" 
-                       :key="hour.id"
-                       class="flex items-center gap-3 py-2 px-3 mx-2 rounded-lg cursor-pointer group transition-colors"
-                       :class="allSlidesData[mod.id] ? 'hover:bg-[#F27D26]/10' : 'opacity-40 grayscale cursor-not-allowed'"
-                       @click="allSlidesData[mod.id] ? startHourDirect(mod, hour) : null"
-                    >
-                      <FileText class="w-3.5 h-3.5 text-white/30 group-hover:text-[#F27D26]" />
-                      <span class="font-mono text-[9px] text-white/40 group-hover:text-[#F27D26]">H{{ String(idx + 1).padStart(2, '0') }}</span>
-                      <span class="text-xs text-white/60 group-hover:text-white line-clamp-1">{{ hour.title }}</span>
-                      <ChevronRight class="w-3 h-3 text-[#F27D26] ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                 </div>
-               </div>
+                <div
+                  v-if="expandedModules[mod.id]"
+                  class="pl-[4.5rem] bg-black/40 py-2 space-y-1"
+                >
+                  <div 
+                    v-for="(hour, idx) in getHoursForModule(mod)" 
+                    :key="hour.id"
+                    class="flex items-center gap-3 py-2 px-3 mx-2 rounded-lg cursor-pointer group transition-colors"
+                    :class="allSlidesData[mod.id] ? 'hover:bg-[#F27D26]/10' : 'opacity-40 grayscale cursor-not-allowed'"
+                    @click="allSlidesData[mod.id] ? startHourDirect(mod, hour) : null"
+                  >
+                    <FileText class="w-3.5 h-3.5 text-white/30 group-hover:text-[#F27D26]" />
+                    <span class="font-mono text-[9px] text-white/40 group-hover:text-[#F27D26]">H{{ String(idx + 1).padStart(2, '0') }}</span>
+                    <span class="text-xs text-white/60 group-hover:text-white line-clamp-1">{{ hour.title }}</span>
+                    <ChevronRight class="w-3 h-3 text-[#F27D26] ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

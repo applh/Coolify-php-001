@@ -94,9 +94,9 @@ const isActive = (path: string) => {
         <div class="w-full h-full bg-gradient-to-br from-red-500/20 to-orange-500/20" />
       </div>
       <button 
-        @click="handleLogout"
         class="w-8 h-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/40 hover:text-[#FF3B30] hover:bg-white/10 transition-all group"
         title="Logout"
+        @click="handleLogout"
       >
         <LogoutIcon :size="16" />
       </button>
@@ -111,8 +111,12 @@ const isActive = (path: string) => {
         <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
           <LogoutIcon class="text-[#FF3B30] w-8 h-8" />
         </div>
-        <p class="text-white/60 font-serif italic text-lg mb-2">Are you sure you wish to disconnect?</p>
-        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">Session tokens and local state will be purged.</p>
+        <p class="text-white/60 font-serif italic text-lg mb-2">
+          Are you sure you wish to disconnect?
+        </p>
+        <p class="text-[10px] uppercase tracking-widest text-white/20 font-bold">
+          Session tokens and local state will be purged.
+        </p>
       </div>
       <template #footer>
         <BaseButton
