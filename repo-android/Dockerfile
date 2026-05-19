@@ -4,18 +4,16 @@ FROM eclipse-temurin:17-jdk-jammy AS builder
 ENV ANDROID_SDK_ROOT /opt/android-sdk
 ENV ANDROID_HOME /opt/android-sdk
 ENV PATH $PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx4096m -XX:MaxMetaspaceSize=512m\""
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=512m\""
 
 # Install dependencies with retries and quiet mode
 RUN apt-get update && \
     apt-get install -y --no-install-recommends wget unzip curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Set up Android SDK directory structure
-RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-
-# Download and install command line tools (using a stable version)
-RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip && \
+# Set up Android SDK
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip && \
     unzip -q /tmp/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
     mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     rm /tmp/cmdline-tools.zip
@@ -37,6 +35,9 @@ COPY . .
 RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace --info
 
 FROM nginx:alpine
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Remove default assets
 RUN rm -rf /usr/share/nginx/html/*
@@ -60,4 +61,8 @@ RUN printf "server {\n\
 }\n" > /etc/nginx/conf.d/default.conf
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]

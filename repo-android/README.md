@@ -17,3 +17,10 @@ Built with modern Android practices:
 
 ## Documentation
 Detailed implementation plan can be found in [docs/multi-app-plan.md](docs/multi-app-plan.md).
+
+## Deployment (Coolify / Docker)
+This module is ready for standalone deployment as a build server:
+- **Dockerfile**: Includes Android SDK 35 and Gradle 8.7.
+- **Port**: Serves the generated APK on port 3000.
+- **Coolify Setup**: Point Coolify to the `repo-android` directory and use the provided `Dockerfile`.
+- **Resources**: Ensure your server has at least 4GB of RAM for the build process.

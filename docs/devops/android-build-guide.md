@@ -37,27 +37,31 @@ As long as the APK exists at that path, the Node.js express server will serve it
 
 ## 4. Serving the APK in Production
 
+### Option A: Via the Main Node.js Backend
 The main backend server (`server.ts`) includes a dedicated endpoint for serving the APK:
 
 ```javascript
 app.get('/api/android/download', async (req, res) => {
   const apkPath = path.join(rootDir, 'repo-android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
-  try {
-    await fs.access(apkPath);
-    res.download(apkPath, 'CameraXApp-debug.apk');
-  } catch {
-    res.status(404).json({ error: 'APK build not found. Please run build in repo-android.' });
-  }
+  // ...
 });
 ```
 
-### Docker Considerations
+### Option B: As a Standalone Container (Coolify)
+The `repo-android/Dockerfile` allows you to deploy a dedicated "Download & Build" service. This service:
+1. Compiles the APK within the container.
+2. Serves a simple landing page on port 3000 where users can download `app.apk`.
 
-When deploying the full framework using Docker, you must ensure that the generated `app-debug.apk` is included in the Docker context.
+## 5. Common Deployment Errors (Coolify / Docker)
 
-Add a build step to your `Dockerfile` if your CI/CD runner has the Android SDK available, or simply ensure the file is generated entirely prior to the `docker build` command. Since `.dockerignore` might exclude build directories, ensure `repo-android/app/build` is selectively permitted if you build outside of Docker and then copy it in.
+If you encounter errors during deployment, check the following:
 
-## 5. Security & Signing
+- **Out of Memory (OOM):** Android builds are resource-intensive. If your server has less than 4GB of RAM, the Gradle build might fail. We have set the default heap to `3072m` in the `Dockerfile`. If it still fails, increase your VPS specs or build the APK locally and push it to the repo.
+- **Build Timeout:** The first build can take over 10 minutes. Ensure Coolify's build timeout is sufficient.
+- **Port Conflicts:** Ensure port `3000` is available or mapped correctly in your Coolify application settings.
+- **Health Check Failures:** Coolify expects the container to respond to HTTP requests. The `Dockerfile` includes a healthcheck that pings the Nginx root.
+
+## 6. Security & Signing
 
 Currently, the endpoint serves the `debug` build. For a production-ready application, you should:
 1. Generate a keystore and sign the APK.
