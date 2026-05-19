@@ -23,6 +23,8 @@ fun SettingsScreen(onBack: () -> Unit) {
     val lensFacing by repository.defaultLensFacing.collectAsState(initial = 1)
     val flashMode by repository.defaultFlashMode.collectAsState(initial = 2)
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
+    val videoQuality by repository.videoQuality.collectAsState(initial = 4)
+    val enableAudio by repository.enableAudio.collectAsState(initial = true)
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -89,6 +91,30 @@ fun SettingsScreen(onBack: () -> Unit) {
                 },
                 modifier = Modifier.clickable {
                     coroutineScope.launch { repository.setDefaultFlashMode((flashMode + 1) % 3) }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Video Quality") },
+                supportingContent = { 
+                    Text(when(videoQuality) {
+                        0 -> "SD"
+                        1 -> "HD"
+                        2 -> "FHD"
+                        3 -> "UHD"
+                        else -> "Highest"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setVideoQuality((videoQuality + 1) % 5) }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Record Audio") },
+                supportingContent = { Text(if (enableAudio) "Enabled" else "Disabled") },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setEnableAudio(!enableAudio) }
                 }
             )
 

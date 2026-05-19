@@ -62,11 +62,20 @@ fun CameraScreen(onBack: () -> Unit) {
     val initialLensFacing = runBlocking { repository.defaultLensFacing.first() }
     val initialFlashMode = runBlocking { repository.defaultFlashMode.first() }
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
+    val videoQuality by repository.videoQuality.collectAsState(initial = 4)
+    val enableAudio by repository.enableAudio.collectAsState(initial = true)
 
     val imageCapture = remember { ImageCapture.Builder().build() }
-    val videoCapture = remember {
+    val videoCapture = remember(videoQuality) {
+        val quality = when(videoQuality) {
+            0 -> Quality.SD
+            1 -> Quality.HD
+            2 -> Quality.FHD
+            3 -> Quality.UHD
+            else -> Quality.HIGHEST
+        }
         val recorder = Recorder.Builder()
-            .setQualitySelector(QualitySelector.from(Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
+            .setQualitySelector(QualitySelector.from(quality, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
             .build()
         VideoCapture.withOutput(recorder)
     }
@@ -165,7 +174,7 @@ fun CameraScreen(onBack: () -> Unit) {
                                 recording?.stop()
                                 recording = null
                             } else {
-                                recording = startVideoRecording(context, videoCapture, ContextCompat.getMainExecutor(context), storageLocation) { uri ->
+                                recording = startVideoRecording(context, videoCapture, ContextCompat.getMainExecutor(context), storageLocation, enableAudio) { uri ->
                                     lastCapturedImageUri = uri
                                 }
                             }
@@ -208,6 +217,7 @@ private fun startVideoRecording(
     videoCapture: VideoCapture<Recorder>,
     executor: Executor,
     storageLocation: Int,
+    enableAudio: Boolean,
     onVideoSaved: (Uri) -> Unit
 ): Recording {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
@@ -240,7 +250,7 @@ private fun startVideoRecording(
     }
 
     var recordSetup = pendingRecording
-    if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+    if (enableAudio && ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
         recordSetup = recordSetup.withAudioEnabled()
     }
 
@@ -331,6 +341,7 @@ fun CameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var previewView by remember { mutableStateOf<PreviewView?>(null) }
 
     AndroidView(
         modifier = modifier,
@@ -341,40 +352,44 @@ fun CameraPreview(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
+                previewView = this
             }
-        },
-        update = { previewView ->
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-                val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(lensFacing)
-                    .build()
-
-                try {
-                    cameraProvider.unbindAll()
-                    if (captureMode == "PHOTO") {
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageCapture
-                        )
-                    } else if (captureMode == "VIDEO" && videoCapture != null) {
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            videoCapture
-                        )
-                    }
-                } catch (exc: Exception) {
-                    Log.e("CameraPreview", "Use case binding failed", exc)
-                }
-            }, ContextCompat.getMainExecutor(context))
         }
     )
+
+    LaunchedEffect(previewView, captureMode, lensFacing, videoCapture) {
+        val view = previewView ?: return@LaunchedEffect
+
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(view.surfaceProvider)
+            }
+
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(lensFacing)
+                .build()
+
+            try {
+                cameraProvider.unbindAll()
+                if (captureMode == "PHOTO") {
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageCapture
+                    )
+                } else if (captureMode == "VIDEO" && videoCapture != null) {
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        videoCapture
+                    )
+                }
+            } catch (exc: Exception) {
+                Log.e("CameraPreview", "Use case binding failed", exc)
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
 }
