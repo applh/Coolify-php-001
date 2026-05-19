@@ -25,6 +25,7 @@ import androidx.camera.video.PendingRecording
 import androidx.core.util.Consumer
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -39,6 +40,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -86,6 +89,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var lensFacing by remember { mutableStateOf(if (initialLensFacing == 1) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT) }
     var flashModeState by remember { mutableStateOf(initialFlashMode) } // 0: Off, 1: On, 2: Auto
     var lastCapturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showGrid by remember { mutableStateOf(false) }
 
     LaunchedEffect(flashModeState) {
         imageCapture.flashMode = when(flashModeState) {
@@ -107,6 +111,12 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showGrid = !showGrid }) {
+                        Text(
+                            text = if (showGrid) "GRID" else "#",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                     IconButton(onClick = { captureMode = if (captureMode == "PHOTO") "VIDEO" else "PHOTO" }) {
                         Text(
                             text = if (captureMode == "PHOTO") "🎥" else "📷",
@@ -138,6 +148,38 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 captureMode = captureMode,
                 lensFacing = lensFacing
             )
+
+            if (showGrid) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(canvasWidth / 3f, 0f),
+                        end = Offset(canvasWidth / 3f, canvasHeight),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(canvasWidth * 2f / 3f, 0f),
+                        end = Offset(canvasWidth * 2f / 3f, canvasHeight),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(0f, canvasHeight / 3f),
+                        end = Offset(canvasWidth, canvasHeight / 3f),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(0f, canvasHeight * 2f / 3f),
+                        end = Offset(canvasWidth, canvasHeight * 2f / 3f),
+                        strokeWidth = 2f
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier
