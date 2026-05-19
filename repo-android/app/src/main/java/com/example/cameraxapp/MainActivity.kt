@@ -116,32 +116,73 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        NavHost(navController = navController, startDestination = "hub") {
-                            composable("hub") {
-                                HubScreen(navController, onOpenDrawer = { scope.launch { drawerState.open() } })
-                            }
-                            composable("camera") {
-                                if (isGranted) {
-                                    CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                } else {
-                                    PermissionRequestScreen(
-                                        onRequestPermission = {
-                                            permissionsLauncher.launch(
-                                                arrayOf(
-                                                    Manifest.permission.CAMERA,
-                                                    Manifest.permission.RECORD_AUDIO
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            NavHost(navController = navController, startDestination = "hub", modifier = Modifier.fillMaxSize()) {
+                                composable("hub") {
+                                    HubScreen(navController, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                }
+                                composable("camera") {
+                                    if (isGranted) {
+                                        CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                    } else {
+                                        PermissionRequestScreen(
+                                            onRequestPermission = {
+                                                permissionsLauncher.launch(
+                                                    arrayOf(
+                                                        Manifest.permission.CAMERA,
+                                                        Manifest.permission.RECORD_AUDIO
+                                                    )
                                                 )
-                                            )
-                                        },
-                                        onOpenDrawer = { scope.launch { drawerState.open() } }
-                                    )
+                                            },
+                                            onOpenDrawer = { scope.launch { drawerState.open() } }
+                                        )
+                                    }
+                                }
+                                composable("explorer") {
+                                    ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                }
+                                composable("settings") {
+                                    SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
                                 }
                             }
-                            composable("explorer") {
-                                ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                            }
-                            composable("settings") {
-                                SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                            
+                            // Vertical Floating Toolbar
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 16.dp),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
+                                shadowElevation = 4.dp
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    applets.forEach { applet ->
+                                        SmallFloatingActionButton(
+                                            onClick = {
+                                                if (currentRoute != applet.route) {
+                                                    if (applet.route == "hub") {
+                                                        navController.popBackStack("hub", inclusive = false)
+                                                    } else {
+                                                        navController.navigate(applet.route) {
+                                                            popUpTo("hub") { saveState = true }
+                                                            launchSingleTop = true
+                                                            restoreState = true
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            shape = androidx.compose.foundation.shape.CircleShape,
+                                            containerColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                                        ) {
+                                            Icon(applet.icon, contentDescription = applet.name)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
