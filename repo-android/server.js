@@ -37,7 +37,6 @@ const server = http.createServer((req, res) => {
             <html>
             <head>
                 <title>Android Build Server</title>
-                <meta http-equiv="refresh" content="3">
                 <style>
                     body { font-family: monospace; background: #1e1e1e; color: #fff; padding: 20px; line-height: 1.5; }
                     .status { padding: 15px; margin-bottom: 20px; border-radius: 5px; font-weight: bold; font-size: 1.2em; }
@@ -51,14 +50,62 @@ const server = http.createServer((req, res) => {
             </head>
             <body>
                 <h1>Android Build Panel</h1>
-                <div class="status ${buildStatus}">Status: ${buildStatus}</div>
-                ${buildStatus === 'Success' ? '<a href="/app.apk" class="button">Download APK</a>' : ''}
+                <div id="status-div" class="status ${buildStatus}">Status: ${buildStatus}</div>
+                <div id="download-container">
+                    ${buildStatus === 'Success' ? '<a href="/app.apk" class="button">Download APK</a>' : ''}
+                </div>
                 <h2>Build Logs:</h2>
-                <p><i>The page refreshes automatically every 3 seconds.</i></p>
-                <pre>${logContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                <p><i>Logs are automatically updated via AJAX.</i></p>
+                <pre id="logs-pre">${logContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                
+                <script>
+                    async function fetchStatus() {
+                        try {
+                            const res = await fetch('/status');
+                            if (!res.ok) throw new Error('Network response was not ok');
+                            const data = await res.json();
+                            
+                            const statusDiv = document.getElementById('status-div');
+                            statusDiv.textContent = 'Status: ' + data.buildStatus;
+                            statusDiv.className = 'status ' + data.buildStatus;
+                            
+                            const logsPre = document.getElementById('logs-pre');
+                            logsPre.textContent = data.logContent;
+                            
+                            // Scroll to bottom if it's currently building
+                            if (data.buildStatus === 'Building') {
+                                window.scrollTo(0, document.body.scrollHeight);
+                            }
+                            
+                            const downloadContainer = document.getElementById('download-container');
+                            if (data.buildStatus === 'Success') {
+                                if (downloadContainer.innerHTML.trim() === '') {
+                                    downloadContainer.innerHTML = '<a href="/app.apk" class="button">Download APK</a>';
+                                }
+                            } else {
+                                downloadContainer.innerHTML = '';
+                            }
+                            
+                            if (data.buildStatus === 'Building') {
+                                setTimeout(fetchStatus, 2000); // Poll every 2 seconds
+                            }
+                        } catch (e) {
+                            console.error('Error fetching status', e);
+                            setTimeout(fetchStatus, 5000); // Retry longer on error
+                        }
+                    }
+                    
+                    // Start polling if still building
+                    if ('${buildStatus}' === 'Building') {
+                        setTimeout(fetchStatus, 2000);
+                    }
+                </script>
             </body>
             </html>
         `);
+    } else if (req.url === '/status') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ buildStatus, logContent }));
     } else if (req.url === '/app.apk' && buildStatus === 'Success') {
         const apkPath = path.join(__dirname, 'app/build/outputs/apk/debug/app-debug.apk');
         if (fs.existsSync(apkPath)) {
