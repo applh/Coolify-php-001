@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -99,7 +99,7 @@ data class AppletInfo(
 fun HubScreen(navController: NavController) {
     val applets = listOf(
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-        AppletInfo("Explorer", "explorer", Icons.Default.List, "Browse local files"),
+        AppletInfo("Explorer", "explorer", Icons.AutoMirrored.Filled.List, "Browse local files"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 

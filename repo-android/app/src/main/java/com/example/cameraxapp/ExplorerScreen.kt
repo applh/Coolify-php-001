@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +29,7 @@ fun ExplorerScreen(onBack: () -> Unit) {
                 title = { Text("Explorer: ${currentDir.name}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -39,7 +39,7 @@ fun ExplorerScreen(onBack: () -> Unit) {
             if (currentDir != context.filesDir && currentDir.parentFile != null) {
                 ListItem(
                     headlineContent = { Text(".. (Go up)") },
-                    leadingContent = { Icon(Icons.Default.List, contentDescription = null) },
+                    leadingContent = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                     modifier = Modifier.clickable {
                         currentDir = currentDir.parentFile!!
                     }
@@ -72,7 +72,7 @@ fun FileItem(file: File, onClick: () -> Unit) {
         supportingContent = { Text(if (file.isDirectory) "Directory" else "${file.length() / 1024} KB") },
         leadingContent = {
             Icon(
-                if (file.isDirectory) Icons.Default.List else Icons.Default.Info,
+                if (file.isDirectory) Icons.AutoMirrored.Filled.List else Icons.Default.Info,
                 contentDescription = null
             )
         },
