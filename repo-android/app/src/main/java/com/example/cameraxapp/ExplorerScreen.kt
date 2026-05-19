@@ -22,6 +22,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
 
@@ -111,7 +117,7 @@ fun ExplorerScreen(onBack: () -> Unit) {
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Default.PlayArrow,
+                                        imageVector = Icons.Filled.PlayArrow,
                                         contentDescription = "Video",
                                         tint = Color.White,
                                         modifier = Modifier.size(48.dp)
@@ -177,7 +183,7 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                 },
                 actions = {
                     IconButton(onClick = { showRenameDialog = true }) {
-                        Icon(androidx.compose.material.icons.Icons.Default.Edit, contentDescription = "Rename")
+                        Icon(Icons.Filled.Edit, contentDescription = "Rename")
                     }
                     IconButton(onClick = {
                         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
@@ -206,8 +212,8 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
         Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             if (file.extension == "mp4") {
                 val exoPlayer = remember {
-                    androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
-                        setMediaItem(androidx.media3.common.MediaItem.fromUri(Uri.fromFile(file)))
+                    ExoPlayer.Builder(context).build().apply {
+                        setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
                         prepare()
                         playWhenReady = true
                     }
@@ -217,9 +223,9 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                         exoPlayer.release()
                     }
                 }
-                androidx.compose.ui.viewinterop.AndroidView(
+                AndroidView(
                     factory = {
-                        androidx.media3.ui.PlayerView(it).apply {
+                        PlayerView(it).apply {
                             player = exoPlayer
                             useController = true
                         }
@@ -236,8 +242,8 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxSize()
-                        .androidx.compose.ui.input.pointer.pointerInput(Unit) {
-                            androidx.compose.foundation.gestures.detectTransformGestures { _, pan, zoom, _ ->
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
                                 scale = (scale * zoom).coerceIn(1f, 5f)
                                 val newOffset = offset + pan
                                 // simple boundary to avoid jumping out too far could be added, but keeping it simple

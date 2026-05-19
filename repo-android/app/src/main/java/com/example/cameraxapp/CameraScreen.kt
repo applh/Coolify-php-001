@@ -21,6 +21,8 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
+import androidx.camera.video.PendingRecording
+import androidx.core.util.Consumer
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
@@ -212,16 +214,17 @@ private fun startVideoRecording(
     
     var tempFile: File? = null
 
-    val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    val pendingRecording = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.mp4")
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraXApp")
         }
-        MediaStoreOutputOptions.Builder(
+        val options = MediaStoreOutputOptions.Builder(
             context.contentResolver,
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         ).setContentValues(contentValues).build()
+        videoCapture.output.prepareRecording(context, options)
     } else {
         val dir = when (storageLocation) {
             1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)!!
@@ -232,17 +235,16 @@ private fun startVideoRecording(
             else -> context.filesDir
         }
         tempFile = File(dir, "$name.mp4")
-        FileOutputOptions.Builder(tempFile).build()
+        val options = FileOutputOptions.Builder(tempFile).build()
+        videoCapture.output.prepareRecording(context, options)
     }
 
-    val pendingRecording = videoCapture.output
-        .prepareRecording(context, outputOptions)
-
+    var recordSetup = pendingRecording
     if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-        pendingRecording.withAudioEnabled()
+        recordSetup = recordSetup.withAudioEnabled()
     }
 
-    return pendingRecording.start(executor) { recordEvent ->
+    return recordSetup.start(executor, Consumer { recordEvent ->
         when (recordEvent) {
             is VideoRecordEvent.Start -> {
                 Log.d("CameraScreen", "Video recording started")
@@ -259,7 +261,7 @@ private fun startVideoRecording(
                 }
             }
         }
-    }
+    })
 }
 
 private fun takePhoto(
