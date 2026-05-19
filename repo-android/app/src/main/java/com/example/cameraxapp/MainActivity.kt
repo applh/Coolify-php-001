@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -44,7 +45,15 @@ class MainActivity : ComponentActivity() {
         updatePermissionState()
 
         setContent {
-            CameraXAppTheme {
+            val repository = remember { SettingsRepository(this) }
+            val themeMode by repository.themeMode.collectAsState(initial = 0)
+            val useDarkTheme = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> isSystemInDarkTheme()
+            }
+
+            CameraXAppTheme(darkTheme = useDarkTheme) {
                 val navController = rememberNavController()
                 val isGranted by cameraPermissionGranted
 

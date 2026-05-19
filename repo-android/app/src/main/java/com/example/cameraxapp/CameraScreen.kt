@@ -1,6 +1,10 @@
 package com.example.cameraxapp
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.Toast
@@ -10,22 +14,29 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,11 +46,24 @@ import java.util.concurrent.Executor
 @Composable
 fun CameraScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val repository = remember { SettingsRepository(context) }
     
+    val initialLensFacing = runBlocking { repository.defaultLensFacing.first() }
+    val initialFlashMode = runBlocking { repository.defaultFlashMode.first() }
+    val saveToPublic by repository.saveToPublic.collectAsState(initial = false)
+
     val imageCapture = remember { ImageCapture.Builder().build() }
-    var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
+    var lensFacing by remember { mutableStateOf(if (initialLensFacing == 1) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT) }
+    var flashModeState by remember { mutableStateOf(initialFlashMode) } // 0: Off, 1: On, 2: Auto
+    var lastCapturedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    LaunchedEffect(flashModeState) {
+        imageCapture.flashMode = when(flashModeState) {
+            1 -> ImageCapture.FLASH_MODE_ON
+            0 -> ImageCapture.FLASH_MODE_OFF
+            else -> ImageCapture.FLASH_MODE_AUTO
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -48,6 +72,18 @@ fun CameraScreen(onBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { flashModeState = (flashModeState + 1) % 3 }) {
+                        Text(
+                            text = when(flashModeState) {
+                                1 -> "ON"
+                                0 -> "OFF"
+                                else -> "AUTO"
+                            },
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -63,23 +99,65 @@ fun CameraScreen(onBack: () -> Unit) {
                 lensFacing = lensFacing
             )
 
-            IconButton(
-                onClick = {
-                    takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context))
-                },
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 48.dp)
-                    .size(80.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                    .fillMaxWidth()
+                    .padding(bottom = 48.dp, start = 32.dp, end = 32.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.Filled.Add,
-                    contentDescription = "Capture",
-                    modifier = Modifier.size(40.dp)
-                )
+                // Last Image Thumbnail
+                Box(
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    if (lastCapturedImageUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(lastCapturedImageUri),
+                            contentDescription = "Last Image",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .clickable { }, // Nav to explorer could be here but for now just clickable
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                // Shutter Button
+                IconButton(
+                    onClick = {
+                        takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), saveToPublic) { uri ->
+                            lastCapturedImageUri = uri
+                        }
+                    },
+                    modifier = Modifier.size(80.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Capture",
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
+                // Lens Switch
+                IconButton(
+                    onClick = {
+                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
+                            CameraSelector.LENS_FACING_FRONT 
+                        else 
+                            CameraSelector.LENS_FACING_BACK
+                    },
+                    modifier = Modifier.size(56.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
+                }
             }
         }
     }
@@ -88,24 +166,45 @@ fun CameraScreen(onBack: () -> Unit) {
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
-    executor: Executor
+    executor: Executor,
+    saveToPublic: Boolean,
+    onImageSaved: (Uri) -> Unit
 ) {
-    val photoFile = File(
-        context.externalCacheDir,
-        SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-            .format(System.currentTimeMillis()) + ".jpg"
-    )
+    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
+    
+    var tempFile: File? = null
 
-    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+    val outputOptions = if (saveToPublic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraXApp")
+        }
+        ImageCapture.OutputFileOptions.Builder(
+            context.contentResolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValues
+        ).build()
+    } else {
+        val dir = if (saveToPublic) {
+            context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
+        } else {
+            context.filesDir
+        }
+        tempFile = File(dir, "$name.jpg")
+        ImageCapture.OutputFileOptions.Builder(tempFile).build()
+    }
 
     imageCapture.takePicture(
         outputOptions,
         executor,
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val msg = "Photo saved: ${photoFile.absolutePath}"
+                val msg = "Photo saved successfully"
                 Log.d("CameraScreen", msg)
                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                val uri = output.savedUri ?: if (tempFile != null) Uri.fromFile(tempFile) else null
+                uri?.let { onImageSaved(it) }
             }
 
             override fun onError(exc: ImageCaptureException) {

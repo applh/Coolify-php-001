@@ -1,23 +1,32 @@
 package com.example.cameraxapp
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
-    var darkMode by remember { mutableStateOf(true) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val repository = remember { SettingsRepository(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val themeMode by repository.themeMode.collectAsState(initial = 0)
+    val lensFacing by repository.defaultLensFacing.collectAsState(initial = 1)
+    val flashMode by repository.defaultFlashMode.collectAsState(initial = 2)
+    val saveToPublic by repository.saveToPublic.collectAsState(initial = false)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Shared Settings") },
+                title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -29,36 +38,70 @@ fun SettingsScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize()
         ) {
-            Text("General Preferences", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
+            Text("Appearance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
             
             ListItem(
-                headlineContent = { Text("Dark Mode") },
-                trailingContent = {
-                    Switch(checked = darkMode, onCheckedChange = { darkMode = it })
+                headlineContent = { Text("Theme Mode") },
+                supportingContent = { 
+                    Text(when(themeMode) {
+                        0 -> "System Default"
+                        1 -> "Light Mode"
+                        2 -> "Dark Mode"
+                        else -> "Unknown"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setThemeMode((themeMode + 1) % 3)
+                    }
                 }
             )
             
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Camera Settings", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+
             ListItem(
-                headlineContent = { Text("Enable Notifications") },
-                trailingContent = {
-                    Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
+                headlineContent = { Text("Default Lens Facing") },
+                supportingContent = { Text(if (lensFacing == 1) "Back Camera" else "Front Camera") },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setDefaultLensFacing(if (lensFacing == 1) 0 else 1) }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Default Flash Mode") },
+                supportingContent = { 
+                    Text(when(flashMode) {
+                        0 -> "Off"
+                        1 -> "On"
+                        2 -> "Auto"
+                        else -> "Auto"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setDefaultFlashMode((flashMode + 1) % 3) }
                 }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Applet Config", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+            Text("Storage Configuration", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = { /* Clear Cache */ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Clear All Applets Cache")
-            }
+            ListItem(
+                headlineContent = { Text("Save to Public Directory") },
+                supportingContent = { Text("Make photos accessible to other apps") },
+                trailingContent = {
+                    Switch(checked = saveToPublic, onCheckedChange = { 
+                        coroutineScope.launch { repository.setSaveToPublic(it) } 
+                    })
+                }
+            )
         }
     }
 }
