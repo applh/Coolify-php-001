@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,8 +30,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CameraScreen() {
+fun CameraScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -39,30 +40,46 @@ fun CameraScreen() {
     val imageCapture = remember { ImageCapture.Builder().build() }
     var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        CameraPreview(
-            modifier = Modifier.fillMaxSize(),
-            imageCapture = imageCapture,
-            lensFacing = lensFacing
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Camera") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(androidx.compose.material.icons.Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                )
+            )
+        }
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            CameraPreview(
+                modifier = Modifier.fillMaxSize(),
+                imageCapture = imageCapture,
+                lensFacing = lensFacing
+            )
 
-        IconButton(
-            onClick = {
-                takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context))
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
-                .size(80.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
-        ) {
-            Icon(
-                Icons.Filled.CameraAlt,
-                contentDescription = "Capture",
-                modifier = Modifier.size(40.dp)
-            )
+            IconButton(
+                onClick = {
+                    takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context))
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 48.dp)
+                    .size(80.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Icon(
+                    Icons.Filled.CameraAlt,
+                    contentDescription = "Capture",
+                    modifier = Modifier.size(40.dp)
+                )
+            }
         }
     }
 }
