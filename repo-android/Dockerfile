@@ -31,9 +31,10 @@ ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gra
 WORKDIR /app
 COPY . .
 
-# Build APK with memory optimizations and quiet output
-# Running with --no-daemon and limited workers to stay within container limits
-RUN gradle assembleDebug --no-daemon --max-workers 1 --stacktrace
+# Build APK with memory optimizations and verbose output for debugging
+# Printing system resources, directory structure and gradle version first to help debug
+RUN free -m && df -h && ls -R && gradle --version && \
+    gradle assembleDebug --no-daemon --max-workers 1 --info --full-stacktrace
 
 FROM nginx:alpine
 
