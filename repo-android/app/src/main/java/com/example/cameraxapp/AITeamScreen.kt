@@ -601,7 +601,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                                 "Error in SDK Content Generation: ${sdkEx.message}\n\nStacktrace:\n${sdkEx.stackTraceToString()}"
                                                             }
                                                         }
-                                                    }             }
+                                                    }
                                                     val endTime = System.currentTimeMillis()
                                                     val latency = endTime - startTime
                                                     
