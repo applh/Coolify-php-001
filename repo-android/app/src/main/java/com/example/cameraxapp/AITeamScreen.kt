@@ -509,12 +509,70 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                 
                                                 val startTime = System.currentTimeMillis()
                                                 try {
-                                                    val response = withContext(Dispatchers.IO) {
-                                                        generativeModel.generateContent(prompt)
+                                                    val isImagePrompt = prompt.startsWith("/image ", ignoreCase = true) || prompt.lowercase(Locale.US).startsWith("generate image")
+                                                    val responseText = if (isImagePrompt) {
+                                                        val imagePrompt = if (prompt.startsWith("/image ", ignoreCase = true)) prompt.substring(7).trim() else prompt
+                                                        withContext(Dispatchers.IO) {
+                                                            var resultText = ""
+                                                            val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=$geminiApiKey")
+                                                            val conn = url.openConnection() as java.net.HttpURLConnection
+                                                            conn.requestMethod = "POST"
+                                                            conn.setRequestProperty("Content-Type", "application/json")
+                                                            conn.doOutput = true
+                                                            val escapedPrompt = imagePrompt.replace("\"", "\\\"").replace("\n", " ")
+                                                            val jsonInputString = "{\"instances\": [{\"prompt\": \"$escapedPrompt\"}], \"parameters\": {\"sampleCount\": 1}}"
+                                                            
+                                                            conn.outputStream.use { os ->
+                                                                val input = jsonInputString.toByteArray(Charsets.UTF_8)
+                                                                os.write(input, 0, input.size)
+                                                            }
+                                                            
+                                                            val respCode = conn.responseCode
+                                                            val respStr = if (respCode in 200..299) {
+                                                                conn.inputStream.bufferedReader().use { it.readText() }
+                                                            } else {
+                                                                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                                                            }
+                                                            
+                                                            if (respCode in 200..299) {
+                                                                val root = org.json.JSONObject(respStr)
+                                                                val predictions = root.optJSONArray("predictions")
+                                                                if (predictions != null && predictions.length() > 0) {
+                                                                    val b64 = predictions.getJSONObject(0).optString("bytesBase64Encoded")
+                                                                    val imgBytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                                                                    val rootDir = when(storageLocation) {
+                                                                        1 -> context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                                                                        2 -> {
+                                                                            val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
+                                                                            if (dirs.size > 1) dirs[1] else context.filesDir
+                                                                        }
+                                                                        else -> context.filesDir
+                                                                    }
+                                                                    if (rootDir != null) {
+                                                                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                                                                        val safePrefix = if (imagePrompt.length > 20) imagePrompt.substring(0, 20).replace(Regex("[^a-zA-Z0-9]"), "_") else imagePrompt.replace(Regex("[^a-zA-Z0-9]"), "_")
+                                                                        val imgFile = File(rootDir, "AI_${timestamp}_${safePrefix}.jpg")
+                                                                        imgFile.writeBytes(imgBytes)
+                                                                        resultText = "✨ Image generated and saved to: ${imgFile.absolutePath}"
+                                                                    } else {
+                                                                        resultText = "Error: Could not determine storage location for image."
+                                                                    }
+                                                                } else {
+                                                                    resultText = "Error: No image found in response."
+                                                                }
+                                                            } else {
+                                                                resultText = "Error HTTP $respCode: $respStr"
+                                                            }
+                                                            resultText
+                                                        }
+                                                    } else {
+                                                        val response = withContext(Dispatchers.IO) {
+                                                            generativeModel.generateContent(prompt)
+                                                        }
+                                                        response.text ?: "Empty response"
                                                     }
                                                     val endTime = System.currentTimeMillis()
                                                     val latency = endTime - startTime
-                                                    val responseText = response.text ?: "Empty response"
                                                     
                                                     // Estimations
                                                     val inputTokens = Math.ceil(prompt.length / 4.0).toInt().coerceAtLeast(1)
@@ -834,12 +892,31 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                                     replayStepsLog = replayStepsLog + "🔄 Running step [${i+1}/${prompts.size}]: Prompt: \"${if (p.text.length > 25) p.text.substring(0, 25) + "..." else p.text}\""
                                                                     val start = System.currentTimeMillis()
                                                                     try {
-                                                                        val resp = withContext(Dispatchers.IO) {
-                                                                            generativeModel.generateContent(p.text)
+                                                                        val isImagePrompt = p.text.startsWith("/image ", ignoreCase = true) || p.text.lowercase(Locale.US).startsWith("generate image")
+                                                                        val contentText = if (isImagePrompt) {
+                                                                            val imagePrompt = if (p.text.startsWith("/image ", ignoreCase = true)) p.text.substring(7).trim() else p.text
+                                                                            withContext(Dispatchers.IO) {
+                                                                                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=$geminiApiKey")
+                                                                                val conn = url.openConnection() as java.net.HttpURLConnection
+                                                                                conn.requestMethod = "POST"
+                                                                                conn.setRequestProperty("Content-Type", "application/json")
+                                                                                conn.doOutput = true
+                                                                                val escapedPrompt = imagePrompt.replace("\"", "\\\"").replace("\n", " ")
+                                                                                val jsonInputString = "{\"instances\": [{\"prompt\": \"$escapedPrompt\"}], \"parameters\": {\"sampleCount\": 1}}"
+                                                                                conn.outputStream.use { os ->
+                                                                                    val input = jsonInputString.toByteArray(Charsets.UTF_8)
+                                                                                    os.write(input, 0, input.size)
+                                                                                }
+                                                                                if (conn.responseCode in 200..299) "✨ Image generated via replay" else "Error HTTP ${conn.responseCode}"
+                                                                            }
+                                                                        } else {
+                                                                            val resp = withContext(Dispatchers.IO) {
+                                                                                generativeModel.generateContent(p.text)
+                                                                            }
+                                                                            resp.text ?: ""
                                                                         }
                                                                         val end = System.currentTimeMillis()
                                                                         val delta = end - start
-                                                                        val contentText = resp.text ?: ""
                                                                         
                                                                         val inToks = Math.ceil(p.text.length / 4.0).toInt().coerceAtLeast(1)
                                                                         val outToks = Math.ceil(contentText.length / 4.0).toInt().coerceAtLeast(1)
