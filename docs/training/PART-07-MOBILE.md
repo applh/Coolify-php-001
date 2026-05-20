@@ -45,5 +45,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Write a custom script to query the active models list (`v1beta/models`) to find replacement models like `gemini-2.5-flash` when ancestral models are deprecated.
 - **Complexity**: Part 3
 
+### 6. Android AI Session Recording, Replaying, and Regression Benchmarking (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`
+- **Goal**: Learn how to serialize real-time LLM telemetry (inputs, outputs, response latency, token count, estimated cost) into persistent JSON files and build an automated playback regression benchmarker.
+- **Exercise**: Implement an offline-first replayer inside Android Jetpack Compose that iterates through archived session prompts, re-queries the Gemini API to measure delta speed/cost variations, and renders side-by-side performance comparisons.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
