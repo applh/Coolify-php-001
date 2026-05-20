@@ -112,30 +112,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         }
                     }
                 },
-                actions = {
-                    IconButton(onClick = { showGrid = !showGrid }) {
-                        Text(
-                            text = if (showGrid) "GRID" else "#",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                    IconButton(onClick = { captureMode = if (captureMode == "PHOTO") "VIDEO" else "PHOTO" }) {
-                        Text(
-                            text = if (captureMode == "PHOTO") "🎥" else "📷",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                    IconButton(onClick = { flashModeState = (flashModeState + 1) % 3 }) {
-                        Text(
-                            text = when(flashModeState) {
-                                1 -> "ON"
-                                0 -> "OFF"
-                                else -> "AUTO"
-                            },
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                 )
@@ -202,13 +179,10 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 }
             }
 
-            Row(
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(bottom = 48.dp, start = 32.dp, end = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = 48.dp, start = 32.dp)
             ) {
                 // Last Image Thumbnail
                 Box(
@@ -226,8 +200,72 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         )
                     }
                 }
+            }
 
-                // Shutter Button
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Flash button
+                IconButton(
+                    onClick = { flashModeState = (flashModeState + 1) % 3 },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                ) {
+                    Text(
+                        text = when(flashModeState) {
+                            1 -> "ON"
+                            0 -> "OFF"
+                            else -> "AUTO"
+                        },
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                
+                // Grid button
+                IconButton(
+                    onClick = { showGrid = !showGrid },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                ) {
+                    Text(
+                        text = if (showGrid) "GRID" else "#",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
+                // Photo/Video mode button
+                IconButton(
+                    onClick = { captureMode = if (captureMode == "PHOTO") "VIDEO" else "PHOTO" },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                ) {
+                    Text(
+                        text = if (captureMode == "PHOTO") "🎥" else "📷",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                // Lens switch
+                IconButton(
+                    onClick = {
+                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
+                            CameraSelector.LENS_FACING_FRONT 
+                        else 
+                            CameraSelector.LENS_FACING_BACK
+                    },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+                ) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Capture Button
                 IconButton(
                     onClick = {
                         if (captureMode == "PHOTO") {
@@ -265,22 +303,6 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         contentDescription = "Capture",
                         modifier = Modifier.size(40.dp)
                     )
-                }
-
-                // Lens Switch
-                IconButton(
-                    onClick = {
-                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
-                            CameraSelector.LENS_FACING_FRONT 
-                        else 
-                            CameraSelector.LENS_FACING_BACK
-                    },
-                    modifier = Modifier.size(56.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
                 }
             }
         }
