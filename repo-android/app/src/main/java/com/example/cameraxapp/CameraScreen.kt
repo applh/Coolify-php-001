@@ -205,7 +205,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp),
+                    .padding(end = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
