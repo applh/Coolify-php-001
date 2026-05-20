@@ -33,5 +33,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Modify the Android Dockerfile to adjust Gradle heap sizes and deploy the container to distribute the APK.
 - **Complexity**: Part 4
 
+### 4. Gemini SDK Error Diagnosing and Model Configuration (20h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`
+- **Goal**: Learn how standard client-side error parsing works in the Google Generative AI Android SDK and resolve API version / model mismatch issues.
+- **Exercise**: Diagnose API error codes like 404 NOT_FOUND caused by incorrect model identifiers (e.g. `gemini-1.5-flash-001`) and standard serialization crashes related to `GRpcError` missing `details`.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

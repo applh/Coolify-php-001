@@ -16,7 +16,8 @@ Built with modern Android practices:
 - **Camera**: CameraX API
 
 ## Documentation
-Detailed implementation plan can be found in [docs/multi-app-plan.md](docs/multi-app-plan.md).
+- Detailed implementation plan can be found in [docs/multi-app-plan.md](docs/multi-app-plan.md).
+- Gemini API Integration and Android SDK Error Guide can be found in [docs/android-gemini-integration.md](../docs/android-gemini-integration.md).
 
 ## Deployment (Coolify / Docker)
 This module is ready for standalone deployment as a build server:
