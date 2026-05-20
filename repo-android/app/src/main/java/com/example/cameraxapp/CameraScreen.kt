@@ -113,7 +113,24 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 if (event == null) return
                 val x = event.values[0]
                 val y = event.values[1]
-                rollAngle = Math.toDegrees(atan2(x.toDouble(), y.toDouble())).toFloat()
+                
+                val rotation = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    context.display?.rotation ?: android.view.Surface.ROTATION_0
+                } else {
+                    val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                    windowManager.defaultDisplay.rotation
+                }
+                
+                var adjustedX = 0f
+                var adjustedY = 0f
+                when (rotation) {
+                    android.view.Surface.ROTATION_0 -> { adjustedX = x; adjustedY = y }
+                    android.view.Surface.ROTATION_90 -> { adjustedX = -y; adjustedY = x }
+                    android.view.Surface.ROTATION_180 -> { adjustedX = -x; adjustedY = -y }
+                    android.view.Surface.ROTATION_270 -> { adjustedX = y; adjustedY = -x }
+                }
+                
+                rollAngle = Math.toDegrees(atan2(adjustedX.toDouble(), adjustedY.toDouble())).toFloat()
             }
             override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
         }
@@ -532,6 +549,7 @@ fun CameraPreview(
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var previewView by remember { mutableStateOf<PreviewView?>(null) }
+    var previewUseCase by remember { mutableStateOf<Preview?>(null) }
 
     AndroidView(
         modifier = modifier,
@@ -544,6 +562,17 @@ fun CameraPreview(
                 )
                 previewView = this
             }
+        },
+        update = { view ->
+            val rot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                view.context.display?.rotation ?: android.view.Surface.ROTATION_0
+            } else {
+                val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                wm.defaultDisplay.rotation
+            }
+            imageCapture.targetRotation = rot
+            videoCapture?.targetRotation = rot
+            previewUseCase?.targetRotation = rot
         }
     )
 
@@ -554,7 +583,15 @@ fun CameraPreview(
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(view.surfaceProvider)
+                val rot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    view.context.display?.rotation ?: android.view.Surface.ROTATION_0
+                } else {
+                    val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                    wm.defaultDisplay.rotation
+                }
+                it.targetRotation = rot
             }
+            previewUseCase = preview
 
             val cameraSelector = CameraSelector.Builder()
                 .requireLensFacing(lensFacing)
