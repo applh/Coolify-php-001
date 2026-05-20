@@ -49,13 +49,16 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.graphics.drawscope.withTransform
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
+import kotlin.math.atan2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +71,8 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
     val videoQuality by repository.videoQuality.collectAsState(initial = 4)
     val enableAudio by repository.enableAudio.collectAsState(initial = true)
+
+    val coroutineScope = rememberCoroutineScope()
 
     val imageCapture = remember { ImageCapture.Builder().build() }
     val videoCapture = remember(videoQuality) {
@@ -91,7 +96,40 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var lensFacing by remember { mutableStateOf(if (initialLensFacing == 1) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT) }
     var flashModeState by remember { mutableStateOf(initialFlashMode) } // 0: Off, 1: On, 2: Auto
     var lastCapturedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var showGrid by remember { mutableStateOf(false) }
+    
+    val showGrid by repository.showGrid.collectAsState(initial = false)
+    val showCrosshair by repository.showCrosshair.collectAsState(initial = true)
+    val gridRows by repository.gridRows.collectAsState(initial = 3)
+    val gridColumns by repository.gridColumns.collectAsState(initial = 3)
+    var rollAngle by remember { mutableStateOf(0f) }
+
+    DisposableEffect(Unit) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as android.hardware.SensorManager
+        val gravitySensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY)
+            ?: sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+        
+        val sensorEventListener = object : android.hardware.SensorEventListener {
+            override fun onSensorChanged(event: android.hardware.SensorEvent?) {
+                if (event == null) return
+                val x = event.values[0]
+                val y = event.values[1]
+                rollAngle = Math.toDegrees(atan2(x.toDouble(), y.toDouble())).toFloat()
+            }
+            override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
+        }
+        
+        if (gravitySensor != null) {
+            sensorManager.registerListener(
+                sensorEventListener,
+                gravitySensor,
+                android.hardware.SensorManager.SENSOR_DELAY_UI
+            )
+        }
+        
+        onDispose {
+            sensorManager.unregisterListener(sensorEventListener)
+        }
+    }
 
     LaunchedEffect(flashModeState) {
         imageCapture.flashMode = when(flashModeState) {
@@ -152,30 +190,80 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     val canvasWidth = size.width
                     val canvasHeight = size.height
                     
+                    for (i in 1 until gridColumns) {
+                        val x = canvasWidth * i / gridColumns
+                        drawLine(
+                            color = Color.White.copy(alpha = 0.5f),
+                            start = Offset(x, 0f),
+                            end = Offset(x, canvasHeight),
+                            strokeWidth = 2f
+                        )
+                    }
+                    
+                    for (i in 1 until gridRows) {
+                        val y = canvasHeight * i / gridRows
+                        drawLine(
+                            color = Color.White.copy(alpha = 0.5f),
+                            start = Offset(0f, y),
+                            end = Offset(canvasWidth, y),
+                            strokeWidth = 2f
+                        )
+                    }
+                }
+            }
+
+            // Crosshair, circle and horizon level
+            if (showCrosshair) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    val center = Offset(canvasWidth / 2f, canvasHeight / 2f)
+                    
+                    // Draw circle
+                    val circleRadius = 40.dp.toPx()
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.5f),
+                        radius = circleRadius,
+                        center = center,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                    )
+                    
+                    // Draw crosshair (center dot or small cross)
+                    val crosshairLength = 8.dp.toPx()
                     drawLine(
                         color = Color.White.copy(alpha = 0.5f),
-                        start = Offset(canvasWidth / 3f, 0f),
-                        end = Offset(canvasWidth / 3f, canvasHeight),
-                        strokeWidth = 2f
+                        start = Offset(center.x - crosshairLength, center.y),
+                        end = Offset(center.x + crosshairLength, center.y),
+                        strokeWidth = 1.dp.toPx()
                     )
                     drawLine(
                         color = Color.White.copy(alpha = 0.5f),
-                        start = Offset(canvasWidth * 2f / 3f, 0f),
-                        end = Offset(canvasWidth * 2f / 3f, canvasHeight),
-                        strokeWidth = 2f
+                        start = Offset(center.x, center.y - crosshairLength),
+                        end = Offset(center.x, center.y + crosshairLength),
+                        strokeWidth = 1.dp.toPx()
                     )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.5f),
-                        start = Offset(0f, canvasHeight / 3f),
-                        end = Offset(canvasWidth, canvasHeight / 3f),
-                        strokeWidth = 2f
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.5f),
-                        start = Offset(0f, canvasHeight * 2f / 3f),
-                        end = Offset(canvasWidth, canvasHeight * 2f / 3f),
-                        strokeWidth = 2f
-                    )
+                    
+                    // Draw horizon level
+                    withTransform({
+                        rotate(degrees = rollAngle, pivot = center)
+                    }) {
+                        val horizonLength = canvasWidth * 0.3f
+                        val gap = circleRadius + 16.dp.toPx()
+                        // Left segment
+                        drawLine(
+                            color = Color.Yellow.copy(alpha = 0.8f),
+                            start = Offset(center.x - gap - horizonLength, center.y),
+                            end = Offset(center.x - gap, center.y),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                        // Right segment
+                        drawLine(
+                            color = Color.Yellow.copy(alpha = 0.8f),
+                            start = Offset(center.x + gap, center.y),
+                            end = Offset(center.x + gap + horizonLength, center.y),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                    }
                 }
             }
 
@@ -227,7 +315,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 
                 // Grid button
                 IconButton(
-                    onClick = { showGrid = !showGrid },
+                    onClick = { coroutineScope.launch { repository.setShowGrid(!showGrid) } },
                     modifier = Modifier.size(48.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                 ) {

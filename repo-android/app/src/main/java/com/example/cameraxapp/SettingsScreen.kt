@@ -25,6 +25,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
     val videoQuality by repository.videoQuality.collectAsState(initial = 4)
     val enableAudio by repository.enableAudio.collectAsState(initial = true)
+    val showCrosshair by repository.showCrosshair.collectAsState(initial = true)
+    val showGrid by repository.showGrid.collectAsState(initial = false)
+    val gridRows by repository.gridRows.collectAsState(initial = 3)
+    val gridColumns by repository.gridColumns.collectAsState(initial = 3)
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -119,6 +123,46 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     coroutineScope.launch { repository.setEnableAudio(!enableAudio) }
                 }
             )
+
+            ListItem(
+                headlineContent = { Text("Display Crosshair & Horizon") },
+                supportingContent = { Text(if (showCrosshair) "Visible" else "Hidden") },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setShowCrosshair(!showCrosshair) }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Display Grid") },
+                supportingContent = { Text(if (showGrid) "Visible" else "Hidden") },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch { repository.setShowGrid(!showGrid) }
+                }
+            )
+
+            if (showGrid) {
+                ListItem(
+                    headlineContent = { Text("Grid Lines (Rows)") },
+                    supportingContent = { Text("$gridRows") },
+                    modifier = Modifier.clickable {
+                        coroutineScope.launch { 
+                            val nextRows = if (gridRows >= 5) 2 else gridRows + 1
+                            repository.setGridRows(nextRows) 
+                        }
+                    }
+                )
+
+                ListItem(
+                    headlineContent = { Text("Grid Lines (Columns)") },
+                    supportingContent = { Text("$gridColumns") },
+                    modifier = Modifier.clickable {
+                        coroutineScope.launch { 
+                            val nextCols = if (gridColumns >= 5) 2 else gridColumns + 1
+                            repository.setGridColumns(nextCols) 
+                        }
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
             Text("Storage Configuration", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)

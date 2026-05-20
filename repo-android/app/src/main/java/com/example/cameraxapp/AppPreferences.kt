@@ -16,6 +16,10 @@ object AppPreferences {
     val STORAGE_LOCATION = intPreferencesKey("storage_location") // 0: Internal, 1: Public, 2: SD Card
     val VIDEO_QUALITY = intPreferencesKey("video_quality") // 0: SD, 1: HD, 2: FHD, 3: UHD, 4: HIGHEST
     val ENABLE_AUDIO = booleanPreferencesKey("enable_audio")
+    val SHOW_CROSSHAIR = booleanPreferencesKey("show_crosshair")
+    val SHOW_GRID = booleanPreferencesKey("show_grid")
+    val GRID_ROWS = intPreferencesKey("grid_rows")
+    val GRID_COLUMNS = intPreferencesKey("grid_columns")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -25,6 +29,10 @@ class SettingsRepository(private val context: Context) {
     val storageLocation: Flow<Int> = context.dataStore.data.map { it[AppPreferences.STORAGE_LOCATION] ?: 0 }
     val videoQuality: Flow<Int> = context.dataStore.data.map { it[AppPreferences.VIDEO_QUALITY] ?: 4 }
     val enableAudio: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.ENABLE_AUDIO] ?: true }
+    val showCrosshair: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.SHOW_CROSSHAIR] ?: true }
+    val showGrid: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.SHOW_GRID] ?: false }
+    val gridRows: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_ROWS] ?: 3 }
+    val gridColumns: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_COLUMNS] ?: 3 }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -48,5 +56,21 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setEnableAudio(enable: Boolean) {
         context.dataStore.edit { it[AppPreferences.ENABLE_AUDIO] = enable }
+    }
+
+    suspend fun setShowCrosshair(show: Boolean) {
+        context.dataStore.edit { it[AppPreferences.SHOW_CROSSHAIR] = show }
+    }
+
+    suspend fun setShowGrid(show: Boolean) {
+        context.dataStore.edit { it[AppPreferences.SHOW_GRID] = show }
+    }
+
+    suspend fun setGridRows(rows: Int) {
+        context.dataStore.edit { it[AppPreferences.GRID_ROWS] = rows }
+    }
+
+    suspend fun setGridColumns(columns: Int) {
+        context.dataStore.edit { it[AppPreferences.GRID_COLUMNS] = columns }
     }
 }
