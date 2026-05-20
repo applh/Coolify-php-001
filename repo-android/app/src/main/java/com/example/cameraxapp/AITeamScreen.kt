@@ -4,6 +4,7 @@ import android.os.Environment
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
@@ -70,10 +71,12 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 color = color,
                                 shape = MaterialTheme.shapes.medium
                             ) {
-                                Text(
-                                    text = message.text,
-                                    modifier = Modifier.padding(12.dp)
-                                )
+                                SelectionContainer {
+                                    Text(
+                                        text = message.text,
+                                        modifier = Modifier.padding(12.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -98,7 +101,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
 
                                 coroutineScope.launch {
                                     val generativeModel = GenerativeModel(
-                                        modelName = "gemini-pro",
+                                        modelName = "gemini-1.5-flash",
                                         apiKey = geminiApiKey
                                     )
                                     try {
