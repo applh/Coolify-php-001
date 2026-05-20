@@ -101,7 +101,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
 
                                 coroutineScope.launch {
                                     val generativeModel = GenerativeModel(
-                                        modelName = "gemini-1.5-flash",
+                                        modelName = "gemini-1.5-flash-latest",
                                         apiKey = geminiApiKey
                                     )
                                     try {
