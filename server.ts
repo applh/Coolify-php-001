@@ -685,7 +685,7 @@ Layout::footer();
 
       // Call Gemini
       const result = await ai.models.generateContent({
-        model: "gemini-flash-latest",
+        model: "gemini-1.5-flash",
         contents: prompt,
       });
 
