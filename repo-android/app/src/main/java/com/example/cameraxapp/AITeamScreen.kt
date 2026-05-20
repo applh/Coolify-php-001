@@ -225,6 +225,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
 
     var currentPrompt by remember { mutableStateOf("") }
     var isGenerating by remember { mutableStateOf(false) }
+    var selectedFormat by remember { mutableStateOf("Text") } // "Text" or "Image"
 
     // List of All Saved Sessions
     var savedSessions by remember { mutableStateOf(listOf<SessionRecord>()) }
@@ -457,13 +458,53 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 }
                             }
 
+                            // Output Format Segment Selector
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Output: ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    onClick = { if (!isGenerating) selectedFormat = "Text" },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = if (selectedFormat == "Text") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.padding(end = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Text",
+                                        color = if (selectedFormat == "Text") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+                                Surface(
+                                    onClick = { if (!isGenerating) selectedFormat = "Image" },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = if (selectedFormat == "Image") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Text(
+                                        text = "Image (Imagen API)",
+                                        color = if (selectedFormat == "Image") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+
                             // Dynamic Input Bar
                             Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                 OutlinedTextField(
                                     value = currentPrompt,
                                     onValueChange = { currentPrompt = it },
                                     modifier = Modifier.weight(1f),
-                                    placeholder = { Text("Ask the AI team...") },
+                                    placeholder = { Text(if (selectedFormat == "Image") "Describe the image to generate..." else "Ask the AI team...") },
                                     enabled = !isGenerating
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -509,20 +550,20 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                 
                                                 val startTime = System.currentTimeMillis()
                                                 try {
-                                                                                               val isImagePrompt = prompt.startsWith("/image ", ignoreCase = true) || prompt.lowercase(Locale.US).startsWith("generate image")
+                                                                                               val isImagePrompt = selectedFormat == "Image" || prompt.startsWith("/image ", ignoreCase = true) || prompt.lowercase(Locale.US).startsWith("generate image")
                                                     val responseText = if (isImagePrompt) {
                                                         val imagePrompt = if (prompt.startsWith("/image ", ignoreCase = true)) prompt.substring(7).trim() else prompt
                                                         withContext(Dispatchers.IO) {
                                                             var resultText = ""
                                                             var respStrForDump = ""
                                                             try {
-                                                                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=$geminiApiKey")
+                                                                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=$geminiApiKey")
                                                                 val conn = url.openConnection() as java.net.HttpURLConnection
                                                                 conn.requestMethod = "POST"
                                                                 conn.setRequestProperty("Content-Type", "application/json")
                                                                 conn.doOutput = true
                                                                 val escapedPrompt = imagePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ").replace("\r", " ")
-                                                                val jsonInputString = "{\"contents\": [{\"parts\": [{\"text\": \"$escapedPrompt\"}]}], \"config\": {\"imageConfig\": {\"aspectRatio\": \"1:1\", \"imageSize\": \"1K\"}}}"
+                                                                val jsonInputString = "{\"prompt\": \"$escapedPrompt\", \"config\": {\"numberOfImages\": 1, \"outputMimeType\": \"image/jpeg\", \"aspectRatio\": \"1:1\"}}"
                                                                 
                                                                 conn.outputStream.use { os ->
                                                                     val input = jsonInputString.toByteArray(Charsets.UTF_8)
@@ -539,44 +580,33 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                                 
                                                                 if (respCode in 200..299) {
                                                                     val root = org.json.JSONObject(respStr)
-                                                                    val candidates = root.optJSONArray("candidates")
-                                                                    if (candidates != null && candidates.length() > 0) {
-                                                                        val content = candidates.getJSONObject(0).optJSONObject("content")
-                                                                        val parts = content?.optJSONArray("parts")
-                                                                        var b64 = ""
-                                                                        if (parts != null && parts.length() > 0) {
-                                                                            for (i in 0 until parts.length()) {
-                                                                                val part = parts.getJSONObject(i)
-                                                                                if (part.has("inlineData")) {
-                                                                                    b64 = part.getJSONObject("inlineData").optString("data", "")
-                                                                                    break
-                                                                                }
+                                                                    val genImages = root.optJSONArray("generatedImages")
+                                                                    var b64 = ""
+                                                                    if (genImages != null && genImages.length() > 0) {
+                                                                        val imgObj = genImages.getJSONObject(0).optJSONObject("image")
+                                                                        b64 = imgObj?.optString("imageBytes", "") ?: ""
+                                                                    }
+                                                                    if (b64.isNotEmpty()) {
+                                                                        val imgBytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                                                                        val rootDir = when(storageLocation) {
+                                                                            1 -> context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                                                                            2 -> {
+                                                                                val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
+                                                                                if (dirs.size > 1) dirs[1] else context.filesDir
                                                                             }
+                                                                            else -> context.filesDir
                                                                         }
-                                                                        if (b64.isNotEmpty()) {
-                                                                            val imgBytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
-                                                                            val rootDir = when(storageLocation) {
-                                                                                1 -> context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-                                                                                2 -> {
-                                                                                    val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
-                                                                                    if (dirs.size > 1) dirs[1] else context.filesDir
-                                                                                }
-                                                                                else -> context.filesDir
-                                                                            }
-                                                                            if (rootDir != null) {
-                                                                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                                                                                val safePrefix = if (imagePrompt.length > 20) imagePrompt.substring(0, 20).replace(Regex("[^a-zA-Z0-9]"), "_") else imagePrompt.replace(Regex("[^a-zA-Z0-9]"), "_")
-                                                                                val imgFile = File(rootDir, "AI_${timestamp}_${safePrefix}.jpg")
-                                                                                imgFile.writeBytes(imgBytes)
-                                                                                resultText = "✨ Image generated and saved to: ${imgFile.absolutePath}"
-                                                                            } else {
-                                                                                resultText = "Error: Could not determine storage location for image.\n\n[RAW RESPONSE DUMP]:\n$respStr"
-                                                                            }
+                                                                        if (rootDir != null) {
+                                                                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                                                                            val safePrefix = if (imagePrompt.length > 20) imagePrompt.substring(0, 20).replace(Regex("[^a-zA-Z0-9]"), "_") else imagePrompt.replace(Regex("[^a-zA-Z0-9]"), "_")
+                                                                            val imgFile = File(rootDir, "AI_${timestamp}_${safePrefix}.jpg")
+                                                                            imgFile.writeBytes(imgBytes)
+                                                                            resultText = "✨ Image generated via Imagen and saved to: ${imgFile.absolutePath}"
                                                                         } else {
-                                                                            resultText = "Error: Something went wrong while trying to deserialize a response from the server (Success HTTP 200 but image data was empty).\n\n[RAW RESPONSE DUMP]:\n$respStr"
+                                                                            resultText = "Error: Could not determine storage location for image.\n\n[RAW RESPONSE DUMP]:\n$respStr"
                                                                         }
                                                                     } else {
-                                                                        resultText = "Error: Something went wrong while trying to deserialize a response from the server (Success HTTP 200 but candidates array was empty/missing).\n\n[RAW RESPONSE DUMP]:\n$respStr"
+                                                                        resultText = "Error: Something went wrong while trying to deserialize a response from the server (Success HTTP 200 but image data was empty).\n\n[RAW RESPONSE DUMP]:\n$respStr"
                                                                     }
                                                                 } else {
                                                                     resultText = "Error: Something went wrong while trying to deserialize a response from the server (HTTP Error $respCode).\n\n[RAW RESPONSE DUMP]:\n$respStr"
