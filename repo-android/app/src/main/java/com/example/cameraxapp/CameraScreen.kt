@@ -118,6 +118,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     context.display?.rotation ?: android.view.Surface.ROTATION_0
                 } else {
                     val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                    @Suppress("DEPRECATION")
                     windowManager.defaultDisplay.rotation
                 }
                 
@@ -568,6 +569,7 @@ fun CameraPreview(
                 view.context.display?.rotation ?: android.view.Surface.ROTATION_0
             } else {
                 val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                @Suppress("DEPRECATION")
                 wm.defaultDisplay.rotation
             }
             imageCapture.targetRotation = rot
@@ -587,6 +589,7 @@ fun CameraPreview(
                     view.context.display?.rotation ?: android.view.Surface.ROTATION_0
                 } else {
                     val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                    @Suppress("DEPRECATION")
                     wm.defaultDisplay.rotation
                 }
                 it.targetRotation = rot
