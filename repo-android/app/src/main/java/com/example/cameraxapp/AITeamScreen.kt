@@ -1045,7 +1045,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
                                                             Text(
-                                                                text = "💰 $${String.format(Locale.US, \"%.5f\", session.totalCost)}",
+                                                                text = "💰 $${String.format(Locale.US, "%.5f", session.totalCost)}",
                                                                 style = MaterialTheme.typography.bodySmall,
                                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
