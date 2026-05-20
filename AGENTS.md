@@ -57,3 +57,12 @@ When generating or modifying sites within the `content/` directory, the AI agent
 When writing JavaScript for the frontend, the AI agent MUST:
 - **No Native Dialogs**: Do NOT use `window.alert()`, `window.confirm()`, or `window.prompt()`. These are blocking and provide a poor user experience within an iFrame environment.
 - **Custom UI Components**: Use custom modal, toast, or notification components for user feedback and confirmations.
+
+## 11. Explicative AI Agent Actions
+- **Transparency**: When performing debugging or modifying architecture, clearly explain the actions being taken and why.
+- **Contextualize Problems**: If an error occurs (such as a 404 or `MissingFieldException` from an API), identify the root cause (e.g., incorrect model version in SDK) in your explanation instead of silently fixing it.
+- **Differentiate Environments**: Always explicitly clarify constraints (such as AI Studio environment requirements versus standard deployed builds, or Android versus web behavior) when they influence technical decisions.
+
+## 12. Continuous Architecture Documentation
+- **Keep Documentation Updated**: Whenever a new architectural choice is made or discovered (e.g., how the frontend communicates with APIs, proxy server requirements, routing mechanisms, or framework boundaries), update the appropriate architecture documentation in the `docs/` folder (such as `docs/architecture-decisions.md` or related files).
+- **Justify Choices**: Record the "Why" and the "Context" behind major decisions so that other developers (and future AI agents) understand the constraints that forced a specific implementation.
