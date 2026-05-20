@@ -2,7 +2,7 @@
 
 class AIAgent {
     private $apiKey;
-    private $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    private $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
     public function __construct() {
         $this->apiKey = getenv('GEMINI_API_KEY') ?: getenv('gemini_api_key');

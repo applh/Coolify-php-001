@@ -30,7 +30,7 @@ A series of client-side-blocking errors were identified and corrected in the mob
   }
   ```
 * **Root Cause**: The SDK was configured to use `gemini-1.5-flash-001`. Under the Gemini API `v1beta` endpoint version, specific model definitions like `-001` or raw unstable aliases might fail to resolve or are not supported on standard content generation paths.
-* **Resolution**: The model name was standardized to the supported canonical alias `gemini-1.5-flash` in the standard model initialization inside `AITeamScreen.kt`.
+* **Resolution**: The model name has been standardized to the fully supported modern alias `gemini-2.5-flash` in the standard model initialization inside `AITeamScreen.kt`.
 
 ### Error B: Kotlinx Serialization `MissingFieldException` on Errors
 * **Exception Message**:
@@ -66,7 +66,7 @@ import com.google.ai.client.generativeai.type.content
 
 // Correct instantiation pattern using standard models
 val generativeModel = GenerativeModel(
-    modelName = "gemini-1.5-flash",
+    modelName = "gemini-2.5-flash",
     apiKey = geminiApiKey
 )
 

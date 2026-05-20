@@ -65,3 +65,11 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Task**: Review the theoretical model of parallel orchestration in the slides.
 - **Exercise**: Implement a script that uses the Gemini SDK to call two different tools (e.g., `list_dir` and `read_file`) in a single turn using parallel function calling.
 - **Complexity**: Part 5 (Backend Mastery)
+
+### 8. API Discovery & Model Resilience (10h)
+**Reference**: `AGENTS.md`, `docs/ai-agents/gemini-api-interactions.md`, `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`
+- **Goal**: Master model resilience and dynamic service discovery to avoid model loop crashes upon API updates.
+- **Task**: Review model discovery endpoint protocols (`v1beta/models`) to dynamically inspect environment capabilities.
+- **Exercise**: Implement a lightweight retry or lookup utility that queries valid active models when a `404 NOT_FOUND` is caught, logging valid candidates to the user.
+- **Complexity**: Part 3
+

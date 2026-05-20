@@ -165,3 +165,25 @@ const response = await ai.models.generateContent({
 | Multi-tab / Resume Session | `generateContent` | Manual `contents` array |
 | Low-latency Voice | `ai.live.connect` | Real-time WebSocket |
 | Massive Content Extraction | `generateContent` | `urlContext` tool |
+
+---
+
+## 6. Model Verification & API Error Recovery (Anti-Looping)
+
+When working with rapid updates to the Generative Language APIs, active models can change or be deprecated. To safeguard against endless error loops (such as 404 NOT_FOUND), agents must perform dynamic discovery.
+
+### A. The Discovery Endpoint (v1beta)
+To verify the list of active models supported in the workspace or target environment:
+```ts
+const userApiKey = process.env.GEMINI_API_KEY;
+const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${userApiKey}`;
+const res = await fetch(url);
+const data = await res.json();
+console.log(data.models); // Outputs all supported models, their display names, and action methods
+```
+
+### B. Verification Principles
+1. **Always Check First on 404s**: If any model or endpoint returns a `404` or "model is not found" exception, do not retry the same model with different variations. Instantly instantiate or run a verification check using the discovery endpoint.
+2. **Transparent Log Outputs**: Logs of active models should be printed to the developers/users inside diagnostic tabs or console logs to identify valid fallback candidates instantly (e.g., verifying `gemini-2.5-flash` instead of `gemini-1.5-flash-latest`).
+3. **Graceful Fallbacks**: Design initialization wrappers to fallback gracefully or warn with clear options when a model key disappears or is deprecated.
+

@@ -39,5 +39,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Diagnose API error codes like 404 NOT_FOUND caused by incorrect model identifiers (e.g. `gemini-1.5-flash-001`) and standard serialization crashes related to `GRpcError` missing `details`.
 - **Complexity**: Part 3
 
+### 5. Multi-Platform Gemini API Model Discovery and Recovery (10h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`, `server.ts`, `repo-php/class/AIAgent.php`
+- **Goal**: Master active model enumeration and troubleshooting using the official Generative Language REST APIs to recover from API deprecation states.
+- **Exercise**: Write a custom script to query the active models list (`v1beta/models`) to find replacement models like `gemini-2.5-flash` when ancestral models are deprecated.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

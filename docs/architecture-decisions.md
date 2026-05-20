@@ -9,9 +9,9 @@ A bug emerged where a `404 NOT_FOUND` error was being thrown when calling the Ge
 
 ### Decisions & Corrections
 
-1. **Model Version Correction (`gemini-1.5-flash`)**
-   - The system was previously referencing `gemini-flash-latest` and `gemini-1.5-flash-latest`.
-   - **Fix**: The model names have been standardized to `gemini-1.5-flash` across all applications. The `latest` alias was not properly resolving in the `v1beta` genai SDK, which caused the 404 error.
+1. **Model Version Upgrades and Verification (`gemini-2.5-flash`)**
+   - The system was previously referencing older, deprecated models like `gemini-1.5-flash` and `gemini-1.5-flash-latest`.
+   - **Fix**: The model names have been upgraded to `gemini-2.5-flash` across all applications (Android, server-side tasks, and PHP scripts). Deprecated models are no longer supported under standard `v1beta` endpoint configurations, causing 404 errors. Standardizing to `gemini-2.5-flash` resolves this permanently.
 
 2. **Middleware API Server (`server.ts`) for Web Frontend**
    - **Why `server.ts` is involved**: For the Vue web application, the Gemini API is called via a Node.js express middleware router (`server.ts`).
@@ -24,4 +24,4 @@ A bug emerged where a `404 NOT_FOUND` error was being thrown when calling the Ge
 ### Conclusion
 - The **web application** uses a proxy model (`server.ts`) for strict security and infrastructure compliance.
 - The **Android application** uses a direct client-to-API model for optimal privacy and lower latency.
-- Both refer to `gemini-1.5-flash` reliably.
+- Both refer to `gemini-2.5-flash` reliably.

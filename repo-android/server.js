@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const http = require('http');
 const { spawn } = require('child_process');
 const fs = require('fs');
