@@ -360,11 +360,10 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                "Start a conversation. Session records are auto-archived with telemetry diagnostics for replay testing.",
+                                                text = "Start a conversation. Session records are auto-archived with telemetry diagnostics for replay testing.",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                modifier = Modifier.padding(horizontal = 24.dp),
-                                                maxWidth = 280.dp
+                                                modifier = Modifier.padding(horizontal = 24.dp).widthIn(max = 280.dp)
                                             )
                                         }
                                     }
@@ -1046,7 +1045,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
                                                             Text(
-                                                                text = "💰 $$String.format(Locale.US, \"%.5f\", session.totalCost)",
+                                                                text = "💰 $${String.format(Locale.US, \"%.5f\", session.totalCost)}",
                                                                 style = MaterialTheme.typography.bodySmall,
                                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                                             )
