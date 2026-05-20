@@ -113,6 +113,13 @@ This document outlines the detailed implementation plan for the core features in
   - Allow exporting and importing of app configurations as JSON files.
   - Provide built-in developer options including readable crash logs, storage usage breakdowns, and performance profiling toggles.
 
+## 7. AI Team Applet (`AITeamScreen.kt`)
+
+**Objective**: Provide a simple chat interface capable of generating text and images via the Gemini API, while saving all inputs and outputs to the local file system.
+
+**Implementation Steps**:
+- Refer to `docs/ai-team-plan.md` for the detailed feature rollout and API integration strategy.
+
 ## General Architectural Guidelines
 
 - **UI Architecture**: Adopt the **MVI (Model-View-Intent)** or **MVVM** pattern. Each screen should have a distinct `ViewModel` to process user actions and emit immutable UI state data classes.

@@ -45,7 +45,8 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             1 -> {
                 val pics = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)?.listFiles()?.toList() ?: emptyList()
                 val vids = context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)?.listFiles()?.toList() ?: emptyList()
-                pics + vids
+                val docs = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS)?.listFiles()?.toList() ?: emptyList()
+                pics + vids + docs
             }
             2 -> {
                 val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
@@ -56,7 +57,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 context.filesDir.listFiles()?.toList() ?: emptyList()
             }
         }
-        rootFiles.filter { it.extension == "jpg" || it.extension == "mp4" }
+        rootFiles.filter { it.extension in listOf("jpg", "png", "mp4", "txt", "md") }
     }
     
     var allFiles by remember(storageLocation) { mutableStateOf(loadFiles()) }
@@ -264,9 +265,23 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                 .background(Color.Black.copy(alpha = 0.3f)),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(
+                                        Icon(
                                                 imageVector = Icons.Filled.PlayArrow,
                                                 contentDescription = "Video",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(48.dp)
+                                            )
+                                        }
+                                    } else if (file.extension == "txt" || file.extension == "md") {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.DarkGray),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Menu,
+                                                contentDescription = "Document",
                                                 tint = Color.White,
                                                 modifier = Modifier.size(48.dp)
                                             )
@@ -430,6 +445,15 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                     },
                     modifier = Modifier.fillMaxSize()
                 )
+            } else if (file.extension == "txt" || file.extension == "md") {
+                val textContent = remember(file) { file.readText() }
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                ) {
+                    item {
+                        Text(text = textContent, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
             } else {
                 var scale by remember { mutableStateOf(1f) }
                 var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }

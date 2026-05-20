@@ -29,6 +29,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val showGrid by repository.showGrid.collectAsState(initial = false)
     val gridRows by repository.gridRows.collectAsState(initial = 3)
     val gridColumns by repository.gridColumns.collectAsState(initial = 3)
+    val geminiApiKey by repository.geminiApiKey.collectAsState(initial = "")
+    var showApiKeyDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -70,6 +72,18 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     coroutineScope.launch {
                         repository.setThemeMode((themeMode + 1) % 3)
                     }
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("AI Settings", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ListItem(
+                headlineContent = { Text("Gemini API Key") },
+                supportingContent = { Text(if (geminiApiKey.isEmpty()) "Not set" else "********" + geminiApiKey.takeLast(4)) },
+                modifier = Modifier.clickable {
+                    showApiKeyDialog = true
                 }
             )
             
@@ -181,6 +195,35 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 modifier = Modifier.clickable {
                     val maxVal = if (hasSdCard) 2 else 1
                     coroutineScope.launch { repository.setStorageLocation((storageLocation + 1) % (maxVal + 1)) }
+                }
+            )
+        }
+
+        if (showApiKeyDialog) {
+            var tempKey by remember { mutableStateOf(geminiApiKey) }
+            AlertDialog(
+                onDismissRequest = { showApiKeyDialog = false },
+                title = { Text("Set Gemini API Key") },
+                text = {
+                    OutlinedTextField(
+                        value = tempKey,
+                        onValueChange = { tempKey = it },
+                        label = { Text("API Key") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch { repository.setGeminiApiKey(tempKey) }
+                        showApiKeyDialog = false
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showApiKeyDialog = false }) {
+                        Text("Cancel")
+                    }
                 }
             )
         }

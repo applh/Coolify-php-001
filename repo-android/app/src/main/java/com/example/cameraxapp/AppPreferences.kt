@@ -20,6 +20,7 @@ object AppPreferences {
     val SHOW_GRID = booleanPreferencesKey("show_grid")
     val GRID_ROWS = intPreferencesKey("grid_rows")
     val GRID_COLUMNS = intPreferencesKey("grid_columns")
+    val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -33,6 +34,7 @@ class SettingsRepository(private val context: Context) {
     val showGrid: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.SHOW_GRID] ?: false }
     val gridRows: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_ROWS] ?: 3 }
     val gridColumns: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_COLUMNS] ?: 3 }
+    val geminiApiKey: Flow<String> = context.dataStore.data.map { it[AppPreferences.GEMINI_API_KEY] ?: "" }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -72,5 +74,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setGridColumns(columns: Int) {
         context.dataStore.edit { it[AppPreferences.GRID_COLUMNS] = columns }
+    }
+
+    suspend fun setGeminiApiKey(key: String) {
+        context.dataStore.edit { it[AppPreferences.GEMINI_API_KEY] = key }
     }
 }
