@@ -21,7 +21,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class ChatMessage(val role: String, val text: String, val isError: Boolean = false)
+data class ChatMessage(val role: String, val text: String, val isError: Boolean = false, val timestamp: Long = System.currentTimeMillis())
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,12 +71,26 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 color = color,
                                 shape = MaterialTheme.shapes.medium
                             ) {
-                                SelectionContainer {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    SelectionContainer {
+                                        Text(
+                                            text = message.text
+                                        )
+                                    }
                                     Text(
-                                        text = message.text,
-                                        modifier = Modifier.padding(12.dp)
+                                        text = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(message.timestamp)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.align(androidx.compose.ui.Alignment.End).padding(top = 4.dp),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                     )
                                 }
+                            }
+                        }
+                    }
+                    if (isGenerating) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                             }
                         }
                     }
@@ -104,6 +118,27 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                         modelName = "gemini-1.5-flash-latest",
                                         apiKey = geminiApiKey
                                     )
+                                    
+                                    var file: File? = null
+                                    withContext(Dispatchers.IO) {
+                                        val rootDir = when(storageLocation) {
+                                            1 -> context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+                                            2 -> {
+                                                val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
+                                                if (dirs.size > 1) dirs[1] else context.filesDir
+                                            }
+                                            else -> context.filesDir
+                                        }
+                                        
+                                        if (rootDir != null) {
+                                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                                            val prefix = if (prompt.length > 20) prompt.substring(0, 20).replace(Regex("[^a-zA-Z0-9]"), "_") else prompt.replace(Regex("[^a-zA-Z0-9]"), "_")
+                                            val filename = "AI_${timestamp}_${prefix}.md"
+                                            file = File(rootDir, filename)
+                                            file?.writeText("# Prompt: $prompt\n\n")
+                                        }
+                                    }
+                                    
                                     try {
                                         val response = withContext(Dispatchers.IO) {
                                             generativeModel.generateContent(prompt)
@@ -113,27 +148,14 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                         
                                         // Save to disk
                                         withContext(Dispatchers.IO) {
-                                            val rootDir = when(storageLocation) {
-                                                1 -> context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-                                                2 -> {
-                                                    val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
-                                                    if (dirs.size > 1) dirs[1] else context.filesDir
-                                                }
-                                                else -> context.filesDir
-                                            }
-                                            
-                                            if (rootDir != null) {
-                                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                                                val prefix = if (prompt.length > 20) prompt.substring(0, 20).replace(Regex("[^a-zA-Z0-9]"), "_") else prompt.replace(Regex("[^a-zA-Z0-9]"), "_")
-                                                val filename = "AI_${timestamp}_${prefix}.md"
-                                                val file = File(rootDir, filename)
-                                                val content = "# Prompt: $prompt\n\n$responseText"
-                                                file.writeText(content)
-                                            }
+                                            file?.appendText(responseText)
                                         }
                                         
                                     } catch (e: Exception) {
                                         messages = messages + ChatMessage("model", "Error: ${e.message}", isError = true)
+                                        withContext(Dispatchers.IO) {
+                                            file?.appendText("\n\nError: ${e.message}")
+                                        }
                                     } finally {
                                         isGenerating = false
                                     }
