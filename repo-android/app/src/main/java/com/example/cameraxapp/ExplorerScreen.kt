@@ -59,7 +59,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 context.filesDir.listFiles()?.toList() ?: emptyList()
             }
         }
-        rootFiles.filter { it.extension in listOf("jpg", "png", "mp4", "txt", "md") }
+        rootFiles.filter { it.extension in listOf("jpg", "png", "mp4", "txt", "md", "json") }
     }
     
     var allFiles by remember(storageLocation) { mutableStateOf(loadFiles()) }
@@ -274,7 +274,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                 modifier = Modifier.size(48.dp)
                                             )
                                         }
-                                    } else if (file.extension == "txt" || file.extension == "md") {
+                                    } else if (file.extension in listOf("txt", "md", "json")) {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
@@ -403,7 +403,13 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                     IconButton(onClick = {
                         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = if (file.extension == "mp4") "video/mp4" else "image/jpeg"
+                            type = when (file.extension) {
+                                "mp4" -> "video/mp4"
+                                "png" -> "image/png"
+                                "json" -> "application/json"
+                                "txt", "md" -> "text/plain"
+                                else -> "image/jpeg"
+                            }
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
@@ -447,7 +453,7 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-            } else if (file.extension == "txt" || file.extension == "md") {
+            } else if (file.extension in listOf("txt", "md", "json")) {
                 val textContent = remember(file) { file.readText() }
                 androidx.compose.foundation.lazy.LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(16.dp)

@@ -218,7 +218,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var activeTab by remember { mutableStateOf(0) } // 0: Active Chat, 1: Benchmarks & Replays
 
     // Current Session State
-    val activeSessionId = remember { "SESSION_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) }
+    var activeSessionId by remember { mutableStateOf("SESSION_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())) }
     var currentSessionMessages by remember { mutableStateOf(listOf<ChatMessageRecord>()) }
     var currentRanking by remember { mutableStateOf(0) }
     var currentNotes by remember { mutableStateOf("") }
@@ -229,6 +229,8 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     // List of All Saved Sessions
     var savedSessions by remember { mutableStateOf(listOf<SessionRecord>()) }
     var statsTrigger by remember { mutableStateOf(0) }
+    
+    var isSessionInitialized by remember { mutableStateOf(false) }
 
     // Selected Session for Inspection
     var selectedSession by remember { mutableStateOf<SessionRecord?>(null) }
@@ -243,7 +245,19 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     // Query disk sessions when storage, focus tab or triggers mutate
     LaunchedEffect(storageLocation, activeTab, statsTrigger) {
         withContext(Dispatchers.IO) {
-            savedSessions = loadSessionsFromDisk(context, storageLocation)
+            val loadedSessions = loadSessionsFromDisk(context, storageLocation)
+            savedSessions = loadedSessions
+            
+            if (!isSessionInitialized) {
+                if (loadedSessions.isNotEmpty()) {
+                    val lastSession = loadedSessions.first()
+                    activeSessionId = lastSession.sessionId
+                    currentSessionMessages = lastSession.messages
+                    currentRanking = lastSession.userRanking
+                    currentNotes = lastSession.userNotes
+                }
+                isSessionInitialized = true
+            }
         }
     }
 
@@ -254,6 +268,18 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    if (activeTab == 0) {
+                        TextButton(onClick = {
+                            activeSessionId = "SESSION_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                            currentSessionMessages = emptyList()
+                            currentRanking = 0
+                            currentNotes = ""
+                        }) {
+                            Text("New Session", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             )

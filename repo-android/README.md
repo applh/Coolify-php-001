@@ -17,6 +17,8 @@ Built with modern Android practices:
 
 ## Documentation
 - Detailed implementation plan can be found in [docs/multi-app-plan.md](docs/multi-app-plan.md).
+- AI Team Applet plan can be found in [docs/ai-team-plan.md](docs/ai-team-plan.md).
+- AI Team Session Management guide can be found in [docs/ai-team-session-management.md](docs/ai-team-session-management.md).
 - Gemini API Integration and Android SDK Error Guide can be found in [docs/android-gemini-integration.md](../docs/android-gemini-integration.md).
 
 ## Deployment (Coolify / Docker)
