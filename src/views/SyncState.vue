@@ -293,7 +293,10 @@ onMounted(() => {
     </div>
 
     <!-- Git Version Tagging Section -->
-    <div id="git-tag-section" class="mt-12 bg-[#181818] border border-[#2A2A2A] p-10 rounded-2xl">
+    <div
+      id="git-tag-section"
+      class="mt-12 bg-[#181818] border border-[#2A2A2A] p-10 rounded-2xl"
+    >
       <div class="flex items-center gap-4 mb-8">
         <div class="p-3 bg-red-500/10 rounded-full">
           <svg
@@ -322,7 +325,10 @@ onMounted(() => {
       </div>
 
       <!-- Tag Creation Form -->
-      <form @submit.prevent="createTag" class="space-y-6">
+      <form
+        class="space-y-6"
+        @submit.prevent="createTag"
+      >
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
             <label class="text-xs uppercase tracking-widest text-[#555] font-bold">Tag / Version Name</label>
@@ -365,29 +371,52 @@ onMounted(() => {
       <!-- Existing Tags List -->
       <div class="mt-10 border-t border-[#2A2A2A] pt-10">
         <div class="flex justify-between items-center mb-6">
-          <h4 class="text-lg font-serif italic text-white">Release History & Version Tags</h4>
+          <h4 class="text-lg font-serif italic text-white">
+            Release History & Version Tags
+          </h4>
           <button 
             type="button"
-            @click="fetchTags" 
-            :disabled="loadingTags"
+            :disabled="loadingTags" 
             class="text-xs font-mono uppercase tracking-wider text-[#FF3B30] hover:text-[#E6352B] transition-colors flex items-center gap-1.5 cursor-pointer"
+            @click="fetchTags"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" :class="{'animate-spin': loadingTags}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H17" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-3.5 h-3.5"
+              :class="{'animate-spin': loadingTags}"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H17"
+              />
             </svg>
             Reload Tags
           </button>
         </div>
 
-        <div v-if="loadingTags" class="text-center py-8 text-neutral-400 text-sm italic">
+        <div
+          v-if="loadingTags"
+          class="text-center py-8 text-neutral-400 text-sm italic"
+        >
           Fetching release tags...
         </div>
 
-        <div v-else-if="tags.length === 0" class="text-center py-8 text-neutral-500 text-sm italic border border-[#222] border-dashed rounded-lg bg-black/40">
+        <div
+          v-else-if="tags.length === 0"
+          class="text-center py-8 text-neutral-500 text-sm italic border border-[#222] border-dashed rounded-lg bg-black/40"
+        >
           No version tags defined yet. Submit a tag above to tag your workspace.
         </div>
 
-        <div v-else class="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar justify-items-stretch">
+        <div
+          v-else
+          class="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar justify-items-stretch"
+        >
           <div 
             v-for="tag in tags" 
             :key="tag.tag_name"

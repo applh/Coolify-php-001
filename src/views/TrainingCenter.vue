@@ -278,6 +278,7 @@ function backToDashboard() {
 </script>
 
 <template>
+  <!-- eslint-disable vue/no-v-html -->
   <div class="space-y-8 animate-in fade-in duration-700 max-w-[1400px] mx-auto px-4 md:px-8 py-8 min-h-screen">
     <!-- Breadcrumbs / Back button -->
     <div
@@ -792,11 +793,13 @@ function backToDashboard() {
               
               <div class="grid grid-cols-1 lg:grid-cols-4 gap-16">
                 <div class="lg:col-span-3 space-y-10">
+                  <!-- eslint-disable-next-line vue/no-v-html -->
                   <div 
                     class="prose prose-invert max-w-none text-xl text-white/70 leading-relaxed font-light first-letter:text-5xl first-letter:font-serif first-letter:text-[#F27D26] first-letter:mr-3 first-letter:float-left whitespace-pre-line"
                     v-html="currentSlide.content"
                   />
 
+                  <!-- eslint-disable-next-line vue/no-v-html -->
                   <div
                     v-if="currentSlide.svgContent"
                     class="my-8"
