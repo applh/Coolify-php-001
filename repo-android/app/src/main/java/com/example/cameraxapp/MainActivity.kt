@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
                     AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+                    AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
 
@@ -146,6 +148,9 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("ai_team") {
                                     AITeamScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                }
+                                composable("db") {
+                                    DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
                                 }
                                 composable("settings") {
                                     SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
@@ -222,6 +227,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
         AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+        AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 

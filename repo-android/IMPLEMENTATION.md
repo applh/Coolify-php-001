@@ -211,6 +211,22 @@ This document outlines the detailed implementation plan for the core features in
     *   Add worker tasks to interface with asynchronous video generation models triggered by Gemini text/image outputs.
     *   Handle backend polling, async `MP4`/`GIF` downloads, and write directly to the app's central media repository.
 
+## 10. Database Manager Applet (`DBScreen.kt`)
+
+**Objective**: Equip the Android application with an offline-first visual database manager to create and operate SQLite files, enabling dynamic table definitions and dynamic paginated data manipulation without requiring hardcoded schema models.
+
+**Implementation Steps**:
+- **Dynamic Connection Engine**:
+  - Build a custom SQLite binder utilizing the native `android.database.sqlite.SQLiteDatabase` API.
+  - Expose a `DBRepository` capable of dynamically querying table schemas (`PRAGMA table_info`), available database indices, and system metrics.
+- **Dynamic UI Data Grid**:
+  - Implement a multi-pane layout: standard collapsible navigation sidebar indexing available tables on the left, and a multi-directional scrollable data table container on the right.
+  - Render an on-screen grid with pagination support using database `LIMIT` and `OFFSET` bounds for maximum query performance.
+- **Visual Schema & Data CRUD**:
+  - Build a user-friendly table designer screen to draft table names, select data types (TEXT, INTEGER, REAL, BLOB), and assign PRIMARY KEY constraints.
+  - Implement dynamic form-builders that read column definitions to dynamically structure record insertion/edit Dialogs.
+  - Implement drop-down actions to trigger drop table actions with prompt safety conformations.
+
 ## General Architectural Guidelines
 
 - **UI Architecture**: Adopt the **MVI (Model-View-Intent)** or **MVVM** pattern. Each screen should have a distinct `ViewModel` to process user actions and emit immutable UI state data classes.

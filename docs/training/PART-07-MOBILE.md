@@ -91,5 +91,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Extend the custom `AITeamViewModel` to auto-serialize metadata into flat local files upon thread additions or session clears, and build out high-performance file-system prune routines to wipe deleted conversational JSON nodes without blocking UI rendering threads.
 - **Complexity**: Part 4
 
+### 13. Dynamic SQLite Database Management & Row CRUD in Jetpack Compose (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/DBScreen.kt`, `repo-android/docs/db-applet-plan.md`
+- **Goal**: Master the concepts of dynamic SQLite database file mapping and runtime database manipulation without traditional object-relational mapping (such as Room). Understand how to query metadata tables, dynamic schema descriptors, and translate variable cursors into paginated list templates in Android Jetpack Compose.
+- **Exercise**: Implement a dynamic row CRUD system in Jetpack Compose that visualizes table metadata (columns, primary keys, nullability) and renders an input form suited to any chosen schema. Write robust database update statements and integrate user alerts before executing column deletions or tables dropping.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
