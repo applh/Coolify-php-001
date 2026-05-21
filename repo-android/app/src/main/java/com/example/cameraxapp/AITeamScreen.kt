@@ -670,7 +670,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(
-                                    when (selectedRatioStr) {
+                                    when (aiRatioPreset) {
                                         "16:9" -> 16f / 9f
                                         "9:16" -> 9f / 16f
                                         "4:3" -> 4f / 3f
