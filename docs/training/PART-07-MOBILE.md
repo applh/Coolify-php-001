@@ -97,5 +97,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a dynamic row CRUD system in Jetpack Compose that visualizes table metadata (columns, primary keys, nullability) and renders an input form suited to any chosen schema. Write robust database update statements and integrate user alerts before executing column deletions or tables dropping.
 - **Complexity**: Part 4
 
+### 14. Android Agenda Applet: Calendar, AlarmManager, and WorkManager (15h)
+**Reference**: `repo-android/docs/agenda-applet-plan.md`
+- **Goal**: Master exact system-level background events scheduling in Android using `AlarmManager` and periodic work task routing using standard `WorkManager` workers, tied into custom offline calendar layouts in Jetpack Compose.
+- **Exercise**: Implement a calendar events list view linked to an exact `AlarmManager` scheduler that triggers heads-up alarms, create a `BroadcastReceiver` to handle restoring active schedules after device reboots, and build a WorkManager routine mapping cron intervals to background script tasks.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
