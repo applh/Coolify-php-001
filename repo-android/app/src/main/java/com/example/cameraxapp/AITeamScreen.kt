@@ -814,7 +814,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                             )
 
                                             Spacer(modifier = Modifier.height(10.dp))
-                                            Divider(color = BorderColor)
+                                            HorizontalDivider(color = BorderColor)
                                             Spacer(modifier = Modifier.height(10.dp))
 
                                             Text(
