@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
@@ -76,6 +77,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
                     AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
+                    AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
 
@@ -151,6 +153,9 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("db") {
                                     DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                }
+                                composable("agenda") {
+                                    AgendaScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
                                 }
                                 composable("settings") {
                                     SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
@@ -228,6 +233,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
         AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
         AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
+        AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 
