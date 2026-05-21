@@ -1,38 +1,293 @@
-# AI Team Session Management
+# AI Team Session Management - Technical Implementation Plan
 
-## Session Storage
+This document outlines the architecture, data structures, and step-by-step implementation plan for adding fully functional, robust **Multi-Session Multi-Turn AI Conversations** (Text + Image) in the `repo-android` Lumina AI Team applet.
 
-**Are the sessions stored in flat files or SQLite db?**
-Sessions and their associated artifacts are strictly stored as **flat files** in the local file system (typically within a designated directory like `Documents/AITeam/`). 
+---
 
-We chose flat files over an SQLite database to ensure seamless interoperability with the Multi-App Hub's File Explorer applet. By saving outputs as standalone files, users can natively browse, open, and manage their generated text and images using the standard file explorer interface without requiring any database extraction or custom UI layers.
+## 1. System Topology & File-Based Storage
 
-## Session Continuity
+As defined in our initial architectural decisions, Lumina AI session logs are persisted strictly as **flat JSON files** in the application's local file store (`context.filesDir/AITeam/`). This guarantees complete local persistence, isolates user histories, and allows the File Explorer applet to browse generated markdown, plain text, and visual outputs without custom database readers.
 
-**How to load and continue a session?**
-Because the system relies on flat-file storage rather than a central database, session continuity works by reading from the file system:
-- **Active State:** During an active session, the conversation context is maintained in-memory within the `ViewModel` of the `AITeamScreen`.
-- **Session Continuity (Last Session Active by Default):** On bootstrap, the applet scans the local directory (`Documents/AITeam/`) and the central manifest (`sessions.json`) to find the session with the highest (most recent) timestamp. Rather than beginning with a blank slate, the app automatically pre-loads and populates this most recent session into the UI thread.
-- **Starting a New Session:** To clear the active canvas and initiate a fresh dialogue branch, the user is provided with a "Start New Session" command (e.g., in the toolbar). Triggering this:
-  1. Commits any lingering states of the old active session to the flat file logs system.
-  2. Creates a clean, empty message timeline in memory.
-  3. Allocates a new unique `UUID` for future disk writes.
-- **Loading Previous Sessions:** To continue standard past sessions, the applet parses the chronological conversation manifest (e.g., `session_id.json` or by reading directory contents) that links user prompts to their generated output files. When a user selects a past session from the history, the applet reads these files into memory to reconstruct the chat UI and resume the conversation with the AI.
+### Directory Structure & Hierarchy
 
-## Output Formats
+```text
+context.filesDir/
+└── AITeam/
+    ├── sessions_manifest.json           <-- Central index tracking all historical sessions
+    └── sessions/
+        ├── session_a0f2b8fd-c9c0.json  <-- Text-based multi-turn dialog sequence for Session A
+        ├── session_f7e15ae1-102c.json  <-- Text-based multi-turn dialog sequence for Session B
+        └── ...
+```
 
-**What output formats are possible?**
-The AI Team applet generates and saves outputs in standard, widely readable file formats:
+- **Manifest Storage (`sessions_manifest.json`)**: Minimizes boot overhead by only storing Session Metadata (ID, Title, timestamp of last activity, token stats, and visual thumbnails references). Loaded on-click or on-startup.
+- **Session Segment Files (`sessions/session_{uuid}.json`)**: Contains the absolute conversational history (messages array), ensuring rapid, lazy loading of individual sessions without loading the user's complete history into random-access memory (RAM).
 
-1. **Structured Text (`.txt`, `.md`)**
-   - Used for standard chat responses, technical explanations, and code snippets.
-   - Markdown is the preferred default to support rich formatting (bold, italics, code blocks) in compatible text viewers.
-   - *Prompt Example:* "Write a comprehensive onboarding guide for new Android developers. Format the document with Markdown headings, bullet points, and code blocks, and output it as `onboarding_guide.md`."
-2. **Images (`.jpg`, `.png`)**
-   - Used for generated visual content.
-   - Images are downloaded or decoded from the API response and written directly to the file system as standard image files.
-   - *Prompt Example:* "Generate a concept art illustration of a futuristic, neon-lit mobile device interface. Please save the output as `concept_art.png`."
-3. **Data & Session Manifests (`.json`)**
-   - Used to store the conversational metadata, mapping the sequence of prompts to their corresponding `.md` or `.png` output files for session reloading.
-   - *System Note:* While session manifests are generated automatically by the applet's state manager, you can also prompt the AI to export raw structured data.
-   - *Prompt Example:* "Extract the top 5 UI color hex codes we discussed today and return them as a clean JSON array file named `theme_colors.json`."
+---
+
+## 2. Standardized Data Models (Moshi Compatible)
+
+To maintain clean JSON serialization and deserialization via the Square Moshi parser, the following Kotlin types are used.
+
+### A. Session Manifest Header
+Represents an individual session item inside `sessions_manifest.json`.
+
+```kotlin
+package com.example.cameraxapp.models
+
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
+data class SessionHeader(
+    val id: String,                 // UUID format
+    val title: String,              // Human-readable summary (e.g., "Designing Kotlin Enums")
+    val startTime: Long,            // Milliseconds epoch
+    val lastActiveTime: Long,       // Milliseconds epoch for sorting (newest first)
+    val totalTokens: Int,           // Rolling cumulative value
+    val modelPreset: String,        // e.g., "gemini-2.5-flash-image" or "gemini-2.5-flash"
+    val highlightsCount: Int        // Number of visual assets generated in this session
+)
+```
+
+### B. Dialogue Message Entities
+A sequence of these represents a single session's detail file inside `sessions/session_{id}.json`.
+
+```kotlin
+package com.example.cameraxapp.models
+
+import com.squareup.moshi.JsonClass
+
+enum class ChatRole {
+    USER,
+    MODEL
+}
+
+enum class Modality {
+    TEXT,
+    IMAGE
+}
+
+@JsonClass(generateAdapter = true)
+data class ChatMessage(
+    val id: String,                 // UUID for list identification
+    val role: ChatRole,             // USER or MODEL
+    val content: String,            // Markdown text or description prompt
+    val modality: Modality,         // TEXT or IMAGE
+    val timestamp: Long,            // Log timestamp
+    val imageUrl: String? = null,   // Scoped storage URI if modality == IMAGE
+    val durationMs: Long? = null,   // Performance metric
+    val calculatedCost: Double? = null // Cost estimation
+)
+
+@JsonClass(generateAdapter = true)
+data class SessionSegment(
+    val sessionId: String,
+    val messages: List<ChatMessage>
+)
+```
+
+---
+
+## 3. Serialization & Disk I/O Layer (Thread Safety)
+
+To prevent locking the main Android UI thread during large JSON saves, Disk operations are managed via Kotlin Coroutines bound to the `Dispatchers.IO` pool.
+
+### File Controller Reference Blueprint
+This helper interface encapsulates robust JSON reading/writing operations.
+
+```kotlin
+package com.example.cameraxapp.storage
+
+import android.content.Context
+import com.example.cameraxapp.models.ChatMessage
+import com.example.cameraxapp.models.SessionHeader
+import com.example.cameraxapp.models.SessionSegment
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.UUID
+
+class SessionStorageController(private val context: Context) {
+    private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    private val baseDir = File(context.filesDir, "AITeam")
+    private val sessionsDir = File(baseDir, "sessions")
+
+    init {
+        if (!baseDir.exists()) baseDir.mkdirs()
+        if (!sessionsDir.exists()) sessionsDir.mkdirs()
+    }
+
+    // --- MANIFEST OPERATIONS ---
+
+    suspend fun getSessionHeaders(): List<SessionHeader> = withContext(Dispatchers.IO) {
+        val manifestFile = File(baseDir, "sessions_manifest.json")
+        if (!manifestFile.exists()) return@withContext emptyList()
+        return@withContext try {
+            val json = manifestFile.readText()
+            val listType = Types.newParameterizedType(List::class.java, SessionHeader::class.java)
+            val adapter = moshi.adapter<List<SessionHeader>>(listType)
+            adapter.fromJson(json)?.sortedByDescending { it.lastActiveTime } ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun saveSessionHeaders(headers: List<SessionHeader>) = withContext(Dispatchers.IO) {
+        try {
+            val manifestFile = File(baseDir, "sessions_manifest.json")
+            val listType = Types.newParameterizedType(List::class.java, SessionHeader::class.java)
+            val adapter = moshi.adapter<List<SessionHeader>>(listType)
+            val json = adapter.toJson(headers)
+            manifestFile.writeText(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // --- CONVERSATION SEGMENT OPERATIONS ---
+
+    suspend fun getSessionSegment(sessionId: String): SessionSegment? = withContext(Dispatchers.IO) {
+        val sessionFile = File(sessionsDir, "session_${sessionId}.json")
+        if (!sessionFile.exists()) return@withContext null
+        return@withContext try {
+            val json = sessionFile.readText()
+            val adapter = moshi.adapter(SessionSegment::class.java)
+            adapter.fromJson(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun saveSessionSegment(segment: SessionSegment) = withContext(Dispatchers.IO) {
+        try {
+            val sessionFile = File(sessionsDir, "session_${segment.sessionId}.json")
+            val adapter = moshi.adapter(SessionSegment::class.java)
+            val json = adapter.toJson(segment)
+            sessionFile.writeText(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun deleteSession(sessionId: String) = withContext(Dispatchers.IO) {
+        try {
+            // Delete segment file
+            val sessionFile = File(sessionsDir, "session_${sessionId}.json")
+            if (sessionFile.exists()) sessionFile.delete()
+
+            // Update Manifest Header Index
+            val headers = getSessionHeaders().filterNot { it.id == sessionId }
+            saveSessionHeaders(headers)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+```
+
+---
+
+## 4. State Machine & ViewModel Architecture
+
+The ViewModel acts as the single-source-of-truth governing active user prompts, selection state headers, operational modes, and responses from the Gemini API.
+
+We'll design the upgraded `AITeamViewModel` to house:
+- **`activeSessionId: StateFlow<String?>`**: Triggers the system to load the dialogue segments when altered.
+- **`manifestState: StateFlow<List<SessionHeader>>`**: Feeds the UI's historical session drawer or floating navigation tabs.
+- **`currentTimeline: StateFlow<List<ChatMessage>>`**: Represents the ordered rendering list of text and images in the active session.
+- **`uiState: StateFlow<ConversationUiState>`**: Reflects loading, busy, streaming (text updates), success, and error diagnostic states.
+
+```kotlin
+sealed interface ConversationUiState {
+    object Idle : ConversationUiState
+    object Connecting : ConversationUiState
+    data class Success(val responseText: String) : ConversationUiState
+    data class Error(val errorMessage: String) : ConversationUiState
+}
+```
+
+### Workflows for Common Session Triggers
+
+```text
+A. BOOT / AUTO-RESUME WORKFLOW
+App Start ──> Check Manifest ──> Find Newest Session Header ──> Load Session Segment ──> Display in App Screen
+                                            │
+                                            └──> If manifest is empty ──> Trigger StartNewSession()
+
+B. START NEW SESSION WORKFLOW
+Toolbar Button "+" click ──> Generate UUID ──> Clear Current Chat Screen ──> Save Empty Manifest Entry ──> Redraw UI
+
+C. APPEND MULTI-TURN RESPONSE WORKFLOW
+User Prompt Submitted ──> Add Message USER (TEXT) to currentTimeline ──> Save Local File ──> Hit Gemini network endpoint 
+       ──> Stream Text / Base64 Pixel payload ──> Add Message MODEL to currentTimeline ──> Save Local File ──> Refresh screen
+```
+
+---
+
+## 5. Jetpack Compose UI Components Mockup Layout
+
+The screen adapts beautifully between narrow screens (portrait phone) and wide displays (landscape tablets, ChromeOS, split-screen browsers) through a modern, responsive **Dual-Pane Split Canvas** whenever possible.
+
+### Layout Elements & Hierarchy (Bento Grid Style)
+
+1. **Toolbar Header**:
+   - Left-aligned menu drawer icon.
+   - Branded text `"Lumina AI"` (Gemini Hub).
+   - Right-aligned floating Action elements:
+     - **"New Session" button (`+` Icon)**: Immediately invokes the UUID purge operation to clear the main canvas and start a new conversation branch.
+     - **"History" Drawer Toggle**: Dispatches floating sidebar to pick prior headers.
+2. **Conversational Scroller (Main Window)**:
+   - Dynamic bubbles tailored with specialized rounded corners mapping back and forth for `USER` and `MODEL`.
+   - Markdown components rendering bold text, inline bullet items and elegant dark-mode code snippets.
+3. **Control Bottom Dock**:
+   - Flat input field.
+   - Checkbox: `[ ] Generate Image` (Toggles the conditional dispatch block redirecting the prompt logic).
+   - Synthesize Action Send button.
+
+### Lightbox Touch gestural overlay card UI
+When tapping on any generated image in the chat canvas, a high-resolution overlay opens with pinch-to-zoom mathematical operations (using Compose scale tracking mechanics):
+
+```kotlin
+Modifier.graphicsLayer {
+    scaleX = scale
+    scaleY = scale
+    translationX = offset.x
+    translationY = offset.y
+}
+```
+
+---
+
+## 6. Detailed Implementation & Integration Schedule
+
+To guarantee a stable, zero-regression build cycle, the feature is rolled out sequentially.
+
+### Phase 1: Data Schema Verification & Storage Control Tests
+- Create data models under `com.example.cameraxapp.models`.
+- Implement `SessionStorageController` under `com.example.cameraxapp.storage`.
+- Write structural unit files or local tests to verify flat JSON reads, writes, and manifest indexing run correctly on Android environments.
+
+### Phase 2: Refactoring ViewModel States
+- Update `AITeamScreen.kt` to define a single orchestrating `AITeamViewModel` replacing the simple standalone `ImageGeneratorViewModel`.
+- Integrate current settings repository properties (such as key retrievals).
+- Set up automatic session recover flow: scans the manifest on VM init and restores context.
+
+### Phase 3: Text Conversation Pipeline via Gemini Retrofit API
+- Enhance the current `GeminiApi` client to support text-generation endpoints (e.g., standard text request payload using `models/gemini-2.5-flash:generateContent`).
+- Handle streaming text rendering inside Jetpack Compose, appending models' outputs sequentially.
+- Trigger auto-saves to individual JSON segments on every prompt-response transaction completion.
+
+### Phase 4: UI Scaffolding & Responsive Layout Integration
+- Create the sidebar list in Compose which pulls from `manifestState`.
+- Incorporate nice floating styles, touch visual feedback, and transition animations during thread changes.
+- Add delete actions directly beside session items in the list.
+
+### Phase 5: Checkbox Image and Gestural Lightbox
+- Wire up the conditional checkpoint image toggle in the bottom input pane.
+- Intercept the input prompt: if checked, dispatch content requests to image models, receive Base64 bytes, and write `.png` visual artifacts to Scoped Storage.
+- Hook up the dismissible overlay lightbox dialog modal complete with multitouch gesture tracking, completing the Lumina Canvas specification.
