@@ -85,5 +85,11 @@ Bridge the gap between web and mobile with Android and Flutter.
   4. Build a custom lightbox Dialog with Compose `PointerInputScope` gestural transformers detecting multitouch pinches, enabling zooming up to 4.0x and scrolling translations dynamically.
 - **Complexity**: Part 4
 
+### 12. Offline-First JSON Dialogue Segment Management & Thread Deletion Flows (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`
+- **Goal**: Learn how to manage multi-session manifest registries containing individual conversation logs on Android. Understand how thread mutations, UUID generational resets, and dynamic deletions represent highly consistent data states.
+- **Exercise**: Extend the custom `AITeamViewModel` to auto-serialize metadata into flat local files upon thread additions or session clears, and build out high-performance file-system prune routines to wipe deleted conversational JSON nodes without blocking UI rendering threads.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
