@@ -590,7 +590,6 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
         )
     }
 }
-}
 
 // ==========================================
 // SUB-PANES AND COMPOSABLES

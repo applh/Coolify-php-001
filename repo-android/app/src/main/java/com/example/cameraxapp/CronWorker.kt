@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 
 class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
