@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import cors from 'cors';
 import AdmZip from 'adm-zip';
 import multer from 'multer';
@@ -43,6 +45,54 @@ console.log('Server.ts: Initializing...');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
+
+const execFileAsync = promisify(execFile);
+
+async function getGitTags() {
+  try {
+    // Check if git repository is initialized
+    await execFileAsync('git', ['rev-parse', '--is-inside-work-tree']);
+  } catch {
+    // If not, initialize it so git features can actually work
+    try {
+      await execFileAsync('git', ['init']);
+      await execFileAsync('git', ['config', '--global', 'user.name', 'AI Coder Agent']);
+      await execFileAsync('git', ['config', '--global', 'user.email', 'fraise-agent@ais.local']);
+      
+      const status = await execFileAsync('git', ['status', '--short']);
+      if (status.stdout.trim()) {
+        await execFileAsync('git', ['add', '.']);
+        await execFileAsync('git', ['commit', '-m', 'Initial commit']);
+      }
+    } catch (e) {
+      console.error('Failed to auto-init git repository:', e);
+    }
+  }
+
+  try {
+    // Fetch real git tags.
+    const { stdout } = await execFileAsync('git', [
+      'tag', 
+      '-l', 
+      '--format=%(refname:short)|%(creatordate:iso)|%(contents:subject)'
+    ]);
+    
+    const lines = stdout.trim().split('\n').filter(line => line.length > 0);
+    const tags = lines.map(line => {
+      const parts = line.split('|');
+      return {
+        tag_name: parts[0] || '',
+        created_at: parts[1] || new Date().toISOString(),
+        message: parts[2]?.trim() || '',
+        is_git: true
+      };
+    });
+    return tags;
+  } catch (err) {
+    console.error('Real git tag retrieval failed, falling back to SQLite db:', err);
+    return null;
+  }
+}
 
 async function createServer() {
   const app = express();
@@ -908,6 +958,101 @@ Layout::footer();
     } catch (error) {
       console.error('Push Error:', error);
       res.status(500).json({ error: 'Failed to push sync: ' + (error instanceof Error ? error.message : String(error)) });
+    }
+  });
+
+  // Git Version Tagging Router
+  app.get('/api/git/tags', async (req, res) => {
+    try {
+      let tags = await getGitTags();
+      
+      const dbTags = db.prepare("SELECT tag_name, message, created_at FROM version_tags ORDER BY created_at DESC").all() as Array<{tag_name: string; message: string; created_at: string}>;
+      
+      if (!tags) {
+        tags = dbTags.map(t => ({
+          tag_name: t.tag_name,
+          message: t.message,
+          created_at: t.created_at,
+          is_git: false
+        }));
+      } else {
+        const gitTagNames = new Set(tags.map(t => t.tag_name));
+        for (const dbT of dbTags) {
+          if (!gitTagNames.has(dbT.tag_name)) {
+            tags.push({
+              tag_name: dbT.tag_name,
+              message: dbT.message,
+              created_at: dbT.created_at,
+              is_git: false
+            });
+          }
+        }
+      }
+
+      tags.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      res.json({ success: true, tags });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: 'Failed to fetch tags: ' + msg });
+    }
+  });
+
+  app.post('/api/git/tags', async (req, res) => {
+    const { tagName, message } = req.body;
+    
+    if (!tagName) {
+      return res.status(400).json({ error: 'Tag name is required' });
+    }
+    
+    if (!/^[a-zA-Z0-9.\-_/]+$/.test(tagName)) {
+      return res.status(400).json({ error: 'Invalid tag name format. Use letters, numbers, dots, hyphens, and underscores.' });
+    }
+
+    try {
+      const stmtInsert = db.prepare("INSERT OR REPLACE INTO version_tags (tag_name, message) VALUES (?, ?)");
+      stmtInsert.run(tagName, message || '');
+
+      let gitSuccess = false;
+      let gitError = '';
+      try {
+        try {
+          await execFileAsync('git', ['rev-parse', 'HEAD']);
+        } catch {
+          await execFileAsync('git', ['add', 'metadata.json']);
+          await execFileAsync('git', ['commit', '-m', 'chore: initial commit for versioning']);
+        }
+
+        try {
+          await execFileAsync('git', ['show-ref', '--tags', 'refs/tags/' + tagName]);
+          await execFileAsync('git', ['tag', '-d', tagName]);
+        } catch {
+          // tag doesn't exist
+        }
+
+        await execFileAsync('git', ['config', '--global', 'user.name', 'AI Coder Agent']);
+        await execFileAsync('git', ['config', '--global', 'user.email', 'fraise-agent@ais.local']);
+
+        if (message) {
+          await execFileAsync('git', ['tag', '-a', tagName, '-m', message]);
+        } else {
+          await execFileAsync('git', ['tag', tagName]);
+        }
+        gitSuccess = true;
+      } catch (e: unknown) {
+        gitError = e instanceof Error ? e.message : String(e);
+        console.warn('Real Git tag creation failed:', gitError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: gitSuccess 
+          ? `Successfully created Git tag "${tagName}"` 
+          : `Saved version "${tagName}" to database fallback (Git unavailable: ${gitError})`,
+        gitSuccess
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: 'Failed to save version tag: ' + msg });
     }
   });
 

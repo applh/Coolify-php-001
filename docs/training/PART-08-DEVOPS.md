@@ -26,6 +26,12 @@ Automate everything: from containerization to full-scale cloud orchestration.
 - **Task**: Learn how webhooks trigger deployments.
 - **Exercise**: Simulate a webhook deployment trigger using `curl`.
 
+### 3. Automated Git Version Tagging & Backup Fallback (20h)
+- **Goal**: Understand version release tracking using real Git annotated tags alongside dual-storage SQLite database persistence.
+- **Reference**: `server.ts`, `src/views/SyncState.vue`, `/database.ts`
+- **Exercise**: Create a new version tag `v1.5.0` via the frontend interface and verify its presence in both the underlying SQLite `version_tags` table and the real Git workspace indexes. Extend the system to support comparing codebase diffs between two tags.
+- **Complexity**: Part 8 (Medium-High)
+
 ## Recommended Reading
 - `docs/devops/deployment.md`
 - `docs/devops/coolify-node-scaling.md`

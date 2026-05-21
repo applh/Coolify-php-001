@@ -50,6 +50,13 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(agent_id) REFERENCES agents(id)
   );
+
+  CREATE TABLE IF NOT EXISTS version_tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tag_name TEXT UNIQUE,
+    message TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Seed default agents if none exist
