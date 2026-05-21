@@ -796,19 +796,30 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             
             // PANEL 1: Permanent left sidebar on Tablet displays
             if (isTabletSize) {
-                Surface(
+                Row(
                     modifier = Modifier
-                        .width(280.dp)
-                        .fillMaxHeight(),
-                    color = SlatePurple,
-                    border = BorderStroke(end = 1.dp, color = BorderColor)
+                        .width(281.dp)
+                        .fillMaxHeight()
                 ) {
-                    SessionSidebarContent(
-                        manifestList = manifestFeed,
-                        activeId = activeSessionId,
-                        onSessionSelect = { id -> viewModel.loadSession(id) },
-                        onNewSession = { viewModel.startNewSession() },
-                        onDeleteSession = { id -> viewModel.deleteSession(id) }
+                    Surface(
+                        modifier = Modifier
+                            .width(280.dp)
+                            .fillMaxHeight(),
+                        color = SlatePurple
+                    ) {
+                        SessionSidebarContent(
+                            manifestList = manifestFeed,
+                            activeId = activeSessionId,
+                            onSessionSelect = { id -> viewModel.loadSession(id) },
+                            onNewSession = { viewModel.startNewSession() },
+                            onDeleteSession = { id -> viewModel.deleteSession(id) }
+                        )
+                    }
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
+                            .background(BorderColor)
                     )
                 }
             }
