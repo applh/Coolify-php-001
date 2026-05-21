@@ -227,6 +227,49 @@ This document outlines the detailed implementation plan for the core features in
   - Implement dynamic form-builders that read column definitions to dynamically structure record insertion/edit Dialogs.
   - Implement drop-down actions to trigger drop table actions with prompt safety conformations.
 
+## 11. Custom Background Automation & Periodic Tasks Suite (`CronWorker.kt` / `AlarmReceiver.kt`)
+
+**Objective**: Harness Android's native system scheduling capabilities (`WorkManager` and `AlarmManager`) to run periodic, battery-optimized, and resilient operational routines that ensure local database hygiene, file storage health, and system telemetry monitoring.
+
+### Catalog of Activatable Periodic Tasks
+
+To provide an elite administrative dashboard, the application outlines a series of modular background routines configured via standard cron representations or exact timers:
+
+1.  **Cache Sweeper & Storage Optimizer (Active)**:
+    *   **Goal**: Automatically sweep transient directories to maintain optimal physical disk footprints.
+    *   **Android Trigger**: `WorkManager` scheduled periodically with constraints `NetworkType.NOT_REQUIRED` and `RequiresBatteryNotLow`.
+    *   **Mechanism**: Safely crawls `applicationContext.cacheDir`, verifying file-modification headers. Destroys non-essential log dumps or cached visual thumbnails older than 10 minutes (or user-defined time bounds).
+
+2.  **App State & User Preference Backup Engine**:
+    *   **Goal**: Create a portable snapshot of local database transactions and `DataStore` key-value pairs to prevent data loss.
+    *   **Android Trigger**: Periodic overnight runner (e.g., `0 2 * * *` - daily at 2 AM) under `RequiresDeviceIdle` and `RequiresCharging` constraints.
+    *   **Mechanism**: Serializes the SQLite tables and preferences into a compressed `backup_[timestamp].json` payload written to Scoped Storage under a secure `/backups/` route.
+
+3.  **Database Log Rotator & SQLite Vacuum**:
+    *   **Goal**: Prevent index thrashing and disk footprint bloat of the active `agenda_hub.db` file.
+    *   **Android Trigger**: Monthly or weekly cron execution (`0 0 * * 0` - Sundays at midnight).
+    *   **Mechanism**: Trims telemetry history logs older than 30 days from `cron_logs`, re-indexes key tables, and issues a standard native database `VACUUM` statement to release unneeded file blocks back to the OS.
+
+4.  **Media Directory Integrity Warden**:
+    *   **Goal**: Ensure the consistency of photos taken by `CameraX` and visual assets stored by the `AI Team` explorer.
+    *   **Android Trigger**: Semi-daily periodic job.
+    *   **Mechanism**: Scans the targeted local storage folders, verifying file-header descriptors against known signatures. Identifies and prunes corrupted zero-byte images or partial streaming downloads, and updates the local files list dynamically.
+
+5.  **Exif Content & Geotag Enrichment Worker**:
+    *   **Goal**: Automatically enrich captured media EXIF coordinates when localized permissions are granted seamlessly post-processing.
+    *   **Android Trigger**: Deferred background queue triggered after camera activities or on a low-priority delay.
+    *   **Mechanism**: Uses `androidx.exifinterface.media.ExifInterface` to read and supplement JPEG headers, aligning photo file timestamps with system GPS location offsets retrieved during capture.
+
+6.  **Daily Morning Agenda Digest Notifier**:
+    *   **Goal**: Provide push notifications summarizing the user's active schedules and exact calendar alarms for the day ahead.
+    *   **Android Trigger**: Precise morning wakeup using `AlarmManager` with `setExactAndAllowWhileIdle` at 7:00 AM.
+    *   **Mechanism**: Queries the local `agenda_events` SQLite database to aggregate upcoming records, then issues a custom styled local `Notification` summary with action links.
+
+7.  **Battery & Resource Governor Guardian**:
+    *   **Goal**: Adapt background sync frequency dynamically to prevent battery drain or mobile data overuse.
+    *   **Android Trigger**: Broadcast-receiver listening to battery level and internet connection broadcasts.
+    *   **Mechanism**: Adjusts WorkManager constraint thresholds on other background tasks — scaling down sync tasks to "manual-only" if battery falls below 20% or enters Battery Saver mode.
+
 ## General Architectural Guidelines
 
 - **UI Architecture**: Adopt the **MVI (Model-View-Intent)** or **MVVM** pattern. Each screen should have a distinct `ViewModel` to process user actions and emit immutable UI state data classes.

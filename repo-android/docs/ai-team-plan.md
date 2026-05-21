@@ -67,6 +67,12 @@ Add a new "AI Team" applet to the Multi-App Hub in `repo-android`. This applet w
   - Formally writes any pending active session records to the file system.
   - Clears the active chat bubble states from the layout, welcoming the user with a fresh prompt workspace.
 
+### 5. Scheduled Background AI Session Replay
+- **Periodic Operational Configuration**: Add a settings overlay or switch (`[ ] Schedule Periodic Run`) where students or users can bind an active session to a custom recurrence interval (e.g. daily, hourly, or weekly cron expression).
+- **Background Execution Engine**: Bind the scheduled sessions with the local SQLite `TABLE_CRON_JOBS` registry, managed by the unified on-device scheduling engine.
+- **Auto-Execution Prompt**: Store a pre-configured recurring trigger query (e.g., *"Assess log diagnostics and summarize device health"*). When `CronWorker.kt` fires on the schedule, it fetches the session message array, connects to the Gemini API, appends the response to the saved markdown history seamlessly, and fires a push notification.
+
+
 ### 4. Interactive Image Gallery Lightbox (Multitouch Zoom & Pan)
 - **Dismissible Overlay**: Tapping on any image preview within the active session stream or the "Session Highlights Gallery" launches a high-resolution, full-screen Overlay Card or Dialog Modal acting as a Lightbox.
 - **Gestural Transformation Controller**:

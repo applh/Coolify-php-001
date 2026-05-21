@@ -291,3 +291,93 @@ To guarantee a stable, zero-regression build cycle, the feature is rolled out se
 - Wire up the conditional checkpoint image toggle in the bottom input pane.
 - Intercept the input prompt: if checked, dispatch content requests to image models, receive Base64 bytes, and write `.png` visual artifacts to Scoped Storage.
 - Hook up the dismissible overlay lightbox dialog modal complete with multitouch gesture tracking, completing the Lumina Canvas specification.
+
+---
+
+## 7. Automated Periodic Rerun & Session Replication Specification
+
+To empower local batch-processing workflows—such as generating a daily intelligence digest, repeating automated status audits, or scheduled image content generation branches—the application framework integrates saved Multi-Turn Sessions with Android's SQLite-backed background scheduling system (`CronWorker.kt` / `WorkManager`).
+
+### A. Extended Schema for Scheduling Control
+To support periodic executions, we extend the active JSON schemas (`SessionHeader` and `SessionSegment`) with attributes that store and maintain execution instructions:
+
+```kotlin
+// Append to com.example.cameraxapp.models.SessionHeader
+data class SessionHeader(
+    val id: String,                 
+    val title: String,              
+    val startTime: Long,            
+    val lastActiveTime: Long,       
+    val totalTokens: Int,           
+    val modelPreset: String,        
+    val highlightsCount: Int,
+    // --- Scheduling Configurations ---
+    val isPeriodic: Boolean = false,          // Toggle active cron scheduling
+    val cronExpression: String? = null,        // e.g. "0 9 * * *" (Every day at 9 AM)
+    val autoTriggerPrompt: String? = null,    // Prompt automatically executed on wake (e.g., "Analyze current storage logs and summarize")
+    val systemInstructionsOverride: String? = null, // Optional system constraints
+    val scheduleActive: Boolean = false,       // Current active scheduler toggle state
+    val lastScheduledRunTime: Long = 0L,       // Millisecond tracking
+    val executionCount: Int = 0                // Total background run rounds
+)
+```
+
+### B. SQLite Database Alignment (`AgendaDatabaseHelper.kt`)
+When a user marks an AI Team Session as "Periodic" in the Compose UI:
+1.  **Register Cron Record**: Insert corresponding values into `TABLE_CRON_JOBS` via `AgendaDatabaseHelper`:
+    -   `COL_CRON_NAME` -> `"AI Session: ${sessionHeader.title}"`
+    -   `COL_CRON_EXPRESSION` -> `sessionHeader.cronExpression ?: "0 9 * * *"`
+    -   `COL_CRON_IS_ACTIVE` -> `if (sessionHeader.scheduleActive) 1 else 0`
+2.  **Metadata Association**: Save the Unique session UUID into the `cron_jobs` metadata context (or serialize inside the job's parameters matching `"CRON_SESSION_ID: [UUID]"`) to allow instant retrieval upon background worker wake-up.
+
+### C. Background Compilation & Service Execution Pipeline in `CronWorker`
+When `CronWorker.kt` triggers on the designated cron alarm execution step:
+
+```text
+                  [CronWorker wakes up from WorkManager / AlarmManager]
+                                           │
+                    [Retrieve CRON_ID and identify target Session UUID]
+                                           │
+                [Read session JSON segment from context.filesDir/AITeam/]
+                                           │
+               [Load Saved API Key from Cryptographic AppPreferences Store]
+                                           │
+         [Assemble active message history + Append autoTriggerPrompt text payload]
+                                           │
+            [Dispatch REST query: gemini-2.5-flash / models/generateContent]
+                                           │
+            [Await Response ──> Generate Local Markdown File / Save Image]
+                                           │
+           [Update JSON segments logs & Increment executionCount manifest metric]
+                                           │
+                     [Write success status to SQLite TABLE_CRON_LOGS]
+                                           │
+               [Display High-Contrast Local Push Notification Toast Summary]
+```
+
+### D. Detailed Implementation Operations for Developers
+
+To implement the automated background rerun loop, edit `CronWorker.kt` to handle AI Team schedules:
+
+1.  **Extract Parameters**: Read the target Session UUID from the job name or custom data inputs:
+    ```kotlin
+    val sessionUuid = job.name.substringAfter("AI Session: ", "").trim()
+    if (sessionUuid.isNotEmpty()) {
+        executeScheduledSessionRerun(sessionUuid, dbHelper, job.id)
+    }
+    ```
+2.  **Restore Context & Prepare Prompt**:
+    *   Initialize `SessionStorageController` and load the saved `SessionSegment` using `getSessionSegment(sessionUuid)`.
+    *   Retrieve the corresponding `SessionHeader` from the manifest.
+    *   Collect the historical conversational array (e.g., standard text lines or image cues).
+3.  **Perform Non-Blocking Network Dispatch**:
+    *   Verify immediate internet network status in WorkManager.
+    *   Load the stored, decrypted `GEMINI_API_KEY` from `AppPreferences`.
+    *   If the key is missing or blank, write `FAILED` telemetry status containing `"Missing Gemini API Key configuration"` and terminate gracefully.
+    *   Assemble a retrofitted payload: append `sessionHeader.autoTriggerPrompt` as a new `ChatMessage(role = ChatRole.USER)` sequence.
+4.  **Save Results & Notify System**:
+    *   Append the response `ChatMessage(role = ChatRole.MODEL)` to the timeline list file.
+    *   Update tokens metrics, last active timestamps, and increments `executionCount` in the manifest file.
+    *   Write the execution metrics to `dbHelper.addCronLog()`.
+    *   Issue a local `Notification` notifying the user that the AI workspace ran background updates successfully.
+

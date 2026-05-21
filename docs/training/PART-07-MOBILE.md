@@ -103,5 +103,23 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a calendar events list view linked to an exact `AlarmManager` scheduler that triggers heads-up alarms, create a `BroadcastReceiver` to handle restoring active schedules after device reboots, and build a WorkManager routine mapping cron intervals to background script tasks.
 - **Complexity**: Part 4
 
+### 15. WorkManager & AlarmManager Multi-Task Background Suite (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/CronWorker.kt`, `repo-android/IMPLEMENTATION.md`
+- **Goal**: Understand how to develop and chain multiple high-utility periodic tasks inside a unified Android WorkManager execution harness (`CronWorker.kt`), while respecting battery, networking, and platform constraints.
+- **Exercise**: Create and register three brand-new periodic background automation tasks in `CronWorker.kt`: a weekly database optimizer issuing a `VACUUM` transaction on the SQLite database, a daily media integrity supervisor inspecting saved images and cleaning orphan records, and an environmental resource watchdog rescheduling heavy operations if battery levels fall below the 20% limit.
+- **Complexity**: Part 4
+
+### 16. Scheduled Background AI Session Replay & Periodic Task Routing (15h)
+**Reference**: `repo-android/docs/ai-team-session-management.md`, `repo-android/app/src/main/java/com/example/cameraxapp/CronWorker.kt`
+- **Goal**: Master the integration of local file-based AI session state objects with Android's system background triggers. Understand how to serialize complex cron instructions, fetch saved configurations dynamically on-boot, perform background network actions safely with WorkManager, and notify clients about scheduled updates.
+- **Exercise**: Implement custom scheduling properties within the `SessionHeader` schema. Create a periodic subscription toggle in the Jetpack Compose chat view that registers a custom background job in the SQLite `TABLE_CRON_JOBS` index. Extend `CronWorker.kt` to identify scheduled AI sessions, parse raw history files, construct background prompts, dispatch queries to the Gemini API, update JSON threads asynchronously on run completion, and post a push notification.
+- **Complexity**: Part 4
+
+### 17. Multi-Entity Agenda Row CRUD & System Alarm Synchronization (20h)
+**Reference**: `repo-android/docs/agenda-applet-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/AgendaDatabaseHelper.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master full Create, Read, Update, and Delete (CRUD) flows on Android SQLite databases alongside high-precision scheduling synchronizations with the operating system layer.
+- **Exercise**: Extend the custom SQLite helper to support dynamic update queries for events, alarms, and cron expressions. In Jetpack Compose, build out Edit overlays initialized with selection state details, configure strict field pattern inputs validation, and handle exact side effect callbacks—clearing and rescheduling AlarmManager PendingIntents or restarting WorkManager loops on task modifications.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

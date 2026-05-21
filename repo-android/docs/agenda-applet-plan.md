@@ -55,6 +55,12 @@ To ensure bulletproof reliability for tasks, alarms, and background work, the ap
 - **Harnessing WorkManager**: Convert periodic crons into registered WorkManager `PeriodicWorkRequest` items containing native constraints (e.g. `NetworkType.CONNECTED` or `RequiresCharging`).
 - **Telemetry Console Tracker**: Run-history database logs showing past executables, execution time/latencies, network states, and exit statuses (Success, Warning, Failed).
 - **On-Demand Running**: A manual play button next to cron entries running tests synchronously inside immediate background worker threads.
+- **Pre-Configured Background Automation Routines**:
+  - **Cache Sweeper & Trash Purger**: Run on battery-friendly conditions (e.g. every 6 hours) to clear thumbnail caches, old log files, and intermediate media exports older than 10 minutes.
+  - **Auto-Backup Generator**: Daily automated JSON snapshot exports of the active calendar schedules, alarm states, and cron configurations, placing backups in secure sandboxed Scoped Storage.
+  - **Database Optimizer & Log Vacuum**: Weekly housekeeper that deletes expired log telemetry statements (older than 30 days) and issues sqlite `VACUUM` statements to release unused disk sectors.
+  - **Media Integrity Warden**: Daily validation checking recorded files in files/MediaStore directory, updating database references, and parsing metadata values.
+  - **System Resource Watchdog**: Real-time throttling based on system health checks (pausing background transfers or batch operations if battery is below 20% or thermal throttling is active).
 
 ---
 
@@ -69,6 +75,10 @@ These features elevate the Agenda applet from a basic schedule tool into an adva
 ### 2. Event-Driven Action Routines (Macro Automation)
 - **Macro Command Executor**: Allow users to bind Cron jobs or Alarm triggers to run distinct on-device shell routines or system settings (e.g., automatically toggle Silent Mode during a calendar event, or trigger a webhook request when a task runs).
 - **Automation Log**: View-system showing logs of automation scripts and action cascades launched directly by background jobs.
+
+### 3. Integrated System Periodic Core Tasks
+- **EXIF Tag Enrichment Service**: Background worker that matches captured media with current geoparser/location cache tags, and appends locations post-capture.
+- **Precision Calendar Wakeup Notifier**: High-precision `AlarmManager` helper that wakes up exactly at sunrise or user-configured times (e.g. 7:00 AM) to build a custom local notification ledger summarizing all daily calendar items.
 
 ---
 
@@ -181,7 +191,88 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
 ---
 
-## 6. Rollout Phases
+## 6. Unified Full CRUD Operations Specification
+
+To ensure a seamless administrative experience matching professional patterns, the Agenda system features full Create, Read, Update, and Delete (CRUD) pipelines for all three underlying entities: Calendar Events, Exact Alarms, and Cron Tasks.
+
+### A. SQLite Storage Updates API (`AgendaDatabaseHelper.kt`)
+
+We must implement high-performance, synchronous SQLite transaction mappings to write entity updates safely:
+
+```kotlin
+// 1. Calendar Event Updates
+fun updateEvent(id: Int, title: String, notes: String, dateMillis: Long, duration: Int, color: String): Int {
+    val db = writableDatabase
+    val values = ContentValues().apply {
+        put(COL_EVENT_TITLE, title)
+        put(COL_EVENT_NOTES, notes)
+        put(COL_EVENT_DATE_MILLIS, dateMillis)
+        put(COL_EVENT_DURATION, duration)
+        put(COL_EVENT_COLOR, color)
+    }
+    return db.update(TABLE_EVENTS, values, "$COL_EVENT_ID = ?", arrayOf(id.toString()))
+}
+
+// 2. Alarm Meta & Time Updates 
+fun updateAlarm(id: Int, timeMillis: Long, label: String, isActive: Boolean): Int {
+    val db = writableDatabase
+    val values = ContentValues().apply {
+        put(COL_ALARM_TIME_MILLIS, timeMillis)
+        put(COL_ALARM_LABEL, label)
+        put(COL_ALARM_IS_ACTIVE, if (isActive) 1 else 0)
+    }
+    return db.update(TABLE_ALARMS, values, "$COL_ALARM_ID = ?", arrayOf(id.toString()))
+}
+
+// 3. Cron Task Metadata & Rule Updates
+fun updateCronJob(id: Int, name: String, expression: String, isActive: Boolean): Int {
+    val db = writableDatabase
+    val values = ContentValues().apply {
+        put(COL_CRON_NAME, name)
+        put(COL_CRON_EXPRESSION, expression)
+        put(COL_CRON_IS_ACTIVE, if (isActive) 1 else 0)
+    }
+    return db.update(TABLE_CRON_JOBS, values, "$COL_CRON_ID = ?", arrayOf(id.toString()))
+}
+```
+
+### B. State Management Flow (`AgendaViewModel.kt`)
+
+The ViewModel manages live selection overlays, edit flags, and exact side-effect scheduling on update triggers:
+
+1.  **Selection State Tracking**:
+    ```kotlin
+    private val _editingEvent = MutableStateFlow<AgendaEvent?>(null)
+    val editingEvent = _editingEvent.asStateFlow()
+
+    private val _editingAlarm = MutableStateFlow<AlarmInfo?>(null)
+    val editingAlarm = _editingAlarm.asStateFlow()
+
+    private val _editingCron = MutableStateFlow<CronJobInfo?>(null)
+    val editingCron = _editingCron.asStateFlow()
+    ```
+
+2.  **Temporal Rescheduling Logic & Native Side Effects**:
+    *   **Updating a Calendar Event**: When an event's time changes, locate the previous event ID, call `cancelEventAlarm(eventId)` to clear its registered `PendingIntent` from `AlarmManager`, call `updateEvent(...)`, and immediately register a new alarm with the updated milliseconds using `scheduleEventAlarm(...)`.
+    *   **Updating an Alarm**: Time updates require dynamic recalculation. If the updated timestamp falls prior to the current system time, roll the trigger forward +24 hours automatically. Cancel the old PendingIntent and establish a fresh one via `setExactAndAllowWhileIdle`.
+    *   **Updating Cron Jobs**: If the user alters the text-descriptor cron expression rules, cancel active WorkManager cron items, re-parse the interval sequence, and launch a fresh, verified `PeriodicWorkRequest` under charging and low-battery guard constraints.
+
+### C. UI Composition & Interaction Flows (`AgendaScreen.kt`)
+
+We establish cohesive Compose dialog modals, sheet structures, and swipe triggers to empower editing:
+
+1.  **Form Dialog Sheets (`EditEventDialog` / `EditAlarmDialog` / `EditCronDialog`)**:
+    *   Initialize text field states with the properties of the selected entity.
+    *   Integrate full form validation: verify title lengths, prevent past alarms generation without rollover, check raw cron expressions parsing validity (e.g. Reject malformed symbols using regex parsing safeguards).
+    *   Save and Cancel triggers directly reset the target selection states.
+2.  **Interaction Touch-points**:
+    *   **Long-Press Gestures**: Long-pressing any card displays a custom Popover overlay menu with options `[Edit Details]` and `[Delete Task]`.
+    *   **High-Contrast Action Lists**: Add an editing pencil icon on list elements that opens the dynamic edit overlay on tap.
+    *   **Deletion Confirmations**: To avoid physical click errors, tapping Delete presents a clean custom Modal warning before the SQLite deletion executes.
+
+---
+
+## 7. Rollout Phases
 
 1. **Phase 1: Basic Calendar UI & Local Persistence**
    - Compose the monthly grid, detail event entry wizards, and core date models.
@@ -195,3 +286,4 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 4. **Phase 4: Optimization, Sync, and Advanced Automation features**
    - Complete custom swipe integrations for views transitioning.
    - Add macro-action scripts and system conflict handlers.
+   - Deploy dynamic and validated row CRUD pipelines across entities.
