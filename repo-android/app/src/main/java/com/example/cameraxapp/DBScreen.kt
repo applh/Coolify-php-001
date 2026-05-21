@@ -3,6 +3,7 @@ package com.example.cameraxapp
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
