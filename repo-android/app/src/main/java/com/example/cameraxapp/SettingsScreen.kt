@@ -31,6 +31,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val gridRows by repository.gridRows.collectAsState(initial = 3)
     val gridColumns by repository.gridColumns.collectAsState(initial = 3)
     val geminiApiKey by repository.geminiApiKey.collectAsState(initial = "")
+    val aiModel by repository.aiModel.collectAsState(initial = "gemini-2.5-flash-image")
+    val aiRatio by repository.aiRatio.collectAsState(initial = "1:1")
+    val aiSize by repository.aiSize.collectAsState(initial = "1K")
     var showApiKeyDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
@@ -101,6 +104,47 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 supportingContent = { Text(if (geminiApiKey.isEmpty()) "Not set" else "********" + geminiApiKey.takeLast(4)) },
                 modifier = Modifier.clickable {
                     showApiKeyDialog = true
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("AI Image Model") },
+                supportingContent = {
+                    Text(when(aiModel) {
+                        "gemini-2.5-flash-image" -> "Standard (Flash 2.5)"
+                        "gemini-3.1-flash-image-preview" -> "High-Detail (Flash 3.1)"
+                        else -> "Standard (Flash 2.5)"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val nextModel = if (aiModel == "gemini-2.5-flash-image") "gemini-3.1-flash-image-preview" else "gemini-2.5-flash-image"
+                        repository.setAiModel(nextModel)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("AI Image Aspect Ratio") },
+                supportingContent = { Text(aiRatio) },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val ratios = listOf("1:1", "16:9", "4:3", "9:16", "3:4")
+                        val nextIndex = (ratios.indexOf(aiRatio) + 1) % ratios.size
+                        repository.setAiRatio(ratios[nextIndex])
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("AI Image Generation Size") },
+                supportingContent = { Text(aiSize) },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val sizes = listOf("512px", "1K", "2K", "4K")
+                        val nextIndex = (sizes.indexOf(aiSize) + 1) % sizes.size
+                        repository.setAiSize(sizes[nextIndex])
+                    }
                 }
             )
             

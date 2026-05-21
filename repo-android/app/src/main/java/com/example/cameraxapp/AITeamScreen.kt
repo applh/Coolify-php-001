@@ -146,10 +146,29 @@ object RetrofitClient {
 
 // --- ARCHITECTURAL STATE MACHINE (MVVM) ---
 
+data class SessionItem(
+    val id: String,
+    val prompt: String,
+    val storageUri: String?,
+    val model: String,
+    val timestamp: Long,
+    val durationMs: Long,
+    val tokensUsed: Int,
+    val calculatedCost: Double
+)
+
 sealed interface UiState {
     object Idle : UiState
     object Generating : UiState
-    data class Success(val bitmap: Bitmap, val prompt: String, val storageUri: String?, val model: String) : UiState
+    data class Success(
+        val bitmap: Bitmap,
+        val prompt: String,
+        val storageUri: String?,
+        val model: String,
+        val durationMs: Long,
+        val tokensUsed: Int,
+        val calculatedCost: Double
+    ) : UiState
     data class Error(val message: String) : UiState
 }
 
@@ -159,7 +178,10 @@ data class HistoryItem(
     val bitmap: Bitmap,
     val storageUri: String?,
     val model: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val durationMs: Long,
+    val tokensUsed: Int,
+    val calculatedCost: Double
 )
 
 class ImageGeneratorViewModel(private val repository: SettingsRepository) : ViewModel() {
@@ -169,6 +191,94 @@ class ImageGeneratorViewModel(private val repository: SettingsRepository) : View
     private val _history = MutableStateFlow<List<HistoryItem>>(emptyList())
     val history: StateFlow<List<HistoryItem>> = _history.asStateFlow()
 
+    private fun saveBitmapToFile(context: Context, id: String, bitmap: Bitmap) {
+        try {
+            val file = java.io.File(context.filesDir, "session_${id}.png")
+            java.io.FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun loadBitmapFromFile(context: Context, id: String): Bitmap? {
+        return try {
+            val file = java.io.File(context.filesDir, "session_${id}.png")
+            if (file.exists()) {
+                android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+            } else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun loadHistory(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val sessionsFile = java.io.File(context.filesDir, "sessions.json")
+                if (!sessionsFile.exists()) return@launch
+
+                val jsonStr = sessionsFile.readText()
+                val type = com.squareup.moshi.Types.newParameterizedType(List::class.java, SessionItem::class.java)
+                val adapter = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build().adapter<List<SessionItem>>(type)
+                val sessionItems = adapter.fromJson(jsonStr) ?: emptyList()
+
+                val loadedItems = sessionItems.mapNotNull { session ->
+                    val bitmap = loadBitmapFromFile(context, session.id)
+                    if (bitmap != null) {
+                        HistoryItem(
+                            id = session.id,
+                            prompt = session.prompt,
+                            bitmap = bitmap,
+                            storageUri = session.storageUri,
+                            model = session.model,
+                            timestamp = session.timestamp,
+                            durationMs = session.durationMs,
+                            tokensUsed = session.tokensUsed,
+                            calculatedCost = session.calculatedCost
+                        )
+                    } else null
+                }
+
+                withContext(Dispatchers.Main) {
+                    _history.value = loadedItems
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun saveHistory(context: Context, items: List<HistoryItem>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val sessionItems = items.map { item ->
+                    SessionItem(
+                        id = item.id,
+                        prompt = item.prompt,
+                        storageUri = item.storageUri,
+                        model = item.model,
+                        timestamp = item.timestamp,
+                        durationMs = item.durationMs,
+                        tokensUsed = item.tokensUsed,
+                        calculatedCost = item.calculatedCost
+                    )
+                }
+
+                val type = com.squareup.moshi.Types.newParameterizedType(List::class.java, SessionItem::class.java)
+                val adapter = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build().adapter<List<SessionItem>>(type)
+                val jsonStr = adapter.toJson(sessionItems)
+
+                val sessionsFile = java.io.File(context.filesDir, "sessions.json")
+                sessionsFile.writeText(jsonStr)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun generateImage(context: Context, apiKey: String, prompt: String, model: String, ratio: String, size: String) {
         if (prompt.trim().isEmpty()) {
             _uiState.value = UiState.Error("Prompt description cannot be empty. Please paint your thoughts in words first.")
@@ -176,11 +286,12 @@ class ImageGeneratorViewModel(private val repository: SettingsRepository) : View
         }
 
         if (apiKey.trim().isEmpty()) {
-            _uiState.value = UiState.Error("API Access Key is required. Please secure your credential key in the Authentication card.")
+            _uiState.value = UiState.Error("API Access Key is required. Please secure your credential key in Settings under AI Settings first.")
             return
         }
 
         _uiState.value = UiState.Generating
+        val startTime = System.currentTimeMillis()
 
         viewModelScope.launch {
             try {
@@ -223,23 +334,53 @@ class ImageGeneratorViewModel(private val repository: SettingsRepository) : View
                             StorageUtils.saveImageToGallery(context, bitmap, prompt)
                         }
 
+                        val durationMs = System.currentTimeMillis() - startTime
+                        val tokensUsed = (prompt.length / 4) + 4
+                        val inputCost = (tokensUsed.toDouble() / 1000.0) * 0.000075
+                        val baseImageCost = when (model) {
+                            "gemini-3.1-flash-image-preview" -> when (size) {
+                                "512px" -> 0.02
+                                "1K" -> 0.035
+                                else -> 0.05
+                            }
+                            else -> when (size) {
+                                "512px" -> 0.015
+                                "1K" -> 0.03
+                                else -> 0.045
+                            }
+                        }
+                        val calculatedCost = inputCost + baseImageCost
+
+                        val newItemId = UUID.randomUUID().toString()
+                        withContext(Dispatchers.IO) {
+                            saveBitmapToFile(context, newItemId, bitmap)
+                        }
+
                         _uiState.value = UiState.Success(
                             bitmap = bitmap,
                             prompt = prompt,
                             storageUri = savedUriStr,
-                            model = model
+                            model = model,
+                            durationMs = durationMs,
+                            tokensUsed = tokensUsed,
+                            calculatedCost = calculatedCost
                         )
 
-                        // Update history feed list in local cache memory
+                        // Update history feed list in local cache memory Catalog
                         val newItem = HistoryItem(
-                            id = UUID.randomUUID().toString(),
+                            id = newItemId,
                             prompt = prompt,
                             bitmap = bitmap,
                             storageUri = savedUriStr,
                             model = model,
-                            timestamp = System.currentTimeMillis()
+                            timestamp = System.currentTimeMillis(),
+                            durationMs = durationMs,
+                            tokensUsed = tokensUsed,
+                            calculatedCost = calculatedCost
                         )
-                        _history.value = listOf(newItem) + _history.value
+                        val updatedFeed = listOf(newItem) + _history.value
+                        _history.value = updatedFeed
+                        saveHistory(context, updatedFeed)
                     } else {
                         _uiState.value = UiState.Error("Pixelation failure: Stream fetched successfully but failed to assemble bitmap bytes cleanly.")
                     }
@@ -260,7 +401,10 @@ class ImageGeneratorViewModel(private val repository: SettingsRepository) : View
             bitmap = item.bitmap,
             prompt = item.prompt,
             storageUri = item.storageUri,
-            model = item.model
+            model = item.model,
+            durationMs = item.durationMs,
+            tokensUsed = item.tokensUsed,
+            calculatedCost = item.calculatedCost
         )
     }
 
@@ -279,34 +423,23 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     
     // Core preferences state flowing
     val geminiApiKeySaved by repository.geminiApiKey.collectAsState(initial = "")
-    var localApiKey by remember { mutableStateOf("") }
-    var apiKeyVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(geminiApiKeySaved) {
-        localApiKey = geminiApiKeySaved
-    }
+    val aiModelPreset by repository.aiModel.collectAsState(initial = "gemini-2.5-flash-image")
+    val aiRatioPreset by repository.aiRatio.collectAsState(initial = "1:1")
+    val aiSizePreset by repository.aiSize.collectAsState(initial = "1K")
 
     // Instantiating ViewModel for single-screen operation scoping
     val viewModel = remember { ImageGeneratorViewModel(repository) }
     val uiState by viewModel.uiState.collectAsState()
     val historyFeed by viewModel.history.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.loadHistory(context)
+    }
+
     // Prompt studio states
     var promptInputText by remember { mutableStateOf("") }
-    var selectedModelStr by remember { mutableStateOf("gemini-2.5-flash-image") }
-    var selectedRatioStr by remember { mutableStateOf("1:1") }
-    var selectedSizeStr by remember { mutableStateOf("1K") }
-    var studioOptionsExpanded by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-
-    // Sample inspiration creative words to test Lumina Engine directly on tap
-    val inspirationsList = listOf(
-        "Mechanical paint cat on glowing neon street, synthwave retro",
-        "Ethereal crystal castle under aurora borealis sky, high fantasy art",
-        "Isometric minimalist workspace scene with warm lights, clean vector",
-        "Brutalist concrete architecture villa in rich desert sands, photorealistic 4k"
-    )
 
     // Layout configuration curves mapping 
     val CardCurve = RoundedCornerShape(26.dp)
@@ -403,74 +536,6 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
 
-                // Bento Grid Frame 1: Securing API Authentication Wrapper
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CardCurve,
-                    colors = CardDefaults.cardColors(containerColor = SlatePurple),
-                    border = BorderStroke(1.dp, BorderColor)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "🔒 Secure Access Configuration",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.2.sp
-                                ),
-                                color = Color.White
-                            )
-                            Surface(
-                                color = if (geminiApiKeySaved.isNotEmpty()) Color(0xFF2E7D32) else Color(0xFFC62828),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = if (geminiApiKeySaved.isNotEmpty()) "KEY ACTIVE" else "KEY MISSING",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        OutlinedTextField(
-                            value = localApiKey,
-                            onValueChange = {
-                                localApiKey = it
-                                coroutineScope.launch {
-                                    repository.setGeminiApiKey(it)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("AI Studio Developer Key (AI_...)") },
-                            leadingIcon = { Text("🔑", modifier = Modifier.padding(start = 8.dp)) },
-                            trailingIcon = {
-                                IconButton(onClick = { apiKeyVisible = !apiKeyVisible }) {
-                                    Text(if (apiKeyVisible) "👁️" else "🙈", fontSize = 16.sp)
-                                }
-                            },
-                            visualTransformation = if (apiKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            shape = InputCurve,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = LavenderTint,
-                                unfocusedBorderColor = BorderColor,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedPlaceholderColor = Color.Gray,
-                                unfocusedPlaceholderColor = Color.Gray
-                            ),
-                            singleLine = true
-                        )
-                    }
-                }
-
                 // Bento Grid Frame 2: Creative Art Studio (Prompt Engineering Panel)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -484,7 +549,24 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Small row displaying current model, ratio and resolution sizing configuration presets
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            val presetText = "Preset: Model: " + (if (aiModelPreset == "gemini-2.5-flash-image") "Standard" else "High-Detail") + " | " + aiRatioPreset + " | " + aiSizePreset
+                            Text(
+                                text = presetText,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 10.sp,
+                                color = LavenderTint,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // Large detailed instructions text field box
                         OutlinedTextField(
@@ -505,182 +587,6 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             )
                         )
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Inspiration Prompt Suggestion Chips layout
-                        Text(
-                            text = "Inspirations (tap to fill input):",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LavenderTint
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            inspirationsList.chunked(2).forEach { rowChips ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    rowChips.forEach { suggestion ->
-                                        Surface(
-                                            onClick = { promptInputText = suggestion },
-                                            color = LavenderContainer.copy(alpha = 0.4f),
-                                            shape = RoundedCornerShape(12.dp),
-                                            border = BorderStroke(1.dp, BorderColor),
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = suggestion,
-                                                fontSize = 11.sp,
-                                                color = OnLavenderContainer,
-                                                maxLines = 1,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Expansion button to open dynamic detailed quality parameters
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { studioOptionsExpanded = !studioOptionsExpanded }
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "⚙️ Configure Aspect, Sizing, and Models",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                color = LavenderTint
-                            )
-                            Text(
-                                text = if (studioOptionsExpanded) "▲ Hide" else "▼ Expand",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LavenderTint
-                            )
-                        }
-
-                        // Retractable Dynamic Quality Selectors Panel
-                        AnimatedVisibility(
-                            visible = studioOptionsExpanded,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Divider(color = BorderColor)
-
-                                // Model profile selection block
-                                Text(
-                                    text = "Generative Model Path:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    val models = listOf(
-                                        "gemini-2.5-flash-image" to "Standard (Flash 2.5)",
-                                        "gemini-3.1-flash-image-preview" to "High-Detail (Flash 3.1)"
-                                    )
-                                    models.forEach { (codeName, labelName) ->
-                                        val isSelected = selectedModelStr == codeName
-                                        Surface(
-                                            onClick = { selectedModelStr = codeName },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(14.dp),
-                                            color = if (isSelected) LavenderTint else LavenderContainer,
-                                            border = if (isSelected) null else BorderStroke(1.dp, BorderColor)
-                                        ) {
-                                            Text(
-                                                text = labelName,
-                                                color = if (isSelected) OnPrimaryPurple else Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 11.sp,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(vertical = 8.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Aspect Ratio Chip toggles
-                                Text(
-                                    text = "Aspect Ratio Frame Selection:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    val ratios = listOf("1:1", "16:9", "4:3", "9:16", "3:4")
-                                    ratios.forEach { ratio ->
-                                        val isSelected = selectedRatioStr == ratio
-                                        Surface(
-                                            onClick = { selectedRatioStr = ratio },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (isSelected) LavenderTint else LavenderContainer,
-                                            border = if (isSelected) null else BorderStroke(1.dp, BorderColor)
-                                        ) {
-                                            Text(
-                                                text = ratio,
-                                                color = if (isSelected) OnPrimaryPurple else Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 11.sp,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(vertical = 6.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Target Image resolution size toggles
-                                Text(
-                                    text = "Target Image Sizing / Benchmark Quality:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    val sizes = listOf("512px", "1K", "2K", "4K")
-                                    sizes.forEach { size ->
-                                        val isSelected = selectedSizeStr == size
-                                        Surface(
-                                            onClick = { selectedSizeStr = size },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (isSelected) LavenderTint else LavenderContainer,
-                                            border = if (isSelected) null else BorderStroke(1.dp, BorderColor)
-                                        ) {
-                                            Text(
-                                                text = size,
-                                                color = if (isSelected) OnPrimaryPurple else Color.White,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 11.sp,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(vertical = 6.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
                         Spacer(modifier = Modifier.height(14.dp))
 
                         // Sparkly active create button
@@ -689,11 +595,11 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             onClick = {
                                 viewModel.generateImage(
                                     context = context,
-                                    apiKey = localApiKey,
+                                    apiKey = geminiApiKeySaved,
                                     prompt = promptInputText,
-                                    model = selectedModelStr,
-                                    ratio = selectedRatioStr,
-                                    size = selectedSizeStr
+                                    model = aiModelPreset,
+                                    ratio = aiRatioPreset,
+                                    size = aiSizePreset
                                 )
                             },
                             modifier = Modifier
@@ -725,6 +631,17 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                     style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold)
                                 )
                             }
+                        }
+
+                        if (geminiApiKeySaved.isEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "⚠️ Gemini API Key is missing. Please configure your developer API Key in Settings first.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
@@ -797,7 +714,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                             color = Color.White
                                         )
                                         Text(
-                                            text = "Charging $selectedModelStr",
+                                            text = "Charging $aiModelPreset",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = LavenderTint
                                         )
@@ -888,13 +805,46 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                                 color = Color.White,
                                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                                             )
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.height(6.dp))
                                             Text(
                                                 text = "Engine profile output on ${successState.model}",
-                                                fontSize = 10.sp,
+                                                fontSize = 11.sp,
                                                 color = LavenderTint,
                                                 fontWeight = FontWeight.Bold
                                             )
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Divider(color = BorderColor)
+                                            Spacer(modifier = Modifier.height(10.dp))
+
+                                            Text(
+                                                text = "📊 Request Performance Metrics & Billables",
+                                                fontSize = 11.sp,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(bottom = 6.dp)
+                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text("Generation Time:", fontSize = 11.sp, color = Color.Gray)
+                                                Text("${(successState.durationMs / 100.0) / 10.0}s", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text("Estimated Prompt Tokens:", fontSize = 11.sp, color = Color.Gray)
+                                                Text("${successState.tokensUsed} tokens", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text("Estimated Cost:", fontSize = 11.sp, color = Color.Gray)
+                                                Text(String.format("$%.5f", successState.calculatedCost), fontSize = 11.sp, color = Color(0xFF81C784), fontWeight = FontWeight.Bold)
+                                            }
                                         }
                                     }
 

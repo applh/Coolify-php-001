@@ -22,6 +22,9 @@ object AppPreferences {
     val GRID_COLUMNS = intPreferencesKey("grid_columns")
     val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
     val COLOR_THEME = intPreferencesKey("color_theme") // 0: Standard, 1: Lumina AI Theme
+    val AI_MODEL = stringPreferencesKey("ai_model")
+    val AI_RATIO = stringPreferencesKey("ai_ratio")
+    val AI_SIZE = stringPreferencesKey("ai_size")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -37,6 +40,9 @@ class SettingsRepository(private val context: Context) {
     val gridRows: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_ROWS] ?: 3 }
     val gridColumns: Flow<Int> = context.dataStore.data.map { it[AppPreferences.GRID_COLUMNS] ?: 3 }
     val geminiApiKey: Flow<String> = context.dataStore.data.map { it[AppPreferences.GEMINI_API_KEY] ?: "" }
+    val aiModel: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_MODEL] ?: "gemini-2.5-flash-image" }
+    val aiRatio: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_RATIO] ?: "1:1" }
+    val aiSize: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_SIZE] ?: "1K" }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -84,5 +90,17 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setColorTheme(theme: Int) {
         context.dataStore.edit { it[AppPreferences.COLOR_THEME] = theme }
+    }
+
+    suspend fun setAiModel(model: String) {
+        context.dataStore.edit { it[AppPreferences.AI_MODEL] = model }
+    }
+
+    suspend fun setAiRatio(ratio: String) {
+        context.dataStore.edit { it[AppPreferences.AI_RATIO] = ratio }
+    }
+
+    suspend fun setAiSize(size: String) {
+        context.dataStore.edit { it[AppPreferences.AI_SIZE] = size }
     }
 }
