@@ -132,6 +132,22 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun updateEvent(id: Int, title: String, notes: String, hours: Int, minutes: Int, duration: Int, color: String) {
+        viewModelScope.launch {
+            cancelEventAlarm(id)
+            val targetCal = _selectedDay.value.clone() as Calendar
+            targetCal.set(Calendar.HOUR_OF_DAY, hours)
+            targetCal.set(Calendar.MINUTE, minutes)
+            targetCal.set(Calendar.SECOND, 0)
+            targetCal.set(Calendar.MILLISECOND, 0)
+
+            dbHelper.updateEvent(id, title, notes, targetCal.timeInMillis, duration, color)
+            scheduleEventAlarm(id, targetCal.timeInMillis, title)
+            _toastMessage.value = "Calendar event updated with rescheduled alarm reminder!"
+            loadData()
+        }
+    }
+
     // --- High-Precision Alarm Managers ---
     fun addAlarm(hours: Int, minutes: Int, name: String) {
         viewModelScope.launch {
@@ -191,6 +207,27 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun updateAlarm(id: Int, hours: Int, minutes: Int, name: String, isActive: Boolean) {
+        viewModelScope.launch {
+            cancelSystemAlarm(id)
+            val alarmCal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hours)
+                set(Calendar.MINUTE, minutes)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                if (timeInMillis <= System.currentTimeMillis()) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
+            }
+            dbHelper.updateAlarm(id, alarmCal.timeInMillis, name, isActive)
+            if (isActive) {
+                registerSystemAlarm(id, alarmCal.timeInMillis, name)
+            }
+            _toastMessage.value = "Exact Alarm updated safely!"
+            loadData()
+        }
+    }
+
     // --- Background Cron Workers ---
     fun addCronJob(name: String, expression: String) {
         viewModelScope.launch {
@@ -212,6 +249,14 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             dbHelper.deleteCronJob(jobId)
             _toastMessage.value = "Cron automation deleted successfully."
+            loadData()
+        }
+    }
+
+    fun updateCronJob(id: Int, name: String, expression: String, isActive: Boolean) {
+        viewModelScope.launch {
+            dbHelper.updateCronJob(id, name, expression, isActive)
+            _toastMessage.value = "Cron task configuration updated."
             loadData()
         }
     }
@@ -308,6 +353,16 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var showAddAlarmDialog by remember { mutableStateOf(false) }
     var showAddCronDialog by remember { mutableStateOf(false) }
 
+    // Editing State Trackers
+    var editingEvent by remember { mutableStateOf<AgendaEvent?>(null) }
+    var editingAlarm by remember { mutableStateOf<AlarmInfo?>(null) }
+    var editingCron by remember { mutableStateOf<CronJobInfo?>(null) }
+
+    // Deletion Confirm States
+    var confirmDeleteEventId by remember { mutableStateOf<Int?>(null) }
+    var confirmDeleteAlarm by remember { mutableStateOf<AlarmInfo?>(null) }
+    var confirmDeleteCron by remember { mutableStateOf<CronJobInfo?>(null) }
+
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
             // Simulated Toast using snackbars
@@ -369,20 +424,23 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         onPrevMonth = { viewModel.prevMonth() },
                         onNextMonth = { viewModel.nextMonth() },
                         onSelectDay = { viewModel.selectDay(it) },
-                        onDeleteEvent = { viewModel.deleteEvent(it) },
+                        onDeleteEvent = { confirmDeleteEventId = it },
+                        onEditEventClick = { editingEvent = it },
                         onAddEventClick = { showAddEventDialog = true }
                     )
                     1 -> AlarmManagersPane(
                         alarms = alarms,
                         onToggleAlarm = { viewModel.toggleAlarm(it) },
-                        onDeleteAlarm = { viewModel.deleteAlarm(it) },
+                        onDeleteAlarm = { confirmDeleteAlarm = it },
+                        onEditAlarmClick = { editingAlarm = it },
                         onAddAlarmClick = { showAddAlarmDialog = true }
                     )
                     2 -> CronSchedulerPane(
                         jobs = cronJobs,
                         logs = cronLogs,
                         onToggleCron = { viewModel.toggleCron(it) },
-                        onDeleteCron = { viewModel.deleteCronJob(it.id) },
+                        onDeleteCron = { confirmDeleteCron = it },
+                        onEditCronClick = { editingCron = it },
                         onRunOnDemand = { viewModel.runCronOnDemand(it) },
                         onAddCronClick = { showAddCronDialog = true }
                     )
@@ -400,7 +458,7 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
         }
     }
 
-    // Modal dialogs
+    // Modal dialogs - Add creation Dialogs
     if (showAddEventDialog) {
         CalendarEventCreatorDialog(
             onDismiss = { showAddEventDialog = false },
@@ -430,6 +488,108 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             }
         )
     }
+
+    // Modal dialogs - Edit Dialogs
+    editingEvent?.let { event ->
+        CalendarEventEditorDialog(
+            event = event,
+            onDismiss = { editingEvent = null },
+            onConfirm = { title, notes, hour, min, dur, color ->
+                viewModel.updateEvent(event.id, title, notes, hour, min, dur, color)
+                editingEvent = null
+            }
+        )
+    }
+
+    editingAlarm?.let { alarm ->
+        AlarmEditorDialog(
+            alarm = alarm,
+            onDismiss = { editingAlarm = null },
+            onConfirm = { hour, min, label, active ->
+                viewModel.updateAlarm(alarm.id, hour, min, label, active)
+                editingAlarm = null
+            }
+        )
+    }
+
+    editingCron?.let { job ->
+        CronEditorDialog(
+            job = job,
+            onDismiss = { editingCron = null },
+            onConfirm = { name, expression, active ->
+                viewModel.updateCronJob(job.id, name, expression, active)
+                editingCron = null
+            }
+        )
+    }
+
+    // Modal dialogs - Deletion Confirmations (Anti-click-error safeguards)
+    confirmDeleteEventId?.let { eventId ->
+        AlertDialog(
+            onDismissRequest = { confirmDeleteEventId = null },
+            title = { Text("Delete Event Confirmation") },
+            text = { Text("Are you absolutely sure you want to permanently delete this calendar appointment and its registered alarm remainder?") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    onClick = {
+                        viewModel.deleteEvent(eventId)
+                        confirmDeleteEventId = null
+                    }
+                ) {
+                    Text("Delete Permanently", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteEventId = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    confirmDeleteAlarm?.let { alarm ->
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAlarm = null },
+            title = { Text("Delete Alarm Clock Confirmation") },
+            text = { Text("This will permanently delete precise system schedule clock \"${alarm.label}\" from your database. Confirm deletion?") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    onClick = {
+                        viewModel.deleteAlarm(alarm)
+                        confirmDeleteAlarm = null
+                    }
+                ) {
+                    Text("Delete Permanently", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAlarm = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    confirmDeleteCron?.let { job ->
+        AlertDialog(
+            onDismissRequest = { confirmDeleteCron = null },
+            title = { Text("Delete Cron Service Confirmation") },
+            text = { Text("This will permanently disable background WorkManager task execution for custom cron automation script \"${job.name}\". Continue?") },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    onClick = {
+                        viewModel.deleteCronJob(job.id)
+                        confirmDeleteCron = null
+                    }
+                ) {
+                    Text("Delete Permanently", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteCron = null }) { Text("Cancel") }
+            }
+        )
+    }
+}
 }
 
 // ==========================================
@@ -445,6 +605,7 @@ fun CalendarPlannerPane(
     onNextMonth: () -> Unit,
     onSelectDay: (Calendar) -> Unit,
     onDeleteEvent: (Int) -> Unit,
+    onEditEventClick: (AgendaEvent) -> Unit,
     onAddEventClick: () -> Unit
 ) {
     val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
@@ -616,8 +777,13 @@ fun CalendarPlannerPane(
                                     Text(item.notes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            IconButton(onClick = { onDeleteEvent(item.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove Event", tint = MaterialTheme.colorScheme.error)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { onEditEventClick(item) }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Event", tint = MaterialTheme.colorScheme.primary)
+                                }
+                                IconButton(onClick = { onDeleteEvent(item.id) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Remove Event", tint = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                     }
@@ -632,6 +798,7 @@ fun AlarmManagersPane(
     alarms: List<AlarmInfo>,
     onToggleAlarm: (AlarmInfo) -> Unit,
     onDeleteAlarm: (AlarmInfo) -> Unit,
+    onEditAlarmClick: (AlarmInfo) -> Unit,
     onAddAlarmClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
@@ -695,7 +862,11 @@ fun AlarmManagersPane(
                                     checked = alarm.isActive,
                                     onCheckedChange = { onToggleAlarm(alarm) }
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(onClick = { onEditAlarmClick(alarm) }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Alarm", tint = MaterialTheme.colorScheme.primary)
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
                                 IconButton(onClick = { onDeleteAlarm(alarm) }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Delete Alarm", tint = MaterialTheme.colorScheme.error)
                                 }
@@ -714,6 +885,7 @@ fun CronSchedulerPane(
     logs: List<CronLog>,
     onToggleCron: (CronJobInfo) -> Unit,
     onDeleteCron: (CronJobInfo) -> Unit,
+    onEditCronClick: (CronJobInfo) -> Unit,
     onRunOnDemand: (Int) -> Unit,
     onAddCronClick: () -> Unit
 ) {
@@ -791,6 +963,11 @@ fun CronSchedulerPane(
                                     checked = job.isActive,
                                     onCheckedChange = { onToggleCron(job) }
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(onClick = { onEditCronClick(job) }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Cron", tint = MaterialTheme.colorScheme.primary)
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
                                 IconButton(onClick = { onDeleteCron(job) }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Delete Cron", tint = MaterialTheme.colorScheme.error)
                                 }
@@ -1030,6 +1207,214 @@ fun CronCreatorDialog(
                 }
             ) {
                 Text("Register Cron")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+fun CalendarEventEditorDialog(
+    event: AgendaEvent,
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, notes: String, hour: Int, min: Int, duration: Int, color: String) -> Unit
+) {
+    val initialCal = Calendar.getInstance().apply { timeInMillis = event.dateMillis }
+    var title by remember { mutableStateOf(event.title) }
+    var notes by remember { mutableStateOf(event.notes) }
+    var hourText by remember { mutableStateOf(initialCal.get(Calendar.HOUR_OF_DAY).toString()) }
+    var minText by remember { mutableStateOf(initialCal.get(Calendar.MINUTE).toString()) }
+    var durationText by remember { mutableStateOf(event.durationMin.toString()) }
+    var isColorSecondary by remember { mutableStateOf(event.colorTag == "Secondary") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Calendar Appointment") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Appointment Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Details & Context") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = hourText,
+                        onValueChange = { hourText = it },
+                        label = { Text("Hour (24h)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = minText,
+                        onValueChange = { minText = it },
+                        label = { Text("Minute") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                OutlinedTextField(
+                    value = durationText,
+                    onValueChange = { durationText = it },
+                    label = { Text("Duration (mins)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isColorSecondary,
+                        onCheckedChange = { isColorSecondary = it }
+                    )
+                    Text("Apply Secondary Alert Tag (Orange dot)", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank()) {
+                        val hr = hourText.toIntOrNull() ?: 12
+                        val mn = minText.toIntOrNull() ?: 0
+                        val dur = durationText.toIntOrNull() ?: 30
+                        val tag = if (isColorSecondary) "Secondary" else "Primary"
+                        onConfirm(title, notes, hr, mn, dur, tag)
+                    }
+                }
+            ) {
+                Text("Save Changes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+fun AlarmEditorDialog(
+    alarm: AlarmInfo,
+    onDismiss: () -> Unit,
+    onConfirm: (hour: Int, min: Int, label: String, isActive: Boolean) -> Unit
+) {
+    val initialCal = Calendar.getInstance().apply { timeInMillis = alarm.timeMillis }
+    var label by remember { mutableStateOf(alarm.label) }
+    var hourText by remember { mutableStateOf(initialCal.get(Calendar.HOUR_OF_DAY).toString()) }
+    var minText by remember { mutableStateOf(initialCal.get(Calendar.MINUTE).toString()) }
+    var isActive by remember { mutableStateOf(alarm.isActive) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Alarm Clock") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text("Alarm Label") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = hourText,
+                        onValueChange = { hourText = it },
+                        label = { Text("Hour (0-23)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = minText,
+                        onValueChange = { minText = it },
+                        label = { Text("Minute (0-59)") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isActive,
+                        onCheckedChange = { isActive = it }
+                    )
+                    Text("Set Alarm Active", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val hr = hourText.toIntOrNull() ?: 7
+                    val mn = minText.toIntOrNull() ?: 30
+                    onConfirm(hr, mn, label, isActive)
+                }
+            ) {
+                Text("Save Changes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+fun CronEditorDialog(
+    job: CronJobInfo,
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, expression: String, isActive: Boolean) -> Unit
+) {
+    var name by remember { mutableStateOf(job.name) }
+    var expression by remember { mutableStateOf(job.cronExpression) }
+    var isActive by remember { mutableStateOf(job.isActive) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Cron Configuration") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Cron Task Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = expression,
+                    onValueChange = { expression = it },
+                    label = { Text("Cron Expression schema") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isActive,
+                        onCheckedChange = { isActive = it }
+                    )
+                    Text("Enable Automation Schedule", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank() && expression.isNotBlank()) {
+                        onConfirm(name, expression, isActive)
+                    }
+                }
+            ) {
+                Text("Save Changes")
             }
         },
         dismissButton = {

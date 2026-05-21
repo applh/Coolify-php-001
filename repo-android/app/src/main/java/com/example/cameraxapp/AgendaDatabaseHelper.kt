@@ -239,6 +239,18 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         return db.delete(TABLE_EVENTS, "$COL_EVENT_ID = ?", arrayOf(id.toString()))
     }
 
+    fun updateEvent(id: Int, title: String, notes: String, dateMillis: Long, duration: Int, color: String): Int {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COL_EVENT_TITLE, title)
+            put(COL_EVENT_NOTES, notes)
+            put(COL_EVENT_DATE_MILLIS, dateMillis)
+            put(COL_EVENT_DURATION, duration)
+            put(COL_EVENT_COLOR, color)
+        }
+        return db.update(TABLE_EVENTS, values, "$COL_EVENT_ID = ?", arrayOf(id.toString()))
+    }
+
     // --- Alarms Handling API ---
     fun getAllAlarms(): List<AlarmInfo> {
         val list = mutableListOf<AlarmInfo>()
@@ -273,6 +285,16 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
     fun updateAlarmStatus(id: Int, isActive: Boolean): Int {
         val db = writableDatabase
         val values = ContentValues().apply {
+            put(COL_ALARM_IS_ACTIVE, if (isActive) 1 else 0)
+        }
+        return db.update(TABLE_ALARMS, values, "$COL_ALARM_ID = ?", arrayOf(id.toString()))
+    }
+
+    fun updateAlarm(id: Int, timeMillis: Long, label: String, isActive: Boolean): Int {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COL_ALARM_TIME_MILLIS, timeMillis)
+            put(COL_ALARM_LABEL, label)
             put(COL_ALARM_IS_ACTIVE, if (isActive) 1 else 0)
         }
         return db.update(TABLE_ALARMS, values, "$COL_ALARM_ID = ?", arrayOf(id.toString()))
@@ -324,6 +346,16 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_CRON_IS_ACTIVE, if (isActive) 1 else 0)
             put(COL_CRON_LAST_RUN, lastRun)
             put(COL_CRON_STATUS, status)
+        }
+        return db.update(TABLE_CRON_JOBS, values, "$COL_CRON_ID = ?", arrayOf(id.toString()))
+    }
+
+    fun updateCronJob(id: Int, name: String, expression: String, isActive: Boolean): Int {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COL_CRON_NAME, name)
+            put(COL_CRON_EXPRESSION, expression)
+            put(COL_CRON_IS_ACTIVE, if (isActive) 1 else 0)
         }
         return db.update(TABLE_CRON_JOBS, values, "$COL_CRON_ID = ?", arrayOf(id.toString()))
     }

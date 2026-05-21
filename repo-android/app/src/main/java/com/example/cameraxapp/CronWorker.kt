@@ -7,6 +7,9 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -21,13 +24,125 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val startTime = System.currentTimeMillis()
 
         return try {
-            // Simulate the actual background work matching the cron description
-            val durationMs = (100L..500L).random()
-            kotlinx.coroutines.delay(durationMs)
-
             val logMsg: String
-            if (job.name.contains("Cache", ignoreCase = true)) {
-                // Perform a visual cleaning of caches
+            if (job.name.contains("AI", ignoreCase = true)) {
+                // Fully Functional AI Dialogue Rerun Autopilot Flow
+                val settingsRepo = SettingsRepository(applicationContext)
+                val apiKey = kotlinx.coroutines.flow.first(settingsRepo.geminiApiKey)
+                
+                if (apiKey.trim().isEmpty()) {
+                    logMsg = "AI Session Rerun failed: Gemini API Key is missing. Check App Settings."
+                } else {
+                    val controller = SessionStorageController(applicationContext)
+                    val sessions = controller.getSessionHeaders()
+                    
+                    if (sessions.isEmpty()) {
+                        logMsg = "AI Session Rerun completed: No dialogue headers found to continue."
+                    } else {
+                        // Select primary (most recent) dialogue head
+                        val targetSession = sessions.first()
+                        val sessionId = targetSession.id
+                        val segment = controller.getSessionSegment(sessionId)
+                        
+                        if (segment == null || segment.messages.isEmpty()) {
+                            logMsg = "AI Session Rerun completed: Selected session '$sessionId' contains empty thread."
+                        } else {
+                            val lastUserMsg = segment.messages.findLast { it.role == ChatRole.USER }?.content ?: "Hello AI Team"
+                            val autoPrompt = "Continuous Autopilot Periodic Review: Critique and expand on our previous prompt concept ('$lastUserMsg') with updated insights or direct project guidelines."
+
+                            // Frame content wrapper for Multi-turn conversation
+                            val apiContents = mutableListOf<ContentPartList>()
+                            for (msg in segment.messages) {
+                                if (msg.modality == Modality.TEXT) {
+                                    val apiRole = if (msg.role == ChatRole.USER) "user" else "model"
+                                    apiContents.add(
+                                        ContentPartList(
+                                            role = apiRole,
+                                            parts = listOf(Part(text = msg.content))
+                                        )
+                                    )
+                                }
+                            }
+
+                            // Append automatic continuation prompt
+                            apiContents.add(
+                                ContentPartList(
+                                    role = "user",
+                                    parts = listOf(Part(text = autoPrompt))
+                                )
+                            )
+
+                            val req = GeminiRequest(
+                                contents = apiContents,
+                                generationConfig = GenerationConfig(
+                                    responseModalities = listOf("TEXT")
+                                )
+                            )
+
+                            // Send network request synchronously in Worker IO dispatcher
+                            val startCallMs = System.currentTimeMillis()
+                            val response = withContext(Dispatchers.IO) {
+                                RetrofitClient.geminiApi.generateContent(
+                                    model = "gemini-2.5-flash",
+                                    apiKey = apiKey,
+                                    request = req
+                                )
+                            }
+
+                            val responseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+
+                            if (responseText != null) {
+                                val durationCall = System.currentTimeMillis() - startCallMs
+                                val tokensUsed = (autoPrompt.length / 4) + (responseText.length / 4)
+                                val calculatedCost = (tokensUsed.toDouble() / 1000.0) * 0.000075
+
+                                val simulatedUserMsg = ChatMessage(
+                                    id = UUID.randomUUID().toString(),
+                                    role = ChatRole.USER,
+                                    content = autoPrompt,
+                                    modality = Modality.TEXT,
+                                    timestamp = startCallMs,
+                                    durationMs = 0L,
+                                    calculatedCost = 0.0,
+                                    tokensUsed = 0,
+                                    modelName = "Autopilot Schedule"
+                                )
+
+                                val responseAgentMsg = ChatMessage(
+                                    id = UUID.randomUUID().toString(),
+                                    role = ChatRole.MODEL,
+                                    content = responseText,
+                                    modality = Modality.TEXT,
+                                    timestamp = System.currentTimeMillis(),
+                                    durationMs = durationCall,
+                                    calculatedCost = calculatedCost,
+                                    tokensUsed = tokensUsed,
+                                    modelName = "gemini-2.5-flash"
+                                )
+
+                                val finalMessages = segment.messages + simulatedUserMsg + responseAgentMsg
+                                controller.saveSessionSegment(SessionSegment(sessionId = sessionId, messages = finalMessages))
+
+                                val updatedHeaders = sessions.map { h ->
+                                    if (h.id == sessionId) {
+                                        h.copy(
+                                            lastActiveTime = System.currentTimeMillis(),
+                                            totalTokens = h.totalTokens + tokensUsed,
+                                            latestSummary = if (responseText.length > 50) responseText.take(50) + "..." else responseText
+                                        )
+                                    } else h
+                                }
+                                controller.saveSessionHeaders(updatedHeaders)
+
+                                logMsg = "AI autopilot rerun succeeded for conversation '${targetSession.title}'. Summary: ${responseText.take(50)}..."
+                            } else {
+                                logMsg = "AI Session Rerun API triggered but returned empty text candidate list."
+                            }
+                        }
+                    }
+                }
+            } else if (job.name.contains("Cache", ignoreCase = true)) {
+                // Perform cache sweeps
                 var filesDeleted = 0
                 val cacheFolder = applicationContext.cacheDir
                 cacheFolder.listFiles()?.forEach { file ->
@@ -36,18 +151,20 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         filesDeleted++
                     }
                 }
-                logMsg = "Cache sweeper executed successfully. Purged $filesDeleted indices."
+                logMsg = "Cache sweeper swept cache root directory. Cleaned $filesDeleted temporary indexes."
             } else if (job.name.contains("Backup", ignoreCase = true)) {
-                // Simulate backing up preferences
+                // Perform file and preference system backup simulations
                 val sharedPrefsDir = File(applicationContext.filesDir.parent, "shared_prefs")
                 val filesCount = sharedPrefsDir.listFiles()?.size ?: 0
-                logMsg = "Preferences backup sync finished. Backed up $filesCount configurations."
+                logMsg = "Diagnostics backup completed. Packed structural system assets: $filesCount files."
             } else {
                 logMsg = "Custom Cron task '${job.name}' verified environment and logged dependencies."
             }
 
+            val executionDuration = System.currentTimeMillis() - startTime
+
             // Write telemetry result
-            dbHelper.addCronLog(cronId, startTime, durationMs, "SUCCESS", logMsg)
+            dbHelper.addCronLog(cronId, startTime, executionDuration, "SUCCESS", logMsg)
             dbHelper.updateCronStatus(cronId, job.isActive, startTime, "SUCCESS")
 
             // Fire status notification

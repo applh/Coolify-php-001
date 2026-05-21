@@ -121,5 +121,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Extend the custom SQLite helper to support dynamic update queries for events, alarms, and cron expressions. In Jetpack Compose, build out Edit overlays initialized with selection state details, configure strict field pattern inputs validation, and handle exact side effect callbacks—clearing and rescheduling AlarmManager PendingIntents or restarting WorkManager loops on task modifications.
 - **Complexity**: Part 4
 
+### 18. Operational Autopilot AI Agent & Ambient System Prompts Customization (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/CronWorker.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/AppPreferences.kt`
+- **Goal**: Learn how to implement customizable system instructions and ambient contextual injections for periodic background execution pipelines that integrate with Gemini chat API.
+- **Exercise**: Implement a new DataStore key storing an "Autopilot Persona/Instruction" string. Modify `CronWorker.kt` to query this string on-the-fly when resuming an active AI session rerun job, injecting it as a system prompt directive to mold the tone of the automated response.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
