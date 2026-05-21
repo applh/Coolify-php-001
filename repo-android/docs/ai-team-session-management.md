@@ -12,7 +12,12 @@ We chose flat files over an SQLite database to ensure seamless interoperability 
 **How to load and continue a session?**
 Because the system relies on flat-file storage rather than a central database, session continuity works by reading from the file system:
 - **Active State:** During an active session, the conversation context is maintained in-memory within the `ViewModel` of the `AITeamScreen`.
-- **Loading Previous Sessions:** To continue a past session, the applet parses a chronological conversation manifest (e.g., `session_id.json` or by reading the directory contents) that links user prompts to their generated output files. When a user selects a past session from the history, the applet reads these files into memory to reconstruct the chat UI and resume the conversation with the AI.
+- **Session Continuity (Last Session Active by Default):** On bootstrap, the applet scans the local directory (`Documents/AITeam/`) and the central manifest (`sessions.json`) to find the session with the highest (most recent) timestamp. Rather than beginning with a blank slate, the app automatically pre-loads and populates this most recent session into the UI thread.
+- **Starting a New Session:** To clear the active canvas and initiate a fresh dialogue branch, the user is provided with a "Start New Session" command (e.g., in the toolbar). Triggering this:
+  1. Commits any lingering states of the old active session to the flat file logs system.
+  2. Creates a clean, empty message timeline in memory.
+  3. Allocates a new unique `UUID` for future disk writes.
+- **Loading Previous Sessions:** To continue standard past sessions, the applet parses the chronological conversation manifest (e.g., `session_id.json` or by reading directory contents) that links user prompts to their generated output files. When a user selects a past session from the history, the applet reads these files into memory to reconstruct the chat UI and resume the conversation with the AI.
 
 ## Output Formats
 
