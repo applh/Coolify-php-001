@@ -34,19 +34,37 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color.Black
 )
 
+private val LuminaDarkColorScheme = darkColorScheme(
+    primary = LuminaPrimaryDark,
+    secondary = LuminaSecondaryDark,
+    tertiary = LuminaTertiaryDark,
+    background = LuminaBackgroundDark,
+    surface = LuminaSurfaceDark,
+    onPrimary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White
+)
+
+private val LuminaLightColorScheme = lightColorScheme(
+    primary = LuminaPrimaryLight,
+    secondary = LuminaSecondaryLight,
+    tertiary = LuminaTertiaryLight,
+    background = LuminaBackgroundLight,
+    surface = LuminaSurfaceLight,
+    onPrimary = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color.Black
+)
+
 @Composable
 fun CameraXAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    colorTheme: Int = 0, // 0: Standard, 1: Lumina AI Theme
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val colorScheme = when (colorTheme) {
+        1 -> if (darkTheme) LuminaDarkColorScheme else LuminaLightColorScheme
+        else -> if (darkTheme) DarkColorScheme else LightColorScheme
     }
     val view = LocalView.current
     if (!view.isInEditMode) {

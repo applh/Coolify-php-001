@@ -21,10 +21,12 @@ object AppPreferences {
     val GRID_ROWS = intPreferencesKey("grid_rows")
     val GRID_COLUMNS = intPreferencesKey("grid_columns")
     val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
+    val COLOR_THEME = intPreferencesKey("color_theme") // 0: Standard, 1: Lumina AI Theme
 }
 
 class SettingsRepository(private val context: Context) {
     val themeMode: Flow<Int> = context.dataStore.data.map { it[AppPreferences.THEME_MODE] ?: 0 }
+    val colorTheme: Flow<Int> = context.dataStore.data.map { it[AppPreferences.COLOR_THEME] ?: 0 }
     val defaultLensFacing: Flow<Int> = context.dataStore.data.map { it[AppPreferences.DEFAULT_LENS_FACING] ?: 1 }
     val defaultFlashMode: Flow<Int> = context.dataStore.data.map { it[AppPreferences.DEFAULT_FLASH_MODE] ?: 2 }
     val storageLocation: Flow<Int> = context.dataStore.data.map { it[AppPreferences.STORAGE_LOCATION] ?: 0 }
@@ -78,5 +80,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setGeminiApiKey(key: String) {
         context.dataStore.edit { it[AppPreferences.GEMINI_API_KEY] = key }
+    }
+
+    suspend fun setColorTheme(theme: Int) {
+        context.dataStore.edit { it[AppPreferences.COLOR_THEME] = theme }
     }
 }

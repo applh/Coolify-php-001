@@ -53,13 +53,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val repository = remember { SettingsRepository(this) }
             val themeMode by repository.themeMode.collectAsState(initial = 0)
+            val colorTheme by repository.colorTheme.collectAsState(initial = 0)
             val useDarkTheme = when (themeMode) {
                 1 -> false
                 2 -> true
                 else -> isSystemInDarkTheme()
             }
 
-            CameraXAppTheme(darkTheme = useDarkTheme) {
+            CameraXAppTheme(darkTheme = useDarkTheme, colorTheme = colorTheme) {
                 val navController = rememberNavController()
                 val isGranted by permissionsGranted
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)

@@ -20,6 +20,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
 
     val themeMode by repository.themeMode.collectAsState(initial = 0)
+    val colorTheme by repository.colorTheme.collectAsState(initial = 0)
     val lensFacing by repository.defaultLensFacing.collectAsState(initial = 1)
     val flashMode by repository.defaultFlashMode.collectAsState(initial = 2)
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
@@ -71,6 +72,22 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 modifier = Modifier.clickable {
                     coroutineScope.launch {
                         repository.setThemeMode((themeMode + 1) % 3)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("App Color Palette") },
+                supportingContent = {
+                    Text(when(colorTheme) {
+                        0 -> "Initial Grayscale & Red Theme"
+                        1 -> "Lumina AI (Glowing Aurora) Theme"
+                        else -> "Initial Grayscale & Red Theme"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setColorTheme((colorTheme + 1) % 2)
                     }
                 }
             )
