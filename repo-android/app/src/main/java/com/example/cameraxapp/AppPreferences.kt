@@ -25,6 +25,7 @@ object AppPreferences {
     val AI_MODEL = stringPreferencesKey("ai_model")
     val AI_RATIO = stringPreferencesKey("ai_ratio")
     val AI_SIZE = stringPreferencesKey("ai_size")
+    val PUBLIC_GALLERY_NAME = stringPreferencesKey("public_gallery_name")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -43,6 +44,7 @@ class SettingsRepository(private val context: Context) {
     val aiModel: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_MODEL] ?: "gemini-2.5-flash-image" }
     val aiRatio: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_RATIO] ?: "1:1" }
     val aiSize: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_SIZE] ?: "1K" }
+    val publicGalleryName: Flow<String> = context.dataStore.data.map { it[AppPreferences.PUBLIC_GALLERY_NAME] ?: "GeminiCanvas" }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -102,5 +104,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setAiSize(size: String) {
         context.dataStore.edit { it[AppPreferences.AI_SIZE] = size }
+    }
+
+    suspend fun setPublicGalleryName(name: String) {
+        context.dataStore.edit { it[AppPreferences.PUBLIC_GALLERY_NAME] = name }
     }
 }

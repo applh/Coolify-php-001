@@ -1,6 +1,8 @@
 package com.example.cameraxapp
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -34,7 +36,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val aiModel by repository.aiModel.collectAsState(initial = "gemini-2.5-flash-image")
     val aiRatio by repository.aiRatio.collectAsState(initial = "1:1")
     val aiSize by repository.aiSize.collectAsState(initial = "1K")
+    val publicGalleryName by repository.publicGalleryName.collectAsState(initial = "GeminiCanvas")
     var showApiKeyDialog by remember { mutableStateOf(false) }
+    var showGalleryNameDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -56,6 +60,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -258,6 +263,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     coroutineScope.launch { repository.setStorageLocation((storageLocation + 1) % (maxVal + 1)) }
                 }
             )
+
+            ListItem(
+                headlineContent = { Text("Public Gallery Folder Name") },
+                supportingContent = { Text(publicGalleryName) },
+                modifier = Modifier.clickable {
+                    showGalleryNameDialog = true
+                }
+            )
         }
 
         if (showApiKeyDialog) {
@@ -283,6 +296,35 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 },
                 dismissButton = {
                     TextButton(onClick = { showApiKeyDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showGalleryNameDialog) {
+            var tempName by remember { mutableStateOf(publicGalleryName) }
+            AlertDialog(
+                onDismissRequest = { showGalleryNameDialog = false },
+                title = { Text("Set Public Gallery Folder Name") },
+                text = {
+                    OutlinedTextField(
+                        value = tempName,
+                        onValueChange = { tempName = it },
+                        label = { Text("Folder Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch { repository.setPublicGalleryName(tempName) }
+                        showGalleryNameDialog = false
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGalleryNameDialog = false }) {
                         Text("Cancel")
                     }
                 }

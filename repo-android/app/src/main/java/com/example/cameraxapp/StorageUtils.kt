@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -22,22 +23,70 @@ import java.util.Locale
 object StorageUtils {
 
     /**
-     * Saves a [Bitmap] to the device gallery.
+     * Saves a [Bitmap] to the device gallery or configured storage location.
      * Handles API 29+ (Scoped Storage) and API 28- gracefully.
      * Returns the [Uri] string representing the saved media.
      */
-    fun saveImageToGallery(context: Context, bitmap: Bitmap, prompt: String?): String? {
+    fun saveImageToGallery(
+        context: Context, 
+        bitmap: Bitmap, 
+        prompt: String?, 
+        galleryName: String? = null,
+        storageLocation: Int = 1
+    ): String? {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val displayName = "Lumina_${timestamp}.jpg"
         val mimeType = "image/jpeg"
+        val folderName = if (galleryName.isNullOrBlank()) "GeminiCanvas" else galleryName
 
         val resolver = context.contentResolver
 
+        // Destination 0: Internal (Internal App Storage)
+        if (storageLocation == 0) {
+            val appDir = File(context.filesDir, folderName)
+            if (!appDir.exists()) {
+                appDir.mkdirs()
+            }
+            val imageFile = File(appDir, displayName)
+            try {
+                FileOutputStream(imageFile).use { fos ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
+                }
+                return Uri.fromFile(imageFile).toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
+        }
+
+        // Destination 2: SD Card
+        if (storageLocation == 2) {
+            val dirs = ContextCompat.getExternalFilesDirs(context, null)
+            val sdDir = if (dirs.size > 1) dirs[1] else null
+            if (sdDir != null) {
+                val appDir = File(sdDir, folderName)
+                if (!appDir.exists()) {
+                    appDir.mkdirs()
+                }
+                val imageFile = File(appDir, displayName)
+                try {
+                    FileOutputStream(imageFile).use { fos ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
+                    }
+                    return Uri.fromFile(imageFile).toString()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            // fallback if SD Card is not inserted / configured
+        }
+
+        // Destination 1: Public Shared Directory (or older versions fallback)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
                 put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/GeminiCanvas")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + folderName)
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
 
@@ -61,7 +110,7 @@ object StorageUtils {
         } else {
             // Older Android versions fallback
             val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val appDir = File(picturesDir, "GeminiCanvas")
+            val appDir = File(picturesDir, folderName)
             if (!appDir.exists()) {
                 appDir.mkdirs()
             }

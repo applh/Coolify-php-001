@@ -18,7 +18,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -479,7 +481,9 @@ class AITeamViewModel(private val repository: SettingsRepository, context: Conte
         apiKey: String,
         imageModelPreset: String,
         imageRatio: String,
-        imageSize: String
+        imageSize: String,
+        publicGalleryName: String = "GeminiCanvas",
+        storageLocation: Int = 1
     ) {
         val sessionId = _activeSessionId.value ?: return
         if (prompt.trim().isEmpty()) {
@@ -558,7 +562,13 @@ class AITeamViewModel(private val repository: SettingsRepository, context: Conte
 
                             // Write to phone Gallery as fallback and user asset
                             val galleryUriStr = withContext(Dispatchers.IO) {
-                                StorageUtils.saveImageToGallery(context, bitmap, prompt)
+                                StorageUtils.saveImageToGallery(
+                                    context = context,
+                                    bitmap = bitmap,
+                                    prompt = prompt,
+                                    galleryName = publicGalleryName,
+                                    storageLocation = storageLocation
+                                )
                             }
 
                             val durationMs = System.currentTimeMillis() - startTime
@@ -761,6 +771,8 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val aiModelPreset by repository.aiModel.collectAsState(initial = "gemini-2.5-flash-image")
     val aiRatioPreset by repository.aiRatio.collectAsState(initial = "1:1")
     val aiSizePreset by repository.aiSize.collectAsState(initial = "1K")
+    val publicGalleryNameSaved by repository.publicGalleryName.collectAsState(initial = "GeminiCanvas")
+    val storageLocationSaved by repository.storageLocation.collectAsState(initial = 0)
 
     // Scoped Multi-turn session states
     val viewModel = remember { AITeamViewModel(repository, context) }
@@ -771,6 +783,8 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
 
     var textPromptInput by remember { mutableStateOf("") }
     var isImageModeChecked by remember { mutableStateOf(false) }
+    var showAiTeamSettingsDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Drawer state on mobile
     var mobileSidebarDropdownToggled by remember { mutableStateOf(false) }
@@ -900,7 +914,17 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     }
 
                     // Flush Dialogue / Return home
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { showAiTeamSettingsDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Configure AI Storage Options",
+                                tint = LavenderTint
+                            )
+                        }
                         IconButton(onClick = { viewModel.clearActiveSessionMessages() }) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
@@ -1004,7 +1028,9 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             apiKey = geminiApiKeySaved,
                             imageModelPreset = aiModelPreset,
                             imageRatio = aiRatioPreset,
-                            imageSize = aiSizePreset
+                            imageSize = aiSizePreset,
+                            publicGalleryName = publicGalleryNameSaved,
+                            storageLocation = storageLocationSaved
                         )
                         textPromptInput = ""
                     },
@@ -1060,6 +1086,91 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 tokens = msg.tokensUsed ?: 0,
                 cost = msg.calculatedCost ?: 0.0,
                 onDismiss = { activeLightboxMessage = null }
+            )
+        }
+
+        if (showAiTeamSettingsDialog) {
+            var tempGalleryName by remember { mutableStateOf(publicGalleryNameSaved) }
+            var selectedStorage by remember { mutableStateOf(storageLocationSaved) }
+            val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
+
+            AlertDialog(
+                onDismissRequest = { showAiTeamSettingsDialog = false },
+                title = { Text("AI Team Storage Settings", color = Color.White) },
+                containerColor = SlatePurple,
+                titleContentColor = Color.White,
+                textContentColor = Color.LightGray,
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Column {
+                            Text("Public Gallery Folder Name", color = LavenderTint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            OutlinedTextField(
+                                value = tempGalleryName,
+                                onValueChange = { tempGalleryName = it },
+                                placeholder = { Text("e.g. GeminiCanvas", color = Color.Gray) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = LavenderTint,
+                                    unfocusedBorderColor = BorderColor,
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                        }
+
+                        Column {
+                            Text("Storage Destination", color = LavenderTint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            
+                            listOf(
+                                0 to "Internal App Storage",
+                                1 to "Public Shared Directory",
+                                2 to "SD Card (External Storage)"
+                            ).forEach { (locId, label) ->
+                                if (locId != 2 || hasSdCard) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { selectedStorage = locId }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = (selectedStorage == locId),
+                                            onClick = { selectedStorage = locId },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = LavenderTint,
+                                                unselectedColor = Color.Gray
+                                            )
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(label, color = Color.White, fontSize = 13.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch {
+                            repository.setPublicGalleryName(tempGalleryName)
+                            repository.setStorageLocation(selectedStorage)
+                        }
+                        showAiTeamSettingsDialog = false
+                    }) {
+                        Text("Save", color = LavenderTint, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAiTeamSettingsDialog = false }) {
+                        Text("Cancel", color = Color.LightGray)
+                    }
+                }
             )
         }
     }
