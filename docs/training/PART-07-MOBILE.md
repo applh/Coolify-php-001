@@ -127,5 +127,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a new DataStore key storing an "Autopilot Persona/Instruction" string. Modify `CronWorker.kt` to query this string on-the-fly when resuming an active AI session rerun job, injecting it as a system prompt directive to mold the tone of the automated response.
 - **Complexity**: Part 4
 
+### 19. Android Background Processing & System Autonomy (15h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`, `repo-android/app/src/main/AndroidManifest.xml`, `repo-android/docs/android-background-guide.md`
+- **Goal**: Understand the differences between exact scheduling with AlarmManager and deferrable background synchronization via WorkManager, including system broadcast receivers.
+- **Exercise**: Implement a new scheduled notification using AlarmManager and verify that the BootCompletedReceiver properly captures the system boot sequence to dynamically restore the exact alarm. Verify runtime behavior of POST_NOTIFICATIONS on Android 13+.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

@@ -1,7 +1,7 @@
 {
   "moduleId": "PHASE-7-MOBILE",
   "title": "Mobile & Multi-Platform Systems (Android & Flutter)",
-  "totalSlides": 3,
+  "totalSlides": 4,
   "bundleId": 7,
   "slides": [
     {
@@ -45,6 +45,20 @@
         "What are some common resource constraints encountered when running Android Gradle builds in CI/CD?"
       ],
       "codeReferences": ["repo-android/Dockerfile", "repo-android/build.gradle"]
+    },
+    {
+      "id": "S007-04",
+      "title": "Android Background Processing: WorkManager, AlarmManager & Receivers",
+      "content": "Modern Android requires careful orchestration of background capabilities to ensure system health and battery efficiency. WorkManager is the Jetpack standard for deferrable, guaranteed background execution, ideal for data synchronization or periodic cleanup tasks when exact timing is not required. By contrast, AlarmManager is reserved for exact, time-critical operations such as calendar alerts or morning alarms, requiring specific permissions like SCHEDULE_EXACT_ALARM on modern Android. Because alarms are ephemeral across device reboots, applications must register a BroadcastReceiver configured to listen for the ACTION_BOOT_COMPLETED intent, which queries the database and silently reschedules all pending AlarmManager intents. Additionally, when these background frameworks attempt to communicate with the user, they must respect the POST_NOTIFICATIONS runtime permission on Android 13+, ensuring users have explicitly opted-in to receive asynchronous alerts triggered by background services or receivers.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f5f3ff'/><circle cx='200' cy='100' r='50' fill='#8b5cf6' fill-opacity='0.2'/><text x='200' y='180' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#5b21b6'>Background Sync & Execution</text></svg>",
+      "tags": ["android", "background", "workmanager", "alarmmanager", "broadcastreceiver"],
+      "links": ["https://developer.android.com/guide/background"],
+      "studentPrompts": [
+        "What is the primary difference between WorkManager and AlarmManager in terms of execution strictness?",
+        "Why is it necessary to implement a BootCompletedReceiver when utilizing AlarmManager?",
+        "Explain the runtime permission flow for POST_NOTIFICATIONS introduced in Android 13."
+      ],
+      "codeReferences": ["repo-android/app/src/main/AndroidManifest.xml", "repo-android/docs/android-background-guide.md"]
     }
   ]
 }
