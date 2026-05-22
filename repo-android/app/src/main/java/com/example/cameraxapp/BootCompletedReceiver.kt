@@ -86,6 +86,9 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     CronScheduler.scheduleExact(context, cron.id, intervalMinutes)
                 }
             }
+            
+            // Sync user-managed cron jobs
+            com.example.cameraxapp.cronjob.CronJobScheduler.syncJobsFromDatabase(context)
         }
     }
 }

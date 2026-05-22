@@ -76,6 +76,9 @@ class MainActivity : ComponentActivity() {
                         CronScheduler.scheduleExact(applicationContext, cron.id, intervalMinutes)
                     }
                 }
+                
+                // Sync user-managed cron jobs
+                com.example.cameraxapp.cronjob.CronJobScheduler.syncJobsFromDatabase(applicationContext)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -106,6 +109,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
                     AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+                    AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
                     AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
                     AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
                     AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
@@ -228,6 +232,9 @@ class MainActivity : ComponentActivity() {
                                             composable("ai_team") {
                                                 AITeamScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
                                             }
+                                            composable("cronjobs") {
+                                                com.example.cameraxapp.cronjob.CronJobManagerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
                                             composable("db") {
                                                 DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
                                             }
@@ -297,6 +304,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
         AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+        AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
         AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
         AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
         AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
