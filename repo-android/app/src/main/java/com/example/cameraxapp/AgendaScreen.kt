@@ -662,7 +662,7 @@ fun CalendarPlannerPane(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPrevMonth) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
+                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
             }
             Text(
                 text = monthYearFormat.format(selectedCalendar.time),
@@ -670,7 +670,7 @@ fun CalendarPlannerPane(
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onNextMonth) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next Month")
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next Month")
             }
         }
 
