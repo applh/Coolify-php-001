@@ -165,20 +165,58 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     imageDir.mkdirs()
                 }
                 
-                val images = imageDir.listFiles { file -> file.isFile && (file.extension.equals("jpg", true) || file.extension.equals("png", true)) }
+                val internalImages = imageDir.listFiles { file -> 
+                    file.isFile && (file.extension.equals("jpg", true) || file.extension.equals("png", true)) 
+                }?.toList() ?: emptyList()
                 
-                if (images != null && images.isNotEmpty()) {
-                    val nextImage = images.random()
+                val settingsRepo = SettingsRepository(applicationContext)
+                val externalUriString = settingsRepo.wallpaperFolderUri.first()
+                val externalImages = mutableListOf<androidx.documentfile.provider.DocumentFile>()
+                
+                if (externalUriString.isNotEmpty()) {
+                    try {
+                        val treeUri = android.net.Uri.parse(externalUriString)
+                        val docTree = androidx.documentfile.provider.DocumentFile.fromTreeUri(applicationContext, treeUri)
+                        if (docTree != null && docTree.isDirectory) {
+                            docTree.listFiles().forEach { docFile ->
+                                if (docFile.isFile && (docFile.type?.startsWith("image/") == true || docFile.name?.endsWith(".jpg", true) == true || docFile.name?.endsWith(".png", true) == true)) {
+                                    externalImages.add(docFile)
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                
+                if (internalImages.isNotEmpty() || externalImages.isNotEmpty()) {
+                    val totalSize = internalImages.size + externalImages.size
+                    val randomIndex = (0 until totalSize).random()
+                    
                     val wallpaperManager = android.app.WallpaperManager.getInstance(applicationContext)
-                    val bitmap = android.graphics.BitmapFactory.decodeFile(nextImage.absolutePath)
+                    var bitmap: android.graphics.Bitmap? = null
+                    var selectedName = ""
+                    
+                    if (randomIndex < internalImages.size) {
+                        val file = internalImages[randomIndex]
+                        bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                        selectedName = file.name
+                    } else {
+                        val docFile = externalImages[randomIndex - internalImages.size]
+                        val inputStream = applicationContext.contentResolver.openInputStream(docFile.uri)
+                        bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                        inputStream?.close()
+                        selectedName = docFile.name ?: "Unknown Document"
+                    }
+
                     if (bitmap != null) {
                         wallpaperManager.setBitmap(bitmap)
-                        logMsg = "Wallpaper changed successfully to ${nextImage.name}"
+                        logMsg = "Wallpaper changed successfully to $selectedName"
                     } else {
-                        logMsg = "Wallpaper rotation failed: Couldn't decode ${nextImage.name}"
+                        logMsg = "Wallpaper rotation failed: Couldn't decode $selectedName"
                     }
                 } else {
-                    logMsg = "Wallpaper rotation skipped: No images found. Please add images to the 'wallpapers' folder."
+                    logMsg = "Wallpaper rotation skipped: No images found. Please add images or select a folder."
                 }
             } else {
                 logMsg = "Custom Cron task '${job.name}' verified environment and logged dependencies."

@@ -1,5 +1,6 @@
 package com.example.cameraxapp
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,45 +28,116 @@ import androidx.compose.ui.unit.dp
 import java.io.File
 import java.io.FileOutputStream
 import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+
+data class WallpaperItem(
+    val uri: Uri,
+    val name: String,
+    val size: Long,
+    val isLocal: Boolean,
+    val file: File? = null,
+    val documentFile: DocumentFile? = null
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     val context = LocalContext.current
     val dbHelper = remember { AgendaDatabaseHelper(context) }
+    val settingsRepo = remember { SettingsRepository(context) }
+    val scope = rememberCoroutineScope()
+    
     var cronJob by remember { mutableStateOf<CronJobInfo?>(null) }
-    var images by remember { mutableStateOf<List<File>>(emptyList()) }
-    var currentWallpaper by remember { mutableStateOf<File?>(null) } // This could just be the list of images.
+    var images by remember { mutableStateOf<List<WallpaperItem>>(emptyList()) }
+    var externalFolderPath by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
-    // Refresh state
     fun refreshData() {
-        cronJob = dbHelper.getAllCronJobs().find { it.name.contains("Wallpaper", ignoreCase = true) }
-        val imageDir = File(context.getExternalFilesDir(null), "wallpapers")
-        if (!imageDir.exists()) imageDir.mkdirs()
-        images = imageDir.listFiles { file -> 
-            file.isFile && (file.extension.equals("jpg", true) || file.extension.equals("png", true)) 
-        }?.toList() ?: emptyList()
+        isLoading = true
+        scope.launch {
+            cronJob = dbHelper.getAllCronJobs().find { it.name.contains("Wallpaper", ignoreCase = true) }
+            
+            val newImages = mutableListOf<WallpaperItem>()
+            
+            // Local files
+            val imageDir = File(context.getExternalFilesDir(null), "wallpapers")
+            if (!imageDir.exists()) imageDir.mkdirs()
+            imageDir.listFiles { f -> 
+                f.isFile && (f.extension.equals("jpg", true) || f.extension.equals("png", true)) 
+            }?.forEach { f ->
+                newImages.add(WallpaperItem(Uri.fromFile(f), f.name, f.length(), true, file = f))
+            }
+            
+            // External folder
+            val externalUriString = settingsRepo.wallpaperFolderUri.first()
+            if (externalUriString.isNotEmpty()) {
+                externalFolderPath = externalUriString
+                try {
+                    val treeUri = Uri.parse(externalUriString)
+                    val docTree = DocumentFile.fromTreeUri(context, treeUri)
+                    if (docTree != null && docTree.isDirectory) {
+                        docTree.listFiles().forEach { docFile ->
+                            if (docFile.isFile && (docFile.type?.startsWith("image/") == true || docFile.name?.endsWith(".jpg", true) == true || docFile.name?.endsWith(".png", true) == true)) {
+                                newImages.add(WallpaperItem(docFile.uri, docFile.name ?: "Unknown", docFile.length(), false, documentFile = docFile))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } else {
+                externalFolderPath = ""
+            }
+            
+            images = newImages
+            isLoading = false
+        }
     }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri)
+    val multipleImagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            scope.launch {
+                isLoading = true
                 val imageDir = File(context.getExternalFilesDir(null), "wallpapers")
                 if (!imageDir.exists()) imageDir.mkdirs()
                 
-                val newFile = File(imageDir, "wallpaper_${System.currentTimeMillis()}.jpg")
-                val outputStream = FileOutputStream(newFile)
-                
-                inputStream?.copyTo(outputStream)
-                
-                inputStream?.close()
-                outputStream.close()
+                uris.forEach { uri ->
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        val newFile = File(imageDir, "wp_${System.currentTimeMillis()}.jpg")
+                        val outputStream = FileOutputStream(newFile)
+                        inputStream?.copyTo(outputStream)
+                        inputStream?.close()
+                        outputStream.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
                 refreshData()
-            } catch (e: Exception) {
-                e.printStackTrace()
+            }
+        }
+    }
+
+    val folderPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri, 
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                    settingsRepo.setWallpaperFolderUri(uri.toString())
+                    refreshData()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
@@ -90,8 +163,16 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { imagePickerLauncher.launch("image/*") }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Wallpaper")
+            Column(horizontalAlignment = Alignment.End) {
+                SmallFloatingActionButton(
+                    onClick = { folderPickerLauncher.launch(null) },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(Icons.Default.Folder, contentDescription = "Add Folder")
+                }
+                FloatingActionButton(onClick = { multipleImagePickerLauncher.launch("image/*") }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Files")
+                }
             }
         }
     ) { padding ->
@@ -121,11 +202,10 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             onCheckedChange = { active ->
                                 cronJob?.let { job ->
                                     dbHelper.updateCronStatus(job.id, active, job.lastRunMillis, job.status)
-                                    // Make sure WorkManager is updated if active
                                     if (active) {
                                         CronScheduler.scheduleExact(context, job.id, 15)
                                     }
-                                    refreshData()
+                                    cronJob = job.copy(isActive = active)
                                 }
                             }
                         )
@@ -139,9 +219,17 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
             }
 
             Text("Wallpaper Library (${images.size} items)", style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.Start))
-            Text("Tap + to add images from your device.", style = MaterialTheme.typography.bodySmall, color = Color.Gray, modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp))
             
-            if (images.isEmpty()) {
+            if (externalFolderPath.isNotEmpty()) {
+                Text("Syncing from folder: ${Uri.parse(externalFolderPath).lastPathSegment}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.align(Alignment.Start))
+            }
+            Text("Tap + to add files or link a folder.", style = MaterialTheme.typography.bodySmall, color = Color.Gray, modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp))
+            
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (images.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No wallpapers found.", style = MaterialTheme.typography.bodyLarge)
                 }
@@ -154,11 +242,18 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
-                                // Manual set
-                                val wallpaperManager = android.app.WallpaperManager.getInstance(context)
-                                val bitmap = BitmapFactory.decodeFile(image.absolutePath)
-                                if (bitmap != null) {
-                                    wallpaperManager.setBitmap(bitmap)
+                                scope.launch {
+                                    try {
+                                        val wallpaperManager = android.app.WallpaperManager.getInstance(context)
+                                        val inputStream = context.contentResolver.openInputStream(image.uri)
+                                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                                        if (bitmap != null) {
+                                            wallpaperManager.setBitmap(bitmap)
+                                        }
+                                        inputStream?.close()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
                                 }
                             }
                         ) {
@@ -166,10 +261,35 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 modifier = Modifier.padding(8.dp).fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val bitmap = BitmapFactory.decodeFile(image.absolutePath)
-                                if (bitmap != null) {
+                                var loadedBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+                                
+                                LaunchedEffect(image.uri) {
+                                    try {
+                                        val inputStream = context.contentResolver.openInputStream(image.uri)
+                                        // Use sample size for thumbnail to avoid OOM
+                                        val options = BitmapFactory.Options().apply {
+                                            inJustDecodeBounds = true
+                                            BitmapFactory.decodeStream(inputStream, null, this)
+                                        }
+                                        inputStream?.close()
+                                        
+                                        var scale = 1
+                                        if (options.outHeight > 128 || options.outWidth > 128) {
+                                            scale = Math.pow(2.0, Math.round(Math.log(128.0 / Math.max(options.outHeight, options.outWidth)) / Math.log(0.5)).toDouble()).toInt()
+                                        }
+                                        
+                                        val inputStream2 = context.contentResolver.openInputStream(image.uri)
+                                        val options2 = BitmapFactory.Options().apply { inSampleSize = scale }
+                                        loadedBitmap = BitmapFactory.decodeStream(inputStream2, null, options2)
+                                        inputStream2?.close()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                                
+                                if (loadedBitmap != null) {
                                     Image(
-                                        bitmap = bitmap.asImageBitmap(),
+                                        bitmap = loadedBitmap!!.asImageBitmap(),
                                         contentDescription = image.name,
                                         modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
                                         contentScale = ContentScale.Crop
@@ -177,18 +297,22 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                 } else {
                                     Box(modifier = Modifier.size(64.dp).background(Color.Gray, RoundedCornerShape(8.dp)))
                                 }
+                                
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(image.name, style = MaterialTheme.typography.bodyLarge)
-                                    Text("${image.length() / 1024} KB", style = MaterialTheme.typography.bodySmall)
+                                    Text(image.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+                                    Text("${image.size / 1024} KB" + if(!image.isLocal) " (External)" else "", style = MaterialTheme.typography.bodySmall)
                                 }
-                                IconButton(onClick = {
-                                    if (image.exists()) {
-                                        image.delete()
-                                        refreshData()
+                                
+                                if (image.isLocal) {
+                                    IconButton(onClick = {
+                                        if (image.file?.exists() == true) {
+                                            image.file.delete()
+                                            refreshData()
+                                        }
+                                    }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete Local File")
                                     }
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
                                 }
                             }
                         }

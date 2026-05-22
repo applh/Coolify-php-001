@@ -75,6 +75,7 @@ dependencies {
 
     // WorkManager for background Cron routines
     implementation "androidx.work:work-runtime-ktx:2.9.0"
+    implementation "androidx.documentfile:documentfile:1.0.1"
 
     // Retrofit & Moshi JSON
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
