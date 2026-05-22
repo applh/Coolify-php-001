@@ -18,14 +18,19 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -70,6 +75,9 @@ class MainActivity : ComponentActivity() {
                 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route ?: "hub"
+                
+                var isToolbarExpanded by remember { mutableStateOf(false) }
+                var toolbarOffsetY by remember { mutableStateOf(0f) }
                 
                 val applets = listOf(
                     AppletInfo("Home", "hub", Icons.Default.Home, "Main Hub"),
@@ -166,36 +174,56 @@ class MainActivity : ComponentActivity() {
                             Surface(
                                 modifier = Modifier
                                     .align(Alignment.CenterEnd)
-                                    .padding(end = 16.dp),
+                                    .offset { IntOffset(0, toolbarOffsetY.roundToInt()) }
+                                    .padding(end = 16.dp)
+                                    .pointerInput(Unit) {
+                                        detectDragGestures { change, dragAmount ->
+                                            change.consume()
+                                            toolbarOffsetY += dragAmount.y
+                                        }
+                                    },
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
                                 shadowElevation = 4.dp
                             ) {
                                 Column(
                                     modifier = Modifier.padding(vertical = 16.dp, horizontal = 12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    applets.forEach { applet ->
-                                        SmallFloatingActionButton(
-                                            onClick = {
-                                                if (currentRoute != applet.route) {
-                                                    if (applet.route == "hub") {
-                                                        navController.popBackStack("hub", inclusive = false)
-                                                    } else {
-                                                        navController.navigate(applet.route) {
-                                                            popUpTo("hub") { saveState = true }
-                                                            launchSingleTop = true
-                                                            restoreState = true
+                                    IconButton(
+                                        onClick = { isToolbarExpanded = !isToolbarExpanded },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            if (isToolbarExpanded) Icons.Default.Close else Icons.Default.Menu,
+                                            contentDescription = "Toggle Toolbar"
+                                        )
+                                    }
+                                    
+                                    if (isToolbarExpanded) {
+                                        applets.forEach { applet ->
+                                            SmallFloatingActionButton(
+                                                onClick = {
+                                                    if (currentRoute != applet.route) {
+                                                        if (applet.route == "hub") {
+                                                            navController.popBackStack("hub", inclusive = false)
+                                                        } else {
+                                                            navController.navigate(applet.route) {
+                                                                popUpTo("hub") { saveState = true }
+                                                                launchSingleTop = true
+                                                                restoreState = true
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            },
-                                            shape = androidx.compose.foundation.shape.CircleShape,
-                                            containerColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                            elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                                        ) {
-                                            Icon(applet.icon, contentDescription = applet.name)
+                                                },
+                                                shape = androidx.compose.foundation.shape.CircleShape,
+                                                containerColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
+                                                elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                                            ) {
+                                                Icon(applet.icon, contentDescription = applet.name)
+                                            }
                                         }
                                     }
                                 }
