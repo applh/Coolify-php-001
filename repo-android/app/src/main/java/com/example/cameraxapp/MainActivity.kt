@@ -61,6 +61,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         updatePermissionState()
+        
+        // Enforce WorkManager scheduling for seeded items locally on boot
+        Thread {
+            try {
+                val dbHelper = AgendaDatabaseHelper(applicationContext)
+                val cronJobs = dbHelper.getAllCronJobs()
+                for (cron in cronJobs) {
+                    if (cron.isActive) {
+                        var intervalMinutes = 15L
+                        if (cron.cronExpression.startsWith("*/")) {
+                            val mins = cron.cronExpression.substringAfter("*/").substringBefore(" ").toLongOrNull()
+                            if (mins != null && mins >= 15L) {
+                                intervalMinutes = mins
+                            }
+                        }
+                        val workRequest = androidx.work.PeriodicWorkRequestBuilder<CronWorker>(intervalMinutes, java.util.concurrent.TimeUnit.MINUTES)
+                            .setInputData(androidx.work.workDataOf("CRON_ID" to cron.id))
+                            .build()
+                        androidx.work.WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+                            "CRON_${cron.id}",
+                            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                            workRequest
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
 
         setContent {
             val repository = remember { SettingsRepository(this) }

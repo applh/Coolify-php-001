@@ -71,6 +71,28 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     )
                 }
             }
+
+            // 3. Reschedule active Cron Jobs (in case they were wiped or it's a seed state)
+            val cronJobs = dbHelper.getAllCronJobs()
+            for (cron in cronJobs) {
+                if (cron.isActive) {
+                    var intervalMinutes = 15L
+                    if (cron.cronExpression.startsWith("*/")) {
+                        val mins = cron.cronExpression.substringAfter("*/").substringBefore(" ").toLongOrNull()
+                        if (mins != null && mins >= 15L) {
+                            intervalMinutes = mins
+                        }
+                    }
+                    val workRequest = androidx.work.PeriodicWorkRequestBuilder<CronWorker>(intervalMinutes, java.util.concurrent.TimeUnit.MINUTES)
+                        .setInputData(androidx.work.workDataOf("CRON_ID" to cron.id))
+                        .build()
+                    androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                        "CRON_${cron.id}",
+                        androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                        workRequest
+                    )
+                }
+            }
         }
     }
 }
