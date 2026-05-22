@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.flow.first
 
 class DynamicRouterWorker(
     appContext: Context,
@@ -110,7 +111,7 @@ class DynamicRouterWorker(
         }?.toList() ?: emptyList()
         
         val settingsRepo = com.example.cameraxapp.SettingsRepository(applicationContext)
-        val externalUriString = kotlinx.coroutines.flow.first(settingsRepo.wallpaperFolderUri)
+        val externalUriString = settingsRepo.wallpaperFolderUri.first()
         val externalImages = mutableListOf<androidx.documentfile.provider.DocumentFile>()
         
         if (externalUriString.isNotEmpty()) {

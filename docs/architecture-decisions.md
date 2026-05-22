@@ -46,3 +46,24 @@ Developing the new **Agenda** (Calendar, Alarm, and Cron) applet under `repo-and
 3. **Reboot Resilience via `BroadcastReceiver`**
    - **Choice**: Bind a `BootCompletedReceiver` to listen for the standard `android.intent.action.BOOT_COMPLETED` event.
    - **Reason**: The Android OS flushes all scheduled intents in the `AlarmManager` whenever a device shuts down or reboots. Listening to standard system boot signals enables scanning the Room/SQLite store and cleanly rescheduling existing calendar triggers or alarm clocks on start-up.
+
+---
+
+## 3. Dynamic User-Managed Cronjob Framework & Foreground Services
+
+### Context
+We introduced a user-facing Cronjob Manager within the Android app, which allows users to dynamically create and manage background tasks (such as taking intermittent photos in the background) via an updated Jetpack Compose UI. This capability is fundamentally different from statically compiled workers.
+
+### Decisions & Justification
+
+1. **Single Router Worker (`DynamicRouterWorker`)**
+   - **Choice**: A unified WorkManager `CoroutineWorker` handles various user-defined tasks based on `jobType` passed through input payload arguments, rather than creating specialized worker classes for each job type.
+   - **Reason**: Greatly simplifies the scheduling engine since it allows dynamic instantiation of WorkManager constraints and generic interval scheduling handled through a universal Room-based job configuration registry without code-bloat.
+
+2. **Foreground Service Promotion (`setForeground()`) for Hardware Tasks**
+   - **Choice**: Any Dynamic Router job executing a hardware-dependent action, such as `CAMERA_CAPTURE`, is programmed to explicitly call `setForeground()` alongside publishing an active foreground service payload matching the `camera` type within `AndroidManifest.xml`. 
+   - **Reason**: Android 9+ prevents background apps from accessing sensitive hardware (camera/microphone) to maintain privacy. Promoting the background worker temporarily to a foreground service displays a mandated persistent notification ("Capturing photo") fulfilling Android's security constraints and enabling legitimate headless captures via CameraX use cases.
+
+3. **Room Database as Scheduler Truth Source**
+   - **Choice**: Use a dedicated `CronJobDatabase` holding schemas for cron assignments (types, intervals, states).
+   - **Reason**: Provides a completely decoupled persistent state that allows standard `BootCompletedReceiver` scripts and `CronJobScheduler` objects to reliably pull unexecuted jobs and resupply them cleanly to WorkManager across process deaths or reboots.

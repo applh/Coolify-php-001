@@ -133,5 +133,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 **Exercise**: Implement a scheduled notification using AlarmManager. Test the behavior by simply pressing "Home" versus "Swiping from Recents". Implement a mitigation strategy by analyzing how `BootCompletedReceiver` restores swiped alarms after a reboot, and research the architectural trade-offs of using a persistent Foreground Service to bypass Recents-swipe kills.
 **Complexity**: Part 4
 
+### 20. Android Dynamic Cronjob Framework & Foreground Services (20h)
+**Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/cronjob/`, `repo-android/docs/android-background-guide.md`, `repo-android/docs/user-cronjob-library-plan.md`
+- **Goal**: Understand how to develop a generic, database-driven cron engine using WorkManager, Room, and foreground service promotion for hardware access (like CameraX).
+- **Exercise**: Explore the `CronJobScheduler` and `DynamicRouterWorker`. Add a new generic job type (e.g., "Network Sync") to the `CronJobDatabase` via Jetpack Compose UI, schedule it using the scheduler wrapper, and verify it executes without requiring a foreground service promotion. Modify the worker router to handle this new type appropriately.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
