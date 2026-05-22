@@ -26,6 +26,7 @@ object AppPreferences {
     val AI_RATIO = stringPreferencesKey("ai_ratio")
     val AI_SIZE = stringPreferencesKey("ai_size")
     val PUBLIC_GALLERY_NAME = stringPreferencesKey("public_gallery_name")
+    val AUTOPILOT_PERSONA = stringPreferencesKey("autopilot_persona")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -45,6 +46,7 @@ class SettingsRepository(private val context: Context) {
     val aiRatio: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_RATIO] ?: "1:1" }
     val aiSize: Flow<String> = context.dataStore.data.map { it[AppPreferences.AI_SIZE] ?: "1K" }
     val publicGalleryName: Flow<String> = context.dataStore.data.map { it[AppPreferences.PUBLIC_GALLERY_NAME] ?: "GeminiCanvas" }
+    val autopilotPersona: Flow<String> = context.dataStore.data.map { it[AppPreferences.AUTOPILOT_PERSONA] ?: "Continuous Autopilot Periodic Review: Critique and expand on our previous prompt concept with updated insights or direct project guidelines." }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -108,5 +110,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setPublicGalleryName(name: String) {
         context.dataStore.edit { it[AppPreferences.PUBLIC_GALLERY_NAME] = name }
+    }
+
+    suspend fun setAutopilotPersona(persona: String) {
+        context.dataStore.edit { it[AppPreferences.AUTOPILOT_PERSONA] = persona }
     }
 }

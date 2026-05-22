@@ -29,7 +29,7 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             if (job.name.contains("AI", ignoreCase = true)) {
                 // Fully Functional AI Dialogue Rerun Autopilot Flow
                 val settingsRepo = SettingsRepository(applicationContext)
-                val apiKey = kotlinx.coroutines.flow.first(settingsRepo.geminiApiKey)
+                val apiKey = settingsRepo.geminiApiKey.first()
                 
                 if (apiKey.trim().isEmpty()) {
                     logMsg = "AI Session Rerun failed: Gemini API Key is missing. Check App Settings."
@@ -48,8 +48,9 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         if (segment == null || segment.messages.isEmpty()) {
                             logMsg = "AI Session Rerun completed: Selected session '$sessionId' contains empty thread."
                         } else {
+                            val persona = settingsRepo.autopilotPersona.first()
                             val lastUserMsg = segment.messages.findLast { it.role == ChatRole.USER }?.content ?: "Hello AI Team"
-                            val autoPrompt = "Continuous Autopilot Periodic Review: Critique and expand on our previous prompt concept ('$lastUserMsg') with updated insights or direct project guidelines."
+                            val autoPrompt = "$persona\n\nContext block: '$lastUserMsg'"
 
                             // Frame content wrapper for Multi-turn conversation
                             val apiContents = mutableListOf<ContentPartList>()
