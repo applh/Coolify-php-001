@@ -13,7 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -168,7 +168,7 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     onClick = { folderPickerLauncher.launch(null) },
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(Icons.Default.Folder, contentDescription = "Add Folder")
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Add Folder")
                 }
                 FloatingActionButton(onClick = { multipleImagePickerLauncher.launch("image/*") }) {
                     Icon(Icons.Default.Add, contentDescription = "Add Files")
