@@ -26,12 +26,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -98,14 +94,12 @@ class MainActivity : ComponentActivity() {
             CameraXAppTheme(darkTheme = useDarkTheme, colorTheme = colorTheme) {
                 val navController = rememberNavController()
                 val isGranted by permissionsGranted
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val leftDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val rightDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route ?: "hub"
-                
-                var isToolbarExpanded by remember { mutableStateOf(false) }
-                var toolbarOffsetY by remember { mutableStateOf(0f) }
                 
                 val applets = listOf(
                     AppletInfo("Home", "hub", Icons.Default.Home, "Main Hub"),
@@ -119,7 +113,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 ModalNavigationDrawer(
-                    drawerState = drawerState,
+                    drawerState = leftDrawerState,
                     drawerContent = {
                         ModalDrawerSheet {
                             Spacer(Modifier.height(16.dp))
@@ -135,7 +129,7 @@ class MainActivity : ComponentActivity() {
                                     label = { Text(applet.name) },
                                     selected = currentRoute == applet.route,
                                     onClick = {
-                                        scope.launch { drawerState.close() }
+                                        scope.launch { leftDrawerState.close() }
                                         if (currentRoute != applet.route) {
                                             if (applet.route == "hub") {
                                                 navController.popBackStack("hub", inclusive = false)
@@ -156,108 +150,112 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            NavHost(navController = navController, startDestination = "hub", modifier = Modifier.fillMaxSize()) {
-                                composable("hub") {
-                                    HubScreen(navController, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("camera") {
-                                    if (isGranted) {
-                                        CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                    } else {
-                                        PermissionRequestScreen(
-                                            onRequestPermission = {
-                                                val perms = mutableListOf(
-                                                    Manifest.permission.CAMERA,
-                                                    Manifest.permission.RECORD_AUDIO
-                                                )
-                                                if (android.os.Build.VERSION.SDK_INT >= 33) {
-                                                    perms.add(Manifest.permission.POST_NOTIFICATIONS)
-                                                }
-                                                permissionsLauncher.launch(perms.toTypedArray())
-                                            },
-                                            onOpenDrawer = { scope.launch { drawerState.open() } }
-                                        )
-                                    }
-                                }
-                                composable("explorer") {
-                                    ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("ai_team") {
-                                    AITeamScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("db") {
-                                    DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("agenda") {
-                                    AgendaScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("wallpaper") {
-                                    WallpaperScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                                composable("settings") {
-                                    SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
-                                }
-                            }
-                            
-                            // Vertical Floating Toolbar
-                            Surface(
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .offset { IntOffset(0, toolbarOffsetY.roundToInt()) }
-                                    .padding(end = 16.dp)
-                                    .pointerInput(Unit) {
-                                        detectDragGestures { change, dragAmount ->
-                                            change.consume()
-                                            toolbarOffsetY += dragAmount.y
-                                        }
-                                    },
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
-                                shadowElevation = 4.dp
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    IconButton(
-                                        onClick = { isToolbarExpanded = !isToolbarExpanded },
-                                        modifier = Modifier.size(32.dp)
+                    CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl) {
+                        ModalNavigationDrawer(
+                            drawerState = rightDrawerState,
+                            drawerContent = {
+                                CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                                    ModalDrawerSheet(
+                                        modifier = Modifier.width(300.dp)
                                     ) {
-                                        Icon(
-                                            if (isToolbarExpanded) Icons.Default.Close else Icons.Default.Menu,
-                                            contentDescription = "Toggle Toolbar"
+                                        Spacer(Modifier.height(16.dp))
+                                        Text(
+                                            text = "Quick Tools",
+                                            modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp),
+                                            style = MaterialTheme.typography.titleLarge
                                         )
-                                    }
-                                    
-                                    if (isToolbarExpanded) {
+                                        Spacer(Modifier.height(8.dp))
                                         applets.forEach { applet ->
-                                            SmallFloatingActionButton(
+                                            NavigationDrawerItem(
+                                                icon = { Icon(applet.icon, contentDescription = null) },
+                                                label = { Text(applet.name) },
+                                                selected = currentRoute == applet.route,
                                                 onClick = {
+                                                    scope.launch { rightDrawerState.close() }
                                                     if (currentRoute != applet.route) {
                                                         if (applet.route == "hub") {
                                                             navController.popBackStack("hub", inclusive = false)
                                                         } else {
                                                             navController.navigate(applet.route) {
-                                                                popUpTo("hub") { saveState = true }
+                                                                popUpTo("hub") {
+                                                                    saveState = true
+                                                                }
                                                                 launchSingleTop = true
                                                                 restoreState = true
                                                             }
                                                         }
                                                     }
                                                 },
-                                                shape = androidx.compose.foundation.shape.CircleShape,
-                                                containerColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                                contentColor = if (currentRoute == applet.route) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                                elevation = FloatingActionButtonDefaults.elevation(0.dp)
-                                            ) {
-                                                Icon(applet.icon, contentDescription = applet.name)
+                                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                                Surface(
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = MaterialTheme.colorScheme.background
+                                ) {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        NavHost(navController = navController, startDestination = "hub", modifier = Modifier.fillMaxSize()) {
+                                            composable("hub") {
+                                                HubScreen(navController, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
                                             }
+                                            composable("camera") {
+                                                if (isGranted) {
+                                                    CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                } else {
+                                                    PermissionRequestScreen(
+                                                        onRequestPermission = {
+                                                            val perms = mutableListOf(
+                                                                Manifest.permission.CAMERA,
+                                                                Manifest.permission.RECORD_AUDIO
+                                                            )
+                                                            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                                                perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                                                            }
+                                                            permissionsLauncher.launch(perms.toTypedArray())
+                                                        },
+                                                        onOpenDrawer = { scope.launch { leftDrawerState.open() } }
+                                                    )
+                                                }
+                                            }
+                                            composable("explorer") {
+                                                ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                            composable("ai_team") {
+                                                AITeamScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                            composable("db") {
+                                                DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                            composable("agenda") {
+                                                AgendaScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                            composable("wallpaper") {
+                                                WallpaperScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                            composable("settings") {
+                                                SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                            }
+                                        }
+                                        
+                                        // Floating Action Button on Center Right
+                                        SmallFloatingActionButton(
+                                            onClick = { scope.launch { rightDrawerState.open() } },
+                                            modifier = Modifier
+                                                .align(Alignment.CenterEnd)
+                                                .padding(end = 0.dp),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                                topStart = 8.dp,
+                                                bottomStart = 8.dp,
+                                                topEnd = 0.dp,
+                                                bottomEnd = 0.dp
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                                         }
                                     }
                                 }
