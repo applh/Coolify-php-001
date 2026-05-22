@@ -15,7 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -662,7 +662,7 @@ fun CalendarPlannerPane(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPrevMonth) {
-                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
             }
             Text(
                 text = monthYearFormat.format(selectedCalendar.time),
@@ -670,7 +670,7 @@ fun CalendarPlannerPane(
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onNextMonth) {
-                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next Month")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next Month")
             }
         }
 
