@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import android.net.Uri
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import org.json.JSONObject
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -120,5 +123,39 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setWallpaperFolderUri(uri: String) {
         context.dataStore.edit { it[AppPreferences.WALLPAPER_FOLDER_URI] = uri }
+    }
+
+    suspend fun exportSettings(uri: Uri) {
+        val preferences = context.dataStore.data.first()
+        val json = JSONObject()
+        preferences.asMap().forEach { (key, value) ->
+            json.put(key.name, value)
+        }
+        context.contentResolver.openOutputStream(uri)?.use {
+            it.write(json.toString(4).toByteArray())
+        }
+    }
+
+    suspend fun importSettings(uri: Uri) {
+        try {
+            val jsonText = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: return
+            val json = JSONObject(jsonText)
+            context.dataStore.edit { preferences ->
+                val keys = json.keys()
+                while (keys.hasNext()) {
+                    val keyName = keys.next()
+                    when (val value = json.get(keyName)) {
+                        is Int -> preferences[intPreferencesKey(keyName)] = value
+                        is Boolean -> preferences[booleanPreferencesKey(keyName)] = value
+                        is String -> preferences[stringPreferencesKey(keyName)] = value
+                        is Float -> preferences[floatPreferencesKey(keyName)] = value
+                        is Double -> preferences[doublePreferencesKey(keyName)] = value
+                        is Long -> preferences[longPreferencesKey(keyName)] = value
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

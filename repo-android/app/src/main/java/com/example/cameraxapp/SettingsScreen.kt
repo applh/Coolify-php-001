@@ -1,5 +1,9 @@
 package com.example.cameraxapp
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +45,28 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var showGalleryNameDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                repository.exportSettings(it)
+                Toast.makeText(context, "Settings exported", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                repository.importSettings(it)
+                Toast.makeText(context, "Settings imported", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -271,6 +297,28 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     showGalleryNameDialog = true
                 }
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Backup & Restore", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ListItem(
+                headlineContent = { Text("Export Settings") },
+                supportingContent = { Text("Save your preferences to a file") },
+                modifier = Modifier.clickable {
+                    exportLauncher.launch("settings-backup.json")
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Import Settings") },
+                supportingContent = { Text("Restore your preferences from a file") },
+                modifier = Modifier.clickable {
+                    importLauncher.launch(arrayOf("application/json", "*/*"))
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
         if (showApiKeyDialog) {
