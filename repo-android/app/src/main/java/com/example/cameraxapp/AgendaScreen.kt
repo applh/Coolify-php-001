@@ -299,21 +299,15 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
         var intervalMinutes = 15L
         if (expression.startsWith("*/")) {
             val mins = expression.substringAfter("*/").substringBefore(" ").toLongOrNull()
-            if (mins != null && mins >= 15L) {
+            if (mins != null && mins >= 1L) {
                 intervalMinutes = mins
             }
         }
-        val workRequest = PeriodicWorkRequestBuilder<CronWorker>(intervalMinutes, TimeUnit.MINUTES)
-            .setInputData(workDataOf("CRON_ID" to cronId))
-            .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "CRON_$cronId",
-            ExistingPeriodicWorkPolicy.REPLACE,
-            workRequest
-        )
+        CronScheduler.scheduleExact(context, cronId, intervalMinutes)
     }
 
     private fun cancelCronJob(cronId: Int) {
+        CronScheduler.cancelExact(context, cronId)
         WorkManager.getInstance(context).cancelUniqueWork("CRON_$cronId")
     }
 

@@ -76,7 +76,21 @@ This originates from the PHP application (`repo-php`). It means the `Host` heade
 
 ---
 
-## 5. Deployment Recommendation
+## 6. Android App Troubleshooting: Background Tasks & Crons
+If `repo-android` background features (such as Cron Services, Automation Tasks, or Alarms) are not triggering automatically:
+
+1. **"App Closed" vs "App Force Stopped":** 
+   - If the user presses the Home button or backs out of the app normally, `AlarmManager` and `WorkManager` **will continue to work** and will wake up the app when needed.
+   - If the user **swipes the app away from the Recent Apps list**, many Android OEMs (Samsung, Xiaomi, OnePlus) treat this as a **Force Stop**.
+2. **Foreground App Wipes (Force Stop consequence):** 
+   - Force-closing an app via the Recents tray will unilaterally cancel all scheduled alarms, broadcast receivers, and `WorkManager` queues on most Android skins. The app will **not** wake up again until the user explicitly taps the app icon to relaunch it, or the device reboots (triggering the `BootCompletedReceiver`).
+3. **OEM Battery Restrictions (Aggressive Killing):** Manufacturers have highly aggressive App Standby Buckets that immediately suspend background activity if an app is closed.
+   - **Fix:** Navigate to device **Settings -> Apps -> Your App -> Battery** and change the state to **Unrestricted** or **Don't Optimize**. Some devices also have a "Lock in Recents" feature to prevent accidental swiping.
+4. **Exact Alarms Revoked:** Starting in Android 14 (API 34), `SCHEDULE_EXACT_ALARM` permissions can be silently rejected or disabled by the OS to save battery. The updated `CronScheduler` defaults to a standard loose alarm if this is blocked, but this can cause triggers to become inaccurate.
+
+---
+
+## 7. Deployment Recommendation
 For a live production environment, we recommend:
 1. Hosting the **Node.js FRAISE Backend** on a Node service (e.g., Cloud Run, Railway, Heroku).
 2. Hosting the **PHP Multisite App** on a specialized PHP platform or a VPS using Docker (as provided in `repo-php/docker-compose.yml`).

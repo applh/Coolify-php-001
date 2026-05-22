@@ -79,18 +79,11 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     var intervalMinutes = 15L
                     if (cron.cronExpression.startsWith("*/")) {
                         val mins = cron.cronExpression.substringAfter("*/").substringBefore(" ").toLongOrNull()
-                        if (mins != null && mins >= 15L) {
+                        if (mins != null && mins >= 1L) {
                             intervalMinutes = mins
                         }
                     }
-                    val workRequest = androidx.work.PeriodicWorkRequestBuilder<CronWorker>(intervalMinutes, java.util.concurrent.TimeUnit.MINUTES)
-                        .setInputData(androidx.work.workDataOf("CRON_ID" to cron.id))
-                        .build()
-                    androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                        "CRON_${cron.id}",
-                        androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-                        workRequest
-                    )
+                    CronScheduler.scheduleExact(context, cron.id, intervalMinutes)
                 }
             }
         }
