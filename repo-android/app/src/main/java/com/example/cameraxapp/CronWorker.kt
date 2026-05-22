@@ -159,6 +159,27 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 val sharedPrefsDir = File(applicationContext.filesDir.parent, "shared_prefs")
                 val filesCount = sharedPrefsDir.listFiles()?.size ?: 0
                 logMsg = "Diagnostics backup completed. Packed structural system assets: $filesCount files."
+            } else if (job.name.contains("Wallpaper", ignoreCase = true)) {
+                val imageDir = File(applicationContext.getExternalFilesDir(null), "wallpapers")
+                if (!imageDir.exists()) {
+                    imageDir.mkdirs()
+                }
+                
+                val images = imageDir.listFiles { file -> file.isFile && (file.extension.equals("jpg", true) || file.extension.equals("png", true)) }
+                
+                if (images != null && images.isNotEmpty()) {
+                    val nextImage = images.random()
+                    val wallpaperManager = android.app.WallpaperManager.getInstance(applicationContext)
+                    val bitmap = android.graphics.BitmapFactory.decodeFile(nextImage.absolutePath)
+                    if (bitmap != null) {
+                        wallpaperManager.setBitmap(bitmap)
+                        logMsg = "Wallpaper changed successfully to ${nextImage.name}"
+                    } else {
+                        logMsg = "Wallpaper rotation failed: Couldn't decode ${nextImage.name}"
+                    }
+                } else {
+                    logMsg = "Wallpaper rotation skipped: No images found. Please add images to the 'wallpapers' folder."
+                }
             } else {
                 logMsg = "Custom Cron task '${job.name}' verified environment and logged dependencies."
             }

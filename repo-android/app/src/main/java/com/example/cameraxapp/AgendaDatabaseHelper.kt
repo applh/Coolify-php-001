@@ -188,6 +188,15 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         }
         db.insert(TABLE_CRON_JOBS, null, cron2)
 
+        val cron3 = ContentValues().apply {
+            put(COL_CRON_NAME, "Wallpaper Rotator")
+            put(COL_CRON_EXPRESSION, "*/15 * * * *")
+            put(COL_CRON_IS_ACTIVE, 0)
+            put(COL_CRON_LAST_RUN, 0)
+            put(COL_CRON_STATUS, "IDLE")
+        }
+        db.insert(TABLE_CRON_JOBS, null, cron3)
+
         // 4. Seed status Telemetry logs
         val log1 = ContentValues().apply {
             put(COL_LOG_CRON_ID, cronId1)

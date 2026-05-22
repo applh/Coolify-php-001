@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -113,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
                     AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
                     AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
+                    AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
 
@@ -193,6 +195,9 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("agenda") {
                                     AgendaScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
+                                }
+                                composable("wallpaper") {
+                                    WallpaperScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
                                 }
                                 composable("settings") {
                                     SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { drawerState.open() } })
@@ -296,6 +301,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
         AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
         AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
+        AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 
