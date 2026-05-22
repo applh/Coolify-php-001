@@ -237,7 +237,7 @@ To provide an elite administrative dashboard, the application outlines a series 
 
 1.  **Cache Sweeper & Storage Optimizer (Active)**:
     *   **Goal**: Automatically sweep transient directories to maintain optimal physical disk footprints.
-    *   **Android Trigger**: `WorkManager` scheduled periodically with constraints `NetworkType.NOT_REQUIRED` and `RequiresBatteryNotLow`.
+    *   **Android Trigger**: `WorkManager` scheduled periodically with constraints `NetworkType.NOT_REQUIRED` and `RequiresBatteryNotLow` (Note: minimum 15-minute intervals apply).
     *   **Mechanism**: Safely crawls `applicationContext.cacheDir`, verifying file-modification headers. Destroys non-essential log dumps or cached visual thumbnails older than 10 minutes (or user-defined time bounds).
 
 2.  **App State & User Preference Backup Engine**:

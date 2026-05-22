@@ -52,7 +52,7 @@ To ensure bulletproof reliability for tasks, alarms, and background work, the ap
 
 ### C. Cron Features (Background Schedulers)
 - **Cron Definition Parser**: Build or bundle a simple standard cron string reader mapping sequences (e.g. `*/15 * * * *` for every 15 minutes) into millisecond delays and intervals.
-- **Harnessing WorkManager**: Convert periodic crons into registered WorkManager `PeriodicWorkRequest` items containing native constraints (e.g. `NetworkType.CONNECTED` or `RequiresCharging`).
+- **Harnessing WorkManager**: Convert periodic crons into registered WorkManager `PeriodicWorkRequest` items containing native constraints (e.g. `NetworkType.CONNECTED` or `RequiresCharging`). Note: Android enforces a strict **15-minute minimum interval** for all periodic tasks using WorkManager.
 - **Telemetry Console Tracker**: Run-history database logs showing past executables, execution time/latencies, network states, and exit statuses (Success, Warning, Failed).
 - **On-Demand Running**: A manual play button next to cron entries running tests synchronously inside immediate background worker threads.
 - **Pre-Configured Background Automation Routines**:
