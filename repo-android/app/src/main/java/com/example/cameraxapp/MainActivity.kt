@@ -47,7 +47,12 @@ class MainActivity : ComponentActivity() {
     ) { permissions ->
         val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
         val audioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
-        permissionsGranted.value = cameraGranted && audioGranted
+        val notificationsGranted = if (android.os.Build.VERSION.SDK_INT >= 33) {
+            permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
+        } else {
+            true
+        }
+        permissionsGranted.value = cameraGranted && audioGranted && notificationsGranted
     }
 
     private val permissionsGranted = mutableStateOf(false)
@@ -142,12 +147,14 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         PermissionRequestScreen(
                                             onRequestPermission = {
-                                                permissionsLauncher.launch(
-                                                    arrayOf(
-                                                        Manifest.permission.CAMERA,
-                                                        Manifest.permission.RECORD_AUDIO
-                                                    )
+                                                val perms = mutableListOf(
+                                                    Manifest.permission.CAMERA,
+                                                    Manifest.permission.RECORD_AUDIO
                                                 )
+                                                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                                    perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                                                }
+                                                permissionsLauncher.launch(perms.toTypedArray())
                                             },
                                             onOpenDrawer = { scope.launch { drawerState.open() } }
                                         )
@@ -242,7 +249,12 @@ class MainActivity : ComponentActivity() {
         val audioGranted = ContextCompat.checkSelfPermission(
             this, Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
-        permissionsGranted.value = cameraGranted && audioGranted
+        val notificationsGranted = if (android.os.Build.VERSION.SDK_INT >= 33) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        permissionsGranted.value = cameraGranted && audioGranted && notificationsGranted
     }
 }
 
@@ -363,7 +375,7 @@ fun PermissionRequestScreen(onRequestPermission: () -> Unit, onOpenDrawer: () ->
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Camera and Audio permissions are required to use this app.",
+                text = "Camera, Audio, and Notification permissions are required to use this app.",
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(bottom = 16.dp),
                 textAlign = TextAlign.Center

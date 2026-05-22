@@ -32,8 +32,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -231,7 +234,10 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
     // --- Background Cron Workers ---
     fun addCronJob(name: String, expression: String) {
         viewModelScope.launch {
-            dbHelper.insertCronJob(name, expression, true)
+            val cronId = dbHelper.insertCronJob(name, expression, true)
+            if (cronId != -1L) {
+                scheduleCronJob(cronId.toInt(), expression)
+            }
             _toastMessage.value = "Custom Cron service registered successfully."
             loadData()
         }
@@ -240,7 +246,13 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
     fun toggleCron(job: CronJobInfo) {
         viewModelScope.launch {
             dbHelper.updateCronStatus(job.id, !job.isActive, job.lastRunMillis, job.status)
-            _toastMessage.value = if (!job.isActive) "Cron Job is now active." else "Cron Job paused."
+            if (!job.isActive) {
+                scheduleCronJob(job.id, job.cronExpression)
+                _toastMessage.value = "Cron Job is now active."
+            } else {
+                cancelCronJob(job.id)
+                _toastMessage.value = "Cron Job paused."
+            }
             loadData()
         }
     }
@@ -248,6 +260,7 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
     fun deleteCronJob(jobId: Int) {
         viewModelScope.launch {
             dbHelper.deleteCronJob(jobId)
+            cancelCronJob(jobId)
             _toastMessage.value = "Cron automation deleted successfully."
             loadData()
         }
@@ -256,6 +269,11 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
     fun updateCronJob(id: Int, name: String, expression: String, isActive: Boolean) {
         viewModelScope.launch {
             dbHelper.updateCronJob(id, name, expression, isActive)
+            if (isActive) {
+                scheduleCronJob(id, expression)
+            } else {
+                cancelCronJob(id)
+            }
             _toastMessage.value = "Cron task configuration updated."
             loadData()
         }
@@ -274,6 +292,29 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
             kotlinx.coroutines.delay(1000)
             loadData()
         }
+    }
+
+    // --- Background WorkManager Setup ---
+    private fun scheduleCronJob(cronId: Int, expression: String) {
+        var intervalMinutes = 15L
+        if (expression.startsWith("*/")) {
+            val mins = expression.substringAfter("*/").substringBefore(" ").toLongOrNull()
+            if (mins != null && mins >= 15L) {
+                intervalMinutes = mins
+            }
+        }
+        val workRequest = PeriodicWorkRequestBuilder<CronWorker>(intervalMinutes, TimeUnit.MINUTES)
+            .setInputData(workDataOf("CRON_ID" to cronId))
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "CRON_$cronId",
+            ExistingPeriodicWorkPolicy.REPLACE,
+            workRequest
+        )
+    }
+
+    private fun cancelCronJob(cronId: Int) {
+        WorkManager.getInstance(context).cancelUniqueWork("CRON_$cronId")
     }
 
     // --- Android System Alarms Wiring ----
