@@ -662,7 +662,7 @@ fun CalendarPlannerPane(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPrevMonth) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Previous Month")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous Month")
             }
             Text(
                 text = monthYearFormat.format(selectedCalendar.time),
@@ -670,7 +670,7 @@ fun CalendarPlannerPane(
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onNextMonth) {
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next Month")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next Month")
             }
         }
 
@@ -754,7 +754,7 @@ fun CalendarPlannerPane(
             }
         }
 
-        Divider(modifier = Modifier.padding(vertical = 12.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
         // Daily Ledger List
         val selectedDayFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
@@ -1018,7 +1018,7 @@ fun CronSchedulerPane(
             }
         }
 
-        Divider(modifier = Modifier.padding(vertical = 12.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
         // Diagnostic logs
         Text("Telemetry System Console Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))

@@ -15,9 +15,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.core.content.ContextCompat
@@ -870,7 +870,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             Spacer(modifier = Modifier.width(4.dp))
                             IconButton(onClick = { mobileSidebarDropdownToggled = true }) {
                                 Icon(
-                                    imageVector = Icons.Default.List,
+                                    imageVector = Icons.AutoMirrored.Filled.List,
                                     contentDescription = "Show Past Dialogues",
                                     tint = LavenderTint
                                 )
@@ -1484,7 +1484,7 @@ fun OutlinedInputPane(
                         )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Submit Dialogue prompt",
                         tint = if (promptText.trim().isEmpty() || !hasKey || isProcessing) {
                             Color.Gray

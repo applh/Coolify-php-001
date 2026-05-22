@@ -1308,7 +1308,7 @@ fun SidebarTableSelector(
                 Icon(Icons.Default.Add, contentDescription = "New Table", tint = MaterialTheme.colorScheme.primary)
             }
         }
-        Divider()
+        HorizontalDivider()
         Spacer(Modifier.height(8.dp))
 
         if (tables.isEmpty()) {
@@ -1635,7 +1635,7 @@ fun SchemaViewerTab(
                 }
             }
         }
-        Divider()
+        HorizontalDivider()
 
         Spacer(Modifier.height(8.dp))
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -1736,7 +1736,7 @@ fun TerminalSqlTab(
                             modifier = Modifier.padding(vertical = 4.dp),
                             fontFamily = FontFamily.Monospace
                         )
-                        Divider(color = Color.DarkGray)
+                        HorizontalDivider(color = Color.DarkGray)
                         Spacer(Modifier.height(8.dp))
 
                         if (terminalResult.columns.isNotEmpty()) {

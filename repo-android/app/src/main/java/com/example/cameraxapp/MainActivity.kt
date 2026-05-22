@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
                     AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
                     AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
-                    AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
+                    AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
                     AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
@@ -272,7 +272,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
         AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
-        AppletInfo("DB SQLite", "db", Icons.Default.List, "Inspect and edit database files"),
+        AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
         AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
