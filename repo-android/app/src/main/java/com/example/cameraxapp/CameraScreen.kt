@@ -935,6 +935,8 @@ private fun applyFilterToBitmap(src: Bitmap, filter: String): Bitmap {
     paint.colorFilter = android.graphics.ColorMatrixColorFilter(matrix)
     canvas.drawBitmap(src, 0f, 0f, paint)
     return res
+}
+
 // MediaStore and External storage file sync adapter
 private fun saveBitmapToDisk(
     context: Context,
