@@ -59,6 +59,20 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
 import kotlin.math.atan2
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Intent
+import androidx.camera.core.Camera
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +116,70 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     val gridRows by repository.gridRows.collectAsState(initial = 3)
     val gridColumns by repository.gridColumns.collectAsState(initial = 3)
     var rollAngle by remember { mutableStateOf(0f) }
+
+    // Advanced modular upgrades states
+    var cameraInstance by remember { mutableStateOf<Camera?>(null) }
+    var selectedFilter by remember { mutableStateOf("NORMAL") }
+    var scannedBarcode by remember { mutableStateOf<String?>(null) }
+    var showScanResultDialog by remember { mutableStateOf(false) }
+    var isScanningPaused by remember { mutableStateOf(false) }
+
+    // Manual, compile-safe observer for CameraX zoomState LiveData
+    val zoomStateFlow = cameraInstance?.cameraInfo?.zoomState
+    var zoomState by remember { mutableStateOf<androidx.camera.core.ZoomState?>(null) }
+    DisposableEffect(zoomStateFlow) {
+        val observer = androidx.lifecycle.Observer<androidx.camera.core.ZoomState> { state ->
+            zoomState = state
+        }
+        zoomStateFlow?.observeForever(observer)
+        onDispose {
+            zoomStateFlow?.removeObserver(observer)
+        }
+    }
+
+    // Google ML Kit QR/Barcode Analyzer configuration
+    val imageAnalysis = remember {
+        ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+    }
+
+    LaunchedEffect(imageAnalysis, isScanningPaused, captureMode) {
+        if (captureMode == "SCAN" && !isScanningPaused) {
+            val options = BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
+                .build()
+            val scanner = BarcodeScanning.getClient(options)
+            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+                val mediaImage = imageProxy.image
+                if (mediaImage != null) {
+                    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                    scanner.process(image)
+                        .addOnSuccessListener { barcodes ->
+                            if (barcodes.isNotEmpty() && !isScanningPaused) {
+                                val barcodeValue = barcodes[0].rawValue ?: barcodes[0].displayValue
+                                if (barcodeValue != null) {
+                                    scannedBarcode = barcodeValue
+                                    isScanningPaused = true
+                                    showScanResultDialog = true
+                                }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("CameraScreen", "Offline ML Kit scan error", e)
+                        }
+                        .addOnCompleteListener {
+                            imageProxy.close()
+                        }
+                } else {
+                    imageProxy.close()
+                }
+            }
+        } else {
+            imageAnalysis.clearAnalyzer()
+        }
+    }
 
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as android.hardware.SensorManager
@@ -160,7 +238,16 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     Scaffold(
         bottomBar = {
             TopAppBar(
-                title = { Text(if (captureMode == "PHOTO") "Camera" else "Video") },
+                title = { 
+                    Text(
+                        when(captureMode) {
+                            "PHOTO" -> "Camera"
+                            "VIDEO" -> "Video Recorder"
+                            "SCAN" -> "QR Code Scanner"
+                            else -> "Camera"
+                        }
+                    )
+                },
                 navigationIcon = {
                     Row {
                         IconButton(onClick = onOpenDrawer) {
@@ -179,14 +266,94 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .pointerInput(cameraInstance) {
+                    detectTransformGestures { _, _, zoomFactor, _ ->
+                        cameraInstance?.let { camera ->
+                            val zState = camera.cameraInfo.zoomState.value
+                            if (zState != null) {
+                                val currentVal = zState.zoomRatio
+                                val minVal = zState.minZoomRatio
+                                val maxVal = zState.maxZoomRatio
+                                val targetVal = (currentVal * zoomFactor).coerceIn(minVal, maxVal)
+                                camera.cameraControl.setZoomRatio(targetVal)
+                            }
+                        }
+                    }
+                }
+        ) {
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 imageCapture = imageCapture,
                 videoCapture = videoCapture,
+                imageAnalysis = imageAnalysis,
                 captureMode = captureMode,
-                lensFacing = lensFacing
+                lensFacing = lensFacing,
+                onCameraConfigured = { camera ->
+                    cameraInstance = camera
+                }
             )
+
+            // Dynamic Atmospheric Tint Filters (Instant GPU Simulation)
+            if (captureMode != "SCAN" && selectedFilter != "NORMAL") {
+                val overlayColor = when (selectedFilter) {
+                    "GRAYSCALE" -> Color(0xFF555555).copy(alpha = 0.15f)
+                    "SEPIA" -> Color(0xFF8B4F1D).copy(alpha = 0.22f)
+                    "INVERT" -> Color(0xFF00FFCC).copy(alpha = 0.12f)
+                    "WARM" -> Color(0xFFFF9E00).copy(alpha = 0.16f)
+                    else -> Color.Transparent
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(overlayColor)
+                )
+            }
+
+            // Elegant high-visibility Viewfinder Reticle for Quick Scanning
+            if (captureMode == "SCAN") {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    
+                    // Center Reticle Dimensions
+                    val boxSize = 250.dp.toPx()
+                    val left = (canvasWidth - boxSize) / 2f
+                    val top = (canvasHeight - boxSize) / 2f
+                    val right = left + boxSize
+                    val bottom = top + boxSize
+                    
+                    // Translucent Dim Outer Mask Shapes
+                    drawRect(color = Color.Black.copy(alpha = 0.5f), size = androidx.compose.ui.geometry.Size(canvasWidth, top))
+                    drawRect(color = Color.Black.copy(alpha = 0.5f), topLeft = Offset(0f, bottom), size = androidx.compose.ui.geometry.Size(canvasWidth, canvasHeight - bottom))
+                    drawRect(color = Color.Black.copy(alpha = 0.5f), topLeft = Offset(0f, top), size = androidx.compose.ui.geometry.Size(left, boxSize))
+                    drawRect(color = Color.Black.copy(alpha = 0.5f), topLeft = Offset(right, top), size = androidx.compose.ui.geometry.Size(canvasWidth - right, boxSize))
+                    
+                    // High-Contrast Neon Bracket Corner Accents (4px Green)
+                    val stroke = 4.dp.toPx()
+                    val cornerLen = 24.dp.toPx()
+                    val neonColor = Color(0xFF00FFCC)
+                    
+                    // Top-Left Neon Bracket
+                    drawLine(color = neonColor, start = Offset(left, top), end = Offset(left + cornerLen, top), strokeWidth = stroke)
+                    drawLine(color = neonColor, start = Offset(left, top), end = Offset(left, top + cornerLen), strokeWidth = stroke)
+                    
+                    // Top-Right Neon Bracket
+                    drawLine(color = neonColor, start = Offset(right, top), end = Offset(right - cornerLen, top), strokeWidth = stroke)
+                    drawLine(color = neonColor, start = Offset(right, top), end = Offset(right, top + cornerLen), strokeWidth = stroke)
+                    
+                    // Bottom-Left Neon Bracket
+                    drawLine(color = neonColor, start = Offset(left, bottom), end = Offset(left + cornerLen, bottom), strokeWidth = stroke)
+                    drawLine(color = neonColor, start = Offset(left, bottom), end = Offset(left, bottom - cornerLen), strokeWidth = stroke)
+                    
+                    // Bottom-Right Neon Bracket
+                    drawLine(color = neonColor, start = Offset(right, bottom), end = Offset(right - cornerLen, bottom), strokeWidth = stroke)
+                    drawLine(color = neonColor, start = Offset(right, bottom), end = Offset(right, bottom - cornerLen), strokeWidth = stroke)
+                }
+            }
 
             if (recording != null) {
                 Box(
@@ -312,6 +479,193 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 }
             }
 
+            // High Precision Zoom Slider HUD
+            if (captureMode != "SCAN" && cameraInstance != null) {
+                val zState = zoomState
+                if (zState != null) {
+                    val currentVal = zState.zoomRatio
+                    val minVal = zState.minZoomRatio
+                    val maxVal = zState.maxZoomRatio
+                    
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 120.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Quick Presets
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            listOf(1f, 2f, 4f).forEach { scaleTarget ->
+                                if (scaleTarget in minVal..maxVal) {
+                                    Card(
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = if (currentVal == scaleTarget) MaterialTheme.colorScheme.primaryContainer else Color.Black.copy(alpha = 0.6f)
+                                        ),
+                                        modifier = Modifier.clickable {
+                                            cameraInstance?.cameraControl?.setZoomRatio(scaleTarget)
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "${scaleTarget.toInt()}x",
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Precision Control
+                        Row(
+                            modifier = Modifier
+                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Zoom HUD", tint = Color.LightGray, modifier = Modifier.size(16.dp))
+                            Slider(
+                                value = currentVal,
+                                onValueChange = { targetScale ->
+                                    cameraInstance?.cameraControl?.setZoomRatio(targetScale)
+                                },
+                                valueRange = minVal..maxVal,
+                                modifier = Modifier.width(160.dp),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = Color.DarkGray
+                                )
+                            )
+                            Text(
+                                text = String.format(Locale.US, "%.1fx", currentVal),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Google ML Kit Offline Scanned Code Interactive Bottom Sheet
+            if (showScanResultDialog && scannedBarcode != null) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(12.dp)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "QR/Barcode Scanned",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 100.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Box(modifier = Modifier.padding(12.dp).verticalScroll(rememberScrollState())) {
+                                Text(
+                                    text = scannedBarcode ?: "",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("Scanned Barcode", scannedBarcode)
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "Copied text to clipboard!", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp)
+                            ) {
+                                Text("Copy", style = MaterialTheme.typography.labelMedium)
+                            }
+                            
+                            val isLink = scannedBarcode?.startsWith("http://") == true || scannedBarcode?.startsWith("https://") == true
+                            if (isLink) {
+                                Button(
+                                    onClick = {
+                                        try {
+                                            val openIntent = Intent(Intent.ACTION_VIEW, Uri.parse(scannedBarcode))
+                                            context.startActivity(openIntent)
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Could not open browser: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 4.dp)
+                                ) {
+                                    Text("Open Url", style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                            
+                            Button(
+                                onClick = {
+                                    try {
+                                        val agendaDb = AgendaDatabaseHelper(context)
+                                        agendaDb.insertEvent(
+                                            title = "Scanned Event Note",
+                                            notes = scannedBarcode ?: "",
+                                            dateMillis = System.currentTimeMillis(),
+                                            duration = 30,
+                                            color = "Secondary"
+                                        )
+                                        Toast.makeText(context, "Saved to notes database!", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Database save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp)
+                            ) {
+                                Text("Save Note", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                        
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        
+                        TextButton(
+                            onClick = {
+                                scannedBarcode = null
+                                showScanResultDialog = false
+                                isScanningPaused = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Rescan / Dismiss", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -347,16 +701,54 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     )
                 }
 
-                // Photo/Video mode button
+                // Advanced Camera/Video/Scan Mode Toggle Cycle
                 IconButton(
-                    onClick = { captureMode = if (captureMode == "PHOTO") "VIDEO" else "PHOTO" },
+                    onClick = { 
+                        captureMode = when(captureMode) {
+                            "PHOTO" -> "VIDEO"
+                            "VIDEO" -> "SCAN"
+                            else -> "PHOTO"
+                        }
+                    },
                     modifier = Modifier.size(48.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                 ) {
                     Text(
-                        text = if (captureMode == "PHOTO") "🎥" else "📷",
+                        text = when(captureMode) {
+                            "PHOTO" -> "📸"
+                            "VIDEO" -> "📹"
+                            else -> "🔍"
+                        },
                         style = MaterialTheme.typography.titleMedium
                     )
+                }
+
+                // Dynamic Live Film Filters Toggle Key (Cycles Sepia, Grayscale, etc)
+                if (captureMode == "PHOTO") {
+                    IconButton(
+                        onClick = {
+                            selectedFilter = when(selectedFilter) {
+                                "NORMAL" -> "GRAYSCALE"
+                                "GRAYSCALE" -> "SEPIA"
+                                "SEPIA" -> "INVERT"
+                                "INVERT" -> "WARM"
+                                else -> "NORMAL"
+                            }
+                        },
+                        modifier = Modifier.size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    ) {
+                        Text(
+                            text = when(selectedFilter) {
+                                "NORMAL" -> "🎨"
+                                "GRAYSCALE" -> "⬜"
+                                "SEPIA" -> "🟫"
+                                "INVERT" -> "🔲"
+                                else -> "🔥"
+                            },
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
 
                 // Lens switch
@@ -375,14 +767,14 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Capture Button
+                // Dynamic Capture Action Button
                 IconButton(
                     onClick = {
                         if (captureMode == "PHOTO") {
-                            takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation) { uri ->
+                            takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
                                 lastCapturedImageUri = uri
                             }
-                        } else {
+                        } else if (captureMode == "VIDEO") {
                             if (recording != null) {
                                 recording?.stop()
                                 recording = null
@@ -401,6 +793,11 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                     }
                                 )
                             }
+                        } else {
+                            // SCAN QR Mode: Press the capture button to reset scanner
+                            scannedBarcode = null
+                            showScanResultDialog = false
+                            isScanningPaused = false
                         }
                     },
                     modifier = Modifier.size(80.dp),
@@ -486,28 +883,82 @@ private fun startVideoRecording(
     })
 }
 
-private fun takePhoto(
-    context: Context,
-    imageCapture: ImageCapture,
-    executor: Executor,
-    storageLocation: Int,
-    onImageSaved: (Uri) -> Unit
-) {
-    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
-    
-    var tempFile: File? = null
+// High-efficiency, zero-leak pixel buffer to Bitmap decoder
+private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
+    val planes = image.planes
+    val buffer = planes[0].buffer
+    val bytes = ByteArray(buffer.capacity())
+    buffer.get(bytes)
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+}
 
-    val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+// Native Hardware-Accelerated Color Matrix Filtration kernel
+private fun applyFilterToBitmap(src: Bitmap, filter: String): Bitmap {
+    if (filter == "NORMAL") return src
+    val res = Bitmap.createBitmap(src.width, src.height, src.config ?: Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(res)
+    val paint = android.graphics.Paint()
+    
+    val matrix = android.graphics.ColorMatrix()
+    when (filter) {
+        "GRAYSCALE" -> {
+            matrix.setSaturation(0f)
+        }
+        "SEPIA" -> {
+            val sepiaMatrix = android.graphics.ColorMatrix().apply {
+                set(floatArrayOf(
+                    0.393f, 0.769f, 0.189f, 0f, 0f,
+                    0.349f, 0.686f, 0.168f, 0f, 0f,
+                    0.272f, 0.534f, 0.131f, 0f, 0f,
+                    0f,      0f,      0f,      1f, 0f
+                ))
+            }
+            matrix.postConcat(sepiaMatrix)
+        }
+        "INVERT" -> {
+            matrix.set(floatArrayOf(
+                -1f, 0f,  0f,  0f, 255f,
+                0f,  -1f, 0f,  0f, 255f,
+                0f,  0f,  -1f, 0f, 255f,
+                0f,  0f,  0f,  1f, 0f
+            ))
+        }
+        "WARM" -> {
+            matrix.set(floatArrayOf(
+                1.22f, 0f,   0f,   0f, 0f,
+                0f,   1.02f, 0f,   0f, 0f,
+                0f,   0f,   0.78f, 0f, 0f,
+                0f,   0f,   0f,   1f, 0f
+            ))
+        }
+    }
+    paint.colorFilter = android.graphics.ColorMatrixColorFilter(matrix)
+    canvas.drawBitmap(src, 0f, 0f, paint)
+    return res
+// MediaStore and External storage file sync adapter
+private fun saveBitmapToDisk(
+    context: Context,
+    bitmap: Bitmap,
+    name: String,
+    storageLocation: Int
+): Uri? {
+    val resolver = context.contentResolver
+    if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraXApp")
         }
-        ImageCapture.OutputFileOptions.Builder(
-            context.contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ).build()
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return null
+        return try {
+            resolver.openOutputStream(uri)?.use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+            }
+            uri
+        } catch (e: Exception) {
+            Log.e("CameraScreen", "Error compressing filtered bitmap to external gallery", e)
+            null
+        }
     } else {
         val dir = when (storageLocation) {
             1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
@@ -517,28 +968,128 @@ private fun takePhoto(
             }
             else -> context.filesDir
         }
-        tempFile = File(dir, "$name.jpg")
-        ImageCapture.OutputFileOptions.Builder(tempFile).build()
-    }
-
-    imageCapture.takePicture(
-        outputOptions,
-        executor,
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val msg = "Photo saved successfully"
-                Log.d("CameraScreen", msg)
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                val uri = output.savedUri ?: if (tempFile != null) Uri.fromFile(tempFile) else null
-                uri?.let { onImageSaved(it) }
+        val file = File(dir, "$name.jpg")
+        return try {
+            java.io.FileOutputStream(file).use { stream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
             }
-
-            override fun onError(exc: ImageCaptureException) {
-                Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
-                Toast.makeText(context, "Capture failed: ${exc.message}", Toast.LENGTH_SHORT).show()
-            }
+            Uri.fromFile(file)
+        } catch (e: Exception) {
+            Log.e("CameraScreen", "Error compressing filtered bitmap to sandboxed storage", e)
+            null
         }
-    )
+    }
+}
+
+private fun takePhoto(
+    context: Context,
+    imageCapture: ImageCapture,
+    executor: Executor,
+    storageLocation: Int,
+    filter: String = "NORMAL",
+    onImageSaved: (Uri) -> Unit
+) {
+    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
+    
+    // Fall back to standard, hyper-optimized execution path if no filter is active
+    if (filter == "NORMAL") {
+        var tempFile: File? = null
+
+        val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraXApp")
+            }
+            ImageCapture.OutputFileOptions.Builder(
+                context.contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            ).build()
+        } else {
+            val dir = when (storageLocation) {
+                1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
+                2 -> {
+                    val dirs = ContextCompat.getExternalFilesDirs(context, null)
+                    if (dirs.size > 1) dirs[1] else context.filesDir
+                }
+                else -> context.filesDir
+            }
+            tempFile = File(dir, "$name.jpg")
+            ImageCapture.OutputFileOptions.Builder(tempFile).build()
+        }
+
+        imageCapture.takePicture(
+            outputOptions,
+            executor,
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val msg = "Photo saved successfully"
+                    Log.d("CameraScreen", msg)
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    val uri = output.savedUri ?: if (tempFile != null) Uri.fromFile(tempFile) else null
+                    uri?.let { onImageSaved(it) }
+                }
+
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e("CameraScreen", "Photo capture failed: ${exc.message}", exc)
+                    Toast.makeText(context, "Capture failed: ${exc.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    } else {
+        // In-memory hardware pixel buffer interception for precision filter rendering
+        imageCapture.takePicture(
+            executor,
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(imageProxy: ImageProxy) {
+                    try {
+                        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+                        val rawBitmap = imageProxyToBitmap(imageProxy)
+                        imageProxy.close()
+                        
+                        // Rotational normalization adjustment
+                        val normalBitmap = if (rotationDegrees != 0) {
+                            val rMatrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+                            Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.width, rawBitmap.height, rMatrix, true)
+                        } else {
+                            rawBitmap
+                        }
+                        
+                        // Render final filtered pixel matrix
+                        val filteredBitmap = applyFilterToBitmap(normalBitmap, filter)
+                        
+                        // Save output
+                        val savedUri = saveBitmapToDisk(context, filteredBitmap, name, storageLocation)
+                        
+                        ContextCompat.getMainExecutor(context).execute {
+                            if (savedUri != null) {
+                                val msg = "Custom filtered photo saved successfully"
+                                Log.d("CameraScreen", msg)
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                onImageSaved(savedUri)
+                            } else {
+                                Toast.makeText(context, "Failed to save filtered photo", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        imageProxy.close()
+                        Log.e("CameraScreen", "In-memory callback filter error: ", e)
+                        ContextCompat.getMainExecutor(context).execute {
+                            Toast.makeText(context, "Filter rendering failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e("CameraScreen", "In-memory interception capture failure", exc)
+                    ContextCompat.getMainExecutor(context).execute {
+                        Toast.makeText(context, "Capture failed: ${exc.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -546,9 +1097,11 @@ fun CameraPreview(
     modifier: Modifier = Modifier,
     imageCapture: ImageCapture,
     videoCapture: androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>?,
+    imageAnalysis: ImageAnalysis? = null,
     captureMode: String,
     lensFacing: Int = CameraSelector.LENS_FACING_BACK,
-    scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER
+    scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER,
+    onCameraConfigured: (Camera) -> Unit = {}
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -578,11 +1131,12 @@ fun CameraPreview(
             }
             imageCapture.targetRotation = rot
             videoCapture?.targetRotation = rot
+            imageAnalysis?.targetRotation = rot
             previewUseCase?.targetRotation = rot
         }
     )
 
-    LaunchedEffect(previewView, captureMode, lensFacing, videoCapture) {
+    LaunchedEffect(previewView, captureMode, lensFacing, videoCapture, imageAnalysis) {
         val view = previewView ?: return@LaunchedEffect
 
         cameraProviderFuture.addListener({
@@ -606,7 +1160,7 @@ fun CameraPreview(
 
             try {
                 cameraProvider.unbindAll()
-                if (captureMode == "PHOTO") {
+                val camera = if (captureMode == "PHOTO") {
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
@@ -620,7 +1174,17 @@ fun CameraPreview(
                         preview,
                         videoCapture
                     )
+                } else if (captureMode == "SCAN" && imageAnalysis != null) {
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
+                    )
+                } else {
+                    null
                 }
+                camera?.let { onCameraConfigured(it) }
             } catch (exc: Exception) {
                 Log.e("CameraPreview", "Use case binding failed", exc)
             }

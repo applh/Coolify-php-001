@@ -157,5 +157,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Explore the updated `exportSettings` and `importSettings` implementations in `AppPreferences.kt`. Learn how to use Android SQL Cursor type reflection to generically serialize database columns dynamically without custom schema conversion code. Complete an exercise to safely handle and restore the app's persistent background WorkManager states post-import by triggering a reactive database-resynchronization cycle in `CronJobScheduler`.
 - **Complexity**: Part 4
 
+### 24. Jetpack CameraX Advancements: Zoom, Post-Processing Effects, & ML Kit Scanner (20h)
+- **Reference**: `repo-android/docs/camera-applet-upgrade-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/CameraScreen.kt`
+- **Goal**: Master exact Jetpack CameraX integrations combining gestural interactions (pinch-to-zoom), reactive slider state mapping, custom CPU/GPU pixel processing filters, and real-time offline ML Kit Vision Barcode analyzers.
+- **Exercise**: Examine the complete production-grade implementation inside `CameraScreen.kt`. Build custom pinch gestures on the `AndroidView` wrapper, verify post-capture pixel filter translations in `takePhoto`, and implement a new, fifth creative visual filter (such as a dynamic Vignette or Retro VHS noise filter overlay) into the color matrix filtration kernel.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
