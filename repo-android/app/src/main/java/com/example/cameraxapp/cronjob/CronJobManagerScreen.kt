@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +32,7 @@ fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 title = { Text("Cronjob Manager") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -88,7 +88,7 @@ fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
         if (showCreateDialog) {
             JobEditorDialog(
                 onDismiss = { showCreateDialog = false },
-                onSave = { jobType, intervalMinutes, reqNet, reqCharge ->
+                onSave = { jobType, intervalMinutes, reqNet, reqCharge, url, fileName ->
                     scope.launch {
                         val newJob = CronJobEntity(
                             id = UUID.randomUUID().toString(),
@@ -96,7 +96,9 @@ fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                             intervalMinutes = intervalMinutes,
                             isEnabled = true,
                             requiresNetwork = reqNet,
-                            requiresCharging = reqCharge
+                            requiresCharging = reqCharge,
+                            downloadUrl = url,
+                            saveFileName = fileName
                         )
                         dao.insertJob(newJob)
                         CronJobScheduler.scheduleJob(context, newJob)
@@ -130,6 +132,11 @@ fun JobItemCard(
             Spacer(modifier = Modifier.height(4.dp))
             Text("Interval: ${job.intervalMinutes} mins")
             Text("Network Req: ${job.requiresNetwork} | Charging Req: ${job.requiresCharging}")
+            if (job.jobType == "HTTP_DOWNLOAD") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("URL: ${job.downloadUrl ?: "(none)"}", style = MaterialTheme.typography.bodySmall)
+                Text("File: ${job.saveFileName ?: "(none)"}", style = MaterialTheme.typography.bodySmall)
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onDelete, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                 Text("Delete")
@@ -141,14 +148,17 @@ fun JobItemCard(
 @Composable
 fun JobEditorDialog(
     onDismiss: () -> Unit,
-    onSave: (String, Int, Boolean, Boolean) -> Unit
+    onSave: (String, Int, Boolean, Boolean, String?, String?) -> Unit
 ) {
     var jobType by remember { mutableStateOf("CAMERA_CAPTURE") }
-    val jobTypes = listOf("CAMERA_CAPTURE", "WALLPAPER_CHANGER")
+    val jobTypes = listOf("CAMERA_CAPTURE", "WALLPAPER_CHANGER", "HTTP_DOWNLOAD")
     
     var intervalMinutes by remember { mutableStateOf(15f) }
     var reqNet by remember { mutableStateOf(false) }
     var reqCharge by remember { mutableStateOf(false) }
+
+    var downloadUrl by remember { mutableStateOf("") }
+    var saveFileName by remember { mutableStateOf("downloaded_file.jpg") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -160,7 +170,12 @@ fun JobEditorDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(
                             selected = jobType == type,
-                            onClick = { jobType = type }
+                            onClick = { 
+                                jobType = type
+                                if (type == "HTTP_DOWNLOAD") {
+                                    reqNet = true
+                                }
+                            }
                         )
                         Text(type)
                     }
@@ -183,11 +198,34 @@ fun JobEditorDialog(
                     Checkbox(checked = reqCharge, onCheckedChange = { reqCharge = it })
                     Text("Requires Charging")
                 }
+
+                if (jobType == "HTTP_DOWNLOAD") {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = downloadUrl,
+                        onValueChange = { downloadUrl = it },
+                        label = { Text("Download URL") },
+                        placeholder = { Text("https://example.com/api/data") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = saveFileName,
+                        onValueChange = { saveFileName = it },
+                        label = { Text("Save Filename") },
+                        placeholder = { Text("data.json") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
             }
         },
         confirmButton = {
             Button(onClick = { 
-                onSave(jobType, intervalMinutes.toInt(), reqNet, reqCharge) 
+                val finalUrl = if (jobType == "HTTP_DOWNLOAD") downloadUrl else null
+                val finalFileName = if (jobType == "HTTP_DOWNLOAD") saveFileName else null
+                onSave(jobType, intervalMinutes.toInt(), reqNet, reqCharge, finalUrl, finalFileName) 
             }) {
                 Text("Save")
             }

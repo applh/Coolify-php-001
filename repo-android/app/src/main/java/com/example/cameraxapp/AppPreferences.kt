@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
+import android.content.ContentValues
+import android.database.Cursor
+import org.json.JSONArray
+import com.example.cameraxapp.cronjob.CronJobDatabase
+import com.example.cameraxapp.cronjob.CronJobEntity
+import com.example.cameraxapp.cronjob.CronJobScheduler
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -127,12 +133,127 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun exportSettings(uri: Uri) {
         val preferences = context.dataStore.data.first()
-        val json = JSONObject()
+        val prefsJson = JSONObject()
         preferences.asMap().forEach { (key, value) ->
-            json.put(key.name, value)
+            prefsJson.put(key.name, value)
         }
+
+        val json = JSONObject()
+        json.put("preferences", prefsJson)
+
+        // 1. Export agenda_hub.db
+        val agendaHelper = AgendaDatabaseHelper(context)
+        val agendaDb = agendaHelper.readableDatabase
+        try {
+            json.put("agenda_events", exportTable(agendaDb, "agenda_events"))
+            json.put("alarms", exportTable(agendaDb, "alarms"))
+            json.put("agenda_cron_jobs", exportTable(agendaDb, "cron_jobs"))
+            json.put("agenda_cron_logs", exportTable(agendaDb, "cron_logs"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            agendaDb.close()
+        }
+
+        // 2. Export room_cron_jobs
+        val roomDb = CronJobDatabase.getDatabase(context)
+        try {
+            val jobs = roomDb.cronJobDao().getAllJobs()
+            val jobsArray = JSONArray()
+            jobs.forEach { job ->
+                jobsArray.put(cronJobToJSON(job))
+            }
+            json.put("room_cron_jobs", jobsArray)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         context.contentResolver.openOutputStream(uri)?.use {
             it.write(json.toString(4).toByteArray())
+        }
+    }
+
+    private fun exportTable(db: android.database.sqlite.SQLiteDatabase, tableName: String): JSONArray {
+        val jsonArray = JSONArray()
+        var cursor: Cursor? = null
+        try {
+            cursor = db.rawQuery("SELECT * FROM \"$tableName\"", null)
+            val columnNames = cursor.columnNames
+            if (cursor.moveToFirst()) {
+                do {
+                    val obj = JSONObject()
+                    for (i in columnNames.indices) {
+                        val colName = columnNames[i]
+                        when (cursor.getType(i)) {
+                            Cursor.FIELD_TYPE_NULL -> obj.put(colName, JSONObject.NULL)
+                            Cursor.FIELD_TYPE_INTEGER -> obj.put(colName, cursor.getLong(i))
+                            Cursor.FIELD_TYPE_FLOAT -> obj.put(colName, cursor.getDouble(i))
+                            Cursor.FIELD_TYPE_STRING -> obj.put(colName, cursor.getString(i))
+                            Cursor.FIELD_TYPE_BLOB -> { /* BLOB support optional, omitted for now */ }
+                        }
+                    }
+                    jsonArray.put(obj)
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor?.close()
+        }
+        return jsonArray
+    }
+
+    private fun cronJobToJSON(job: CronJobEntity): JSONObject {
+        return JSONObject().apply {
+            put("id", job.id)
+            put("jobType", job.jobType)
+            put("intervalMinutes", job.intervalMinutes)
+            put("isEnabled", job.isEnabled)
+            put("requiresNetwork", job.requiresNetwork)
+            put("requiresCharging", job.requiresCharging)
+            put("lastRunTimestamp", job.lastRunTimestamp)
+            put("nextRunTimestamp", job.nextRunTimestamp)
+            put("downloadUrl", job.downloadUrl ?: JSONObject.NULL)
+            put("saveFileName", job.saveFileName ?: JSONObject.NULL)
+        }
+    }
+
+    private fun jsonToCronJob(obj: JSONObject): CronJobEntity {
+        return CronJobEntity(
+            id = obj.getString("id"),
+            jobType = obj.getString("jobType"),
+            intervalMinutes = obj.getInt("intervalMinutes"),
+            isEnabled = obj.getBoolean("isEnabled"),
+            requiresNetwork = obj.optBoolean("requiresNetwork", false),
+            requiresCharging = obj.optBoolean("requiresCharging", false),
+            lastRunTimestamp = obj.optLong("lastRunTimestamp", 0L),
+            nextRunTimestamp = obj.optLong("nextRunTimestamp", 0L),
+            downloadUrl = if (obj.isNull("downloadUrl")) null else obj.getString("downloadUrl"),
+            saveFileName = if (obj.isNull("saveFileName")) null else obj.getString("saveFileName")
+        )
+    }
+
+    private fun importTable(db: android.database.sqlite.SQLiteDatabase, tableName: String, jsonArray: JSONArray) {
+        db.execSQL("DELETE FROM \"$tableName\"")
+        for (idx in 0 until jsonArray.length()) {
+            val obj = jsonArray.getJSONObject(idx)
+            val values = ContentValues()
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                if (obj.isNull(key)) {
+                    values.putNull(key)
+                } else {
+                    when (val item = obj.get(key)) {
+                        is Int -> values.put(key, item)
+                        is Long -> values.put(key, item)
+                        is Double -> values.put(key, item)
+                        is Boolean -> values.put(key, if (item) 1 else 0)
+                        is String -> values.put(key, item)
+                    }
+                }
+            }
+            db.insert(tableName, null, values)
         }
     }
 
@@ -140,17 +261,69 @@ class SettingsRepository(private val context: Context) {
         try {
             val jsonText = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: return
             val json = JSONObject(jsonText)
+            
+            // Check consolidated format vs legacy flat format
+            val hasPreferencesObject = json.has("preferences")
+            val prefsToImport = if (hasPreferencesObject) {
+                json.getJSONObject("preferences")
+            } else {
+                json
+            }
+
+            // Restore preferences DataStore
             context.dataStore.edit { preferences ->
-                val keys = json.keys()
+                val keys = prefsToImport.keys()
                 while (keys.hasNext()) {
                     val keyName = keys.next()
-                    when (val value = json.get(keyName)) {
+                    when (val value = prefsToImport.get(keyName)) {
                         is Int -> preferences[intPreferencesKey(keyName)] = value
                         is Boolean -> preferences[booleanPreferencesKey(keyName)] = value
                         is String -> preferences[stringPreferencesKey(keyName)] = value
                         is Float -> preferences[floatPreferencesKey(keyName)] = value
                         is Double -> preferences[doublePreferencesKey(keyName)] = value
                         is Long -> preferences[longPreferencesKey(keyName)] = value
+                    }
+                }
+            }
+
+            // Restore SQLite / AgendaDatabaseHelper databases
+            if (hasPreferencesObject) {
+                val agendaHelper = AgendaDatabaseHelper(context)
+                val agendaDb = agendaHelper.writableDatabase
+                try {
+                    if (json.has("agenda_events")) {
+                        importTable(agendaDb, "agenda_events", json.getJSONArray("agenda_events"))
+                    }
+                    if (json.has("alarms")) {
+                        importTable(agendaDb, "alarms", json.getJSONArray("alarms"))
+                    }
+                    if (json.has("agenda_cron_jobs")) {
+                        importTable(agendaDb, "cron_jobs", json.getJSONArray("agenda_cron_jobs"))
+                    }
+                    if (json.has("agenda_cron_logs")) {
+                        importTable(agendaDb, "cron_logs", json.getJSONArray("agenda_cron_logs"))
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    agendaDb.close()
+                }
+
+                // Restore Room / CronJobDatabase database
+                if (json.has("room_cron_jobs")) {
+                    val roomDb = CronJobDatabase.getDatabase(context)
+                    try {
+                        roomDb.openHelper.writableDatabase.execSQL("DELETE FROM cron_jobs")
+                        val jobsArray = json.getJSONArray("room_cron_jobs")
+                        for (idx in 0 until jobsArray.length()) {
+                            val jobObj = jobsArray.getJSONObject(idx)
+                            val job = jsonToCronJob(jobObj)
+                            roomDb.cronJobDao().insertJob(job)
+                        }
+                        // Re-sync imported cronjobs to WorkManager
+                        CronJobScheduler.syncJobsFromDatabase(context)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
             }

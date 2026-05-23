@@ -139,5 +139,23 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Explore the `CronJobScheduler` and `DynamicRouterWorker`. Add a new generic job type (e.g., "Network Sync") to the `CronJobDatabase` via Jetpack Compose UI, schedule it using the scheduler wrapper, and verify it executes without requiring a foreground service promotion. Modify the worker router to handle this new type appropriately.
 - **Complexity**: Part 5
 
+### 21. Android Jetpack Compose Icon Migration and Deprecation Resolution (10h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/cronjob/CronJobManagerScreen.kt`
+- **Goal**: Understand the architectural design patterns of modern material design assets inside Jetpack Compose, specifically the transition from standard `Icons.Filled`/`Icons.Default` collections to unidirectional/internationalized `Icons.AutoMirrored.Filled` equivalents.
+- **Exercise**: Learn to spot and resolve Android compiler warnings indicating icon deprecations, modify references from `Icons.Default.ArrowBack` to `Icons.AutoMirrored.Filled.ArrowBack`, and ensure correct package import optimization without leaving orphan imports.
+- **Complexity**: Part 2
+
+### 22. Scheduled Background Internet Downloader & Zero-Copy I/O (15h)
+- **Reference**: `repo-android/docs/internet-download-cronjob-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/cronjob/`
+- **Goal**: Master high-performance background networking, WorkManager schedules with connectivity constraints, and SQLite / Room schema migrations in Android.
+- **Exercise**: Extend the local `CronJobEntity` database model to store nullable `downloadUrl` and `saveFileName` configurations. Update `DynamicRouterWorker.kt` to intercept `"HTTP_DOWNLOAD"` request types and implement a buffered streaming routine ($O(1)$ RAM footprint) that writes response bodies byte-by-byte into the app's standard local directory, gracefully retrying on socket timeouts or low storage alerts.
+- **Complexity**: Part 4
+
+### 23. Consolidated Backup & Restore of Multi-Database and DataStore States (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AppPreferences.kt`
+- **Goal**: Master application-state saving and restoring across multiple storage mediums (Android DataStore, custom SQLiteOpenHelper, Room / SQLite DB) into a unified backup JSON payload.
+- **Exercise**: Explore the updated `exportSettings` and `importSettings` implementations in `AppPreferences.kt`. Learn how to use Android SQL Cursor type reflection to generically serialize database columns dynamically without custom schema conversion code. Complete an exercise to safely handle and restore the app's persistent background WorkManager states post-import by triggering a reactive database-resynchronization cycle in `CronJobScheduler`.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

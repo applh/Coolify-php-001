@@ -12,5 +12,7 @@ data class CronJobEntity(
     val requiresNetwork: Boolean = false,
     val requiresCharging: Boolean = false,
     val lastRunTimestamp: Long = 0L,
-    val nextRunTimestamp: Long = 0L
+    val nextRunTimestamp: Long = 0L,
+    val downloadUrl: String? = null,
+    val saveFileName: String? = null
 )

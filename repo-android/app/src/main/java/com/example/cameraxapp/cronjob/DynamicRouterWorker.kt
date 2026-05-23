@@ -30,6 +30,7 @@ class DynamicRouterWorker(
             when (jobType) {
                 "CAMERA_CAPTURE" -> handleCameraCapture()
                 "WALLPAPER_CHANGER" -> handleWallpaperChanger()
+                "HTTP_DOWNLOAD" -> handleHttpDownload(job)
                 else -> {
                     Log.w("DynamicRouterWorker", "Unknown jobType: $jobType")
                     Result.success()
@@ -161,6 +162,54 @@ class DynamicRouterWorker(
         } else {
             Log.w("DynamicRouterWorker", "Wallpaper rotation skipped: No images found.")
             return Result.success() // Success because there's just nothing to do
+        }
+    }
+
+    private suspend fun handleHttpDownload(job: CronJobEntity): Result {
+        Log.d("DynamicRouterWorker", "Handling HTTP_DOWNLOAD...")
+        val urlString = job.downloadUrl
+        val fileName = job.saveFileName
+
+        if (urlString.isNullOrBlank() || fileName.isNullOrBlank()) {
+            Log.e("DynamicRouterWorker", "Missing download url or save file name config.")
+            return Result.failure()
+        }
+
+        // Post progress / status notification
+        val notificationId = 9988
+        val channelId = "CRON_DOWNLOAD_CHANNEL"
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "File Downloads",
+                android.app.NotificationManager.IMPORTANCE_LOW
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = androidx.core.app.NotificationCompat.Builder(applicationContext, channelId)
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setContentTitle("Scheduled Download Worker")
+            .setContentText("Downloading: $fileName")
+            .setOngoing(true)
+            .build()
+
+        val foregroundInfo = androidx.work.ForegroundInfo(notificationId, notification)
+        try {
+            setForeground(foregroundInfo)
+        } catch (e: Exception) {
+            Log.e("DynamicRouterWorker", "Failed to elevate task to foreground context", e)
+        }
+
+        val downloadedFile = FileDownloader.downloadFile(applicationContext, urlString, fileName)
+        return if (downloadedFile != null && downloadedFile.exists()) {
+            Log.i("DynamicRouterWorker", "HTTP_DOWNLOAD succeeded: ${downloadedFile.absolutePath}")
+            Result.success()
+        } else {
+            Log.e("DynamicRouterWorker", "HTTP_DOWNLOAD failed")
+            Result.retry()
         }
     }
 }
