@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     val coroutineScope = rememberCoroutineScope()
@@ -69,7 +69,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
@@ -77,6 +77,11 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         IconButton(onClick = onOpenDrawer) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )

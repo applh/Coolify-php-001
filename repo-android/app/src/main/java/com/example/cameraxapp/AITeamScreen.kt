@@ -762,7 +762,7 @@ class AITeamViewModel(private val repository: SettingsRepository, context: Conte
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
 
@@ -845,109 +845,6 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     .fillMaxHeight()
                     .padding(bottom = 8.dp)
             ) {
-                // Toolbar Layout
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        IconButton(onClick = onOpenDrawer) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Open App Drawer",
-                                tint = Color.White
-                            )
-                        }
-                        
-                        // Mobile past sessions history expander icon
-                        if (!isTabletSize) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(onClick = { mobileSidebarDropdownToggled = true }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.List,
-                                    contentDescription = "Show Past Dialogues",
-                                    tint = LavenderTint
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            color = LavenderTint,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = OnPrimaryPurple,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Lumina Team",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontFamily = FontFamily.SansSerif
-                                ),
-                                color = Color.White
-                            )
-                            Text(
-                                text = "MULTI-TURN SESSION HUB",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                ),
-                                color = LavenderTint
-                            )
-                        }
-                    }
-
-                    // Flush Dialogue / Return home
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { showAiTeamSettingsDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Configure AI Storage Options",
-                                tint = LavenderTint
-                            )
-                        }
-                        IconButton(onClick = { viewModel.clearActiveSessionMessages() }) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Clear Current Dialogue history",
-                                tint = Color.LightGray
-                            )
-                        }
-                        Surface(
-                            onClick = onBack,
-                            shape = RoundedCornerShape(20.dp),
-                            color = SlatePurple,
-                            border = BorderStroke(1.dp, BorderColor),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                        }
-                    }
-                }
-
-                HorizontalDivider(color = BorderColor)
-
                 // Main dialogue feed scrolling viewport
                 Box(
                     modifier = Modifier
@@ -1039,6 +936,116 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                     ratioStr = aiRatioPreset,
                     sizeStr = aiSizePreset
                 )
+
+                HorizontalDivider(color = BorderColor)
+
+                // Toolbar Layout
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open App Drawer",
+                                tint = Color.White
+                            )
+                        }
+                        
+                        // Mobile past sessions history expander icon
+                        if (!isTabletSize) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(onClick = { mobileSidebarDropdownToggled = true }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.List,
+                                    contentDescription = "Show Past Dialogues",
+                                    tint = LavenderTint
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = LavenderTint,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = OnPrimaryPurple,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Lumina Team",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontFamily = FontFamily.SansSerif
+                                ),
+                                color = Color.White
+                            )
+                            Text(
+                                text = "MULTI-TURN SESSION HUB",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = LavenderTint
+                            )
+                        }
+                    }
+
+                    // Flush Dialogue / Return home
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { showAiTeamSettingsDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Configure AI Storage Options",
+                                tint = LavenderTint
+                            )
+                        }
+                        IconButton(onClick = { viewModel.clearActiveSessionMessages() }) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Clear Current Dialogue history",
+                                tint = Color.LightGray
+                            )
+                        }
+                        IconButton(onClick = onOpenRightDrawer) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Quick Tools",
+                                tint = Color.White
+                            )
+                        }
+                        Surface(
+                            onClick = onBack,
+                            shape = RoundedCornerShape(20.dp),
+                            color = SlatePurple,
+                            border = BorderStroke(1.dp, BorderColor),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
+                    }
+                }
             }
         }
 

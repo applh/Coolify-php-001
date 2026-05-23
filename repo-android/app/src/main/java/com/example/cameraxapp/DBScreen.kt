@@ -749,7 +749,7 @@ class DBViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DBScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun DBScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val viewModel: DBViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 
@@ -784,7 +784,7 @@ fun DBScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var activeTabIdx by remember { mutableStateOf(0) } // 0: Rows Grid, 1: Columns Schema, 2: SQL Terminal, 3: Diagnostics
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = {
                     Column {
@@ -807,6 +807,9 @@ fun DBScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         IconButton(onClick = { viewModel.closeDatabase() }) {
                             Icon(Icons.Default.Close, contentDescription = "Disconnect")
                         }
+                    }
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )

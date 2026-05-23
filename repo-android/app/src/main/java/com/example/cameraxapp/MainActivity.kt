@@ -205,11 +205,19 @@ class MainActivity : ComponentActivity() {
                                     Box(modifier = Modifier.fillMaxSize()) {
                                         NavHost(navController = navController, startDestination = "hub", modifier = Modifier.fillMaxSize()) {
                                             composable("hub") {
-                                                HubScreen(navController, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                HubScreen(
+                                                    navController = navController,
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("camera") {
                                                 if (isGranted) {
-                                                    CameraScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                    CameraScreen(
+                                                        onBack = { navController.popBackStack() },
+                                                        onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                        onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                    )
                                                 } else {
                                                     PermissionRequestScreen(
                                                         onRequestPermission = {
@@ -222,47 +230,60 @@ class MainActivity : ComponentActivity() {
                                                             }
                                                             permissionsLauncher.launch(perms.toTypedArray())
                                                         },
-                                                        onOpenDrawer = { scope.launch { leftDrawerState.open() } }
+                                                        onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                        onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
                                                     )
                                                 }
                                             }
                                             composable("explorer") {
-                                                ExplorerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                ExplorerScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("ai_team") {
-                                                AITeamScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                AITeamScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("cronjobs") {
-                                                com.example.cameraxapp.cronjob.CronJobManagerScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                com.example.cameraxapp.cronjob.CronJobManagerScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("db") {
-                                                DBScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                DBScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("agenda") {
-                                                AgendaScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                AgendaScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("wallpaper") {
-                                                WallpaperScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                WallpaperScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
                                             composable("settings") {
-                                                SettingsScreen(onBack = { navController.popBackStack() }, onOpenDrawer = { scope.launch { leftDrawerState.open() } })
+                                                SettingsScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
                                             }
-                                        }
-                                        
-                                        // Floating Action Button on Center Right
-                                        SmallFloatingActionButton(
-                                            onClick = { scope.launch { rightDrawerState.open() } },
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .padding(end = 0.dp),
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                                topStart = 8.dp,
-                                                bottomStart = 8.dp,
-                                                topEnd = 0.dp,
-                                                bottomEnd = 0.dp
-                                            )
-                                        ) {
-                                            Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                                         }
                                     }
                                 }
@@ -299,7 +320,7 @@ data class AppletInfo(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
+fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val applets = listOf(
         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
         AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
@@ -312,12 +333,17 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit) {
     )
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("🍓FRAISE") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )
@@ -387,14 +413,19 @@ fun AppletCard(applet: AppletInfo, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PermissionRequestScreen(onRequestPermission: () -> Unit, onOpenDrawer: () -> Unit) {
+fun PermissionRequestScreen(onRequestPermission: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("Camera Permission") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )

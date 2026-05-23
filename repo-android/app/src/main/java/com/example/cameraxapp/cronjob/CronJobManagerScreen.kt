@@ -17,7 +17,7 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val database = remember { CronJobDatabase.getDatabase(context) }
     val dao = remember { database.cronJobDao() }
@@ -27,7 +27,7 @@ fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     var showCreateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("Cronjob Manager") },
                 navigationIcon = {
@@ -38,6 +38,9 @@ fun CronJobManagerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 actions = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )

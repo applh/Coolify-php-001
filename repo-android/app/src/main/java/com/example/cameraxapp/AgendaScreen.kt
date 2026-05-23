@@ -371,7 +371,7 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val viewModel: AgendaViewModel = viewModel(factory = AgendaViewModelFactory(context))
 
@@ -406,7 +406,7 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("🍓 Fraise Agenda Hub") },
                 navigationIcon = {
@@ -417,6 +417,9 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 actions = {
                     IconButton(onClick = { viewModel.loadData() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Sync Data")
+                    }
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )

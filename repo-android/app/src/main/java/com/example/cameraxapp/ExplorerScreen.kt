@@ -37,7 +37,7 @@ enum class SortOption { DATE_DESC, DATE_ASC, NAME_ASC, SIZE_DESC }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     val storageLocation by repository.storageLocation.collectAsState(initial = 0)
@@ -102,7 +102,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
         }
 
         Scaffold(
-            topBar = {
+            bottomBar = {
                 if (isSelectionMode) {
                     TopAppBar(
                         title = { Text("${selectedFiles.size} selected") },
@@ -204,6 +204,9 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                                         onClick = { sortOption = SortOption.SIZE_DESC; showSortMenu = false }
                                     )
                                 }
+                            }
+                            IconButton(onClick = onOpenRightDrawer) {
+                                Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                             }
                         }
                     )
@@ -380,7 +383,7 @@ fun FullScreenMedia(file: File, onClose: () -> Unit, onDelete: (File) -> Unit) {
     }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { 
                     Column {

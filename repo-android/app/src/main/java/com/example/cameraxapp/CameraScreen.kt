@@ -62,7 +62,7 @@ import kotlin.math.atan2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val repository = remember { SettingsRepository(context) }
     
@@ -158,7 +158,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text(if (captureMode == "PHOTO") "Camera" else "Video") },
                 navigationIcon = {
@@ -168,7 +168,11 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                         }
                     }
                 },
-                actions = {},
+                actions = {
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
                 )

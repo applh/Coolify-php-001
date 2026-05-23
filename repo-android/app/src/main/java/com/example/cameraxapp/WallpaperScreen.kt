@@ -44,7 +44,7 @@ data class WallpaperItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
+fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
     val context = LocalContext.current
     val dbHelper = remember { AgendaDatabaseHelper(context) }
     val settingsRepo = remember { SettingsRepository(context) }
@@ -147,7 +147,7 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
     }
 
     Scaffold(
-        topBar = {
+        bottomBar = {
             TopAppBar(
                 title = { Text("Wallpaper Rotator") },
                 navigationIcon = {
@@ -158,6 +158,9 @@ fun WallpaperScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit) {
                 actions = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                    IconButton(onClick = onOpenRightDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
                     }
                 }
             )
