@@ -270,7 +270,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
             )
         }
     ) { padding ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -289,6 +289,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     }
                 }
         ) {
+            val isPortrait = maxWidth < maxHeight
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 imageCapture = imageCapture,
@@ -460,25 +461,27 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = 48.dp, start = 32.dp)
-            ) {
-                // Last Image Thumbnail
+            if (!isPortrait) {
                 Box(
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = 48.dp, start = 32.dp)
                 ) {
-                    if (lastCapturedImageUri != null) {
-                        Image(
-                            painter = rememberAsyncImagePainter(lastCapturedImageUri),
-                            contentDescription = "Last Image",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .clickable { }, // Nav to explorer could be here but for now just clickable
-                            contentScale = ContentScale.Crop
-                        )
+                    // Last Image Thumbnail
+                    Box(
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        if (lastCapturedImageUri != null) {
+                            Image(
+                                painter = rememberAsyncImagePainter(lastCapturedImageUri),
+                                contentDescription = "Last Image",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .clickable { }, // Nav to explorer could be here but for now just clickable
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
                 }
             }
@@ -494,7 +497,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 120.dp),
+                            .padding(bottom = if (isPortrait) 112.dp else 48.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Quick Presets
@@ -670,150 +673,340 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Flash button
-                IconButton(
-                    onClick = { flashModeState = (flashModeState + 1) % 3 },
-                    modifier = Modifier.size(48.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+            if (isPortrait) {
+                // Flash, Grid, Mode, Filter Row (Centered at Bottom)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 180.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = when(flashModeState) {
-                            1 -> "ON"
-                            0 -> "OFF"
-                            else -> "AUTO"
-                        },
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                
-                // Grid button
-                IconButton(
-                    onClick = { coroutineScope.launch { repository.setShowGrid(!showGrid) } },
-                    modifier = Modifier.size(48.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                ) {
-                    Text(
-                        text = if (showGrid) "GRID" else "#",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
+                    // Flash button
+                    IconButton(
+                        onClick = { flashModeState = (flashModeState + 1) % 3 },
+                        modifier = Modifier.size(44.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent)
+                    ) {
+                        Text(
+                            text = when(flashModeState) {
+                                1 -> "ON"
+                                0 -> "OFF"
+                                else -> "AUTO"
+                            },
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    
+                    // Grid button
+                    IconButton(
+                        onClick = { coroutineScope.launch { repository.setShowGrid(!showGrid) } },
+                        modifier = Modifier.size(44.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent)
+                    ) {
+                        Text(
+                            text = if (showGrid) "GRID" else "#",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
 
-                // Advanced Camera/Video/Scan Mode Toggle Cycle
-                IconButton(
-                    onClick = { 
-                        captureMode = when(captureMode) {
-                            "PHOTO" -> "VIDEO"
-                            "VIDEO" -> "SCAN"
-                            else -> "PHOTO"
+                    // Advanced Camera/Video/Scan Mode Toggle Cycle
+                    IconButton(
+                        onClick = { 
+                            captureMode = when(captureMode) {
+                                "PHOTO" -> "VIDEO"
+                                "VIDEO" -> "SCAN"
+                                else -> "PHOTO"
+                            }
+                        },
+                        modifier = Modifier.size(44.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent)
+                    ) {
+                        Text(
+                            text = when(captureMode) {
+                                "PHOTO" -> "📸"
+                                "VIDEO" -> "📹"
+                                else -> "🔍"
+                            },
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    // Dynamic Live Film Filters Toggle Key (Cycles Sepia, Grayscale, etc)
+                    if (captureMode == "PHOTO") {
+                        IconButton(
+                            onClick = {
+                                selectedFilter = when(selectedFilter) {
+                                    "NORMAL" -> "GRAYSCALE"
+                                    "GRAYSCALE" -> "SEPIA"
+                                    "SEPIA" -> "INVERT"
+                                    "INVERT" -> "WARM"
+                                    else -> "NORMAL"
+                                }
+                            },
+                            modifier = Modifier.size(44.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Transparent)
+                        ) {
+                            Text(
+                                text = when(selectedFilter) {
+                                    "NORMAL" -> "🎨"
+                                    "GRAYSCALE" -> "⬜"
+                                    "SEPIA" -> "🟫"
+                                    "INVERT" -> "🔲"
+                                    else -> "🔥"
+                                },
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
-                    },
-                    modifier = Modifier.size(48.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                ) {
-                    Text(
-                        text = when(captureMode) {
-                            "PHOTO" -> "📸"
-                            "VIDEO" -> "📹"
-                            else -> "🔍"
-                        },
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    }
                 }
 
-                // Dynamic Live Film Filters Toggle Key (Cycles Sepia, Grayscale, etc)
-                if (captureMode == "PHOTO") {
+                // Primary ergonomic control layout: Gallery Thumbnail | Large Capture Trigger | Lens Reverse Switcher
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Gallery Thumbnail
+                    Box(
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        if (lastCapturedImageUri != null) {
+                            Image(
+                                painter = rememberAsyncImagePainter(lastCapturedImageUri),
+                                contentDescription = "Last Image",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .clickable { },
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.3f))
+                            )
+                        }
+                    }
+
+                    // Centered Camera Trigger
                     IconButton(
                         onClick = {
-                            selectedFilter = when(selectedFilter) {
-                                "NORMAL" -> "GRAYSCALE"
-                                "GRAYSCALE" -> "SEPIA"
-                                "SEPIA" -> "INVERT"
-                                "INVERT" -> "WARM"
-                                else -> "NORMAL"
+                            if (captureMode == "PHOTO") {
+                                takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
+                                    lastCapturedImageUri = uri
+                                }
+                            } else if (captureMode == "VIDEO") {
+                                if (recording != null) {
+                                    recording?.stop()
+                                    recording = null
+                                } else {
+                                    recording = startVideoRecording(
+                                        context, 
+                                        videoCapture, 
+                                        ContextCompat.getMainExecutor(context), 
+                                        storageLocation, 
+                                        enableAudio,
+                                        onVideoSaved = { uri ->
+                                            lastCapturedImageUri = uri
+                                        },
+                                        onDurationUpdate = { nanos ->
+                                            recordingDurationNanos = nanos
+                                        }
+                                    )
+                                }
+                            } else {
+                                // SCAN QR Mode: Press the capture button to reset scanner
+                                scannedBarcode = null
+                                showScanResultDialog = false
+                                isScanningPaused = false
+                            }
+                        },
+                        modifier = Modifier.size(80.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = if (recording != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = "Capture",
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+
+                    // Switch Camera Lens Trigger
+                    IconButton(
+                        onClick = {
+                            lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
+                                CameraSelector.LENS_FACING_FRONT 
+                            else 
+                                CameraSelector.LENS_FACING_BACK
+                        },
+                        modifier = Modifier.size(56.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+                    ) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
+                    }
+                }
+            } else {
+                // Landscape Edge Control Panel
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 24.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Flash button
+                    IconButton(
+                        onClick = { flashModeState = (flashModeState + 1) % 3 },
+                        modifier = Modifier.size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    ) {
+                        Text(
+                            text = when(flashModeState) {
+                                1 -> "ON"
+                                0 -> "OFF"
+                                else -> "AUTO"
+                            },
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    
+                    // Grid button
+                    IconButton(
+                        onClick = { coroutineScope.launch { repository.setShowGrid(!showGrid) } },
+                        modifier = Modifier.size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    ) {
+                        Text(
+                            text = if (showGrid) "GRID" else "#",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+
+                    // Advanced Camera/Video/Scan Mode Toggle Cycle
+                    IconButton(
+                        onClick = { 
+                            captureMode = when(captureMode) {
+                                "PHOTO" -> "VIDEO"
+                                "VIDEO" -> "SCAN"
+                                else -> "PHOTO"
                             }
                         },
                         modifier = Modifier.size(48.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                     ) {
                         Text(
-                            text = when(selectedFilter) {
-                                "NORMAL" -> "🎨"
-                                "GRAYSCALE" -> "⬜"
-                                "SEPIA" -> "🟫"
-                                "INVERT" -> "🔲"
-                                else -> "🔥"
+                            text = when(captureMode) {
+                                "PHOTO" -> "📸"
+                                "VIDEO" -> "📹"
+                                else -> "🔍"
                             },
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                }
 
-                // Lens switch
-                IconButton(
-                    onClick = {
-                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
-                            CameraSelector.LENS_FACING_FRONT 
-                        else 
-                            CameraSelector.LENS_FACING_BACK
-                    },
-                    modifier = Modifier.size(48.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Dynamic Capture Action Button
-                IconButton(
-                    onClick = {
-                        if (captureMode == "PHOTO") {
-                            takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
-                                lastCapturedImageUri = uri
-                            }
-                        } else if (captureMode == "VIDEO") {
-                            if (recording != null) {
-                                recording?.stop()
-                                recording = null
-                            } else {
-                                recording = startVideoRecording(
-                                    context, 
-                                    videoCapture, 
-                                    ContextCompat.getMainExecutor(context), 
-                                    storageLocation, 
-                                    enableAudio,
-                                    onVideoSaved = { uri ->
-                                        lastCapturedImageUri = uri
-                                    },
-                                    onDurationUpdate = { nanos ->
-                                        recordingDurationNanos = nanos
-                                    }
-                                )
-                            }
-                        } else {
-                            // SCAN QR Mode: Press the capture button to reset scanner
-                            scannedBarcode = null
-                            showScanResultDialog = false
-                            isScanningPaused = false
+                    // Dynamic Live Film Filters Toggle Key (Cycles Sepia, Grayscale, etc)
+                    if (captureMode == "PHOTO") {
+                        IconButton(
+                            onClick = {
+                                selectedFilter = when(selectedFilter) {
+                                    "NORMAL" -> "GRAYSCALE"
+                                    "GRAYSCALE" -> "SEPIA"
+                                    "SEPIA" -> "INVERT"
+                                    "INVERT" -> "WARM"
+                                    else -> "NORMAL"
+                                }
+                            },
+                            modifier = Modifier.size(48.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                        ) {
+                            Text(
+                                text = when(selectedFilter) {
+                                    "NORMAL" -> "🎨"
+                                    "GRAYSCALE" -> "⬜"
+                                    "SEPIA" -> "🟫"
+                                    "INVERT" -> "🔲"
+                                    else -> "🔥"
+                                },
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
-                    },
-                    modifier = Modifier.size(80.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (recording != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Capture",
-                        modifier = Modifier.size(40.dp)
-                    )
+                    }
+
+                    // Lens switch
+                    IconButton(
+                        onClick = {
+                            lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) 
+                                CameraSelector.LENS_FACING_FRONT 
+                            else 
+                                CameraSelector.LENS_FACING_BACK
+                        },
+                        modifier = Modifier.size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+                    ) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Switch Camera")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Dynamic Capture Action Button
+                    IconButton(
+                        onClick = {
+                            if (captureMode == "PHOTO") {
+                                takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
+                                    lastCapturedImageUri = uri
+                                }
+                            } else if (captureMode == "VIDEO") {
+                                if (recording != null) {
+                                    recording?.stop()
+                                    recording = null
+                                } else {
+                                    recording = startVideoRecording(
+                                        context, 
+                                        videoCapture, 
+                                        ContextCompat.getMainExecutor(context), 
+                                        storageLocation, 
+                                        enableAudio,
+                                        onVideoSaved = { uri ->
+                                            lastCapturedImageUri = uri
+                                        },
+                                        onDurationUpdate = { nanos ->
+                                            recordingDurationNanos = nanos
+                                        }
+                                    )
+                                }
+                            } else {
+                                // SCAN QR Mode: Press the capture button to reset scanner
+                                scannedBarcode = null
+                                showScanResultDialog = false
+                                isScanningPaused = false
+                            }
+                        },
+                        modifier = Modifier.size(64.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = if (recording != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = "Capture",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
         }

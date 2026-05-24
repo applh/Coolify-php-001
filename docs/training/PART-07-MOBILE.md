@@ -163,5 +163,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Examine the complete production-grade implementation inside `CameraScreen.kt`. Build custom pinch gestures on the `AndroidView` wrapper, verify post-capture pixel filter translations in `takePhoto`, and implement a new, fifth creative visual filter (such as a dynamic Vignette or Retro VHS noise filter overlay) into the color matrix filtration kernel.
 - **Complexity**: Part 4
 
+### 25. Responsive Jetpack Compose Camera Layout & Orientation-Aware UX (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/CameraScreen.kt`
+- **Goal**: Master orientation-aware UI design patterns in modern Jetpack Compose using `BoxWithConstraints`. Learn how to dynamically adapt complex interfaces, HUD overlays, and button configurations between portrait and landscape modes of a smartphone / tablet.
+- **Exercise**: Implement a responsive camera control layer that adapts dynamically. Switch between a portrait ergonomically bottom-centered double row (utilities row and action buttons row) and a landscape sidebar layout. Ensure seamless state retention (e.g., zoom, current flash mode, filters) during orientation changes.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
