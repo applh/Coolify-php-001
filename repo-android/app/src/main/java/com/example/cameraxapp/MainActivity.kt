@@ -53,7 +53,14 @@ import com.example.cameraxapp.ui.theme.CameraXAppTheme
 import androidx.compose.material.icons.filled.Search
 import kotlinx.coroutines.launch
 
+import com.example.cameraxapp.core.di.AppDependencyContainer
+import com.example.cameraxapp.core.framework.AppletRegistry
+import com.example.cameraxapp.core.framework.impl.BrowserApplet
+import com.example.cameraxapp.core.framework.impl.ExplorerApplet
+
 class MainActivity : ComponentActivity() {
+
+    private lateinit var appDependencyContainer: AppDependencyContainer
 
     private val permissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -72,6 +79,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        appDependencyContainer = AppDependencyContainer(applicationContext)
+        AppletRegistry.register(BrowserApplet(appDependencyContainer))
+        AppletRegistry.register(ExplorerApplet())
 
         updatePermissionState()
         
@@ -101,7 +112,7 @@ class MainActivity : ComponentActivity() {
         }.start()
 
         setContent {
-            val repository = remember { SettingsRepository(this) }
+            val repository = remember { appDependencyContainer.settingsRepository }
             val themeMode by repository.themeMode.collectAsState(initial = 0)
             val colorTheme by repository.colorTheme.collectAsState(initial = 0)
             val useDarkTheme = when (themeMode) {
@@ -281,12 +292,15 @@ class MainActivity : ComponentActivity() {
                                                     )
                                                 }
                                             }
-                                            composable("explorer") {
-                                                ExplorerScreen(
-                                                    onBack = { navController.popBackStack() },
-                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
-                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
-                                                )
+                                            // Dynamic loop handling for registered platform plugin applets
+                                            com.example.cameraxapp.core.framework.AppletRegistry.registeredApplets.forEach { applet ->
+                                                composable(applet.id) {
+                                                    applet.Content(
+                                                        navController = navController,
+                                                        onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                        onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                    )
+                                                }
                                             }
                                             composable("ai_team") {
                                                 AITeamScreen(
@@ -337,20 +351,7 @@ class MainActivity : ComponentActivity() {
                                                     onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
                                                 )
                                             }
-                                            composable("browser") {
-                                                val context = androidx.compose.ui.platform.LocalContext.current
-                                                val dbHelper = remember { com.example.cameraxapp.browser.BrowserDatabaseHelper(context) }
-                                                val dlManager = remember { com.example.cameraxapp.browser.BrowserDownloadManager(context) }
-                                                val browserViewModel = remember { com.example.cameraxapp.browser.BrowserViewModel(dbHelper, dlManager) }
-                                                val geminiApiKeySaved by repository.geminiApiKey.collectAsState(initial = "")
-                                                
-                                                com.example.cameraxapp.browser.BrowserScreen(
-                                                    viewModel = browserViewModel,
-                                                    apiKey = geminiApiKeySaved,
-                                                     onBackToHub = { navController.popBackStack() },
-                                                     modifier = Modifier.fillMaxSize()
-                                                )
-                                            }
+                                            // Static fallback browser route removed and delegated fully to AppletRegistry plugins pipeline
                                         }
                                     }
                                 }

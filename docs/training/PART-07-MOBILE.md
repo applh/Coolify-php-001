@@ -193,5 +193,17 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Review the full `media-manager-plan.md` and `ExplorerScreen.kt` implementations. Create an exercise where students configure a secondary key salt for the XOR stream cipher, implement a PIN reset flow requiring a master override pattern (e.g. entering "1234" three times securely prompts a SharedPreferences clear), and write an automated test ensuring that encrypted file structures remain scrambled and corrupted unless unlocked through the specific `SimpleCryptor` transformation.
 - **Complexity**: Part 4
 
+### 30. Android Architectural Layering, Safe SQL, and Standardized Dependency Injection (20h)
+- **Reference**: `repo-android/docs/architectural-improvements-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/`
+- **Goal**: Master the modular refactoring and isolation of monolithic ViewModels and Screens into Clean Architecture layers. Understand standard ViewModel factories, custom lifecycle-aware custom dependency injection (Service Locator Pattern), and thread-safe dynamic database streaming cursors targeting local Android filesystem DBs.
+- **Exercise**: Implement the custom `AppDependencyContainer` and a matching `FeatureViewModelFactory` inside the Android codebase. Create a secure, safe query higher-order Kotlin extension function `safeQuery` on top of native `SQLiteDatabase` cursors to automatically prevent locked SQL database connections, and refactor a chosen monolithic screen's DB requests to use the safe query container via injected layers.
+- **Complexity**: Part 5
+
+### 31. Dynamic Plugin-Driven Applet Framework Contract and Registry (20h)
+- **Reference**: `repo-android/docs/applet-plugin-framework-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/`
+- **Goal**: Understand the design and execution of modular, plug-and-play app architectures using shared dynamic interfaces, reflection-free plugin registries, automated Compose permission gateways, and asynchronous event bus lines using standard Kotlin SharedFlow pipelines safely.
+- **Exercise**: Review the full dynamic framework specification highlighted in `applet-plugin-framework-plan.md`. Implement the unified `Applet` contract, construct an `AppletRegistry` single provider, bind navigation routing directly to live registrants using an automated `forEach` loop in `MainActivity.kt`, and build an asynchronous dispatch test verifying that missing permissions are checked on navigation endpoints automatically.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
