@@ -41,6 +41,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val aiRatio by repository.aiRatio.collectAsState(initial = "1:1")
     val aiSize by repository.aiSize.collectAsState(initial = "1K")
     val publicGalleryName by repository.publicGalleryName.collectAsState(initial = "GeminiCanvas")
+    val startupDefaultRoute by repository.startupDefaultRoute.collectAsState(initial = "hub")
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showGalleryNameDialog by remember { mutableStateOf(false) }
     var showStartAppletDialog by remember { mutableStateOf(false) }
@@ -329,7 +330,6 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             Text("Launcher & Desktop UX Customization", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
 
-            val startupDefaultRoute by repository.startupDefaultRoute.collectAsState(initial = "hub")
             val launcherActiveAppletsStr by repository.launcherActiveApplets.collectAsState(initial = "")
 
             val activeRoutes = remember(launcherActiveAppletsStr) {

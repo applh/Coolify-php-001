@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -288,7 +290,11 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                         triggerNotification("Successfully decrypted & unlocked $count files")
                                     }
                                 }) {
-                                    Icon(Icons.Filled.LockOpen, contentDescription = "Decrypt & Unlock")
+                                    Icon(
+                                        imageVector = Icons.Filled.Lock,
+                                        contentDescription = "Decrypt & Unlock",
+                                        modifier = Modifier.graphicsLayer(rotationZ = 180f)
+                                    )
                                 }
                             } else {
                                 // Encrypt / Lock action
@@ -443,10 +449,10 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(
-                            Triple("📁 Tree Files", ExplorerCategory.ALL, Icons.Default.Folder),
-                            Triple("🖼️ Images", ExplorerCategory.IMAGES, Icons.Default.Image),
+                            Triple("📁 Tree Files", ExplorerCategory.ALL, Icons.AutoMirrored.Filled.List),
+                            Triple("🖼️ Images", ExplorerCategory.IMAGES, Icons.Default.Star),
                             Triple("🎥 Videos", ExplorerCategory.VIDEOS, Icons.Default.PlayArrow),
-                            Triple("📄 Documents", ExplorerCategory.DOCUMENTS, Icons.Default.Description),
+                            Triple("📄 Documents", ExplorerCategory.DOCUMENTS, Icons.Default.Create),
                             Triple("🔒 Private Vault", ExplorerCategory.VAULT, Icons.Default.Lock)
                         ).forEach { (label, category, iconVec) ->
                             val isChosen = selectedCategory == category
@@ -504,7 +510,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                         modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.ArrowUpward,
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, modifier = Modifier.graphicsLayer(rotationZ = 90f),
                                             contentDescription = "Navigate Up",
                                             tint = if (isAtBase) Color.Gray else MaterialTheme.colorScheme.primary
                                         )
@@ -526,7 +532,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                                     modifier = Modifier.height(32.dp)
                                 ) {
-                                    Icon(Icons.Default.CreateNewFolder, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("New Folder", fontSize = 12.sp)
                                 }
@@ -626,7 +632,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                                     ) {
                                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                             Icon(
-                                                                imageVector = Icons.Default.Folder,
+                                                                imageVector = Icons.AutoMirrored.Filled.List,
                                                                 contentDescription = "Folder",
                                                                 tint = Color(0xFFFBC02D), // Golden Sand
                                                                 modifier = Modifier.size(52.dp)
@@ -667,7 +673,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                                             contentAlignment = Alignment.Center
                                                         ) {
                                                             Icon(
-                                                                imageVector = Icons.Filled.PlayCircle,
+                                                                imageVector = Icons.Default.PlayArrow,
                                                                 contentDescription = "Video",
                                                                 tint = Color.White,
                                                                 modifier = Modifier.size(36.dp)
@@ -682,7 +688,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                                             contentAlignment = Alignment.Center
                                                         ) {
                                                             Icon(
-                                                                imageVector = if (selectedCategory == ExplorerCategory.VAULT) Icons.Default.Lock else Icons.Default.Description,
+                                                                imageVector = if (selectedCategory == ExplorerCategory.VAULT) Icons.Default.Lock else Icons.Default.Create,
                                                                 contentDescription = "Document/File",
                                                                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                                                 modifier = Modifier.size(36.dp)
@@ -814,6 +820,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 }
 
 // Security PIN Passcode verification screen
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PrivateVaultPasscodeScreen(
     vaultPrefs: android.content.SharedPreferences,
@@ -958,6 +965,149 @@ fun PrivateVaultPasscodeScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun FullScreenMedia(
+    file: File,
+    onClose: () -> Unit,
+    onDelete: (File) -> Unit
+) {
+    val context = LocalContext.current
+    val isImg = file.extension.lowercase() in listOf("jpg", "png", "jpeg")
+    val isVid = file.extension.lowercase() == "mp4"
+    val isDoc = file.extension.lowercase() in listOf("txt", "md", "json")
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Content Area
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 64.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isImg) {
+                // Pinch to Zoom Interactive Image Viewer
+                var scale by remember { mutableStateOf(1f) }
+                var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                Image(
+                    painter = rememberAsyncImagePainter(model = file),
+                    contentDescription = file.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale = (scale * zoom).coerceIn(1f, 5f)
+                                offset = if (scale > 1f) offset + pan else androidx.compose.ui.geometry.Offset.Zero
+                            }
+                        }
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        )
+                )
+            } else if (isVid) {
+                // Media3 ExoPlayer Video Player
+                val exoPlayer = remember(file) {
+                    ExoPlayer.Builder(context).build().apply {
+                        setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+                        prepare()
+                        playWhenReady = true
+                    }
+                }
+                DisposableEffect(exoPlayer) {
+                    onDispose {
+                        exoPlayer.release()
+                    }
+                }
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            player = exoPlayer
+                            useController = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (isDoc) {
+                // Plain Text Document Reader Panel
+                val textContent = remember(file) {
+                    try {
+                        file.readText()
+                    } catch (e: Exception) {
+                        "Failed to load content: ${e.localizedMessage}"
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = textContent,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                }
+            } else {
+                Text("Preview not supported for this extension type", color = Color.Gray, fontSize = 14.sp)
+            }
+        }
+
+        // Header Action Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+            }
+            Text(
+                text = file.name,
+                color = Color.White,
+                fontSize = 14.sp,
+                maxLines = 1,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                textAlign = TextAlign.Center
+            )
+            IconButton(onClick = { onDelete(file) }) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+            }
+        }
+
+        // Bottom Details Bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(16.dp)
+        ) {
+            val size = file.length()
+            val sizeStr = if (size < 1024) "$size B" else if (size < 1024 * 1024) "${size / 1024} KB" else "${size / (1024 * 1024)} MB"
+            Text(
+                text = "Size: $sizeStr | Location: ${file.parentFile?.name}",
+                color = Color.LightGray,
+                fontSize = 11.sp,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }
