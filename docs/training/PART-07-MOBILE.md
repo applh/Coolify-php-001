@@ -187,5 +187,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Design a custom `CircularAppletCard` clipped using `CircleShape` with centered vector icons and a text caption label beneath. Wire dynamic reordering parameters to serialized JSON sequence flows inside Jetpack Preferences DataStore, and write navigation redirect interceptors executing immediately upon activity cold-launches.
 - **Complexity**: Part 4
 
+### 29. Android Media & File Manager Architecture Evaluation & Hybrid Component Design (15h)
+- **Reference**: `repo-android/docs/media-manager-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/ExplorerScreen.kt`
+- **Goal**: Master system-level file-system architecture evaluations in Android, recursive folder directory walk-throughs, custom directory creation operations inside Jetpack Compose, secure cryptographic transformations for physical file locking, on-the-fly decryption streams, and interactive PIN authentication keypad overlays in Compose.
+- **Exercise**: Review the full `media-manager-plan.md` and `ExplorerScreen.kt` implementations. Create an exercise where students configure a secondary key salt for the XOR stream cipher, implement a PIN reset flow requiring a master override pattern (e.g. entering "1234" three times securely prompts a SharedPreferences clear), and write an automated test ensuring that encrypted file structures remain scrambled and corrupted unless unlocked through the specific `SimpleCryptor` transformation.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
