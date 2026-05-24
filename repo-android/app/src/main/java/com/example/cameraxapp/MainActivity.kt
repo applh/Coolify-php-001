@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -113,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
                     AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
                     AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
+                    AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
                     AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
                 )
 
@@ -277,6 +279,13 @@ class MainActivity : ComponentActivity() {
                                                     onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
                                                 )
                                             }
+                                            composable("backup") {
+                                                BackupScreen(
+                                                    onBack = { navController.popBackStack() },
+                                                    onOpenDrawer = { scope.launch { leftDrawerState.open() } },
+                                                    onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
+                                                )
+                                            }
                                             composable("settings") {
                                                 SettingsScreen(
                                                     onBack = { navController.popBackStack() },
@@ -329,6 +338,7 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit, onOpenRigh
         AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
         AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
         AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
+        AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
     )
 

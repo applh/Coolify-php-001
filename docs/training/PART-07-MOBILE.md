@@ -169,5 +169,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a responsive camera control layer that adapts dynamically. Switch between a portrait ergonomically bottom-centered double row (utilities row and action buttons row) and a landscape sidebar layout. Ensure seamless state retention (e.g., zoom, current flash mode, filters) during orientation changes.
 - **Complexity**: Part 3
 
+### 26. Android ZIP-Archive Backup Manager & Automatic Cron Schedulers (15h)
+- **Reference**: `repo-android/docs/backup-manager-plan.md`
+- **Goal**: Master multi-faceted local data saving and restoring, zip-archive buffering streams, SQLite WAL flush sequences via checkpoints, dynamic test seed injection for rapid bootstrapping, and automated system backups scheduled through WorkManager and surviving app reinstallations.
+- **Exercise**: Review the full Kotlin implementations highlighted in standard `backup-manager-plan.md`. Implement a password-protected zip streaming engine using custom `javax.crypto.CipherOutputStream` layers, write a test suite mapping automated mock ZIP profiles inside app assets, and configure a custom `"SYSTEM_BACKUP"` Cron Job type registered within `CronWorker.kt`.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

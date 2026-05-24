@@ -155,10 +155,39 @@ class CronWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 }
                 logMsg = "Cache sweeper swept cache root directory. Cleaned $filesDeleted temporary indexes."
             } else if (job.name.contains("Backup", ignoreCase = true)) {
-                // Perform file and preference system backup simulations
-                val sharedPrefsDir = File(applicationContext.filesDir.parent, "shared_prefs")
-                val filesCount = sharedPrefsDir.listFiles()?.size ?: 0
-                logMsg = "Diagnostics backup completed. Packed structural system assets: $filesCount files."
+                // Perform real ZIP-packed system db and settings backups on cron schedule
+                val backupDir = File(applicationContext.filesDir, "backup_snapshots")
+                if (!backupDir.exists()) {
+                    backupDir.mkdirs()
+                }
+                
+                val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                val backupFile = File(backupDir, "auto_backup_$timestamp.zip")
+                
+                var success = false
+                try {
+                    FileOutputStream(backupFile).use { fos ->
+                        success = BackupManagerEngine.createBackupZip(applicationContext, fos)
+                    }
+                } catch (e: Exception) {
+                    Log.e("CronWorker", "Fail automated creation: ${e.message}")
+                }
+                
+                if (success) {
+                    // Enforce a strict rolling backup threshold pool of latest 5 items
+                    val zipList = backupDir.listFiles { file -> file.isFile && file.name.startsWith("auto_backup_") && file.name.endsWith(".zip") }
+                        ?.sortedByDescending { it.lastModified() } ?: emptyList()
+                    
+                    if (zipList.size > 5) {
+                        zipList.drop(5).forEach { obsolete ->
+                            obsolete.delete()
+                        }
+                    }
+                    
+                    logMsg = "Automated backup archive generated successfully (Size: ${backupFile.length() / 1024} KB). Packed databases, preferences systems and active AI session files."
+                } else {
+                    logMsg = "Diagnostics backup encountered database lock checkpoints or files access exceptions."
+                }
             } else if (job.name.contains("Wallpaper", ignoreCase = true)) {
                 val imageDir = File(applicationContext.getExternalFilesDir(null), "wallpapers")
                 if (!imageDir.exists()) {

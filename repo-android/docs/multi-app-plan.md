@@ -11,6 +11,7 @@ The goal is to transform the current `repo-android` project into a Multi-App Hub
     *   **File Explorer**: New destination to browse local files.
     *   **Shared Settings**: New destination for configuring global app behavior.
     *   **DB (SQLite Manage)**: New destination for managing database files with full CRUD on schemas and rows.
+    *   **Backup Manager**: New destination to back up and restore application databases, settings, and media using robust ZIP-archives and background cron automations.
 
 ## Phase 1: Infrastructure
 - Add Navigation dependency to `build.gradle`.
@@ -55,6 +56,13 @@ The goal is to transform the current `repo-android` project into a Multi-App Hub
 - **CSV/JSON Bridges**: Formulate robust CSV and JSON database importing/exporting pipelines with structural column auto-mapping.
 - **Diagnostics Dashboard**: Integrate one-tap Pragma integrity examinations and VACUUM sweeps.
 - **Advanced BLOB Decoders**: Add visual interactive lightboxes to dynamically view binary BLOB fields as text, image, or hex formats.
+
+### 5. Backup Manager Applet
+- **Zero-Copy ZIP Streams**: Package diverse databases (SQLite, Room), global settings (DataStore), and session files into a single ZIP using memory-efficient buffering streams.
+- **Bootstrapper Profiles**: Enable full test profile seed arrays for rapid tester environment setup.
+- **Atomic Rollback Restoration**: Use temp-directory staging logic to guarantee atomic folder overrides without risking database/settings halfway-corruption.
+- **Background Cron Automations**: Integrate scheduled daily system database snapshots within WorkManager, backed by rolling limits.
+- **Safe External Survival**: Expose Storage Access Framework (SAF) document creators, saving backups to persistent paths surviving app reinstalls.
 
 ## Technical Details
 - **Namespace**: `com.example.hubapp` (or keep `com.example.cameraxapp` and rename later).
