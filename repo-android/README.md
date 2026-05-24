@@ -21,6 +21,7 @@ Built with modern Android practices:
 - AI Team Session Management guide can be found in [docs/ai-team-session-management.md](docs/ai-team-session-management.md).
 - Gemini API Integration and Android SDK Error Guide can be found in [docs/android-gemini-integration.md](../docs/android-gemini-integration.md).
 - Automated Backup Manager implementation plan can be found in [docs/backup-manager-plan.md](docs/backup-manager-plan.md).
+- **AI Agent Applet Complexity & Prompting Guide** can be found in [docs/ai-agent-applet-complexity-guide.md](docs/ai-agent-applet-complexity-guide.md).
 
 ## Deployment (Coolify / Docker)
 This module is ready for standalone deployment as a build server:

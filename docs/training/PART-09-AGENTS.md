@@ -73,3 +73,11 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Exercise**: Implement a lightweight retry or lookup utility that queries valid active models when a `404 NOT_FOUND` is caught, logging valid candidates to the user.
 - **Complexity**: Part 3
 
+### 9. Multi-Applet Complexity Mapping & Safe Prompting (10h)
+**Reference**: `repo-android/docs/ai-agent-applet-complexity-guide.md`
+- **Goal**: Understand the varying complexities of Android Jetpack Compose and background tasks under AI-agent modifications, learning how to prompt specifically to resolve hardware/lifecycle dependencies securely.
+- **Task**: Analyze the failure modes and safety blueprints mapped for Tier 3 and Tier 5 applets.
+- **Exercise**: Choose an applet from the complexity scaling (e.g., Camera or Backup Manager) and write a mock prompt that incorporates the layout, threading, and lifecycle directives, proving how context constraints prevent typical regression states.
+- **Complexity**: Part 1 (Documentation & AI Orchestration)
+
+
