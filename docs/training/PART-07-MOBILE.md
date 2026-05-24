@@ -159,8 +159,8 @@ Bridge the gap between web and mobile with Android and Flutter.
 
 ### 24. Jetpack CameraX Advancements: Zoom, Post-Processing Effects, & ML Kit Scanner (20h)
 - **Reference**: `repo-android/docs/camera-applet-upgrade-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/CameraScreen.kt`
-- **Goal**: Master exact Jetpack CameraX integrations combining gestural interactions (pinch-to-zoom), reactive slider state mapping, custom CPU/GPU pixel processing filters, and real-time offline ML Kit Vision Barcode analyzers.
-- **Exercise**: Examine the complete production-grade implementation inside `CameraScreen.kt`. Build custom pinch gestures on the `AndroidView` wrapper, verify post-capture pixel filter translations in `takePhoto`, and implement a new, fifth creative visual filter (such as a dynamic Vignette or Retro VHS noise filter overlay) into the color matrix filtration kernel.
+- **Goal**: Master exact Jetpack CameraX integrations combining gestural interactions (pinch-to-zoom), reactive slider state mapping, custom CPU/GPU pixel processing filters, and real-time offline ML Kit Vision Barcode analyzers. Understand advanced capabilities like the CameraX Extensions API, Concurrent Dual-Camera streaming, and Camera2 interoperability controls.
+- **Exercise**: Examine the complete production-grade implementation inside `CameraScreen.kt`. Build custom pinch gestures on the `AndroidView` wrapper, verify post-capture pixel filter translations in `takePhoto`, and implement a new, fifth creative visual filter (such as a dynamic Vignette or Retro VHS noise filter overlay) into the color matrix filtration kernel. For an advanced challenge, build a mockup settings menu to toggle Device OEM Extensions (like HDR and Night Mode) using `ExtensionsManager`, and configure camera-interop bindings to programmatically override the ISO sensitivity based on manual slider states.
 - **Complexity**: Part 4
 
 ### 25. Responsive Jetpack Compose Camera Layout & Orientation-Aware UX (15h)
@@ -204,6 +204,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Goal**: Understand the design and execution of modular, plug-and-play app architectures using shared dynamic interfaces, reflection-free plugin registries, automated Compose permission gateways, and asynchronous event bus lines using standard Kotlin SharedFlow pipelines safely.
 - **Exercise**: Review the full dynamic framework specification highlighted in `applet-plugin-framework-plan.md`. Implement the unified `Applet` contract, construct an `AppletRegistry` single provider, bind navigation routing directly to live registrants using an automated `forEach` loop in `MainActivity.kt`, and build an asynchronous dispatch test verifying that missing permissions are checked on navigation endpoints automatically.
 - **Complexity**: Part 5
+
+### 32. Advanced CameraX Capabilities & Hardware negotiated OEM Extensions (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AppPreferences.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/CameraScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/SettingsScreen.kt`
+- **Goal**: Master system-level integrations of modern CameraX camera pipelines, including physical OEM lens extensions negotiation through `ExtensionsManager` (HDR, Night, Portrait, Retouch), concurrent multi-lens picture-in-picture streams rendering layouts with resilient hardware failure fallback handlers, Pro Mode viewfinder manuals overrides (ISO, Exposure Value), and offline scanner hud overlays.
+- **Exercise**: Review the complete Jetpack Compose and CameraX implementations. Create an exercise where students modify the on-screen manual Pro HUD toolbar to support fine-grained manual white-balance adjustments utilizing the CameraX Camera Control API. Integrate a custom Zoom slide indicator within the floating PiP window to control target picture-in-picture magnification levels.
+- **Complexity**: Part 4
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

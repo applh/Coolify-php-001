@@ -40,6 +40,12 @@ object AppPreferences {
     val LAUNCHER_APPLET_ORDER = stringPreferencesKey("launcher_applet_order")
     val LAUNCHER_ACTIVE_APPLETS = stringPreferencesKey("launcher_active_applets")
     val STARTUP_DEFAULT_APPLET = stringPreferencesKey("startup_default_applet")
+    val CAMERA_EXTENSION = intPreferencesKey("camera_extension") // 0: Disabled, 1: HDR, 2: Portrait, 3: Night, 4: FaceRetouch
+    val CONCURRENT_STREAM = booleanPreferencesKey("concurrent_stream")
+    val PRO_CONTROL_MODE = booleanPreferencesKey("pro_control_mode")
+    val PRO_ISO_VALUE = intPreferencesKey("pro_iso_value")
+    val PRO_EXPOSURE_COMP_VALUE = intPreferencesKey("pro_exposure_comp_value")
+    val OFFLINE_SCAN_HUD = booleanPreferencesKey("offline_scan_hud")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -64,6 +70,12 @@ class SettingsRepository(private val context: Context) {
     val launcherAppletOrder: Flow<String> = context.dataStore.data.map { it[AppPreferences.LAUNCHER_APPLET_ORDER] ?: "" }
     val launcherActiveApplets: Flow<String> = context.dataStore.data.map { it[AppPreferences.LAUNCHER_ACTIVE_APPLETS] ?: "" }
     val startupDefaultRoute: Flow<String> = context.dataStore.data.map { it[AppPreferences.STARTUP_DEFAULT_APPLET] ?: "hub" }
+    val cameraExtension: Flow<Int> = context.dataStore.data.map { it[AppPreferences.CAMERA_EXTENSION] ?: 0 }
+    val concurrentStream: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.CONCURRENT_STREAM] ?: false }
+    val proControlMode: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.PRO_CONTROL_MODE] ?: false }
+    val proIsoValue: Flow<Int> = context.dataStore.data.map { it[AppPreferences.PRO_ISO_VALUE] ?: 0 }
+    val proExposureCompValue: Flow<Int> = context.dataStore.data.map { it[AppPreferences.PRO_EXPOSURE_COMP_VALUE] ?: 0 }
+    val offlineScanHud: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.OFFLINE_SCAN_HUD] ?: true }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -147,6 +159,30 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setStartupDefaultRoute(route: String) {
         context.dataStore.edit { it[AppPreferences.STARTUP_DEFAULT_APPLET] = route }
+    }
+
+    suspend fun setCameraExtension(mode: Int) {
+        context.dataStore.edit { it[AppPreferences.CAMERA_EXTENSION] = mode }
+    }
+
+    suspend fun setConcurrentStream(enabled: Boolean) {
+        context.dataStore.edit { it[AppPreferences.CONCURRENT_STREAM] = enabled }
+    }
+
+    suspend fun setProControlMode(enabled: Boolean) {
+        context.dataStore.edit { it[AppPreferences.PRO_CONTROL_MODE] = enabled }
+    }
+
+    suspend fun setProIsoValue(value: Int) {
+        context.dataStore.edit { it[AppPreferences.PRO_ISO_VALUE] = value }
+    }
+
+    suspend fun setProExposureCompValue(value: Int) {
+        context.dataStore.edit { it[AppPreferences.PRO_EXPOSURE_COMP_VALUE] = value }
+    }
+
+    suspend fun setOfflineScanHud(enabled: Boolean) {
+        context.dataStore.edit { it[AppPreferences.OFFLINE_SCAN_HUD] = enabled }
     }
 
     suspend fun resetLauncherConfig() {

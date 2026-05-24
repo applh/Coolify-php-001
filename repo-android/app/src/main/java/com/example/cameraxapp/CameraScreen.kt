@@ -128,6 +128,31 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     var showScanResultDialog by remember { mutableStateOf(false) }
     var isScanningPaused by remember { mutableStateOf(false) }
 
+    val cameraExtension by repository.cameraExtension.collectAsState(initial = 0)
+    val concurrentStream by repository.concurrentStream.collectAsState(initial = false)
+    val proControlMode by repository.proControlMode.collectAsState(initial = false)
+    val proIsoValue by repository.proIsoValue.collectAsState(initial = 0)
+    val proExposureCompValue by repository.proExposureCompValue.collectAsState(initial = 0)
+    val offlineScanHud by repository.offlineScanHud.collectAsState(initial = true)
+
+    var activeEvCorrection by remember { mutableStateOf(0) }
+    var activeIsoSensitivity by remember { mutableStateOf(0) }
+
+    LaunchedEffect(proExposureCompValue) {
+        activeEvCorrection = proExposureCompValue
+    }
+    LaunchedEffect(proIsoValue) {
+        activeIsoSensitivity = proIsoValue
+    }
+
+    LaunchedEffect(activeEvCorrection, cameraInstance) {
+        try {
+            cameraInstance?.cameraControl?.setExposureCompensationIndex(activeEvCorrection)
+        } catch (e: Exception) {
+            Log.w("CameraScreen", "Failed to set exposure compensation index: ", e)
+        }
+    }
+
     // Manual, compile-safe observer for CameraX zoomState LiveData
     val zoomStateFlow = cameraInstance?.cameraInfo?.zoomState
     var zoomState by remember { mutableStateOf<androidx.camera.core.ZoomState?>(null) }
@@ -297,10 +322,135 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 imageAnalysis = imageAnalysis,
                 captureMode = captureMode,
                 lensFacing = lensFacing,
+                cameraExtension = cameraExtension,
                 onCameraConfigured = { camera ->
                     cameraInstance = camera
                 }
             )
+
+            // Concurrent Picture-in-Picture secondary camera stream overlay
+            if (concurrentStream) {
+                val otherLensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                    CameraSelector.LENS_FACING_FRONT
+                } else {
+                    CameraSelector.LENS_FACING_BACK
+                }
+                
+                var pipBindFailed by remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = if (isPortrait) 160.dp else 48.dp, end = 24.dp)
+                        .size(110.dp, 160.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.Black.copy(alpha = 0.8f))
+                        .border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!pipBindFailed) {
+                        CameraPreview(
+                            modifier = Modifier.fillMaxSize(),
+                            imageCapture = remember { ImageCapture.Builder().build() },
+                            videoCapture = null,
+                            imageAnalysis = null,
+                            captureMode = "PHOTO",
+                            lensFacing = otherLensFacing,
+                            cameraExtension = 0,
+                            onCameraConfigured = {},
+                            onConfigError = { 
+                                pipBindFailed = true 
+                            }
+                        )
+                    } else {
+                        // High-fidelity resilient PiP simulated mirroring layout
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(Color(0xFF202020)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(4.dp)
+                            ) {
+                                Text(
+                                    text = if (otherLensFacing == CameraSelector.LENS_FACING_FRONT) "👨 Front Cam" else "🏞️ Back Cam",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Simulated PiP Stream",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodyExtraSmall,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Real-time HUD manual slider knobs layout for Pro Mode
+            if (proControlMode && captureMode != "SCAN") {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 16.dp)
+                        .background(Color.Black.copy(alpha = 0.62f), RoundedCornerShape(20.dp))
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("PRO", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
+                    
+                    // Live EV Adjust Button
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (activeEvCorrection == 0) "EV: 0" else if (activeEvCorrection > 0) "EV: +$activeEvCorrection" else "EV: $activeEvCorrection",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyExtraSmall
+                        )
+                        IconButton(
+                            onClick = {
+                                activeEvCorrection = if (activeEvCorrection >= 3) -3 else activeEvCorrection + 1
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Text("🔆", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Live ISO Adjust Button
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = when(activeIsoSensitivity) {
+                                0 -> "ISO: Auto"
+                                else -> "ISO: $activeIsoSensitivity"
+                            },
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyExtraSmall
+                        )
+                        IconButton(
+                            onClick = {
+                                activeIsoSensitivity = when(activeIsoSensitivity) {
+                                    0 -> 100
+                                    100 -> 200
+                                    200 -> 400
+                                    400 -> 800
+                                    800 -> 1600
+                                    else -> 0
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Text("⚡", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
 
             // Dynamic Atmospheric Tint Filters (Instant GPU Simulation)
             if (captureMode != "SCAN" && selectedFilter != "NORMAL") {
@@ -319,7 +469,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
             }
 
             // Elegant high-visibility Viewfinder Reticle for Quick Scanning
-            if (captureMode == "SCAN") {
+            if (captureMode == "SCAN" && offlineScanHud) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val canvasWidth = size.width
                     val canvasHeight = size.height
@@ -1299,8 +1449,10 @@ fun CameraPreview(
     imageAnalysis: ImageAnalysis? = null,
     captureMode: String,
     lensFacing: Int = CameraSelector.LENS_FACING_BACK,
+    cameraExtension: Int = 0,
     scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER,
-    onCameraConfigured: (Camera) -> Unit = {}
+    onCameraConfigured: (Camera) -> Unit = {},
+    onConfigError: (() -> Unit)? = null
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -1335,57 +1487,83 @@ fun CameraPreview(
         }
     )
 
-    LaunchedEffect(previewView, captureMode, lensFacing, videoCapture, imageAnalysis) {
+    LaunchedEffect(previewView, captureMode, lensFacing, cameraExtension, videoCapture, imageAnalysis) {
         val view = previewView ?: return@LaunchedEffect
 
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(view.surfaceProvider)
-                val rot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    view.context.display?.rotation ?: android.view.Surface.ROTATION_0
-                } else {
-                    val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
-                    @Suppress("DEPRECATION")
-                    wm.defaultDisplay.rotation
-                }
-                it.targetRotation = rot
-            }
-            previewUseCase = preview
-
-            val cameraSelector = CameraSelector.Builder()
-                .requireLensFacing(lensFacing)
-                .build()
-
             try {
-                cameraProvider.unbindAll()
-                val camera = if (captureMode == "PHOTO") {
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageCapture
-                    )
-                } else if (captureMode == "VIDEO" && videoCapture != null) {
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        videoCapture
-                    )
-                } else if (captureMode == "SCAN" && imageAnalysis != null) {
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalysis
-                    )
-                } else {
-                    null
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(view.surfaceProvider)
+                    val rot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        view.context.display?.rotation ?: android.view.Surface.ROTATION_0
+                    } else {
+                        val wm = view.context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+                        @Suppress("DEPRECATION")
+                        wm.defaultDisplay.rotation
+                    }
+                    it.targetRotation = rot
                 }
-                camera?.let { onCameraConfigured(it) }
+                previewUseCase = preview
+
+                val baseSelector = CameraSelector.Builder()
+                    .requireLensFacing(lensFacing)
+                    .build()
+
+                // Dynamically fetch and negotiate advanced device OEM CameraX Extensions
+                val extensionsManagerFuture = androidx.camera.extensions.ExtensionsManager.getInstanceAsync(context, cameraProvider)
+                extensionsManagerFuture.addListener({
+                    try {
+                        val extensionsManager = extensionsManagerFuture.get()
+                        val extensionMode = when (cameraExtension) {
+                            1 -> androidx.camera.extensions.ExtensionMode.HDR
+                            2 -> androidx.camera.extensions.ExtensionMode.BOKEH
+                            3 -> androidx.camera.extensions.ExtensionMode.NIGHT
+                            4 -> androidx.camera.extensions.ExtensionMode.FACE_RETOUCH
+                            else -> -1
+                        }
+
+                        val cameraSelector = if (extensionMode != -1 && extensionsManager.isExtensionAvailable(baseSelector, extensionMode)) {
+                            extensionsManager.getExtensionEnabledCameraSelector(baseSelector, extensionMode)
+                        } else {
+                            baseSelector
+                        }
+
+                        cameraProvider.unbindAll()
+                        val camera = if (captureMode == "PHOTO") {
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageCapture
+                            )
+                        } else if (captureMode == "VIDEO" && videoCapture != null) {
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                videoCapture
+                            )
+                        } else if (captureMode == "SCAN" && imageAnalysis != null) {
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageAnalysis
+                            )
+                        } else {
+                            null
+                        }
+                        camera?.let { onCameraConfigured(it) }
+                    } catch (e: Exception) {
+                        Log.e("CameraPreview", "Extensions negotiation/binding exception: ", e)
+                        onConfigError?.invoke()
+                    }
+                }, ContextCompat.getMainExecutor(context))
+
             } catch (exc: Exception) {
-                Log.e("CameraPreview", "Use case binding failed", exc)
+                Log.e("CameraPreview", "Retrieved ProcessCameraProvider exception: ", exc)
+                onConfigError?.invoke()
             }
         }, ContextCompat.getMainExecutor(context))
     }

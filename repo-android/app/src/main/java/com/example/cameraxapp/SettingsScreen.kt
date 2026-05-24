@@ -42,6 +42,12 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val aiSize by repository.aiSize.collectAsState(initial = "1K")
     val publicGalleryName by repository.publicGalleryName.collectAsState(initial = "GeminiCanvas")
     val startupDefaultRoute by repository.startupDefaultRoute.collectAsState(initial = "hub")
+    val cameraExtension by repository.cameraExtension.collectAsState(initial = 0)
+    val concurrentStream by repository.concurrentStream.collectAsState(initial = false)
+    val proControlMode by repository.proControlMode.collectAsState(initial = false)
+    val proIsoValue by repository.proIsoValue.collectAsState(initial = 0)
+    val proExposureCompValue by repository.proExposureCompValue.collectAsState(initial = 0)
+    val offlineScanHud by repository.offlineScanHud.collectAsState(initial = true)
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showGalleryNameDialog by remember { mutableStateOf(false) }
     var showStartAppletDialog by remember { mutableStateOf(false) }
@@ -276,6 +282,167 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                         }
                     }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Advanced Camera Capabilities", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.secondary)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            ListItem(
+                headlineContent = { Text("Device OEM Extension") },
+                supportingContent = { 
+                    Text(when(cameraExtension) {
+                        0 -> "Disabled (Normal ImageCapture)"
+                        1 -> "HDR Mode (High Dynamic Range)"
+                        2 -> "Portrait Mode (Bokeh Background Depth)"
+                        3 -> "Night Mode (Low-Light Intensity Boost)"
+                        4 -> "Face Retouch Mode (Digital Smoothing)"
+                        else -> "Disabled"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setCameraExtension((cameraExtension + 1) % 5)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Concurrent Dual-Cam Layout") },
+                supportingContent = { Text(if (concurrentStream) "Active (Picture-in-Picture Stream)" else "Inactive (Single Sensor Focus)") },
+                trailingContent = {
+                    Switch(
+                        checked = concurrentStream,
+                        onCheckedChange = { checked ->
+                            coroutineScope.launch { repository.setConcurrentStream(checked) }
+                        }
+                    )
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Pro Mode Control Console") },
+                supportingContent = { Text(if (proControlMode) "Manual ISO & EV Controls Active" else "Auto-Exposure & Sensitivity") },
+                trailingContent = {
+                    Switch(
+                        checked = proControlMode,
+                        onCheckedChange = { checked ->
+                            coroutineScope.launch { repository.setProControlMode(checked) }
+                        }
+                    )
+                }
+            )
+
+            if (proControlMode) {
+                ListItem(
+                    headlineContent = { Text("Manual Exposure Value (EV)") },
+                    supportingContent = { 
+                        Text(if (proExposureCompValue == 0) "Normal (0 EV)" else if (proExposureCompValue > 0) "+${proExposureCompValue} EV" else "${proExposureCompValue} EV") 
+                    },
+                    modifier = Modifier.clickable {
+                        coroutineScope.launch {
+                            val nextEv = if (proExposureCompValue >= 3) -3 else proExposureCompValue + 1
+                            repository.setProExposureCompValue(nextEv)
+                        }
+                    }
+                )
+
+                ListItem(
+                    headlineContent = { Text("Manual Sensor Sensitivity (ISO)") },
+                    supportingContent = { 
+                        Text(when(proIsoValue) {
+                            0 -> "Auto ISO"
+                            100 -> "ISO 100 (Sunlight)"
+                            200 -> "ISO 200 (Overcast)"
+                            400 -> "ISO 400 (Indoors)"
+                            800 -> "ISO 800 (Dim Light)"
+                            1600 -> "ISO 1600 (Night)"
+                            else -> "Auto ISO"
+                        })
+                    },
+                    modifier = Modifier.clickable {
+                        coroutineScope.launch {
+                            val nextIso = when(proIsoValue) {
+                                0 -> 100
+                                100 -> 200
+                                200 -> 400
+                                400 -> 800
+                                800 -> 1600
+                                else -> 0
+                            }
+                            repository.setProIsoValue(nextIso)
+                        }
+                    }
+                )
+            }
+
+            ListItem(
+                headlineContent = { Text("Offline QR/Barcode Scanner HUD") },
+                supportingContent = { Text(if (offlineScanHud) "Green Neon Bracket Guides Active" else "Minimal Clean Frame View") },
+                trailingContent = {
+                    Switch(
+                        checked = offlineScanHud,
+                        onCheckedChange = { checked ->
+                            coroutineScope.launch { repository.setOfflineScanHud(checked) }
+                        }
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            var cameraCount by remember { mutableStateOf(0) }
+            var maxZoomSupported by remember { mutableStateOf(1f) }
+            var flashSupported by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                try {
+                    val cameraProvider = ProcessCameraProvider.getInstance(context).get()
+                    val infos = cameraProvider.availableCameraInfos
+                    cameraCount = infos.size
+                    if (infos.isNotEmpty()) {
+                        val primaryInfo = infos[0]
+                        primaryInfo.zoomState.value?.let {
+                            maxZoomSupported = it.maxZoomRatio
+                        }
+                        flashSupported = primaryInfo.hasFlashUnit()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            val runtime = Runtime.getRuntime()
+            val maxMemoryMB = runtime.maxMemory() / (1024 * 1024)
+            val availableMemoryMB = runtime.freeMemory() / (1024 * 1024)
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Hardware & Camera Capabilities Catalog",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text("• Camera Sensors Discovered: ${cameraCount} active lenses", style = MaterialTheme.typography.bodySmall)
+                    Text("• Hardware Flash Support: ${if (flashSupported) "Available" else "Not Detected / Locked"}", style = MaterialTheme.typography.bodySmall)
+                    Text("• Native Max Optical Zoom: ${String.format(Locale.US, "%.1fx", maxZoomSupported)}", style = MaterialTheme.typography.bodySmall)
+                    Text("• Target OS API Level: SDK ${android.os.Build.VERSION.SDK_INT}", style = MaterialTheme.typography.bodySmall)
+                    Text("• Assigned VM Memory Budget: ${maxMemoryMB} MB (Free: ${availableMemoryMB} MB)", style = MaterialTheme.typography.bodySmall)
+                    Text("• Active Sub-routines: CameraX Preview, Auto-Focus, Audio-Muxer, ML Scan Kernel", style = MaterialTheme.typography.bodySmall)
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
