@@ -14,5 +14,9 @@ data class CronJobEntity(
     val lastRunTimestamp: Long = 0L,
     val nextRunTimestamp: Long = 0L,
     val downloadUrl: String? = null,
-    val saveFileName: String? = null
+    val saveFileName: String? = null,
+    val scrapeSelector: String? = null,
+    val scrapeMatchPattern: String? = null,
+    val notifyOnScrapeMatch: Boolean = false,
+    val lastParsedHash: Int = -1
 )

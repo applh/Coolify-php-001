@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [CronJobEntity::class], version = 2, exportSchema = false)
+@Database(entities = [CronJobEntity::class], version = 3, exportSchema = false)
 abstract class CronJobDatabase : RoomDatabase() {
     abstract fun cronJobDao(): CronJobDao
 

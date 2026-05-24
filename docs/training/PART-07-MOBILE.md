@@ -175,5 +175,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Review the full Kotlin implementations highlighted in standard `backup-manager-plan.md`. Implement a password-protected zip streaming engine using custom `javax.crypto.CipherOutputStream` layers, write a test suite mapping automated mock ZIP profiles inside app assets, and configure a custom `"SYSTEM_BACKUP"` Cron Job type registered within `CronWorker.kt`.
 - **Complexity**: Part 4
 
+### 27. Jetpack Compose Internet Browser Applet with Scheduled I/O Automation & Script Injection (20h)
+- **Reference**: `repo-android/docs/browser-applet-plan.md`
+- **Goal**: Master professional web viewing in modern Jetpack Compose using secure AndroidView configurations, handle zero-copy multi-threaded download streams dynamically with ETA calculations, configure background headless crawling tasks on SQLite schemas via WorkManager routes, and develop a prompt-driven JavaScript userscript engine integrated with contemporary Google Generative AI client-side models (`gemini-2.5-flash`).
+- **Exercise**: Check out the implementation details highlighted inside `browser-applet-plan.md`. Create a custom SQLite table schema for multi-tab management, implement an inline code generation prompt helper that maps raw text requests to prompt-directed sandboxed JavaScript using `generateUserScript()`, link downloads to a custom `BrowserDownloadManager` outputting updates via standard Foreground Notifications, and configure periodic background content checks by adding web scraping triggers inside the common `DynamicRouterWorker.kt` handler.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

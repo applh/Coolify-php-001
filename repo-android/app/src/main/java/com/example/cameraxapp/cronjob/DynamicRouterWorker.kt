@@ -31,6 +31,7 @@ class DynamicRouterWorker(
                 "CAMERA_CAPTURE" -> handleCameraCapture()
                 "WALLPAPER_CHANGER" -> handleWallpaperChanger()
                 "HTTP_DOWNLOAD" -> handleHttpDownload(job)
+                "WEB_SCRAPE" -> handleWebScrape(job)
                 else -> {
                     Log.w("DynamicRouterWorker", "Unknown jobType: $jobType")
                     Result.success()
@@ -211,5 +212,18 @@ class DynamicRouterWorker(
             Log.e("DynamicRouterWorker", "HTTP_DOWNLOAD failed")
             Result.retry()
         }
+    }
+
+    private suspend fun handleWebScrape(job: CronJobEntity): Result {
+        Log.d("DynamicRouterWorker", "Handling WEB_SCRAPE...")
+        val url = job.downloadUrl ?: return Result.failure()
+        val success = CronWebScraper.performScrapeJob(
+            context = applicationContext,
+            url = url,
+            boundarySelector = job.scrapeSelector,
+            matchPattern = job.scrapeMatchPattern,
+            jobId = job.id
+        )
+        return if (success) Result.success() else Result.retry()
     }
 }

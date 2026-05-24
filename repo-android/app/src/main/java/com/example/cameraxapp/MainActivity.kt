@@ -36,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cameraxapp.ui.theme.CameraXAppTheme
+import androidx.compose.material.icons.filled.Search
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -115,7 +116,8 @@ class MainActivity : ComponentActivity() {
                     AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
                     AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
                     AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
-                    AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
+                    AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
+                    AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
                 )
 
                 ModalNavigationDrawer(
@@ -293,6 +295,20 @@ class MainActivity : ComponentActivity() {
                                                     onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
                                                 )
                                             }
+                                            composable("browser") {
+                                                val context = androidx.compose.ui.platform.LocalContext.current
+                                                val dbHelper = remember { com.example.cameraxapp.browser.BrowserDatabaseHelper(context) }
+                                                val dlManager = remember { com.example.cameraxapp.browser.BrowserDownloadManager(context) }
+                                                val browserViewModel = remember { com.example.cameraxapp.browser.BrowserViewModel(dbHelper, dlManager) }
+                                                val geminiApiKeySaved by repository.geminiApiKey.collectAsState(initial = "")
+                                                
+                                                com.example.cameraxapp.browser.BrowserScreen(
+                                                    viewModel = browserViewModel,
+                                                    apiKey = geminiApiKeySaved,
+                                                     onBackToHub = { navController.popBackStack() },
+                                                     modifier = Modifier.fillMaxSize()
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -339,7 +355,8 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit, onOpenRigh
         AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
         AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
         AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
-        AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration")
+        AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
+        AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
     )
 
     Scaffold(
