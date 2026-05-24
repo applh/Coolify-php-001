@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
 import com.example.cameraxapp.core.di.AppDependencyContainer
 import com.example.cameraxapp.core.framework.AppletRegistry
 import com.example.cameraxapp.core.framework.impl.BrowserApplet
-import com.example.cameraxapp.core.framework.impl.ExplorerApplet
+import com.example.cameraxapp.core.framework.impl.FilesApplet
 
 class MainActivity : ComponentActivity() {
 
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
 
         appDependencyContainer = AppDependencyContainer(applicationContext)
         AppletRegistry.register(BrowserApplet(appDependencyContainer))
-        AppletRegistry.register(ExplorerApplet())
+        AppletRegistry.register(FilesApplet())
 
         updatePermissionState()
         
@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
                 val allMasterApplets = remember {
                     listOf(
                         AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-                        AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
+                        AppletInfo("Files", "files", Icons.Default.Menu, "Browse local files"),
                         AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
                         AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
                         AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
@@ -391,7 +391,7 @@ data class AppletInfo(
 fun getAppletColor(route: String): androidx.compose.ui.graphics.Color {
     return when (route) {
         "camera" -> androidx.compose.ui.graphics.Color(0xFFFF8A80)      // Soft Red
-        "explorer" -> androidx.compose.ui.graphics.Color(0xFF82B1FF)    // Soft Blue
+        "files" -> androidx.compose.ui.graphics.Color(0xFF82B1FF)       // Soft Blue
         "ai_team" -> androidx.compose.ui.graphics.Color(0xFFEA80FC)     // Soft Violet
         "cronjobs" -> androidx.compose.ui.graphics.Color(0xFFFFD180)    // Soft Orange
         "db" -> androidx.compose.ui.graphics.Color(0xFF84FFFF)          // Soft Cyan
@@ -515,7 +515,7 @@ fun HubScreen(
     val allApplets = remember {
         listOf(
             AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-            AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
+            AppletInfo("Files", "files", Icons.Default.Menu, "Browse local files"),
             AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
             AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
             AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),

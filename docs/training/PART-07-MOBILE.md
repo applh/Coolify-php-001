@@ -211,5 +211,17 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Review the complete Jetpack Compose and CameraX implementations. Create an exercise where students modify the on-screen manual Pro HUD toolbar to support fine-grained manual white-balance adjustments utilizing the CameraX Camera Control API. Integrate a custom Zoom slide indicator within the floating PiP window to control target picture-in-picture magnification levels.
 - **Complexity**: Part 4
 
+### 33. Jetpack Compose Rich Document Rendering & File CRUD Architecture (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/ExplorerScreen.kt`, `repo-android/docs/media-manager-plan.md`
+- **Goal**: Understand advanced interactive file manipulation structures and single-screen dynamic document styling. Learn how to perform full filesystem operations (Create, Read, Update, Delete) from custom Compose layers, bind document states in double-pane layouts, and execute regex-based paragraph block parsing to construct responsive markdown viewports alongside plain text, code, and style elements without heavy external dependencies.
+- **Exercise**: Implement an extension to the specialized `MarkdownRenderer` that supports checking checkbox bullet formats (e.g., `- [ ]` and `- [x]`). Render unchecked and checked states as live interactive material checkbox elements or toggleable visual states, allowing students to check off markdown to-do list items interactively, and update the raw file content on disk automatically.
+- **Complexity**: Part 4
+
+### 34. Custom Applet Registrations and Navigation Route Restructuring (5h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/FilesApplet.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/MainActivity.kt`
+- **Goal**: Understand how to rename, deprecate, or structure dynamic route identifiers inside highly decoupled navigation systems. Learn how to map route display entries dynamically across customization screens and launcher grids safely without disrupting stored user pref profiles.
+- **Exercise**: Create a custom validation script or handler that checks if a migration from ancient route structures (like `"explorer"`) to modern structures (like `"files"`) is necessary upon application boot, ensuring old bookmarks and shortcut layouts are gracefully updated to target `"files"`.
+- **Complexity**: Part 2
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

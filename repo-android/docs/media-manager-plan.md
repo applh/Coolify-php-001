@@ -154,6 +154,14 @@ object FileOperatorEngine {
 }
 ```
 
+### C. Upgraded Feature Suite: Custom File Creation & Markdown Editor
+We extend Option A with a full CRUD file workspace directly in the explorer UI:
+1. **Dynamic File Creation**: Enable creating arbitrary documents with any file extension suffix (e.g., `.md`, `.txt`, `.json`, `.csv`, `.html`).
+2. **Specialized Markdown Viewer/Editor**:
+   - **View Mode**: A bespoke, pure-Compose renderer that compiles custom paragraph blocks, lists, code spans/blocks, divider bars, headlining levels, and inline formatting (bold/italic/monospace) in WCAG-compliant colors.
+   - **Edit Mode**: An interactive, full-screen text workspace that supports editing and instant saving with error checking.
+3. **Full CRUD Lifecycle**: Add file/folder Rename/Update support via a custom prompt interface, expanding existing Create/Read/Delete controls.
+
 ---
 
 ## 3. Option B Blueprint: Separate Media Manager Applet

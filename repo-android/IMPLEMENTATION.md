@@ -71,9 +71,9 @@ This document outlines the detailed implementation plan for the core features in
   - Add pinch-to-zoom and pan functionality to the full-screen image view in `ExplorerScreen.kt` using Compose's `transformable` modifier or dedicated zoomable libraries (e.g., `Telephoto`).
   - For videos, integrate `ExoPlayer` within the full-screen view with standard playback controls (play, pause, seek), allowing users to properly preview video recordings.
 - **Full CRUD on File Explorer**:
-  - **Create/Read**: Already partially implemented via capturing and viewing. Read needs to be expanded to support grouping or sorting.
-  - **Update**: Implement file renaming functionality (e.g., via a dialog) and potentially basic image editing intents if required.
-  - **Delete**: Support batch deletion by enabling a multi-select mode in the grid view.
+  - **Create/Read**: Expanded to support creating new files with any file suffix dynamically. Read includes general file-system support and folder-tree traversal.
+  - **Update / Edit Mode**: Specialized Markdown (.md) document editor for editing and saving on-the-fly, alongside custom folder/file renaming overlays (Update actions).
+  - **Delete**: Support batch deletion by enabling a multi-select mode in the grid view and individual deletions.
 - **SD Card Storage Integration**:
   - Expand the `SettingsScreen` to offer "SD Card" as a storage location choice when an external volume is mounted.
   - Use `ContextCompat.getExternalFilesDirs` to retrieve paths to removable media, and handle permissions/SAF (Storage Access Framework) interactions if writing outside app-specific directories.

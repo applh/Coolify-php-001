@@ -504,7 +504,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 
             val activeRoutes = remember(launcherActiveAppletsStr) {
                 if (launcherActiveAppletsStr.isEmpty()) {
-                    listOf("camera", "explorer", "ai_team", "cronjobs", "db", "agenda", "wallpaper", "backup", "settings", "browser").toSet()
+                    listOf("camera", "files", "ai_team", "cronjobs", "db", "agenda", "wallpaper", "backup", "settings", "browser").toSet()
                 } else {
                     try {
                         val arr = org.json.JSONArray(launcherActiveAppletsStr)
@@ -519,12 +519,11 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     }
                 }
             }
-
             val routeDisplayNames = remember {
                 mapOf(
                     "hub" to "Main Launcher Hub",
                     "camera" to "Camera Screen",
-                    "explorer" to "File Explorer",
+                    "files" to "Files Applet",
                     "ai_team" to "AI Workspace",
                     "cronjobs" to "Cron Task Management",
                     "db" to "SQLite Database Inspector",
@@ -558,7 +557,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             val configurableApplets = remember {
                 listOf(
                     "camera" to "Camera Screen",
-                    "explorer" to "File Explorer",
+                    "files" to "Files Applet",
                     "ai_team" to "AI Workspace",
                     "cronjobs" to "Cron Task Management",
                     "db" to "SQLite Database Inspector",
@@ -661,7 +660,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                 mapOf(
                     "hub" to "Main Launcher Hub",
                     "camera" to "Camera Screen",
-                    "explorer" to "File Explorer",
+                    "files" to "Files Applet",
                     "ai_team" to "AI Workspace",
                     "cronjobs" to "Cron Task Management",
                     "db" to "SQLite Database Inspector",

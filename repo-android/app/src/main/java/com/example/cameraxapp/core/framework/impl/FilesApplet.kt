@@ -7,9 +7,9 @@ import androidx.navigation.NavController
 import com.example.cameraxapp.core.framework.Applet
 import com.example.cameraxapp.ExplorerScreen
 
-class ExplorerApplet : Applet {
-    override val id: String = "explorer"
-    override val name: String = "Explorer"
+class FilesApplet : Applet {
+    override val id: String = "files"
+    override val name: String = "Files"
     override val description: String = "Browse local files"
     override val icon = Icons.Default.Menu
 

@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.core.content.FileProvider
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.input.pointer.pointerInput
@@ -157,7 +161,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
         if (selectedCategory == ExplorerCategory.ALL) {
             val allInDir = currentFolder.listFiles()?.toList() ?: emptyList()
             val validFiles = allInDir.filter { 
-                it.isDirectory || it.extension.lowercase() in listOf("jpg", "png", "jpeg", "mp4", "txt", "md", "json")
+                it.isDirectory || !it.name.startsWith(".")
             }
             // Sort folder first, then sort alphabetically/by date
             validFiles.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
@@ -166,7 +170,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
         } else if (selectedCategory == ExplorerCategory.VIDEOS) {
             getRecursiveFiles(baseFolder, listOf("mp4"))
         } else if (selectedCategory == ExplorerCategory.DOCUMENTS) {
-            getRecursiveFiles(baseFolder, listOf("txt", "md", "json"))
+            getRecursiveFiles(baseFolder, listOf("txt", "md", "json", "csv", "xml", "html", "css", "js", "py", "sh"))
         } else { // VAULT
             vaultFolder.listFiles()?.toList() ?: emptyList()
         }
@@ -188,6 +192,9 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 
     // Dialog state
     var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var showCreateFileDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var fileToRename by remember { mutableStateOf<File?>(null) }
 
     // Filter by search terms and sort choice
     val displayedFiles = remember(currentDirectoryItems, searchQuery, sortOption, refreshCounter) {
@@ -240,7 +247,12 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     tempDecryptedPreviewFile = null
                     selectedFile = null
                     triggerNotification("Item permanently deleted")
-                }
+                },
+                onRename = { old, _ ->
+                    fileToRename = old
+                    showRenameDialog = true
+                },
+                triggerNotification = triggerNotification
             )
             return@BoxWithConstraints
         }
@@ -341,6 +353,15 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                 }
                             }) {
                                 Icon(Icons.Filled.Share, contentDescription = "Share")
+                            }
+
+                            if (selectedFiles.size == 1) {
+                                IconButton(onClick = {
+                                    fileToRename = selectedFiles.first()
+                                    showRenameDialog = true
+                                }) {
+                                    Icon(Icons.Filled.Edit, contentDescription = "Rename")
+                                }
                             }
 
                             // Delete selected items recursively
@@ -526,15 +547,31 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                     )
                                 }
                                 
-                                // Quick folder creation option
-                                TextButton(
-                                    onClick = { showCreateFolderDialog = true },
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                    modifier = Modifier.height(32.dp)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("New Folder", fontSize = 12.sp)
+                                    // Quick folder creation option
+                                    TextButton(
+                                        onClick = { showCreateFolderDialog = true },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text("Folder", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+
+                                    // Quick file creation option
+                                    TextButton(
+                                        onClick = { showCreateFileDialog = true },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                        modifier = Modifier.height(32.dp)
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text("File", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             }
                         }
@@ -751,7 +788,12 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                             tempDecryptedPreviewFile = null
                                             selectedFile = null
                                             triggerNotification("Item permanently deleted")
-                                        }
+                                        },
+                                        onRename = { old, _ ->
+                                            fileToRename = old
+                                            showRenameDialog = true
+                                        },
+                                        triggerNotification = triggerNotification
                                     )
                                 }
                             }
@@ -812,6 +854,116 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             },
             dismissButton = {
                 TextButton(onClick = { showCreateFolderDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Dynamic file creation supporting any filename suffix (e.g. notes.md, data.csv)
+    if (showCreateFileDialog) {
+        var newFileName by remember { mutableStateOf("") }
+        var initialFileContent by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCreateFileDialog = false },
+            title = { Text("Create New File") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = newFileName,
+                        onValueChange = { newFileName = it },
+                        label = { Text("File Name (e.g., info.md, todo.txt)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = initialFileContent,
+                        onValueChange = { initialFileContent = it },
+                        label = { Text("Content (Optional)") },
+                        modifier = Modifier.fillMaxWidth().height(120.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (newFileName.isNotBlank()) {
+                        val target = File(currentFolder, newFileName)
+                        if (!target.exists()) {
+                            try {
+                                target.writeText(initialFileContent)
+                                refreshCounter++
+                                triggerNotification("File \"$newFileName\" created successfully")
+                            } catch (e: Exception) {
+                                triggerNotification("Failed to create file: ${e.localizedMessage}")
+                            }
+                        } else {
+                            triggerNotification("A file with this name already exists")
+                        }
+                    }
+                    showCreateFileDialog = false
+                }) {
+                    Text("Create")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateFileDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Rename Dialog (Full Update capability for files and folders)
+    if (showRenameDialog && fileToRename != null) {
+        var renameNewName by remember(fileToRename) { mutableStateOf(fileToRename!!.name) }
+        AlertDialog(
+            onDismissRequest = { 
+                showRenameDialog = false
+                fileToRename = null
+            },
+            title = { Text("Rename Item") },
+            text = {
+                OutlinedTextField(
+                    value = renameNewName,
+                    onValueChange = { renameNewName = it },
+                    label = { Text("New Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val currentRenameFile = fileToRename
+                    if (currentRenameFile != null && renameNewName.isNotBlank() && renameNewName != currentRenameFile.name) {
+                        val target = File(currentRenameFile.parentFile, renameNewName)
+                        if (!target.exists()) {
+                            if (currentRenameFile.renameTo(target)) {
+                                refreshCounter++
+                                triggerNotification("Renamed successfully to \"$renameNewName\"")
+                                if (selectedFile == currentRenameFile) {
+                                    selectedFile = target
+                                }
+                            } else {
+                                triggerNotification("Rename failed")
+                            }
+                        } else {
+                            triggerNotification("An item with this name already exists")
+                        }
+                    }
+                    showRenameDialog = false
+                    fileToRename = null
+                }) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showRenameDialog = false
+                    fileToRename = null
+                }) {
                     Text("Cancel")
                 }
             }
@@ -973,12 +1125,15 @@ fun PrivateVaultPasscodeScreen(
 fun FullScreenMedia(
     file: File,
     onClose: () -> Unit,
-    onDelete: (File) -> Unit
+    onDelete: (File) -> Unit,
+    onRename: ((File, File) -> Unit)? = null,
+    triggerNotification: (String) -> Unit
 ) {
     val context = LocalContext.current
     val isImg = file.extension.lowercase() in listOf("jpg", "png", "jpeg")
     val isVid = file.extension.lowercase() == "mp4"
-    val isDoc = file.extension.lowercase() in listOf("txt", "md", "json")
+    val isMarkdown = file.extension.lowercase() == "md"
+    val isDoc = file.extension.lowercase() in listOf("txt", "json", "csv", "xml", "html", "css", "js", "py", "sh")
 
     Box(
         modifier = Modifier
@@ -989,7 +1144,7 @@ fun FullScreenMedia(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 64.dp),
+                .padding(top = 56.dp, bottom = 64.dp),
             contentAlignment = Alignment.Center
         ) {
             if (isImg) {
@@ -1038,28 +1193,14 @@ fun FullScreenMedia(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-            } else if (isDoc) {
-                // Plain Text Document Reader Panel
-                val textContent = remember(file) {
-                    try {
-                        file.readText()
-                    } catch (e: Exception) {
-                        "Failed to load content: ${e.localizedMessage}"
-                    }
-                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(
-                        text = textContent,
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                }
+            } else if (isMarkdown || isDoc) {
+                // Specialized Renderer & Interactive Document Editor
+                DocumentViewerEditor(
+                    file = file,
+                    isMarkdown = isMarkdown,
+                    onContentChanged = {},
+                    triggerNotification = triggerNotification
+                )
             } else {
                 Text("Preview not supported for this extension type", color = Color.Gray, fontSize = 14.sp)
             }
@@ -1087,6 +1228,13 @@ fun FullScreenMedia(
                 modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                 textAlign = TextAlign.Center
             )
+            onRename?.let {
+                IconButton(onClick = {
+                    onRename(file, file)
+                }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Rename", tint = Color.White)
+                }
+            }
             IconButton(onClick = { onDelete(file) }) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
             }
@@ -1108,6 +1256,400 @@ fun FullScreenMedia(
                 fontSize = 11.sp,
                 modifier = Modifier.align(Alignment.Center)
             )
+        }
+    }
+}
+
+@Composable
+fun DocumentViewerEditor(
+    file: File,
+    isMarkdown: Boolean,
+    onContentChanged: () -> Unit,
+    triggerNotification: (String) -> Unit
+) {
+    var isEditMode by remember { mutableStateOf(false) }
+    var textContent by remember(file) {
+        mutableStateOf(
+            try {
+                file.readText()
+            } catch (e: Exception) {
+                "Failed to load content: ${e.localizedMessage}"
+            }
+        )
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Mode Selector / Toolbar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.DarkGray.copy(alpha = 0.5f))
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(
+                    onClick = { isEditMode = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (!isEditMode) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (!isEditMode) MaterialTheme.colorScheme.onPrimary else Color.White
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text("Preview", fontSize = 12.sp)
+                }
+                TextButton(
+                    onClick = { isEditMode = true },
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (isEditMode) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (isEditMode) MaterialTheme.colorScheme.onPrimary else Color.White
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text("Edit Source", fontSize = 12.sp)
+                }
+            }
+
+            if (isEditMode) {
+                ElevatedButton(
+                    onClick = {
+                        try {
+                            file.writeText(textContent)
+                            triggerNotification("Document saved successfully")
+                            isEditMode = false
+                            onContentChanged()
+                        } catch (e: Exception) {
+                            triggerNotification("Failed to save: ${e.localizedMessage}")
+                        }
+                    },
+                    colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check, 
+                        contentDescription = "Save",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Save", fontSize = 12.sp)
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            if (isEditMode) {
+                OutlinedTextField(
+                    value = textContent,
+                    onValueChange = { textContent = it },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    placeholder = { Text("Type content here...", color = Color.Gray) }
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .background(Color(0xFF1E1E1E))
+                ) {
+                    if (isMarkdown) {
+                        MarkdownRenderer(content = textContent)
+                    } else {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = textContent,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MarkdownRenderer(content: String) {
+    val lines = content.lines()
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onBackgroundColor = Color.White
+    
+    var inCodeBlock = false
+    val codeBlockContent = StringBuilder()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        for (line in lines) {
+            val trimmed = line.trim()
+            
+            if (trimmed.startsWith("```")) {
+                if (inCodeBlock) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D2D2D)),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = codeBlockContent.toString().trimEnd(),
+                            color = Color(0xFFE0E0E0),
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .horizontalScroll(rememberScrollState())
+                        )
+                    }
+                    codeBlockContent.setLength(0)
+                    inCodeBlock = false
+                } else {
+                    inCodeBlock = true
+                }
+                continue
+            }
+
+            if (inCodeBlock) {
+                codeBlockContent.append(line).append("\n")
+                continue
+            }
+
+            if (trimmed.startsWith("# ")) {
+                Text(
+                    text = parseMarkdownInline(trimmed.removePrefix("# "), primaryColor, onBackgroundColor),
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = primaryColor,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                )
+                continue
+            }
+            if (trimmed.startsWith("## ")) {
+                Text(
+                    text = parseMarkdownInline(trimmed.removePrefix("## "), primaryColor, onBackgroundColor),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                )
+                continue
+            }
+            if (trimmed.startsWith("### ")) {
+                Text(
+                    text = parseMarkdownInline(trimmed.removePrefix("### "), primaryColor, onBackgroundColor),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                continue
+            }
+            if (trimmed.startsWith("#### ")) {
+                Text(
+                    text = parseMarkdownInline(trimmed.removePrefix("#### "), primaryColor, onBackgroundColor),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = Color.LightGray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                continue
+            }
+
+            if (trimmed == "---" || trimmed == "***" || trimmed == "___") {
+                HorizontalDivider(
+                    color = Color.Gray.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                continue
+            }
+
+            if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.startsWith("+ ")) {
+                val bulletText = trimmed.substring(2)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "• ",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = parseMarkdownInline(bulletText, primaryColor, onBackgroundColor),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                }
+                continue
+            }
+
+            val matchResult = "^(\\d+)\\.\\s+(.*)$".toRegex().find(trimmed)
+            if (matchResult != null) {
+                val num = matchResult.groupValues[1]
+                val listText = matchResult.groupValues[2]
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "$num. ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = parseMarkdownInline(listText, primaryColor, onBackgroundColor),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                }
+                continue
+            }
+
+            if (trimmed.startsWith(">")) {
+                val quoteText = trimmed.removePrefix(">").trim()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .height(IntrinsicSize.Min)
+                            .background(primaryColor)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = parseMarkdownInline(quoteText, primaryColor, onBackgroundColor),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        ),
+                        color = Color.LightGray
+                    )
+                }
+                continue
+            }
+
+            if (trimmed.isNotEmpty()) {
+                Text(
+                    text = parseMarkdownInline(line, primaryColor, onBackgroundColor),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
+
+        if (inCodeBlock && codeBlockContent.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2D2D2D)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = codeBlockContent.toString().trimEnd(),
+                    color = Color(0xFFE0E0E0),
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .horizontalScroll(rememberScrollState())
+                )
+            }
+        }
+    }
+}
+
+fun parseMarkdownInline(text: String, primaryColor: Color, onBackgroundColor: Color): AnnotatedString {
+    return buildAnnotatedString {
+        var i = 0
+        while (i < text.length) {
+            when {
+                text.startsWith("***", i) -> {
+                    val end = text.indexOf("***", i + 3)
+                    if (end != -1) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) {
+                            append(text.substring(i + 3, end))
+                        }
+                        i = end + 3
+                    } else {
+                        append("***")
+                        i += 3
+                    }
+                }
+                text.startsWith("**", i) -> {
+                    val end = text.indexOf("**", i + 2)
+                    if (end != -1) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = primaryColor)) {
+                            append(text.substring(i + 2, end))
+                        }
+                        i = end + 2
+                    } else {
+                        append("**")
+                        i += 2
+                    }
+                }
+                text.startsWith("*", i) -> {
+                    val end = text.indexOf("*", i + 1)
+                    if (end != -1) {
+                        withStyle(style = SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) {
+                            append(text.substring(i + 1, end))
+                        }
+                        i = end + 1
+                    } else {
+                        append("*")
+                        i += 1
+                    }
+                }
+                text.startsWith("`", i) -> {
+                    val end = text.indexOf("`", i + 1)
+                    if (end != -1) {
+                        withStyle(style = SpanStyle(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            background = Color(0xFF333333),
+                            color = Color(0xFFFFB74D)
+                        )) {
+                            append(" " + text.substring(i + 1, end) + " ")
+                        }
+                        i = end + 1
+                    } else {
+                        append("`")
+                        i += 1
+                    }
+                }
+                else -> {
+                    append(text[i])
+                    i++
+                }
+            }
         }
     }
 }
