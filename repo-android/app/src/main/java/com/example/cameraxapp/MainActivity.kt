@@ -11,6 +11,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
@@ -106,19 +120,46 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route ?: "hub"
                 
-                val applets = listOf(
-                    AppletInfo("Home", "hub", Icons.Default.Home, "Main Hub"),
-                    AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-                    AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
-                    AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
-                    AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
-                    AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
-                    AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
-                    AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
-                    AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
-                    AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
-                    AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
-                )
+                val activeAppletJson by repository.launcherActiveApplets.collectAsState(initial = "")
+                val orderJson by repository.launcherAppletOrder.collectAsState(initial = "")
+                val startupDefaultRoute by repository.startupDefaultRoute.collectAsState(initial = "hub")
+
+                val allMasterApplets = remember {
+                    listOf(
+                        AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
+                        AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
+                        AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+                        AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
+                        AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
+                        AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
+                        AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
+                        AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
+                        AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
+                        AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
+                    )
+                }
+
+                val currentOrderedAndFilteredApplets = remember(activeAppletJson, orderJson) {
+                    getOrderedAndFilteredApplets(allMasterApplets, activeAppletJson, orderJson)
+                }
+
+                val drawerApplets = remember(currentOrderedAndFilteredApplets) {
+                    listOf(AppletInfo("Home", "hub", Icons.Default.Home, "Main Hub")) + currentOrderedAndFilteredApplets
+                }
+
+                var hasRedirectedByStartupKey by rememberSaveable { mutableStateOf(false) }
+
+                LaunchedEffect(startupDefaultRoute) {
+                    if (!hasRedirectedByStartupKey && startupDefaultRoute.isNotEmpty() && startupDefaultRoute != "hub") {
+                        hasRedirectedByStartupKey = true
+                        navController.navigate(startupDefaultRoute) {
+                            popUpTo("hub") {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                }
 
                 ModalNavigationDrawer(
                     drawerState = leftDrawerState,
@@ -131,7 +172,7 @@ class MainActivity : ComponentActivity() {
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Spacer(Modifier.height(8.dp))
-                            applets.forEach { applet ->
+                            drawerApplets.forEach { applet ->
                                 NavigationDrawerItem(
                                     icon = { Icon(applet.icon, contentDescription = null) },
                                     label = { Text(applet.name) },
@@ -173,7 +214,7 @@ class MainActivity : ComponentActivity() {
                                             style = MaterialTheme.typography.titleLarge
                                         )
                                         Spacer(Modifier.height(8.dp))
-                                        applets.forEach { applet ->
+                                        drawerApplets.forEach { applet ->
                                             NavigationDrawerItem(
                                                 icon = { Icon(applet.icon, contentDescription = null) },
                                                 label = { Text(applet.name) },
@@ -211,6 +252,7 @@ class MainActivity : ComponentActivity() {
                                             composable("hub") {
                                                 HubScreen(
                                                     navController = navController,
+                                                    repository = repository,
                                                     onOpenDrawer = { scope.launch { leftDrawerState.open() } },
                                                     onOpenRightDrawer = { scope.launch { rightDrawerState.open() } }
                                                 )
@@ -343,21 +385,162 @@ data class AppletInfo(
     val description: String
 )
 
+@Composable
+fun getAppletColor(route: String): androidx.compose.ui.graphics.Color {
+    return when (route) {
+        "camera" -> androidx.compose.ui.graphics.Color(0xFFFF8A80)      // Soft Red
+        "explorer" -> androidx.compose.ui.graphics.Color(0xFF82B1FF)    // Soft Blue
+        "ai_team" -> androidx.compose.ui.graphics.Color(0xFFEA80FC)     // Soft Violet
+        "cronjobs" -> androidx.compose.ui.graphics.Color(0xFFFFD180)    // Soft Orange
+        "db" -> androidx.compose.ui.graphics.Color(0xFF84FFFF)          // Soft Cyan
+        "agenda" -> androidx.compose.ui.graphics.Color(0xFFB9F6CA)      // Soft Green
+        "wallpaper" -> androidx.compose.ui.graphics.Color(0xFFFF80AB)   // Soft Pink
+        "backup" -> androidx.compose.ui.graphics.Color(0xFFA7FFEB)      // Soft Teal
+        "settings" -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)    // Blue Grey
+        "browser" -> androidx.compose.ui.graphics.Color(0xFFFFE082)     // Soft Gold/Yellow
+        else -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)          // Fallback
+    }
+}
+
+fun getOrderedAndFilteredApplets(
+    allApplets: List<AppletInfo>,
+    activeJson: String,
+    orderJson: String
+): List<AppletInfo> {
+    val activeRoutes = if (activeJson.isEmpty()) {
+        allApplets.map { it.route }.toSet()
+    } else {
+        try {
+            val arr = org.json.JSONArray(activeJson)
+            val set = mutableSetOf<String>()
+            for (i in 0 until arr.length()) {
+                set.add(arr.getString(i))
+            }
+            set.add("settings") // Settings is protected, can never lock out!
+            set
+        } catch (e: Exception) {
+            allApplets.map { it.route }.toSet()
+        }
+    }
+
+    val filteredApplets = allApplets.filter { activeRoutes.contains(it.route) }
+
+    if (orderJson.isEmpty()) {
+        return filteredApplets
+    } else {
+        try {
+            val arr = org.json.JSONArray(orderJson)
+            val orderList = mutableListOf<String>()
+            for (i in 0 until arr.length()) {
+                orderList.add(arr.getString(i))
+            }
+            val activeOrdered = orderList.filter { activeRoutes.contains(it) }
+            val orderedFiltered = mutableListOf<AppletInfo>()
+            activeOrdered.forEach { route ->
+                val applet = filteredApplets.find { it.route == route }
+                if (applet != null) {
+                    orderedFiltered.add(applet)
+                }
+            }
+            filteredApplets.forEach { applet ->
+                if (!orderedFiltered.contains(applet)) {
+                    orderedFiltered.add(applet)
+                }
+            }
+            return orderedFiltered
+        } catch (e: Exception) {
+            return filteredApplets
+        }
+    }
+}
+
+@Composable
+fun CircularAppletCard(
+    applet: AppletInfo,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accentColor = getAppletColor(applet.route)
+    Column(
+        modifier = modifier
+            .width(68.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(accentColor)
+                .border(1.5.dp, accentColor.copy(alpha = 0.8f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = applet.icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = androidx.compose.ui.graphics.Color.Black
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = applet.name,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                letterSpacing = 0.3.sp
+            ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit, onOpenRightDrawer: () -> Unit) {
-    val applets = listOf(
-        AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
-        AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
-        AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
-        AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
-        AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
-        AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
-        AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
-        AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
-        AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
-        AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
-    )
+fun HubScreen(
+    navController: NavController,
+    repository: SettingsRepository,
+    onOpenDrawer: () -> Unit,
+    onOpenRightDrawer: () -> Unit
+) {
+    val activeAppletJson by repository.launcherActiveApplets.collectAsState(initial = "")
+    val orderJson by repository.launcherAppletOrder.collectAsState(initial = "")
+    val scope = rememberCoroutineScope()
+
+    val allApplets = remember {
+        listOf(
+            AppletInfo("Camera", "camera", Icons.Default.PlayArrow, "Capture photos with CameraX"),
+            AppletInfo("Explorer", "explorer", Icons.Default.Menu, "Browse local files"),
+            AppletInfo("AI Team", "ai_team", Icons.Default.Create, "AI chat and generation"),
+            AppletInfo("Cronjobs", "cronjobs", Icons.Default.DateRange, "Manage background cron tasks"),
+            AppletInfo("DB SQLite", "db", Icons.AutoMirrored.Filled.List, "Inspect and edit database files"),
+            AppletInfo("Agenda", "agenda", Icons.Default.DateRange, "Calendar planner and alarm schedules"),
+            AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
+            AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
+            AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
+            AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
+        )
+    }
+
+    val currentSet = remember(activeAppletJson, orderJson) {
+        getOrderedAndFilteredApplets(allApplets, activeAppletJson, orderJson)
+    }
+
+    val mutableAppletsList = remember { mutableStateListOf<AppletInfo>() }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
+    LaunchedEffect(currentSet) {
+        if (draggingIndex == null) {
+            mutableAppletsList.clear()
+            mutableAppletsList.addAll(currentSet)
+        }
+    }
+
+    val itemPositions = remember { mutableStateMapOf<Int, androidx.compose.ui.layout.LayoutCoordinates>() }
 
     Scaffold(
         bottomBar = {
@@ -376,21 +559,124 @@ fun HubScreen(navController: NavController, onOpenDrawer: () -> Unit, onOpenRigh
             )
         }
     ) { padding ->
-        BoxWithConstraints(modifier = Modifier.padding(padding).fillMaxSize()) {
-            val cols = if (maxWidth > 600.dp) 3 else 2
+        BoxWithConstraints(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            val cols = if (maxWidth > 600.dp) 8 else 5
             LazyVerticalGrid(
                 columns = GridCells.Fixed(cols),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                contentPadding = PaddingValues(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(applets) { applet ->
-                    AppletCard(applet) {
-                        navController.navigate(applet.route)
+                itemsIndexed(
+                    items = mutableAppletsList,
+                    key = { _, item -> item.route }
+                ) { index, applet ->
+                    val dragging = draggingIndex == index
+                    val cardOffset = if (dragging) dragOffset else androidx.compose.ui.geometry.Offset.Zero
+
+                    val itemModifier = if (dragging) {
+                        Modifier
+                    } else {
+                        @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+                        @Suppress("DEPRECATION")
+                        Modifier.animateItemPlacement()
                     }
+
+                    CircularAppletCard(
+                        applet = applet,
+                        onClick = {
+                            if (draggingIndex == null) {
+                                navController.navigate(applet.route)
+                            }
+                        },
+                        modifier = itemModifier
+                            .onGloballyPositioned { coordinates ->
+                                itemPositions[index] = coordinates
+                            }
+                            .graphicsLayer {
+                                translationX = cardOffset.x
+                                translationY = cardOffset.y
+                                scaleX = if (dragging) 1.2f else 1.0f
+                                scaleY = if (dragging) 1.2f else 1.0f
+                                alpha = if (dragging) 0.85f else 1.0f
+                                shadowElevation = if (dragging) 8f else 0f
+                            }
+                            .pointerInput(index) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { _ ->
+                                        draggingIndex = index
+                                        dragOffset = androidx.compose.ui.geometry.Offset.Zero
+                                    },
+                                    onDragEnd = {
+                                        val finalIndex = draggingIndex
+                                        draggingIndex = null
+                                        dragOffset = androidx.compose.ui.geometry.Offset.Zero
+                                        if (finalIndex != null) {
+                                            scope.launch {
+                                                val orderRoutes = mutableAppletsList.map { it.route }
+                                                val jsonArray = org.json.JSONArray(orderRoutes)
+                                                repository.setLauncherAppletOrder(jsonArray.toString())
+                                            }
+                                        }
+                                    },
+                                    onDragCancel = {
+                                        draggingIndex = null
+                                        dragOffset = androidx.compose.ui.geometry.Offset.Zero
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        dragOffset += dragAmount
+
+                                        val dragIdx = draggingIndex
+                                        if (dragIdx != null && dragIdx in 0..mutableAppletsList.lastIndex) {
+                                            val currentBounds = itemPositions[dragIdx]?.boundsInWindow()
+                                            if (currentBounds != null) {
+                                                val centerX = currentBounds.left + currentBounds.width / 2f + dragOffset.x
+                                                val centerY = currentBounds.top + currentBounds.height / 2f + dragOffset.y
+
+                                                var targetIdx = -1
+                                                for (i in 0..mutableAppletsList.lastIndex) {
+                                                    if (i != dragIdx) {
+                                                        val bounds = itemPositions[i]?.boundsInWindow()
+                                                        if (bounds != null && bounds.contains(
+                                                                androidx.compose.ui.geometry.Offset(centerX, centerY)
+                                                            )
+                                                        ) {
+                                                            targetIdx = i
+                                                            break
+                                                        }
+                                                    }
+                                                }
+
+                                                if (targetIdx != -1) {
+                                                    val oldC = itemPositions[dragIdx]?.positionInRoot()
+                                                    val newC = itemPositions[targetIdx]?.positionInRoot()
+
+                                                    val temp = mutableAppletsList[dragIdx]
+                                                    mutableAppletsList[dragIdx] = mutableAppletsList[targetIdx]
+                                                    mutableAppletsList[targetIdx] = temp
+
+                                                    if (oldC != null && newC != null) {
+                                                        dragOffset = androidx.compose.ui.geometry.Offset(
+                                                            x = dragOffset.x + (oldC.x - newC.x),
+                                                            y = dragOffset.y + (oldC.y - newC.y)
+                                                        )
+                                                    }
+                                                    draggingIndex = targetIdx
+                                                }
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                    )
                 }
             }
         }

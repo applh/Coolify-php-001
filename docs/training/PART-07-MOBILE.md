@@ -181,5 +181,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Check out the implementation details highlighted inside `browser-applet-plan.md`. Create a custom SQLite table schema for multi-tab management, implement an inline code generation prompt helper that maps raw text requests to prompt-directed sandboxed JavaScript using `generateUserScript()`, link downloads to a custom `BrowserDownloadManager` outputting updates via standard Foreground Notifications, and configure periodic background content checks by adding web scraping triggers inside the common `DynamicRouterWorker.kt` handler.
 - **Complexity**: Part 5
 
+### 28. Android Launcher UX Customization: Reordering, Circular Shapes & Startup Configuration (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/MainActivity.kt`, `repo-android/docs/launcher-applet-upgrade-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/AppPreferences.kt`
+- **Goal**: Understand high-performance home screen configuration techniques using Jetpack Compose: dynamic card clipping using custom circular shapes, gestural long-press drag-and-drop mechanics inside vertical grids, multi-select active applet filters, and transaction-based cold-start route redirections in the MainActivity initialization lifecycle.
+- **Exercise**: Design a custom `CircularAppletCard` clipped using `CircleShape` with centered vector icons and a text caption label beneath. Wire dynamic reordering parameters to serialized JSON sequence flows inside Jetpack Preferences DataStore, and write navigation redirect interceptors executing immediately upon activity cold-launches.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

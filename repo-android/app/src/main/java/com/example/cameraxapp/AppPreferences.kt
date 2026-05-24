@@ -37,6 +37,9 @@ object AppPreferences {
     val PUBLIC_GALLERY_NAME = stringPreferencesKey("public_gallery_name")
     val AUTOPILOT_PERSONA = stringPreferencesKey("autopilot_persona")
     val WALLPAPER_FOLDER_URI = stringPreferencesKey("wallpaper_folder_uri")
+    val LAUNCHER_APPLET_ORDER = stringPreferencesKey("launcher_applet_order")
+    val LAUNCHER_ACTIVE_APPLETS = stringPreferencesKey("launcher_active_applets")
+    val STARTUP_DEFAULT_APPLET = stringPreferencesKey("startup_default_applet")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -58,6 +61,9 @@ class SettingsRepository(private val context: Context) {
     val publicGalleryName: Flow<String> = context.dataStore.data.map { it[AppPreferences.PUBLIC_GALLERY_NAME] ?: "GeminiCanvas" }
     val autopilotPersona: Flow<String> = context.dataStore.data.map { it[AppPreferences.AUTOPILOT_PERSONA] ?: "Continuous Autopilot Periodic Review: Critique and expand on our previous prompt concept with updated insights or direct project guidelines." }
     val wallpaperFolderUri: Flow<String> = context.dataStore.data.map { it[AppPreferences.WALLPAPER_FOLDER_URI] ?: "" }
+    val launcherAppletOrder: Flow<String> = context.dataStore.data.map { it[AppPreferences.LAUNCHER_APPLET_ORDER] ?: "" }
+    val launcherActiveApplets: Flow<String> = context.dataStore.data.map { it[AppPreferences.LAUNCHER_ACTIVE_APPLETS] ?: "" }
+    val startupDefaultRoute: Flow<String> = context.dataStore.data.map { it[AppPreferences.STARTUP_DEFAULT_APPLET] ?: "hub" }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -129,6 +135,26 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setWallpaperFolderUri(uri: String) {
         context.dataStore.edit { it[AppPreferences.WALLPAPER_FOLDER_URI] = uri }
+    }
+
+    suspend fun setLauncherAppletOrder(orderJson: String) {
+        context.dataStore.edit { it[AppPreferences.LAUNCHER_APPLET_ORDER] = orderJson }
+    }
+
+    suspend fun setLauncherActiveApplets(activeJson: String) {
+        context.dataStore.edit { it[AppPreferences.LAUNCHER_ACTIVE_APPLETS] = activeJson }
+    }
+
+    suspend fun setStartupDefaultRoute(route: String) {
+        context.dataStore.edit { it[AppPreferences.STARTUP_DEFAULT_APPLET] = route }
+    }
+
+    suspend fun resetLauncherConfig() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(AppPreferences.LAUNCHER_APPLET_ORDER)
+            preferences.remove(AppPreferences.LAUNCHER_ACTIVE_APPLETS)
+            preferences[AppPreferences.STARTUP_DEFAULT_APPLET] = "hub"
+        }
     }
 
     suspend fun exportSettings(uri: Uri) {

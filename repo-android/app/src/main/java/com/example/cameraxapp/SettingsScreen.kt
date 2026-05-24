@@ -43,6 +43,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val publicGalleryName by repository.publicGalleryName.collectAsState(initial = "GeminiCanvas")
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showGalleryNameDialog by remember { mutableStateOf(false) }
+    var showStartAppletDialog by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -322,6 +324,106 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     importLauncher.launch(arrayOf("application/json", "*/*"))
                 }
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Launcher & Desktop UX Customization", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val startupDefaultRoute by repository.startupDefaultRoute.collectAsState(initial = "hub")
+            val launcherActiveAppletsStr by repository.launcherActiveApplets.collectAsState(initial = "")
+
+            val activeRoutes = remember(launcherActiveAppletsStr) {
+                if (launcherActiveAppletsStr.isEmpty()) {
+                    listOf("camera", "explorer", "ai_team", "cronjobs", "db", "agenda", "wallpaper", "backup", "settings", "browser").toSet()
+                } else {
+                    try {
+                        val arr = org.json.JSONArray(launcherActiveAppletsStr)
+                        val set = mutableSetOf<String>()
+                        for (i in 0 until arr.length()) {
+                            set.add(arr.getString(i))
+                        }
+                        set.add("settings") // Settings is permanently active
+                        set
+                    } catch (e: Exception) {
+                        emptySet()
+                    }
+                }
+            }
+
+            val routeDisplayNames = remember {
+                mapOf(
+                    "hub" to "Main Launcher Hub",
+                    "camera" to "Camera Screen",
+                    "explorer" to "File Explorer",
+                    "ai_team" to "AI Workspace",
+                    "cronjobs" to "Cron Task Management",
+                    "db" to "SQLite Database Inspector",
+                    "agenda" to "Agenda & Calendar Scheduler",
+                    "wallpaper" to "Wallpaper Auto-Rotation",
+                    "backup" to "Backup Manager",
+                    "settings" to "Global App Settings",
+                    "browser" to "Sandbox Web Browser"
+                )
+            }
+
+            ListItem(
+                headlineContent = { Text("Default Startup Screen") },
+                supportingContent = { Text("Starts on " + (routeDisplayNames[startupDefaultRoute] ?: "Main Launcher Hub")) },
+                modifier = Modifier.clickable {
+                    showStartAppletDialog = true
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Reset Desktop Layout") },
+                supportingContent = { Text("Restore circular applets positions, active items and routing defaults") },
+                modifier = Modifier.clickable {
+                    showResetConfirmDialog = true
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Active Applet Visibilities", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(vertical = 4.dp))
+
+            val configurableApplets = remember {
+                listOf(
+                    "camera" to "Camera Screen",
+                    "explorer" to "File Explorer",
+                    "ai_team" to "AI Workspace",
+                    "cronjobs" to "Cron Task Management",
+                    "db" to "SQLite Database Inspector",
+                    "agenda" to "Agenda & Calendar Scheduler",
+                    "wallpaper" to "Wallpaper Auto-Rotation",
+                    "backup" to "Backup Manager",
+                    "browser" to "Sandbox Web Browser"
+                )
+            }
+
+            configurableApplets.forEach { (route, name) ->
+                val isActive = activeRoutes.contains(route)
+                ListItem(
+                    headlineContent = { Text(name) },
+                    supportingContent = { Text(if (isActive) "Shown on launcher grid" else "Hidden from launcher") },
+                    trailingContent = {
+                        Switch(
+                            checked = isActive,
+                            onCheckedChange = { checked ->
+                                val newRoutes = activeRoutes.toMutableSet()
+                                if (checked) {
+                                    newRoutes.add(route)
+                                } else {
+                                    newRoutes.remove(route)
+                                }
+                                newRoutes.add("settings") // protect settings
+                                val json = org.json.JSONArray(newRoutes.toList())
+                                coroutineScope.launch {
+                                    repository.setLauncherActiveApplets(json.toString())
+                                }
+                            }
+                        )
+                    }
+                )
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -378,6 +480,88 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                 },
                 dismissButton = {
                     TextButton(onClick = { showGalleryNameDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showStartAppletDialog) {
+            val routeDisplayNames = remember {
+                mapOf(
+                    "hub" to "Main Launcher Hub",
+                    "camera" to "Camera Screen",
+                    "explorer" to "File Explorer",
+                    "ai_team" to "AI Workspace",
+                    "cronjobs" to "Cron Task Management",
+                    "db" to "SQLite Database Inspector",
+                    "agenda" to "Agenda & Calendar Scheduler",
+                    "wallpaper" to "Wallpaper Auto-Rotation",
+                    "backup" to "Backup Manager",
+                    "settings" to "Global App Settings",
+                    "browser" to "Sandbox Web Browser"
+                )
+            }
+            AlertDialog(
+                onDismissRequest = { showStartAppletDialog = false },
+                title = { Text("Select Startup Destination") },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        routeDisplayNames.forEach { (route, displayName) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        coroutineScope.launch {
+                                            repository.setStartupDefaultRoute(route)
+                                        }
+                                        showStartAppletDialog = false
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = startupDefaultRoute == route,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            repository.setStartupDefaultRoute(route)
+                                        }
+                                        showStartAppletDialog = false
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(displayName, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showStartAppletDialog = false }) {
+                        Text("Dismiss")
+                    }
+                }
+            )
+        }
+
+        if (showResetConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetConfirmDialog = false },
+                title = { Text("Reset Desktop Layout") },
+                text = { Text("Are you sure you want to reset customized item drag positions, active switches, and startup landing back to default?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch {
+                            repository.resetLauncherConfig()
+                            Toast.makeText(context, "Desktop layout reset successfully", Toast.LENGTH_SHORT).show()
+                        }
+                        showResetConfirmDialog = false
+                    }) {
+                        Text("Reset Layout", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetConfirmDialog = false }) {
                         Text("Cancel")
                     }
                 }
