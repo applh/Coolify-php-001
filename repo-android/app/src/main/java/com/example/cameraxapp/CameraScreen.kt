@@ -73,6 +73,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.style.TextAlign
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -382,7 +384,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                 Text(
                                     text = "Simulated PiP Stream",
                                     color = Color.Gray,
-                                    style = MaterialTheme.typography.bodyExtraSmall,
+                                    style = MaterialTheme.typography.bodySmall,
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -409,7 +411,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                         Text(
                             text = if (activeEvCorrection == 0) "EV: 0" else if (activeEvCorrection > 0) "EV: +$activeEvCorrection" else "EV: $activeEvCorrection",
                             color = Color.White,
-                            style = MaterialTheme.typography.bodyExtraSmall
+                            style = MaterialTheme.typography.bodySmall
                         )
                         IconButton(
                             onClick = {
@@ -431,7 +433,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                 else -> "ISO: $activeIsoSensitivity"
                             },
                             color = Color.White,
-                            style = MaterialTheme.typography.bodyExtraSmall
+                            style = MaterialTheme.typography.bodySmall
                         )
                         IconButton(
                             onClick = {

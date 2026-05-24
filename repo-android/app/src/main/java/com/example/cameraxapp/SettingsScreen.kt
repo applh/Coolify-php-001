@@ -17,6 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.foundation.shape.RoundedCornerShape
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
