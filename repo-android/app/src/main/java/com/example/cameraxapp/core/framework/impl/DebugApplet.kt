@@ -423,7 +423,7 @@ class DebugApplet : Applet {
                 // Expanding panel for detailed view
                 if (isExpanded) {
                     Spacer(modifier = Modifier.height(10.dp))
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(

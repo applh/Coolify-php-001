@@ -1368,13 +1368,48 @@ fun LeafletMapViewPane(
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Diag Error: Leaflet CSS CDN fails to load.')" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Diag Error: Leaflet JS CDN fails to load.')" onload="verifyLeaflet()"></script>
                 <style>
                     body { font-family: sans-serif; padding: 16px; background: #E8F5E9; color: #333; line-height: 1.4; }
                     h1 { color: #2E7D32; font-size: 18px; margin-top: 0; }
                     .box { border: 1px solid #A5D6A7; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
                 </style>
+                <script>
+                    var verifyCalled = false;
+                    function verifyLeaflet() {
+                        if (verifyCalled) return;
+                        if (typeof L !== 'undefined') {
+                            var leafletCheck = document.getElementById('leaflet-check');
+                            var mapCheck = document.getElementById('map-check');
+                            if (leafletCheck && mapCheck) {
+                                leafletCheck.innerText = "✅ Leaflet L is present. Version: " + L.version;
+                                console.log("Diag Success: Leaflet L reference works.");
+                                try {
+                                    var testMap = L.map('dummy-layout').setView([0,0], 1);
+                                    mapCheck.innerText = "✅ SUCCESS (Map instance created)";
+                                    console.log("Diag Success: Leaflet Map object successfully instantiated.");
+                                    verifyCalled = true;
+                                } catch(e) {
+                                    mapCheck.innerText = "❌ Creation failed (" + e.message + ")";
+                                    console.error("Diag Error: Map instantiation failed: " + e.message);
+                                }
+                            }
+                        } else {
+                            var leafletCheck = document.getElementById('leaflet-check');
+                            if (leafletCheck) {
+                                leafletCheck.innerText = "❌ Leaflet Namespace is undefined!";
+                                console.error("Diag Error: 'L' namespace is missing.");
+                            }
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', verifyLeaflet);
+                    window.addEventListener('load', verifyLeaflet);
+                    setTimeout(verifyLeaflet, 200);
+                    setTimeout(verifyLeaflet, 500);
+                    setTimeout(verifyLeaflet, 1000);
+                </script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Diag Error: Leaflet CSS CDN fails to load.')" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Diag Error: Leaflet JS CDN fails to load.')" onload="verifyLeaflet()"></script>
             </head>
             <body>
                 <h1>🧪 Test Page 3: Leaflet Integrity API Check</h1>
@@ -1385,23 +1420,6 @@ fun LeafletMapViewPane(
                 <div id="dummy-layout" style="display:none; width:10px; height:10px;"></div>
                 <script>
                     console.log("Diagnostic Test Page 3: Initializing.");
-                    function verifyLeaflet() {
-                        if (typeof L !== 'undefined') {
-                            document.getElementById('leaflet-check').innerText = "✅ Leaflet L is present. Version: " + L.version;
-                            console.log("Diag Success: Leaflet L reference works.");
-                            try {
-                                var testMap = L.map('dummy-layout').setView([0,0], 1);
-                                document.getElementById('map-check').innerText = "✅ SUCCESS (Map instance created)";
-                                console.log("Diag Success: Leaflet Map object successfully instantiated.");
-                            } catch(e) {
-                                document.getElementById('map-check').innerText = "❌ Creation failed (" + e.message + ")";
-                                console.error("Diag Error: Map instantiation failed: " + e.message);
-                            }
-                        } else {
-                            document.getElementById('leaflet-check').innerText = "❌ Leaflet Namespace is undefined!";
-                            console.error("Diag Error: 'L' namespace is missing.");
-                        }
-                    }
                 </script>
             </body>
             </html>
@@ -1607,9 +1625,155 @@ fun LeafletMapViewPane(
                     window.addEventListener('error', function(e) {
                         console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
                     }, true);
+
+                    var map;
+                    var mapInitialized = false;
+                    var tempMarker = null;
+
+                    function initMap() {
+                        if (mapInitialized) return;
+                        if (typeof L === 'undefined') {
+                            console.error("Critical: 'L' object is undefined! Map rendering will crash.");
+                            return;
+                        }
+                        var mapContainer = document.getElementById('map');
+                        if (!mapContainer) return;
+
+                        mapInitialized = true;
+                        console.log("Initializing Leaflet map instance centered on [lat: $defaultLat, lng: $defaultLng]");
+                        map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
+                        console.log("Leaflet map created successfully.");
+                        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                        L.tileLayer('$tileUrl', {
+                            maxZoom: 19,
+                            attribution: '© OSM'
+                        }).addTo(map);
+                        console.log("Leaflet Tile layer set with tileUrl: $tileUrl");
+
+                        // Add event markers
+                        var events = $markersJson;
+                        events.forEach(function(ev) {
+                            var color = ev.color || '#4CAF50';
+                            var iconElement = document.createElement('div');
+                            iconElement.className = 'custom-marker';
+                            iconElement.style.backgroundColor = color;
+                            
+                            var customIcon = L.divIcon({
+                                html: iconElement,
+                                className: 'dummy',
+                                iconSize: [18, 18],
+                                iconAnchor: [9, 9]
+                            });
+
+                            var marker = L.marker([ev.lat, ev.lng], { icon: customIcon }).addTo(map);
+                            marker.bindPopup(
+                                "<b>" + ev.title + "</b><br>" + 
+                                ev.notes + "<br>" +
+                                "<button style='margin-top:5px; padding:4px 8px; font-size:11px;' onclick='AndroidBridge.editEvent(" + ev.id + ")'>Edit Event</button>"
+                            );
+                        });
+
+                        // Drop temporary marker on map click
+                        map.on('click', function(e) {
+                            var lat = e.latlng.lat;
+                            var lng = e.latlng.lng;
+                            
+                            if (tempMarker) {
+                                tempMarker.setLatLng([lat, lng]);
+                            } else {
+                                tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                            }
+                            
+                            reverseGeocode(lat, lng, function(name) {
+                                tempMarker.bindPopup(
+                                    "<b>Selected Location</b><br>" + name + "<br>" +
+                                    "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
+                                ).openPopup();
+                            });
+                        });
+
+                        fixMapSize();
+                    }
+
+                    function tryInitMap() {
+                        if (typeof L !== 'undefined' && document.getElementById('map')) {
+                            initMap();
+                        }
+                    }
+
+                    function fixMapSize() {
+                        if (map) {
+                            map.invalidateSize();
+                        }
+                    }
+
+                    function reverseGeocode(lat, lng, callback) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
+                            callback(name);
+                        })
+                        .catch(() => {
+                            callback(lat.toFixed(5) + ', ' + lng.toFixed(5));
+                        });
+                    }
+
+                    function doSearch() {
+                        var query = document.getElementById('search-input').value;
+                        if (!query) return;
+                        document.getElementById('search-btn').innerText = '...';
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(results => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            if (results.length > 0) {
+                                var first = results[0];
+                                var lat = parseFloat(first.lat);
+                                var lng = parseFloat(first.lon);
+                                var name = first.display_name;
+                                if (map) {
+                                    map.setView([lat, lng], 14);
+                                    if (tempMarker) {
+                                        tempMarker.setLatLng([lat, lng]);
+                                    } else {
+                                        tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                                    }
+                                    tempMarker.bindPopup(
+                                        "<b>Found Checkpoint</b><br>" + name + "<br>" +
+                                        "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
+                                    ).openPopup();
+                                }
+                            } else {
+                                alert("Address not found.");
+                            }
+                        })
+                        .catch(() => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            alert("Search failed.");
+                        });
+                    }
+
+                    window.addEventListener('load', fixMapSize);
+                    window.addEventListener('resize', fixMapSize);
+                    document.addEventListener('DOMContentLoaded', function() {
+                        tryInitMap();
+                        fixMapSize();
+                    });
+                    setTimeout(tryInitMap, 100);
+                    setTimeout(tryInitMap, 300);
+                    setTimeout(tryInitMap, 600);
+                    setTimeout(tryInitMap, 1200);
+                    setTimeout(tryInitMap, 2500);
+                    setInterval(fixMapSize, 1500);
                 </script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Leaflet CSS CDN!')" onload="console.log('Leaflet CSS CDN loaded.')" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Leaflet JS CDN!')" onload="console.log('Leaflet JS CDN loaded successfully.')"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Leaflet JS CDN!')" onload="tryInitMap()"></script>
                 <style>
                     body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
@@ -1647,130 +1811,6 @@ fun LeafletMapViewPane(
                     <button id="search-btn" onclick="doSearch()">Search</button>
                 </div>
                 <div id="map"></div>
-                <script>
-                    console.log("Initializing Leaflet map instance centered on [lat: $defaultLat, lng: $defaultLng]");
-                    if (typeof L === 'undefined') {
-                        console.error("Critical: 'L' object is undefined! Map rendering will crash.");
-                    }
-                    var map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
-                    console.log("Leaflet map created successfully.");
-                    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-                    L.tileLayer('$tileUrl', {
-                        maxZoom: 19,
-                        attribution: '© OSM'
-                    }).addTo(map);
-                    console.log("Leaflet Tile layer set with tileUrl: $tileUrl");
-
-                    // Auto-resize / invalidate size to prevent blank map issues in WebView on layout/creation updates
-                    function fixMapSize() {
-                        if (map) {
-                            map.invalidateSize();
-                        }
-                    }
-                    window.addEventListener('load', fixMapSize);
-                    window.addEventListener('resize', fixMapSize);
-                    document.addEventListener('DOMContentLoaded', fixMapSize);
-                    setTimeout(fixMapSize, 100);
-                    setTimeout(fixMapSize, 300);
-                    setTimeout(fixMapSize, 600);
-                    setTimeout(fixMapSize, 1200);
-                    setTimeout(fixMapSize, 2500);
-
-                    // Add event markers
-                    var events = $markersJson;
-                    events.forEach(function(ev) {
-                        var color = ev.color || '#4CAF50';
-                        var iconElement = document.createElement('div');
-                        iconElement.className = 'custom-marker';
-                        iconElement.style.backgroundColor = color;
-                        
-                        var customIcon = L.divIcon({
-                            html: iconElement,
-                            className: 'dummy',
-                            iconSize: [18, 18],
-                            iconAnchor: [9, 9]
-                        });
-
-                        var marker = L.marker([ev.lat, ev.lng], { icon: customIcon }).addTo(map);
-                        marker.bindPopup(
-                            "<b>" + ev.title + "</b><br>" + 
-                            ev.notes + "<br>" +
-                            "<button style='margin-top:5px; padding:4px 8px; font-size:11px;' onclick='AndroidBridge.editEvent(" + ev.id + ")'>Edit Event</button>"
-                        );
-                    });
-
-                    // Drop temporary marker on map click
-                    var tempMarker = null;
-                    
-                    function reverseGeocode(lat, lng, callback) {
-                        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
-                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
-                        })
-                        .then(r => r.json())
-                        .then(data => {
-                            var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-                            callback(name);
-                        })
-                        .catch(() => {
-                            callback(lat.toFixed(5) + ', ' + lng.toFixed(5));
-                        });
-                    }
-
-                    map.on('click', function(e) {
-                        var lat = e.latlng.lat;
-                        var lng = e.latlng.lng;
-                        
-                        if (tempMarker) {
-                            tempMarker.setLatLng([lat, lng]);
-                        } else {
-                            tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
-                        }
-                        
-                        reverseGeocode(lat, lng, function(name) {
-                            tempMarker.bindPopup(
-                                "<b>Selected Location</b><br>" + name + "<br>" +
-                                "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
-                            ).openPopup();
-                        });
-                    });
-
-                    function doSearch() {
-                        var query = document.getElementById('search-input').value;
-                        if (!query) return;
-                        document.getElementById('search-btn').innerText = '...';
-                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
-                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
-                        })
-                        .then(r => r.json())
-                        .then(results => {
-                            document.getElementById('search-btn').innerText = 'Search';
-                            if (results.length > 0) {
-                                var first = results[0];
-                                var lat = parseFloat(first.lat);
-                                var lng = parseFloat(first.lon);
-                                var name = first.display_name;
-                                map.setView([lat, lng], 14);
-                                
-                                if (tempMarker) {
-                                    tempMarker.setLatLng([lat, lng]);
-                                } else {
-                                    tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
-                                }
-                                tempMarker.bindPopup(
-                                    "<b>Found Checkpoint</b><br>" + name + "<br>" +
-                                    "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
-                                ).openPopup();
-                            } else {
-                                alert("Address not found.");
-                            }
-                        })
-                        .catch(() => {
-                            document.getElementById('search-btn').innerText = 'Search';
-                            alert("Search failed.");
-                        });
-                    }
-                </script>
             </body>
             </html>
             """.trimIndent()

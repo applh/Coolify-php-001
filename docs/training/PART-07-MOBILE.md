@@ -270,5 +270,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an action shortcut or menu to copy exclusively error-level logs containing active stack traces, with a custom formatting layout that highlights exception tags and timestamps.
 - **Complexity**: Part 3
 
+### 42. WebView Race Condition Elimination & Robust Library Loading (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master eliminating race conditions when loading external hybrid SDKs in native WebViews. Learn how to design robust `<head>` script callbacks that exist before external script loads, check for library namespaces securely, and delay execution through page lifecycle state listeners (`DOMContentLoaded`, `load`, and multiple backup `setTimeout` / `setInterval` refreshes).
+- **Exercise**: Create a custom HTML testing page integrating a Leaflet/OpenStreetMap standard map with active click coordinators, and ensure the `initMap` loader checks both namespace `L` and DOM elements systematically to avoid JS-bridge crash regressions.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
