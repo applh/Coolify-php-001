@@ -1857,7 +1857,7 @@ fun LeafletMapViewPane(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 70.dp, start = 16.dp, end = 16.dp)
-                .androidx.compose.foundation.background(
+                .background(
                     color = Color.Black.copy(alpha = 0.85f),
                     shape = RoundedCornerShape(8.dp)
                 )
