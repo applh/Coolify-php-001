@@ -1243,7 +1243,7 @@ fun LeafletMapViewPane(
 
     val tileUrl = when(defaultLayer) {
         2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        else -> "https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png"
+        else -> "https://tile.openstreetmap.org/{z}/{y}/{x}.png"
     }
 
     // Build JSON event markers
@@ -1455,11 +1455,14 @@ fun LeafletMapViewPane(
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
                 <style>
-                    body, html, #map {
+                    body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                    }
+                    #map {
+                        width: 100vw; height: 100vh;
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -1499,6 +1502,21 @@ fun LeafletMapViewPane(
                         maxZoom: 19,
                         attribution: '© OSM'
                     }).addTo(map);
+
+                    // Auto-resize / invalidate size to prevent blank map issues in WebView on layout/creation updates
+                    function fixMapSize() {
+                        if (map) {
+                            map.invalidateSize();
+                        }
+                    }
+                    window.addEventListener('load', fixMapSize);
+                    window.addEventListener('resize', fixMapSize);
+                    document.addEventListener('DOMContentLoaded', fixMapSize);
+                    setTimeout(fixMapSize, 100);
+                    setTimeout(fixMapSize, 300);
+                    setTimeout(fixMapSize, 600);
+                    setTimeout(fixMapSize, 1200);
+                    setTimeout(fixMapSize, 2500);
 
                     // Add event markers
                     var events = $markersJson;
@@ -1605,6 +1623,9 @@ fun LeafletMapViewPane(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
+                databaseEnabled = true
+                useWideViewPort = true
+                loadWithOverviewMode = true
             }
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
@@ -1652,7 +1673,7 @@ fun LeafletMapViewPane(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -1676,7 +1697,7 @@ fun LeafletComposeMap(
     val mapHtml = remember(initialLatitude, initialLongitude, initialZoom, layerStyle) {
         val tileUrl = when(layerStyle) {
             2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            else -> "https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png"
+            else -> "https://tile.openstreetmap.org/{z}/{y}/{x}.png"
         }
         """
         <!DOCTYPE html>
@@ -1684,11 +1705,14 @@ fun LeafletComposeMap(
         <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
             <style>
-                body, html, #map {
+                body, html {
                     margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                }
+                #map {
+                    width: 100vw; height: 100vh;
                 }
                 #search-box {
                     position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -1721,6 +1745,21 @@ fun LeafletComposeMap(
                     maxZoom: 19,
                     attribution: '© OSM'
                 }).addTo(map);
+
+                // Auto-resize / invalidate size to prevent blank map issues in WebView on layout/creation updates
+                function fixMapSize() {
+                    if (map) {
+                        map.invalidateSize();
+                    }
+                }
+                window.addEventListener('load', fixMapSize);
+                window.addEventListener('resize', fixMapSize);
+                document.addEventListener('DOMContentLoaded', fixMapSize);
+                setTimeout(fixMapSize, 100);
+                setTimeout(fixMapSize, 300);
+                setTimeout(fixMapSize, 600);
+                setTimeout(fixMapSize, 1200);
+                setTimeout(fixMapSize, 2500);
 
                 var marker = L.marker([$initialLatitude, $initialLongitude], { draggable: true }).addTo(map);
                 marker.bindPopup("<b>Select Location</b><br>Drag me or click map.").openPopup();
@@ -1807,6 +1846,9 @@ fun LeafletComposeMap(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
+                databaseEnabled = true
+                useWideViewPort = true
+                loadWithOverviewMode = true
             }
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
@@ -1847,7 +1889,7 @@ fun LeafletComposeMap(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
     }
 
     androidx.compose.ui.viewinterop.AndroidView(
