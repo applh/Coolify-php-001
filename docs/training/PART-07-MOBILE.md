@@ -258,5 +258,17 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a system check or notification toast that triggers if the user boots the Google Maps JS engine without providing an API key, fallback gracefully to Leaflet GIS views, and explore extending the Google maps marker symbol paths to support dynamic sizing variables.
 - **Complexity**: Part 4
 
+### 40. Interactive WebView Diagnostics & Network Reachability Testing (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master on-device interactive diagnostic design patterns for web hybrid components inside Jetpack Compose, including mock JS-bridge simulations, web console error dispatch classification, CDN accessibility checks, and dynamic iframe dimensions monitoring.
+- **Exercise**: Write a custom script in the diagnostic test page checking for specific CSS selectors and container resize callbacks, adding a dedicated "Clear Log Cache" button to reset the diagnostic state overlay.
+- **Complexity**: Part 4
+
+### 41. Clipboard Log Diagnostics & Bulk Copying Mechanics in Jetpack Compose (10h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/DebugApplet.kt`
+- **Goal**: Master clipboard copy workflows, LocalClipboardManager interaction patterns, structured log string formatting, and dynamic multi-level bulk exporting in Android Jetpack Compose hybrid components.
+- **Exercise**: Implement an action shortcut or menu to copy exclusively error-level logs containing active stack traces, with a custom formatting layout that highlights exception tags and timestamps.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

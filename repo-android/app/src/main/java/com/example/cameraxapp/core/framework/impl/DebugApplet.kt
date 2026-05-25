@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import com.example.cameraxapp.AppLogger
 import com.example.cameraxapp.DebugLogEntry
 import com.example.cameraxapp.core.framework.Applet
@@ -49,6 +51,7 @@ class DebugApplet : Applet {
         var selectedLevel by remember { mutableStateOf("ALL") }
         var expandedLogId by remember { mutableStateOf<Int?>(null) }
         var showToast by remember { mutableStateOf<String?>(null) }
+        val clipboardManager = LocalClipboardManager.current
 
         // Fetch logs initially and on refresh
         val refreshLogs = {
@@ -208,6 +211,67 @@ class DebugApplet : Applet {
                     }
                 }
 
+                // Bulk log copy utility row
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Bulk Clipboard Tools:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                if (filteredLogs.isEmpty()) {
+                                    showToast = "No filtered logs to copy!"
+                                } else {
+                                    val exported = filteredLogs.joinToString("\n\n") { log ->
+                                        "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
+                                    }
+                                    clipboardManager.setText(AnnotatedString(exported))
+                                    showToast = "Copied ${filteredLogs.size} logs matching filter!"
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Text("📋 Copy Filtered (${filteredLogs.size})", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = {
+                                if (logs.isEmpty()) {
+                                    showToast = "No logs to copy!"
+                                } else {
+                                    val exported = logs.joinToString("\n\n") { log ->
+                                        "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
+                                    }
+                                    clipboardManager.setText(AnnotatedString(exported))
+                                    showToast = "Copied all ${logs.size} logs to clipboard!"
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Text("✨ Copy All (${logs.size})", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
                 // Main Logs Content List
                 if (filteredLogs.isEmpty()) {
                     Box(
@@ -236,7 +300,8 @@ class DebugApplet : Applet {
                                 isExpanded = isExpanded,
                                 onClick = {
                                     expandedLogId = if (isExpanded) null else log.id
-                                }
+                                },
+                                onShowToast = { msg -> showToast = msg }
                             )
                         }
                     }
@@ -276,10 +341,12 @@ class DebugApplet : Applet {
     private fun LogCardItem(
         log: DebugLogEntry,
         isExpanded: Boolean,
-        onClick: () -> Unit
+        onClick: () -> Unit,
+        onShowToast: (String) -> Unit
     ) {
         val sdf = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
         val timeStr = sdf.format(Date(log.timestamp))
+        val clipboardManager = LocalClipboardManager.current
 
         val levelColor = when (log.level.uppercase()) {
             "ERROR" -> Color(0xFFEF5350)
@@ -390,6 +457,43 @@ class DebugApplet : Applet {
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                val fullText = """
+                                    [${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}
+                                    ${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}
+                                """.trimIndent()
+                                clipboardManager.setText(AnnotatedString(fullText))
+                                onShowToast("Copied full log details to clipboard!")
+                            },
+                            label = { Text("📋 Copy Full Log", fontSize = 11.sp) }
+                        )
+
+                        AssistChip(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(log.message))
+                                onShowToast("Copied message to clipboard!")
+                            },
+                            label = { Text("💬 Copy Msg", fontSize = 11.sp) }
+                        )
+
+                        if (!log.stackTrace.isNullOrBlank()) {
+                            AssistChip(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(log.stackTrace))
+                                    onShowToast("Copied stack trace!")
+                                },
+                                label = { Text("🔥 Copy Trace", fontSize = 11.sp) }
+                            )
                         }
                     }
                 }

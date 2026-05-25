@@ -1233,6 +1233,7 @@ fun LeafletMapViewPane(
     onEditEvent: (Int) -> Unit
 ) {
     val context = LocalContext.current
+    var diagnosticMode by remember { mutableStateOf(0) }
     val repo = remember { SettingsRepository(context) }
     val defaultLat by repo.mapDefaultLatitude.collectAsState(initial = 48.8566)
     val defaultLng by repo.mapDefaultLongitude.collectAsState(initial = 2.3522)
@@ -1264,14 +1265,160 @@ fun LeafletMapViewPane(
     jsonEventsBuilder.append("]")
     val markersJson = jsonEventsBuilder.toString()
 
-    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson, mapEngineType, googleMapsApiKey) {
-        if (mapEngineType == 1) {
+    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson, mapEngineType, googleMapsApiKey, diagnosticMode) {
+        if (diagnosticMode == 1) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #FFF9C4; color: #333; line-height: 1.4; }
+                    h1 { color: #F57F17; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #FBC02D; padding: 10px; background: #FFFde7; border-radius: 4px; margin-bottom: 10px; }
+                    button { background: #F57F17; color: white; border: none; padding: 10px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 1: JS-Bridge Check</h1>
+                <div class="box">
+                    <p><b>Page URL:</b> <span id="url-text">Checking...</span></p>
+                    <p><b>Kotlin Bridge Status:</b> <span id="bridge-status">Checking...</span></p>
+                </div>
+                <div class="box">
+                    <p>Verify callback communication: Click below to dispatch coordinate simulation to Kotlin.</p>
+                    <button onclick="testBridge()">Simulate addEventAt(1.23, 4.56)</button>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 1: Initializing.");
+                    document.getElementById('url-text').innerText = window.location.href;
+                    var bridgeExists = (typeof window.AndroidBridge !== 'undefined');
+                    document.getElementById('bridge-status').innerText = bridgeExists ? "✅ Present" : "❌ Not found";
+                    if (!bridgeExists) {
+                        console.error("Javascript Error: window.AndroidBridge is undefined!");
+                    } else {
+                        console.log("Javascript Success: bridge registered.");
+                    }
+                    function testBridge() {
+                        if (bridgeExists) {
+                            console.log("Diag: dispatching select coordinates to kotlin.");
+                            window.AndroidBridge.addEventAt(1.23, 4.56);
+                        } else {
+                            alert("Native bridge unregistered.");
+                        }
+                    }
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 2) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #E3F2FD; color: #333; line-height: 1.4; }
+                    h1 { color: #1565C0; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #90CAF9; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 2: CDN Network Reachability</h1>
+                <div class="box">
+                    <p><b>1. OpenStreetMap Tile Server Connection:</b></p>
+                    <p id="osm-status">Testing connection...</p>
+                </div>
+                <div class="box">
+                    <p><b>2. Cloudflare CDN (Leaflet JS/CSS) Reachability:</b></p>
+                    <p id="leaflet-status">Testing connection...</p>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 2: Initializing.");
+                    var img = new Image();
+                    img.onload = function() {
+                        document.getElementById('osm-status').innerText = "✅ Connection successful (Tiles can load)";
+                        console.log("Diag Success: Connection to OpenStreetMap tiles established.");
+                    };
+                    img.onerror = function() {
+                        document.getElementById('osm-status').innerText = "❌ Connection failed (Offline or server blocked)";
+                        console.error("Diag Error: OSM tile image failed loading.");
+                    };
+                    img.src = "https://tile.openstreetmap.org/12/2048/1360.png?diag=" + Date.now();
+
+                    fetch("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js", { method: 'HEAD', mode: 'no-cors' })
+                    .then(function() {
+                        document.getElementById('leaflet-status').innerText = "✅ CDN responds (Leaflet SDK accessible)";
+                        console.log("Diag Success: Cloudflare Leaflet JS is reachable.");
+                    })
+                    .catch(function(e) {
+                        document.getElementById('leaflet-status').innerText = "❌ Reachability failed (Offline or CDN blocked)";
+                        console.error("Diag Error: Leaflet CDN unreachable: " + e.message);
+                    });
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 3) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Diag Error: Leaflet CSS CDN fails to load.')" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Diag Error: Leaflet JS CDN fails to load.')" onload="verifyLeaflet()"></script>
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #E8F5E9; color: #333; line-height: 1.4; }
+                    h1 { color: #2E7D32; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #A5D6A7; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 3: Leaflet Integrity API Check</h1>
+                <div class="box">
+                    <p><b>Leaflet Library Native Namespace:</b> <span id="leaflet-check">Checking...</span></p>
+                    <p><b>Map DOM Creation:</b> <span id="map-check">Pending Leaflet load...</span></p>
+                </div>
+                <div id="dummy-layout" style="display:none; width:10px; height:10px;"></div>
+                <script>
+                    console.log("Diagnostic Test Page 3: Initializing.");
+                    function verifyLeaflet() {
+                        if (typeof L !== 'undefined') {
+                            document.getElementById('leaflet-check').innerText = "✅ Leaflet L is present. Version: " + L.version;
+                            console.log("Diag Success: Leaflet L reference works.");
+                            try {
+                                var testMap = L.map('dummy-layout').setView([0,0], 1);
+                                document.getElementById('map-check').innerText = "✅ SUCCESS (Map instance created)";
+                                console.log("Diag Success: Leaflet Map object successfully instantiated.");
+                            } catch(e) {
+                                document.getElementById('map-check').innerText = "❌ Creation failed (" + e.message + ")";
+                                console.error("Diag Error: Map instantiation failed: " + e.message);
+                            }
+                        } else {
+                            document.getElementById('leaflet-check').innerText = "❌ Leaflet Namespace is undefined!";
+                            console.error("Diag Error: 'L' namespace is missing.");
+                        }
+                    }
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (mapEngineType == 1) {
             """
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <script>
+                    console.log("HTML Init: Google Maps template loaded. System clock: " + Date.now());
+                    window.addEventListener('error', function(e) {
+                        console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
+                    }, true);
+                </script>
                 <style>
                     body, html, #map {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
@@ -1444,7 +1591,7 @@ fun LeafletMapViewPane(
                         });
                     }
                 </script>
-                <script src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap" async defer></script>
+                <script src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap" async defer onerror="console.error('Failed to load Google Maps script (API key issue or internet failure)')" onload="console.log('Google Maps API script fetched successfully')"></script>
             </body>
             </html>
             """.trimIndent()
@@ -1455,8 +1602,14 @@ fun LeafletMapViewPane(
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+                <script>
+                    console.log("HTML Init: Leaflet map template loaded. System clock: " + Date.now());
+                    window.addEventListener('error', function(e) {
+                        console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
+                    }, true);
+                </script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Leaflet CSS CDN!')" onload="console.log('Leaflet CSS CDN loaded.')" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Leaflet JS CDN!')" onload="console.log('Leaflet JS CDN loaded successfully.')"></script>
                 <style>
                     body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
@@ -1495,13 +1648,19 @@ fun LeafletMapViewPane(
                 </div>
                 <div id="map"></div>
                 <script>
+                    console.log("Initializing Leaflet map instance centered on [lat: $defaultLat, lng: $defaultLng]");
+                    if (typeof L === 'undefined') {
+                        console.error("Critical: 'L' object is undefined! Map rendering will crash.");
+                    }
                     var map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
+                    console.log("Leaflet map created successfully.");
                     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
                     L.tileLayer('$tileUrl', {
                         maxZoom: 19,
                         attribution: '© OSM'
                     }).addTo(map);
+                    console.log("Leaflet Tile layer set with tileUrl: $tileUrl");
 
                     // Auto-resize / invalidate size to prevent blank map issues in WebView on layout/creation updates
                     function fixMapSize() {
@@ -1630,7 +1789,12 @@ fun LeafletMapViewPane(
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
                     consoleMessage?.let {
-                        AppLogger.d("LeafletMapViewPane", "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
+                        val msg = "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}"
+                        when (it.messageLevel()) {
+                            android.webkit.ConsoleMessage.MessageLevel.ERROR -> AppLogger.e("LeafletMapViewPane", msg)
+                            android.webkit.ConsoleMessage.MessageLevel.WARNING -> AppLogger.w("LeafletMapViewPane", msg)
+                            else -> AppLogger.d("LeafletMapViewPane", msg)
+                        }
                     }
                     return true
                 }
@@ -1651,7 +1815,13 @@ fun LeafletMapViewPane(
 
                 override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                    AppLogger.i("LeafletMapViewPane", "WebView page loaded successfully: $url")
+                    AppLogger.i("LeafletMapViewPane", "WebView page load completed. URL: $url")
+                    val width = view?.width ?: 0
+                    val height = view?.height ?: 0
+                    AppLogger.d("LeafletMapViewPane", "WebView bounds: ${width}x${height}px")
+                    if (width == 0 || height == 0) {
+                        AppLogger.w("LeafletMapViewPane", "Warning: WebView width or height is 0. Map rendering might be invisible.")
+                    }
                 }
             }
             addJavascriptInterface(object {
@@ -1673,7 +1843,7 @@ fun LeafletMapViewPane(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("https://agenda.local/map_view.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -1681,6 +1851,68 @@ fun LeafletMapViewPane(
             factory = { webView },
             modifier = Modifier.fillMaxSize()
         )
+
+        // Diagnostic floating control bar overlay
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 70.dp, start = 16.dp, end = 16.dp)
+                .androidx.compose.foundation.background(
+                    color = Color.Black.copy(alpha = 0.85f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "🔧 WebView Diagnostics (Senior Dev)",
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val btnColorSelected = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                val btnColorNormal = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+
+                Button(
+                    onClick = { diagnosticMode = 0 },
+                    colors = if (diagnosticMode == 0) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("Standard Map", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 1 },
+                    colors = if (diagnosticMode == 1) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("1: Bridge", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 2 },
+                    colors = if (diagnosticMode == 2) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("2: Network", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 3 },
+                    colors = if (diagnosticMode == 3) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("3: Leaflet", fontSize = 10.sp, color = Color.White)
+                }
+            }
+        }
     }
 }
 
@@ -1705,8 +1937,14 @@ fun LeafletComposeMap(
         <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+            <script>
+                console.log("HTML Init: WebCompose Picker Leaflet template loaded.");
+                window.addEventListener('error', function(e) {
+                    console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
+                }, true);
+            </script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Picker Leaflet CSS CDN!')" onload="console.log('Picker Leaflet CSS CDN loaded successfully.')" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Picker Leaflet JS CDN!')" onload="console.log('Picker Leaflet JS CDN loaded successfully.')"></script>
             <style>
                 body, html {
                     margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
@@ -1738,6 +1976,10 @@ fun LeafletComposeMap(
             </div>
             <div id="map"></div>
             <script>
+                console.log("Initializing Map Picker centering on [$initialLatitude, $initialLongitude]");
+                if (typeof L === 'undefined') {
+                    console.error("Critical Error: Leaflet namespace 'L' is undefined in Map Picker.");
+                }
                 var map = L.map('map', { zoomControl: false }).setView([$initialLatitude, $initialLongitude], $initialZoom);
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -1853,7 +2095,12 @@ fun LeafletComposeMap(
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
                     consoleMessage?.let {
-                        AppLogger.d("LeafletComposeMap", "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
+                        val msg = "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}"
+                        when (it.messageLevel()) {
+                            android.webkit.ConsoleMessage.MessageLevel.ERROR -> AppLogger.e("LeafletComposeMap", msg)
+                            android.webkit.ConsoleMessage.MessageLevel.WARNING -> AppLogger.w("LeafletComposeMap", msg)
+                            else -> AppLogger.d("LeafletComposeMap", msg)
+                        }
                     }
                     return true
                 }
@@ -1874,7 +2121,13 @@ fun LeafletComposeMap(
 
                 override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                    AppLogger.i("LeafletComposeMap", "WebView page loaded successfully: $url")
+                    AppLogger.i("LeafletComposeMap", "WebView page load completed. URL: $url")
+                    val width = view?.width ?: 0
+                    val height = view?.height ?: 0
+                    AppLogger.d("LeafletComposeMap", "WebView bounds: ${width}x${height}px")
+                    if (width == 0 || height == 0) {
+                        AppLogger.w("LeafletComposeMap", "Warning: WebView width or height is 0. Map rendering might be invisible.")
+                    }
                 }
             }
             addJavascriptInterface(object {
@@ -1889,7 +2142,7 @@ fun LeafletComposeMap(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("https://agenda.local/map_picker.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     androidx.compose.ui.viewinterop.AndroidView(
