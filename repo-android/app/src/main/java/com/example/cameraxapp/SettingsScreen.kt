@@ -51,10 +51,16 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val proIsoValue by repository.proIsoValue.collectAsState(initial = 0)
     val proExposureCompValue by repository.proExposureCompValue.collectAsState(initial = 0)
     val offlineScanHud by repository.offlineScanHud.collectAsState(initial = true)
+    val mapDefaultLat by repository.mapDefaultLatitude.collectAsState(initial = 48.8566)
+    val mapDefaultLng by repository.mapDefaultLongitude.collectAsState(initial = 2.3522)
+    val mapDefaultZoom by repository.mapDefaultZoom.collectAsState(initial = 12.0f)
+    val mapLastLayerType by repository.mapLastLayerType.collectAsState(initial = 1)
+
     var showApiKeyDialog by remember { mutableStateOf(false) }
     var showGalleryNameDialog by remember { mutableStateOf(false) }
     var showStartAppletDialog by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
+    var showMapCoordsDialog by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -497,6 +503,47 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+            Text("Mapping Preferences Settings", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ListItem(
+                headlineContent = { Text("Default Map Center") },
+                supportingContent = { Text("Coordinates: $mapDefaultLat, $mapDefaultLng") },
+                modifier = Modifier.clickable {
+                    showMapCoordsDialog = true
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Default Zoom Level") },
+                supportingContent = { Text("Zoom Ratio: $mapDefaultZoom") },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val nextZoom = if (mapDefaultZoom >= 18f) 8f else mapDefaultZoom + 2f
+                        repository.setMapDefaultZoom(nextZoom)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Default Layer Style") },
+                supportingContent = {
+                    Text(when(mapLastLayerType) {
+                        1 -> "Normal Road Map Layer"
+                        2 -> "Satellite High-Resolution Image Layer"
+                        3 -> "Hybrid Label Overlay Layer"
+                        else -> "Normal Road Map Layer"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val nextStyle = (mapLastLayerType % 3) + 1
+                        repository.setMapLastLayerType(nextStyle)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
             Text("Launcher & Desktop UX Customization", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -649,6 +696,46 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                 },
                 dismissButton = {
                     TextButton(onClick = { showGalleryNameDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showMapCoordsDialog) {
+            var tempLatTxt by remember { mutableStateOf(mapDefaultLat.toString()) }
+            var tempLngTxt by remember { mutableStateOf(mapDefaultLng.toString()) }
+            AlertDialog(
+                onDismissRequest = { showMapCoordsDialog = false },
+                title = { Text("Set Fallback Map Location") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = tempLatTxt,
+                            onValueChange = { tempLatTxt = it },
+                            label = { Text("Latitude") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = tempLngTxt,
+                            onValueChange = { tempLngTxt = it },
+                            label = { Text("Longitude") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val lat = tempLatTxt.toDoubleOrNull() ?: 48.8566
+                        val lng = tempLngTxt.toDoubleOrNull() ?: 2.3522
+                        coroutineScope.launch { repository.setMapDefaultCoordinates(lat, lng) }
+                        showMapCoordsDialog = false
+                    }) {
+                        Text("Apply")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showMapCoordsDialog = false }) {
                         Text("Cancel")
                     }
                 }

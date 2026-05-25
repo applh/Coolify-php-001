@@ -223,5 +223,17 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom validation script or handler that checks if a migration from ancient route structures (like `"explorer"`) to modern structures (like `"files"`) is necessary upon application boot, ensuring old bookmarks and shortcut layouts are gracefully updated to target `"files"`.
 - **Complexity**: Part 2
 
+### 35. Offline Play Services Map, Draggable Pin Geocoding Controls, and Color picker (20h)
+- **Reference**: `repo-android/docs/agenda-map-picker-colors-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/AgendaDatabaseHelper.kt`
+- **Goal**: Master integrating Google Maps SDK in Jetpack Compose, dropping draggable markers, reverse geocoding coordinates asynchronously into human addresses, linking events scheduling bidirectionally via calendar views and map views, and custom styling with color picker arrays in Compose.
+- **Exercise**: Add dynamic geolocation fields (`latitude`, `longitude`, `location_name`) to SQLite helper. Develop an interactive maps Compose view linking events into visual custom map pins, and implement a responsive color tags picker that supports selectable color chips and formatted hex inputs verification.
+- **Complexity**: Part 4
+
+### 36. Leaflet Web-GIS Map Tab, Double-Pane Editing Wires, and Javascript-Kotlin Bridge (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/AgendaDatabaseHelper.kt`
+- **Goal**: Master integrating an interactive Leaflet JS map inside Android `WebView` using dynamic HTML templating, supporting OSM/ArcGIS tile layers, bidirectionally plotting color-coded pins, handling coordinate pre-filling on map click popups, and configuring a bidirectional bridge to edit events from map popups.
+- **Exercise**: Implement custom map markers with unique icons representing different event types (e.g., Star icons for "Secondary", Clock icons for "Alarms"), expand the Nominatim reverse geocoder to handle custom search parameters gracefully, and implement cached static OSM tile support for offline operations.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

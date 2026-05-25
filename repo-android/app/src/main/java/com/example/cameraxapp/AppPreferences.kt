@@ -46,6 +46,10 @@ object AppPreferences {
     val PRO_ISO_VALUE = intPreferencesKey("pro_iso_value")
     val PRO_EXPOSURE_COMP_VALUE = intPreferencesKey("pro_exposure_comp_value")
     val OFFLINE_SCAN_HUD = booleanPreferencesKey("offline_scan_hud")
+    val MAP_DEFAULT_LATITUDE = stringPreferencesKey("map_default_latitude")
+    val MAP_DEFAULT_LONGITUDE = stringPreferencesKey("map_default_longitude")
+    val MAP_DEFAULT_ZOOM = floatPreferencesKey("map_default_zoom")
+    val MAP_LAST_LAYER_TYPE = intPreferencesKey("map_last_layer_type")
 }
 
 class SettingsRepository(private val context: Context) {
@@ -76,6 +80,10 @@ class SettingsRepository(private val context: Context) {
     val proIsoValue: Flow<Int> = context.dataStore.data.map { it[AppPreferences.PRO_ISO_VALUE] ?: 0 }
     val proExposureCompValue: Flow<Int> = context.dataStore.data.map { it[AppPreferences.PRO_EXPOSURE_COMP_VALUE] ?: 0 }
     val offlineScanHud: Flow<Boolean> = context.dataStore.data.map { it[AppPreferences.OFFLINE_SCAN_HUD] ?: true }
+    val mapDefaultLatitude: Flow<Double> = context.dataStore.data.map { (it[AppPreferences.MAP_DEFAULT_LATITUDE] ?: "48.8566").toDoubleOrNull() ?: 48.8566 }
+    val mapDefaultLongitude: Flow<Double> = context.dataStore.data.map { (it[AppPreferences.MAP_DEFAULT_LONGITUDE] ?: "2.3522").toDoubleOrNull() ?: 2.3522 }
+    val mapDefaultZoom: Flow<Float> = context.dataStore.data.map { it[AppPreferences.MAP_DEFAULT_ZOOM] ?: 12.0f }
+    val mapLastLayerType: Flow<Int> = context.dataStore.data.map { it[AppPreferences.MAP_LAST_LAYER_TYPE] ?: 1 }
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[AppPreferences.THEME_MODE] = mode }
@@ -183,6 +191,25 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setOfflineScanHud(enabled: Boolean) {
         context.dataStore.edit { it[AppPreferences.OFFLINE_SCAN_HUD] = enabled }
+    }
+
+    suspend fun setMapDefaultCoordinates(lat: Double, lng: Double) {
+        context.dataStore.edit { prefs ->
+            prefs[AppPreferences.MAP_DEFAULT_LATITUDE] = lat.toString()
+            prefs[AppPreferences.MAP_DEFAULT_LONGITUDE] = lng.toString()
+        }
+    }
+
+    suspend fun setMapDefaultZoom(zoom: Float) {
+        context.dataStore.edit { prefs ->
+            prefs[AppPreferences.MAP_DEFAULT_ZOOM] = zoom
+        }
+    }
+
+    suspend fun setMapLastLayerType(type: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[AppPreferences.MAP_LAST_LAYER_TYPE] = type
+        }
     }
 
     suspend fun resetLauncherConfig() {

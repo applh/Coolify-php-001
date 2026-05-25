@@ -11,7 +11,10 @@ data class AgendaEvent(
     val notes: String,
     val dateMillis: Long,
     val durationMin: Int,
-    val colorTag: String
+    val colorTag: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationName: String? = null
 )
 
 data class AlarmInfo(
@@ -43,7 +46,7 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
 
     companion object {
         private const val DATABASE_NAME = "agenda_hub.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         // Event Table
         const val TABLE_EVENTS = "agenda_events"
@@ -53,6 +56,9 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val COL_EVENT_DATE_MILLIS = "date_millis"
         const val COL_EVENT_DURATION = "duration_min"
         const val COL_EVENT_COLOR = "color_tag"
+        const val COL_EVENT_LATITUDE = "latitude"
+        const val COL_EVENT_LONGITUDE = "longitude"
+        const val COL_EVENT_LOCATION_NAME = "location_name"
 
         // Alarm Table
         const val TABLE_ALARMS = "alarms"
@@ -89,7 +95,10 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 $COL_EVENT_NOTES TEXT,
                 $COL_EVENT_DATE_MILLIS INTEGER NOT NULL,
                 $COL_EVENT_DURATION INTEGER NOT NULL,
-                $COL_EVENT_COLOR TEXT NOT NULL
+                $COL_EVENT_COLOR TEXT NOT NULL,
+                $COL_EVENT_LATITUDE REAL,
+                $COL_EVENT_LONGITUDE REAL,
+                $COL_EVENT_LOCATION_NAME TEXT
             )
         """.trimIndent())
 
@@ -132,11 +141,26 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_EVENTS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_ALARMS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_JOBS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_LOGS")
-        onCreate(db)
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_EVENTS ADD COLUMN $COL_EVENT_LATITUDE REAL")
+                db.execSQL("ALTER TABLE $TABLE_EVENTS ADD COLUMN $COL_EVENT_LONGITUDE REAL")
+                db.execSQL("ALTER TABLE $TABLE_EVENTS ADD COLUMN $COL_EVENT_LOCATION_NAME TEXT")
+            } catch (e: Exception) {
+                // Fallback: Drop and recreate if alters fail
+                db.execSQL("DROP TABLE IF EXISTS $TABLE_EVENTS")
+                db.execSQL("DROP TABLE IF EXISTS $TABLE_ALARMS")
+                db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_JOBS")
+                db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_LOGS")
+                onCreate(db)
+            }
+        } else {
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_EVENTS")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_ALARMS")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_JOBS")
+            db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_LOGS")
+            onCreate(db)
+        }
     }
 
     private fun seedDefaultData(db: SQLiteDatabase) {
@@ -148,7 +172,10 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_EVENT_NOTES, "Confirm Agenda Month Grid, WorkManager worker threads and exact sleep wakeups.")
             put(COL_EVENT_DATE_MILLIS, now + (3 * 3600 * 1000)) // 3 hours from now
             put(COL_EVENT_DURATION, 45)
-            put(COL_EVENT_COLOR, "Primary")
+            put(COL_EVENT_COLOR, "#008080")
+            put(COL_EVENT_LATITUDE, 48.8566)
+            put(COL_EVENT_LONGITUDE, 2.3522)
+            put(COL_EVENT_LOCATION_NAME, "Paris, France")
         }
         db.insert(TABLE_EVENTS, null, eventValues)
 
@@ -157,7 +184,10 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_EVENT_NOTES, "Audit alarm scheduler boot listener resilience and DB SQLite integrity checklists.")
             put(COL_EVENT_DATE_MILLIS, now + (24 * 3600 * 1000)) // tomorrow
             put(COL_EVENT_DURATION, 60)
-            put(COL_EVENT_COLOR, "Secondary")
+            put(COL_EVENT_COLOR, "#E91E63")
+            put(COL_EVENT_LATITUDE, 37.7749)
+            put(COL_EVENT_LONGITUDE, -122.4194)
+            put(COL_EVENT_LOCATION_NAME, "San Francisco, CA")
         }
         db.insert(TABLE_EVENTS, null, eventValues2)
 
@@ -215,6 +245,14 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         val cursor = db.rawQuery("SELECT * FROM $TABLE_EVENTS ORDER BY $COL_EVENT_DATE_MILLIS ASC", null)
         if (cursor.moveToFirst()) {
             do {
+                val latIndex = cursor.getColumnIndex(COL_EVENT_LATITUDE)
+                val lngIndex = cursor.getColumnIndex(COL_EVENT_LONGITUDE)
+                val locIndex = cursor.getColumnIndex(COL_EVENT_LOCATION_NAME)
+
+                val latitude = if (latIndex != -1 && !cursor.isNull(latIndex)) cursor.getDouble(latIndex) else null
+                val longitude = if (lngIndex != -1 && !cursor.isNull(lngIndex)) cursor.getDouble(lngIndex) else null
+                val locationName = if (locIndex != -1) cursor.getString(locIndex) else null
+
                 list.add(
                     AgendaEvent(
                         id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_EVENT_ID)),
@@ -222,7 +260,10 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                         notes = cursor.getString(cursor.getColumnIndexOrThrow(COL_EVENT_NOTES)) ?: "",
                         dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COL_EVENT_DATE_MILLIS)),
                         durationMin = cursor.getInt(cursor.getColumnIndexOrThrow(COL_EVENT_DURATION)),
-                        colorTag = cursor.getString(cursor.getColumnIndexOrThrow(COL_EVENT_COLOR))
+                        colorTag = cursor.getString(cursor.getColumnIndexOrThrow(COL_EVENT_COLOR)),
+                        latitude = latitude,
+                        longitude = longitude,
+                        locationName = locationName
                     )
                 )
             } while (cursor.moveToNext())
@@ -231,7 +272,16 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         return list
     }
 
-    fun insertEvent(title: String, notes: String, dateMillis: Long, duration: Int, color: String): Long {
+    fun insertEvent(
+        title: String,
+        notes: String,
+        dateMillis: Long,
+        duration: Int,
+        color: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
+    ): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_EVENT_TITLE, title)
@@ -239,6 +289,9 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_EVENT_DATE_MILLIS, dateMillis)
             put(COL_EVENT_DURATION, duration)
             put(COL_EVENT_COLOR, color)
+            if (latitude != null) put(COL_EVENT_LATITUDE, latitude) else putNull(COL_EVENT_LATITUDE)
+            if (longitude != null) put(COL_EVENT_LONGITUDE, longitude) else putNull(COL_EVENT_LONGITUDE)
+            if (locationName != null) put(COL_EVENT_LOCATION_NAME, locationName) else putNull(COL_EVENT_LOCATION_NAME)
         }
         return db.insert(TABLE_EVENTS, null, values)
     }
@@ -248,7 +301,17 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         return db.delete(TABLE_EVENTS, "$COL_EVENT_ID = ?", arrayOf(id.toString()))
     }
 
-    fun updateEvent(id: Int, title: String, notes: String, dateMillis: Long, duration: Int, color: String): Int {
+    fun updateEvent(
+        id: Int,
+        title: String,
+        notes: String,
+        dateMillis: Long,
+        duration: Int,
+        color: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
+    ): Int {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_EVENT_TITLE, title)
@@ -256,6 +319,9 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_EVENT_DATE_MILLIS, dateMillis)
             put(COL_EVENT_DURATION, duration)
             put(COL_EVENT_COLOR, color)
+            if (latitude != null) put(COL_EVENT_LATITUDE, latitude) else putNull(COL_EVENT_LATITUDE)
+            if (longitude != null) put(COL_EVENT_LONGITUDE, longitude) else putNull(COL_EVENT_LONGITUDE)
+            if (locationName != null) put(COL_EVENT_LOCATION_NAME, locationName) else putNull(COL_EVENT_LOCATION_NAME)
         }
         return db.update(TABLE_EVENTS, values, "$COL_EVENT_ID = ?", arrayOf(id.toString()))
     }

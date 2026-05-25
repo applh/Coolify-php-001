@@ -122,7 +122,7 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 
     // Floating Custom Notification State (Avoid window native alerts blockings)
     var notificationMessage by remember { mutableStateOf<String?>(null) }
-    val triggerNotification = { msg: String ->
+    val triggerNotification: (String) -> Unit = { msg: String ->
         notificationMessage = msg
         scope.launch {
             kotlinx.coroutines.delay(3000)

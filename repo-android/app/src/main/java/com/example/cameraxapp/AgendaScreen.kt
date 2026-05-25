@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import android.webkit.WebView
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,7 +110,17 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
     }
 
     // --- Calendar CRUD & Alarms Setup ---
-    fun addEvent(title: String, notes: String, hours: Int, minutes: Int, duration: Int, color: String) {
+    fun addEvent(
+        title: String,
+        notes: String,
+        hours: Int,
+        minutes: Int,
+        duration: Int,
+        color: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
+    ) {
         viewModelScope.launch {
             val targetCal = _selectedDay.value.clone() as Calendar
             targetCal.set(Calendar.HOUR_OF_DAY, hours)
@@ -116,7 +128,10 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
             targetCal.set(Calendar.SECOND, 0)
             targetCal.set(Calendar.MILLISECOND, 0)
 
-            val eventId = dbHelper.insertEvent(title, notes, targetCal.timeInMillis, duration, color)
+            val eventId = dbHelper.insertEvent(
+                title, notes, targetCal.timeInMillis, duration, color,
+                latitude, longitude, locationName
+            )
             if (eventId != -1L) {
                 // Register alarm notification reminder for this calendar event
                 scheduleEventAlarm(eventId.toInt(), targetCal.timeInMillis, title)
@@ -135,7 +150,18 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    fun updateEvent(id: Int, title: String, notes: String, hours: Int, minutes: Int, duration: Int, color: String) {
+    fun updateEvent(
+        id: Int,
+        title: String,
+        notes: String,
+        hours: Int,
+        minutes: Int,
+        duration: Int,
+        color: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
+    ) {
         viewModelScope.launch {
             cancelEventAlarm(id)
             val targetCal = _selectedDay.value.clone() as Calendar
@@ -144,7 +170,10 @@ class AgendaViewModel(private val context: Context) : ViewModel() {
             targetCal.set(Calendar.SECOND, 0)
             targetCal.set(Calendar.MILLISECOND, 0)
 
-            dbHelper.updateEvent(id, title, notes, targetCal.timeInMillis, duration, color)
+            dbHelper.updateEvent(
+                id, title, notes, targetCal.timeInMillis, duration, color,
+                latitude, longitude, locationName
+            )
             scheduleEventAlarm(id, targetCal.timeInMillis, title)
             _toastMessage.value = "Calendar event updated with rescheduled alarm reminder!"
             loadData()
@@ -383,10 +412,13 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     val selectedDay by viewModel.selectedDay.collectAsState()
     val toastMessage by viewModel.toastMessage.collectAsState()
 
-    var activeTabIdx by remember { mutableStateOf(0) } // 0: Calendar Planner, 1: Alarm Managers, 2: Cron Schedulers
+    var activeTabIdx by remember { mutableStateOf(0) } // 0: Calendar, 1: Alarms, 2: Cron, 3: Map View
     var showAddEventDialog by remember { mutableStateOf(false) }
     var showAddAlarmDialog by remember { mutableStateOf(false) }
     var showAddCronDialog by remember { mutableStateOf(false) }
+
+    var mapClickedLat by remember { mutableStateOf<Double?>(null) }
+    var mapClickedLng by remember { mutableStateOf<Double?>(null) }
 
     // Editing State Trackers
     var editingEvent by remember { mutableStateOf<AgendaEvent?>(null) }
@@ -450,6 +482,12 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     text = { Text("Cron Task") },
                     icon = { Icon(Icons.Default.Build, contentDescription = null) }
                 )
+                Tab(
+                    selected = activeTabIdx == 3,
+                    onClick = { activeTabIdx = 3 },
+                    text = { Text("Map View") },
+                    icon = { Icon(Icons.Default.Place, contentDescription = null) }
+                )
             }
 
             // Central Pane switching
@@ -464,7 +502,11 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                         onSelectDay = { viewModel.selectDay(it) },
                         onDeleteEvent = { confirmDeleteEventId = it },
                         onEditEventClick = { editingEvent = it },
-                        onAddEventClick = { showAddEventDialog = true }
+                        onAddEventClick = {
+                            mapClickedLat = null
+                            mapClickedLng = null
+                            showAddEventDialog = true
+                        }
                     )
                     1 -> AlarmManagersPane(
                         alarms = alarms,
@@ -481,6 +523,20 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                         onEditCronClick = { editingCron = it },
                         onRunOnDemand = { viewModel.runCronOnDemand(it) },
                         onAddCronClick = { showAddCronDialog = true }
+                    )
+                    3 -> LeafletMapViewPane(
+                        events = events,
+                        onAddEventAt = { lat, lng ->
+                            mapClickedLat = lat
+                            mapClickedLng = lng
+                            showAddEventDialog = true
+                        },
+                        onEditEvent = { id ->
+                            val found = events.find { it.id == id }
+                            if (found != null) {
+                                editingEvent = found
+                            }
+                        }
                     )
                 }
             }
@@ -499,9 +555,11 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     // Modal dialogs - Add creation Dialogs
     if (showAddEventDialog) {
         CalendarEventCreatorDialog(
+            initialLatitude = mapClickedLat,
+            initialLongitude = mapClickedLng,
             onDismiss = { showAddEventDialog = false },
-            onConfirm = { title, notes, hour, min, dur, color ->
-                viewModel.addEvent(title, notes, hour, min, dur, color)
+            onConfirm = { title, notes, hour, min, dur, color, lat, lng, name ->
+                viewModel.addEvent(title, notes, hour, min, dur, color, lat, lng, name)
                 showAddEventDialog = false
             }
         )
@@ -532,8 +590,8 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
         CalendarEventEditorDialog(
             event = event,
             onDismiss = { editingEvent = null },
-            onConfirm = { title, notes, hour, min, dur, color ->
-                viewModel.updateEvent(event.id, title, notes, hour, min, dur, color)
+            onConfirm = { title, notes, hour, min, dur, color, lat, lng, name ->
+                viewModel.updateEvent(event.id, title, notes, hour, min, dur, color, lat, lng, name)
                 editingEvent = null
             }
         )
@@ -1069,64 +1127,386 @@ fun CronSchedulerPane(
 // ==========================================
 
 @Composable
+fun AgendaColorPicker(
+    selectedColor: String,
+    onColorSelected: (String) -> Unit
+) {
+    val presets = listOf(
+        "#4CAF50" to "Green",
+        "#2196F3" to "Blue",
+        "#9C27B0" to "Purple",
+        "#E91E63" to "Pink",
+        "#FF9800" to "Orange",
+        "#009688" to "Teal",
+        "#F44336" to "Red",
+        "#008080" to "Teal Accent",
+        "#5D4037" to "Brown",
+        "#607D8B" to "Grey"
+    )
+
+    var customHexText by remember { mutableStateOf(selectedColor.replace("#", "")) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Event Visual Accent Tag", style = MaterialTheme.typography.titleSmall)
+        
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            presets.take(5).forEach { (hex, name) ->
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(android.graphics.Color.parseColor(hex)), CircleShape)
+                        .clickable {
+                            onColorSelected(hex)
+                            customHexText = hex.replace("#", "")
+                        }
+                        .padding(2.dp)
+                ) {
+                    if (selectedColor.equals(hex, ignoreCase = true)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White.copy(alpha = 0.5f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✓", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            presets.drop(5).forEach { (hex, name) ->
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(android.graphics.Color.parseColor(hex)), CircleShape)
+                        .clickable {
+                            onColorSelected(hex)
+                            customHexText = hex.replace("#", "")
+                        }
+                        .padding(2.dp)
+                ) {
+                    if (selectedColor.equals(hex, ignoreCase = true)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White.copy(alpha = 0.5f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✓", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        OutlinedTextField(
+            value = customHexText,
+            onValueChange = { 
+                customHexText = it
+                if (it.length == 6) {
+                    try {
+                        val parsed = "#$it"
+                        android.graphics.Color.parseColor(parsed)
+                        onColorSelected(parsed)
+                    } catch (e: Exception) {}
+                }
+            },
+            leadingIcon = { Text("#") },
+            label = { Text("Custom Color Hex Code") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun LeafletComposeMap(
+    initialLatitude: Double,
+    initialLongitude: Double,
+    initialZoom: Float,
+    layerStyle: Int,
+    modifier: Modifier = Modifier,
+    onLocationSelected: (Double, Double, String) -> Unit
+) {
+    val context = LocalContext.current
+    val mapHtml = remember(initialLatitude, initialLongitude, initialZoom, layerStyle) {
+        val tileUrl = when(layerStyle) {
+            2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            else -> "https://{s}.tile.openstreetmap.org/{z}/{y}/{x}.png"
+        }
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <style>
+                body, html, #map {
+                    margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                }
+                #search-box {
+                    position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
+                    display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+                    padding: 6px; gap: 6px;
+                }
+                #search-input {
+                    flex-grow: 1; border: none; outline: none; padding: 8px; font-size: 14px; border-radius: 4px;
+                }
+                #search-btn {
+                    background: #E91E63; color: white; border: none; padding: 8px 14px;
+                    border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
+                }
+                #search-btn:active {
+                    background: #c2185b;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="search-box">
+                <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
+                <button id="search-btn" onclick="doSearch()">Search</button>
+            </div>
+            <div id="map"></div>
+            <script>
+                var map = L.map('map', { zoomControl: false }).setView([$initialLatitude, $initialLongitude], $initialZoom);
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                L.tileLayer('$tileUrl', {
+                    maxZoom: 19,
+                    attribution: '© OSM'
+                }).addTo(map);
+
+                var marker = L.marker([$initialLatitude, $initialLongitude], { draggable: true }).addTo(map);
+                marker.bindPopup("<b>Select Location</b><br>Drag me or click map.").openPopup();
+
+                function reportLocation(lat, lng, address) {
+                    if (window.AndroidBridge) {
+                        try {
+                            window.AndroidBridge.selectLocation(lat, lng, address);
+                        } catch(e) {}
+                    }
+                }
+
+                function reverseGeocode(lat, lng, callback) {
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
+                        headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
+                        callback(name);
+                    })
+                    .catch(() => {
+                        callback(lat.toFixed(5) + ', ' + lng.toFixed(5));
+                    });
+                }
+
+                function updateMarker(lat, lng, shouldGeocode) {
+                    marker.setLatLng([lat, lng]);
+                    if (shouldGeocode) {
+                        reverseGeocode(lat, lng, function(name) {
+                            marker.setPopupContent("<b>Location:</b><br>" + name).openPopup();
+                            reportLocation(lat, lng, name);
+                        });
+                    } else {
+                        reportLocation(lat, lng, lat.toFixed(5) + ", " + lng.toFixed(5));
+                    }
+                }
+
+                marker.on('dragend', function() {
+                    var latlng = marker.getLatLng();
+                    updateMarker(latlng.lat, latlng.lng, true);
+                });
+
+                map.on('click', function(e) {
+                    updateMarker(e.latlng.lat, e.latlng.lng, true);
+                });
+
+                function doSearch() {
+                    var query = document.getElementById('search-input').value;
+                    if (!query) return;
+                    document.getElementById('search-btn').innerText = '...';
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+                        headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                    })
+                    .then(r => r.json())
+                    .then(results => {
+                        document.getElementById('search-btn').innerText = 'Search';
+                        if (results.length > 0) {
+                            var first = results[0];
+                            var lat = parseFloat(first.lat);
+                            var lng = parseFloat(first.lon);
+                            var name = first.display_name;
+                            map.setView([lat, lng], 14);
+                            updateMarker(lat, lng, false);
+                            marker.setPopupContent("<b>Found:</b><br>" + name).openPopup();
+                            reportLocation(lat, lng, name);
+                        } else {
+                            alert("Address not found.");
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('search-btn').innerText = 'Search';
+                        alert("Search failed.");
+                    });
+                }
+            </script>
+        </body>
+        </html>
+        """.trimIndent()
+    }
+
+    val webView = remember {
+        android.webkit.WebView(context).apply {
+            settings.apply {
+                javaScriptEnabled = true
+                domStorageEnabled = true
+            }
+            addJavascriptInterface(object {
+                @android.webkit.JavascriptInterface
+                fun selectLocation(lat: Double, lng: Double, address: String) {
+                    post {
+                        onLocationSelected(lat, lng, address)
+                    }
+                }
+            }, "AndroidBridge")
+        }
+    }
+
+    LaunchedEffect(mapHtml) {
+        webView.loadDataWithBaseURL("https://openstreetmap.org", mapHtml, "text/html", "UTF-8", null)
+    }
+
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { webView },
+        modifier = modifier
+    )
+}
+
+@Composable
 fun CalendarEventCreatorDialog(
+    initialLatitude: Double? = null,
+    initialLongitude: Double? = null,
     onDismiss: () -> Unit,
-    onConfirm: (title: String, notes: String, hour: Int, min: Int, duration: Int, color: String) -> Unit
+    onConfirm: (title: String, notes: String, hour: Int, min: Int, duration: Int, color: String, latitude: Double?, longitude: Double?, locationName: String?) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var hourText by remember { mutableStateOf("9") }
     var minText by remember { mutableStateOf("00") }
     var durationText by remember { mutableStateOf("30") }
-    var isColorSecondary by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf("#4CAF50") }
+
+    var latitude by remember { mutableStateOf<Double?>(initialLatitude) }
+    var longitude by remember { mutableStateOf<Double?>(initialLongitude) }
+    var locationName by remember {
+        mutableStateOf<String?>(
+            if (initialLatitude != null) "${String.format(Locale.US, "%.4f", initialLatitude)}, ${String.format(Locale.US, "%.4f", initialLongitude ?: 0.0)}" else null
+        )
+    }
+
+    var showMapPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add Calendar Appointment") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Appointment Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Details & Context") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.lazy.LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp)
+            ) {
+                item {
                     OutlinedTextField(
-                        value = hourText,
-                        onValueChange = { hourText = it },
-                        label = { Text("Hour (24h)") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = minText,
-                        onValueChange = { minText = it },
-                        label = { Text("Minute") },
-                        modifier = Modifier.weight(1f)
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Appointment Title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-                OutlinedTextField(
-                    value = durationText,
-                    onValueChange = { durationText = it },
-                    label = { Text("Duration (mins)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = isColorSecondary,
-                        onCheckedChange = { isColorSecondary = it }
+                item {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Details & Context") },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Text("Apply Secondary Alert Tag (Orange dot)", style = MaterialTheme.typography.bodyMedium)
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = hourText,
+                            onValueChange = { hourText = it },
+                            label = { Text("Hour (24h)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = minText,
+                            onValueChange = { minText = it },
+                            label = { Text("Minute") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                item {
+                    OutlinedTextField(
+                        value = durationText,
+                        onValueChange = { durationText = it },
+                        label = { Text("Duration (mins)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    if (locationName != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable { showMapPicker = true },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
+                        ) {
+                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Selected Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    Text(locationName ?: "", style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                                    Text("${String.format(Locale.US, "%.5f", latitude ?: 0.0)}, ${String.format(Locale.US, "%.5f", longitude ?: 0.0)}", style = MaterialTheme.typography.labelSmall)
+                                }
+                                IconButton(onClick = {
+                                    latitude = null
+                                    longitude = null
+                                    locationName = null
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Clear", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { showMapPicker = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Place, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Pick Location on Map")
+                        }
+                    }
+                }
+                item {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    AgendaColorPicker(
+                        selectedColor = selectedColor,
+                        onColorSelected = { selectedColor = it }
+                    )
                 }
             }
         },
@@ -1137,8 +1517,7 @@ fun CalendarEventCreatorDialog(
                         val hr = hourText.toIntOrNull() ?: 12
                         val mn = minText.toIntOrNull() ?: 0
                         val dur = durationText.toIntOrNull() ?: 30
-                        val tag = if (isColorSecondary) "Secondary" else "Primary"
-                        onConfirm(title, notes, hr, mn, dur, tag)
+                        onConfirm(title, notes, hr, mn, dur, selectedColor, latitude, longitude, locationName)
                     }
                 }
             ) {
@@ -1149,6 +1528,45 @@ fun CalendarEventCreatorDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
+
+    if (showMapPicker) {
+        val repo = remember { SettingsRepository(LocalContext.current) }
+        val defaultLat by repo.mapDefaultLatitude.collectAsState(initial = 48.8566)
+        val defaultLng by repo.mapDefaultLongitude.collectAsState(initial = 2.3522)
+        val defaultZoom by repo.mapDefaultZoom.collectAsState(initial = 12f)
+        val defaultLayer by repo.mapLastLayerType.collectAsState(initial = 1)
+
+        AlertDialog(
+            onDismissRequest = { showMapPicker = false },
+            title = { Text("Map GeoPicker Panel") },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                    LeafletComposeMap(
+                        initialLatitude = latitude ?: defaultLat,
+                        initialLongitude = longitude ?: defaultLng,
+                        initialZoom = defaultZoom,
+                        layerStyle = defaultLayer,
+                        modifier = Modifier.fillMaxSize(),
+                        onLocationSelected = { lat, lng, addr ->
+                            latitude = lat
+                            longitude = lng
+                            locationName = addr
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showMapPicker = false }) {
+                    Text("Select Pin Location")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMapPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -1256,7 +1674,7 @@ fun CronCreatorDialog(
 fun CalendarEventEditorDialog(
     event: AgendaEvent,
     onDismiss: () -> Unit,
-    onConfirm: (title: String, notes: String, hour: Int, min: Int, duration: Int, color: String) -> Unit
+    onConfirm: (title: String, notes: String, hour: Int, min: Int, duration: Int, color: String, latitude: Double?, longitude: Double?, locationName: String?) -> Unit
 ) {
     val initialCal = Calendar.getInstance().apply { timeInMillis = event.dateMillis }
     var title by remember { mutableStateOf(event.title) }
@@ -1264,55 +1682,105 @@ fun CalendarEventEditorDialog(
     var hourText by remember { mutableStateOf(initialCal.get(Calendar.HOUR_OF_DAY).toString()) }
     var minText by remember { mutableStateOf(initialCal.get(Calendar.MINUTE).toString()) }
     var durationText by remember { mutableStateOf(event.durationMin.toString()) }
-    var isColorSecondary by remember { mutableStateOf(event.colorTag == "Secondary") }
+    var selectedColor by remember { mutableStateOf(event.colorTag) }
+
+    var latitude by remember { mutableStateOf<Double?>(event.latitude) }
+    var longitude by remember { mutableStateOf<Double?>(event.longitude) }
+    var locationName by remember { mutableStateOf<String?>(event.locationName) }
+
+    var showMapPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Calendar Appointment") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Appointment Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Details & Context") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.lazy.LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp)
+            ) {
+                item {
                     OutlinedTextField(
-                        value = hourText,
-                        onValueChange = { hourText = it },
-                        label = { Text("Hour (24h)") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = minText,
-                        onValueChange = { minText = it },
-                        label = { Text("Minute") },
-                        modifier = Modifier.weight(1f)
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Appointment Title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-                OutlinedTextField(
-                    value = durationText,
-                    onValueChange = { durationText = it },
-                    label = { Text("Duration (mins)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = isColorSecondary,
-                        onCheckedChange = { isColorSecondary = it }
+                item {
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Details & Context") },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Text("Apply Secondary Alert Tag (Orange dot)", style = MaterialTheme.typography.bodyMedium)
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = hourText,
+                            onValueChange = { hourText = it },
+                            label = { Text("Hour (24h)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = minText,
+                            onValueChange = { minText = it },
+                            label = { Text("Minute") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                item {
+                    OutlinedTextField(
+                        value = durationText,
+                        onValueChange = { durationText = it },
+                        label = { Text("Duration (mins)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    if (locationName != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable { showMapPicker = true },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
+                        ) {
+                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Selected Location", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    Text(locationName ?: "", style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                                    Text("${String.format(Locale.US, "%.5f", latitude ?: 0.0)}, ${String.format(Locale.US, "%.5f", longitude ?: 0.0)}", style = MaterialTheme.typography.labelSmall)
+                                }
+                                IconButton(onClick = {
+                                    latitude = null
+                                    longitude = null
+                                    locationName = null
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Clear", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { showMapPicker = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Place, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Pick Location on Map")
+                        }
+                    }
+                }
+                item {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    AgendaColorPicker(
+                        selectedColor = selectedColor,
+                        onColorSelected = { selectedColor = it }
+                    )
                 }
             }
         },
@@ -1323,8 +1791,7 @@ fun CalendarEventEditorDialog(
                         val hr = hourText.toIntOrNull() ?: 12
                         val mn = minText.toIntOrNull() ?: 0
                         val dur = durationText.toIntOrNull() ?: 30
-                        val tag = if (isColorSecondary) "Secondary" else "Primary"
-                        onConfirm(title, notes, hr, mn, dur, tag)
+                        onConfirm(title, notes, hr, mn, dur, selectedColor, latitude, longitude, locationName)
                     }
                 }
             ) {
@@ -1335,6 +1802,45 @@ fun CalendarEventEditorDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
+
+    if (showMapPicker) {
+        val repo = remember { SettingsRepository(LocalContext.current) }
+        val defaultLat by repo.mapDefaultLatitude.collectAsState(initial = 48.8566)
+        val defaultLng by repo.mapDefaultLongitude.collectAsState(initial = 2.3522)
+        val defaultZoom by repo.mapDefaultZoom.collectAsState(initial = 12f)
+        val defaultLayer by repo.mapLastLayerType.collectAsState(initial = 1)
+
+        AlertDialog(
+            onDismissRequest = { showMapPicker = false },
+            title = { Text("Map GeoPicker Panel") },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                    LeafletComposeMap(
+                        initialLatitude = latitude ?: defaultLat,
+                        initialLongitude = longitude ?: defaultLng,
+                        initialZoom = defaultZoom,
+                        layerStyle = defaultLayer,
+                        modifier = Modifier.fillMaxSize(),
+                        onLocationSelected = { lat, lng, addr ->
+                            latitude = lat
+                            longitude = lng
+                            locationName = addr
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showMapPicker = false }) {
+                    Text("Select Pin Location")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMapPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
