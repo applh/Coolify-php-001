@@ -1419,6 +1419,33 @@ fun LeafletMapViewPane(
                 javaScriptEnabled = true
                 domStorageEnabled = true
             }
+            webChromeClient = object : android.webkit.WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    consoleMessage?.let {
+                        AppLogger.d("LeafletMapViewPane", "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
+                    }
+                    return true
+                }
+            }
+            webViewClient = object : android.webkit.WebViewClient() {
+                override fun onReceivedError(
+                    view: android.webkit.WebView?,
+                    request: android.webkit.WebResourceRequest?,
+                    error: android.webkit.WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        AppLogger.e("LeafletMapViewPane", "WebView Error: ${error?.description} for URL: ${request?.url}")
+                    } else {
+                        AppLogger.e("LeafletMapViewPane", "WebView Error for URL: ${request?.url}")
+                    }
+                }
+
+                override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    AppLogger.i("LeafletMapViewPane", "WebView page loaded successfully: $url")
+                }
+            }
             addJavascriptInterface(object {
                 @android.webkit.JavascriptInterface
                 fun addEventAt(lat: Double, lng: Double) {
@@ -1593,6 +1620,33 @@ fun LeafletComposeMap(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
+            }
+            webChromeClient = object : android.webkit.WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    consoleMessage?.let {
+                        AppLogger.d("LeafletComposeMap", "Console: ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
+                    }
+                    return true
+                }
+            }
+            webViewClient = object : android.webkit.WebViewClient() {
+                override fun onReceivedError(
+                    view: android.webkit.WebView?,
+                    request: android.webkit.WebResourceRequest?,
+                    error: android.webkit.WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        AppLogger.e("LeafletComposeMap", "WebView Error: ${error?.description} for URL: ${request?.url}")
+                    } else {
+                        AppLogger.e("LeafletComposeMap", "WebView Error for URL: ${request?.url}")
+                    }
+                }
+
+                override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    AppLogger.i("LeafletComposeMap", "WebView page loaded successfully: $url")
+                }
             }
             addJavascriptInterface(object {
                 @android.webkit.JavascriptInterface

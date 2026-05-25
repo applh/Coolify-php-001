@@ -42,11 +42,20 @@ data class CronLog(
     val message: String
 )
 
+data class DebugLogEntry(
+    val id: Int,
+    val timestamp: Long,
+    val tag: String,
+    val level: String,
+    val message: String,
+    val stackTrace: String? = null
+)
+
 class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "agenda_hub.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         // Event Table
         const val TABLE_EVENTS = "agenda_events"
@@ -84,6 +93,15 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val COL_LOG_DURATION = "duration_ms"
         const val COL_LOG_STATUS = "status"
         const val COL_LOG_MESSAGE = "log_message"
+
+        // Debug Log Table
+        const val TABLE_DEBUG_LOGS = "debug_logs"
+        const val COL_DEBUG_ID = "id"
+        const val COL_DEBUG_TIMESTAMP = "timestamp"
+        const val COL_DEBUG_TAG = "tag"
+        const val COL_DEBUG_LEVEL = "level"
+        const val COL_DEBUG_MESSAGE = "message"
+        const val COL_DEBUG_STACK_TRACE = "stack_trace"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -136,6 +154,18 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             )
         """.trimIndent())
 
+        // Create debug logs table
+        db.execSQL("""
+            CREATE TABLE $TABLE_DEBUG_LOGS (
+                $COL_DEBUG_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_DEBUG_TIMESTAMP INTEGER NOT NULL,
+                $COL_DEBUG_TAG TEXT NOT NULL,
+                $COL_DEBUG_LEVEL TEXT NOT NULL,
+                $COL_DEBUG_MESSAGE TEXT NOT NULL,
+                $COL_DEBUG_STACK_TRACE TEXT
+            )
+        """.trimIndent())
+
         // Populate seed items
         seedDefaultData(db)
     }
@@ -152,14 +182,26 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 db.execSQL("DROP TABLE IF EXISTS $TABLE_ALARMS")
                 db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_JOBS")
                 db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_LOGS")
+                db.execSQL("DROP TABLE IF EXISTS $TABLE_DEBUG_LOGS")
                 onCreate(db)
+                return
             }
-        } else {
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_EVENTS")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_ALARMS")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_JOBS")
-            db.execSQL("DROP TABLE IF EXISTS $TABLE_CRON_LOGS")
-            onCreate(db)
+        }
+        if (oldVersion < 3) {
+            try {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS $TABLE_DEBUG_LOGS (
+                        $COL_DEBUG_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        $COL_DEBUG_TIMESTAMP INTEGER NOT NULL,
+                        $COL_DEBUG_TAG TEXT NOT NULL,
+                        $COL_DEBUG_LEVEL TEXT NOT NULL,
+                        $COL_DEBUG_MESSAGE TEXT NOT NULL,
+                        $COL_DEBUG_STACK_TRACE TEXT
+                    )
+                """.trimIndent())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -475,5 +517,45 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
             put(COL_LOG_MESSAGE, message)
         }
         return db.insert(TABLE_CRON_LOGS, null, values)
+    }
+
+    // --- Debug Logs Handling API ---
+    fun getAllDebugLogs(): List<DebugLogEntry> {
+        val list = mutableListOf<DebugLogEntry>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_DEBUG_LOGS ORDER BY $COL_DEBUG_TIMESTAMP DESC LIMIT 1000", null)
+        if (cursor.moveToFirst()) {
+            do {
+                list.add(
+                    DebugLogEntry(
+                        id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_DEBUG_ID)),
+                        timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COL_DEBUG_TIMESTAMP)),
+                        tag = cursor.getString(cursor.getColumnIndexOrThrow(COL_DEBUG_TAG)),
+                        level = cursor.getString(cursor.getColumnIndexOrThrow(COL_DEBUG_LEVEL)),
+                        message = cursor.getString(cursor.getColumnIndexOrThrow(COL_DEBUG_MESSAGE)),
+                        stackTrace = cursor.getString(cursor.getColumnIndexOrThrow(COL_DEBUG_STACK_TRACE))
+                    )
+                )
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return list
+    }
+
+    fun addDebugLog(tag: String, level: String, message: String, stackTrace: String?): Long {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COL_DEBUG_TIMESTAMP, System.currentTimeMillis())
+            put(COL_DEBUG_TAG, tag)
+            put(COL_DEBUG_LEVEL, level)
+            put(COL_DEBUG_MESSAGE, message)
+            put(COL_DEBUG_STACK_TRACE, stackTrace)
+        }
+        return db.insert(TABLE_DEBUG_LOGS, null, values)
+    }
+
+    fun clearDebugLogs(): Int {
+        val db = writableDatabase
+        return db.delete(TABLE_DEBUG_LOGS, null, null)
     }
 }

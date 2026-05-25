@@ -58,6 +58,7 @@ import com.example.cameraxapp.core.di.AppDependencyContainer
 import com.example.cameraxapp.core.framework.AppletRegistry
 import com.example.cameraxapp.core.framework.impl.BrowserApplet
 import com.example.cameraxapp.core.framework.impl.FilesApplet
+import com.example.cameraxapp.core.framework.impl.DebugApplet
 
 class MainActivity : ComponentActivity() {
 
@@ -80,10 +81,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLogger.init(applicationContext)
 
         appDependencyContainer = AppDependencyContainer(applicationContext)
         AppletRegistry.register(BrowserApplet(appDependencyContainer))
         AppletRegistry.register(FilesApplet())
+        AppletRegistry.register(DebugApplet())
 
         updatePermissionState()
         
@@ -147,7 +150,8 @@ class MainActivity : ComponentActivity() {
                         AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
                         AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
                         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
-                        AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
+                        AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
+                        AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics")
                     )
                 }
 
@@ -523,7 +527,8 @@ fun HubScreen(
             AppletInfo("Wallpaper", "wallpaper", Icons.Default.Star, "Manage auto-rotating wallpapers"),
             AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
             AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
-            AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection")
+            AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
+            AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics")
         )
     }
 

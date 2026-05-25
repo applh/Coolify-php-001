@@ -53,6 +53,7 @@ fun BrowserWebView(
                         consoleMessage?.let {
                             onConsoleMsgCaptured(it)
                             Log.d("BrowserConsole", "[${it.messageLevel()}] ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
+                            com.example.cameraxapp.AppLogger.d("BrowserConsole", "[${it.messageLevel()}] ${it.message()} @ L:${it.lineNumber()} of ${it.sourceId()}")
                         }
                         return true
                     }
