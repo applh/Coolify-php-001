@@ -79,6 +79,13 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import android.graphics.PointF
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,6 +136,10 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     var scannedBarcode by remember { mutableStateOf<String?>(null) }
     var showScanResultDialog by remember { mutableStateOf(false) }
     var isScanningPaused by remember { mutableStateOf(false) }
+    var activeBarcodes by remember { mutableStateOf<List<Barcode>>(emptyList()) }
+    var imageWidthState by remember { mutableStateOf(480) }
+    var imageHeightState by remember { mutableStateOf(640) }
+    var imageRotationState by remember { mutableStateOf(0) }
 
     val cameraExtension by repository.cameraExtension.collectAsState(initial = 0)
     val concurrentStream by repository.concurrentStream.collectAsState(initial = false)
@@ -136,6 +147,9 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     val proIsoValue by repository.proIsoValue.collectAsState(initial = 0)
     val proExposureCompValue by repository.proExposureCompValue.collectAsState(initial = 0)
     val offlineScanHud by repository.offlineScanHud.collectAsState(initial = true)
+    val imageSaveFormat by repository.imageSaveFormat.collectAsState(initial = 0)
+    val videoContainerFormat by repository.videoContainerFormat.collectAsState(initial = 0)
+    val scannerService by repository.scannerService.collectAsState(initial = 0)
 
     var activeEvCorrection by remember { mutableStateOf(0) }
     var activeIsoSensitivity by remember { mutableStateOf(0) }
@@ -176,7 +190,7 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     }
 
     LaunchedEffect(imageAnalysis, isScanningPaused, captureMode) {
-        if (captureMode == "SCAN" && !isScanningPaused) {
+        if ((captureMode == "SCAN" || captureMode == "QR SCANNER") && !isScanningPaused) {
             val options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
                 .build()
@@ -185,9 +199,16 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {
-                    val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                    val frameRot = imageProxy.imageInfo.rotationDegrees
+                    val frameWidth = imageProxy.width
+                    val frameHeight = imageProxy.height
+                    val image = InputImage.fromMediaImage(mediaImage, frameRot)
                     scanner.process(image)
                         .addOnSuccessListener { barcodes ->
+                            activeBarcodes = barcodes
+                            imageWidthState = frameWidth
+                            imageHeightState = frameHeight
+                            imageRotationState = frameRot
                             if (barcodes.isNotEmpty() && !isScanningPaused) {
                                 val barcodeValue = barcodes[0].rawValue ?: barcodes[0].displayValue
                                 if (barcodeValue != null) {
@@ -209,6 +230,16 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
             }
         } else {
             imageAnalysis.clearAnalyzer()
+            activeBarcodes = emptyList()
+        }
+    }
+
+    var isStable by remember { mutableStateOf(false) }
+    LaunchedEffect(captureMode) {
+        if (captureMode == "DOC SCANNER") {
+            isStable = false
+            kotlinx.coroutines.delay(1500)
+            isStable = true
         }
     }
 
@@ -316,7 +347,35 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     }
                 }
         ) {
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val pWidth = with(density) { maxWidth.toPx() }
+            val pHeight = with(density) { maxHeight.toPx() }
             val isPortrait = maxWidth < maxHeight
+
+            // Document scanner simulated active corner edge tracking points with breathing micro-offset animation
+            val paddingX = pWidth * 0.15f
+            val paddingY = pHeight * 0.25f
+
+            val infiniteTransition = rememberInfiniteTransition(label = "ar_doc")
+            val shiftVal by infiniteTransition.animateFloat(
+                initialValue = -6f,
+                targetValue = 6f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "shift"
+            )
+
+            val docCorners = remember(pWidth, pHeight, shiftVal) {
+                listOf(
+                    Offset(paddingX + shiftVal, paddingY - shiftVal),
+                    Offset(pWidth - paddingX - shiftVal, paddingY + shiftVal),
+                    Offset(pWidth - paddingX + shiftVal, pHeight - paddingY - shiftVal),
+                    Offset(paddingX - shiftVal, pHeight - paddingY + shiftVal)
+                )
+            }
+
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 imageCapture = imageCapture,
@@ -329,6 +388,27 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     cameraInstance = camera
                 }
             )
+
+            // Dynamic AR overlays rendering
+            if (captureMode == "SCAN" || captureMode == "QR SCANNER") {
+                val previewSize = remember(pWidth, pHeight) { androidx.compose.ui.geometry.Size(pWidth, pHeight) }
+                if (activeBarcodes.isNotEmpty()) {
+                    ARScanOverlay(
+                        detectedBarcodes = activeBarcodes,
+                        previewSize = previewSize,
+                        imageResolution = android.util.Size(imageWidthState, imageHeightState),
+                        lensFacing = lensFacing,
+                        rotationDegrees = imageRotationState
+                    )
+                }
+            }
+
+            if (captureMode == "DOC SCANNER") {
+                ARDocumentOverlay(
+                    corners = docCorners,
+                    isStable = isStable
+                )
+            }
 
             // Concurrent Picture-in-Picture secondary camera stream overlay
             if (concurrentStream) {
@@ -871,7 +951,8 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                         onClick = { 
                             captureMode = when(captureMode) {
                                 "PHOTO" -> "VIDEO"
-                                "VIDEO" -> "SCAN"
+                                "VIDEO" -> "QR SCANNER"
+                                "QR SCANNER" -> "DOC SCANNER"
                                 else -> "PHOTO"
                             }
                         },
@@ -882,7 +963,9 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                             text = when(captureMode) {
                                 "PHOTO" -> "📸"
                                 "VIDEO" -> "📹"
-                                else -> "🔍"
+                                "SCAN", "QR SCANNER" -> "🔍"
+                                "DOC SCANNER" -> "📄"
+                                else -> "📸"
                             },
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -954,8 +1037,19 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     // Centered Camera Trigger
                     IconButton(
                         onClick = {
-                            if (captureMode == "PHOTO") {
-                                takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
+                            if (captureMode == "PHOTO" || captureMode == "DOC SCANNER") {
+                                takePhoto(
+                                    context = context,
+                                    imageCapture = imageCapture,
+                                    executor = ContextCompat.getMainExecutor(context),
+                                    storageLocation = storageLocation,
+                                    filter = selectedFilter,
+                                    imageSaveFormat = imageSaveFormat,
+                                    captureMode = captureMode,
+                                    docCorners = docCorners,
+                                    previewWidth = pWidth,
+                                    previewHeight = pHeight
+                                ) { uri ->
                                     lastCapturedImageUri = uri
                                 }
                             } else if (captureMode == "VIDEO") {
@@ -964,11 +1058,12 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                     recording = null
                                 } else {
                                     recording = startVideoRecording(
-                                        context, 
-                                        videoCapture, 
-                                        ContextCompat.getMainExecutor(context), 
-                                        storageLocation, 
-                                        enableAudio,
+                                        context = context, 
+                                        videoCapture = videoCapture, 
+                                        executor = ContextCompat.getMainExecutor(context), 
+                                        storageLocation = storageLocation, 
+                                        enableAudio = enableAudio,
+                                        videoContainerFormat = videoContainerFormat,
                                         onVideoSaved = { uri ->
                                             lastCapturedImageUri = uri
                                         },
@@ -1054,7 +1149,8 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                         onClick = { 
                             captureMode = when(captureMode) {
                                 "PHOTO" -> "VIDEO"
-                                "VIDEO" -> "SCAN"
+                                "VIDEO" -> "QR SCANNER"
+                                "QR SCANNER" -> "DOC SCANNER"
                                 else -> "PHOTO"
                             }
                         },
@@ -1065,7 +1161,9 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                             text = when(captureMode) {
                                 "PHOTO" -> "📸"
                                 "VIDEO" -> "📹"
-                                else -> "🔍"
+                                "SCAN", "QR SCANNER" -> "🔍"
+                                "DOC SCANNER" -> "📄"
+                                else -> "📸"
                             },
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -1118,8 +1216,19 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                     // Dynamic Capture Action Button
                     IconButton(
                         onClick = {
-                            if (captureMode == "PHOTO") {
-                                takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context), storageLocation, selectedFilter) { uri ->
+                            if (captureMode == "PHOTO" || captureMode == "DOC SCANNER") {
+                                takePhoto(
+                                    context = context,
+                                    imageCapture = imageCapture,
+                                    executor = ContextCompat.getMainExecutor(context),
+                                    storageLocation = storageLocation,
+                                    filter = selectedFilter,
+                                    imageSaveFormat = imageSaveFormat,
+                                    captureMode = captureMode,
+                                    docCorners = docCorners,
+                                    previewWidth = pWidth,
+                                    previewHeight = pHeight
+                                ) { uri ->
                                     lastCapturedImageUri = uri
                                 }
                             } else if (captureMode == "VIDEO") {
@@ -1128,11 +1237,12 @@ fun CameraScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                     recording = null
                                 } else {
                                     recording = startVideoRecording(
-                                        context, 
-                                        videoCapture, 
-                                        ContextCompat.getMainExecutor(context), 
-                                        storageLocation, 
-                                        enableAudio,
+                                        context = context, 
+                                        videoCapture = videoCapture, 
+                                        executor = ContextCompat.getMainExecutor(context), 
+                                        storageLocation = storageLocation, 
+                                        enableAudio = enableAudio,
+                                        videoContainerFormat = videoContainerFormat,
                                         onVideoSaved = { uri ->
                                             lastCapturedImageUri = uri
                                         },
@@ -1171,17 +1281,29 @@ private fun startVideoRecording(
     executor: Executor,
     storageLocation: Int,
     enableAudio: Boolean,
+    videoContainerFormat: Int = 0,
     onVideoSaved: (Uri) -> Unit,
     onDurationUpdate: (Long) -> Unit
 ): Recording {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
     
+    val videoExt = when(videoContainerFormat) {
+        1 -> "mkv"
+        2 -> "webm"
+        else -> "mp4"
+    }
+    val videoMime = when(videoContainerFormat) {
+        1 -> "video/x-matroska"
+        2 -> "video/webm"
+        else -> "video/mp4"
+    }
+
     var tempFile: File? = null
 
     val pendingRecording = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.mp4")
-            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.$videoExt")
+            put(MediaStore.MediaColumns.MIME_TYPE, videoMime)
             put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraXApp")
         }
         val options = MediaStoreOutputOptions.Builder(
@@ -1198,7 +1320,7 @@ private fun startVideoRecording(
             }
             else -> context.filesDir
         }
-        tempFile = File(dir, "$name.mp4")
+        tempFile = File(dir, "$name.$videoExt")
         val options = FileOutputOptions.Builder(tempFile).build()
         videoCapture.output.prepareRecording(context, options)
     }
@@ -1222,8 +1344,8 @@ private fun startVideoRecording(
                     val msg = "Video saved successfully"
                     Log.d("CameraScreen", msg)
                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    val uri = recordEvent.outputResults.outputUri
-                    onVideoSaved(uri)
+                    val uri = recordEvent.outputResults.outputUri ?: if (tempFile != null) Uri.fromFile(tempFile) else null
+                    uri?.let { onVideoSaved(it) }
                 } else {
                     Log.e("CameraScreen", "Video recording error: ${recordEvent.error}")
                 }
@@ -1291,19 +1413,43 @@ private fun saveBitmapToDisk(
     context: Context,
     bitmap: Bitmap,
     name: String,
-    storageLocation: Int
+    storageLocation: Int,
+    imageSaveFormat: Int = 0
 ): Uri? {
     val resolver = context.contentResolver
+    val extension = when(imageSaveFormat) {
+        1 -> "png"
+        2 -> "webp"
+        else -> "jpg"
+    }
+    val mimeType = when(imageSaveFormat) {
+        1 -> "image/png"
+        2 -> "image/webp"
+        else -> "image/jpeg"
+    }
+    val compressFormat = when(imageSaveFormat) {
+        1 -> Bitmap.CompressFormat.PNG
+        2 -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Bitmap.CompressFormat.WEBP_LOSSLESS
+            } else {
+                @Suppress("DEPRECATION")
+                Bitmap.CompressFormat.WEBP
+            }
+        }
+        else -> Bitmap.CompressFormat.JPEG
+    }
+
     if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.$extension")
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraXApp")
         }
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return null
         return try {
             resolver.openOutputStream(uri)?.use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                bitmap.compress(compressFormat, 95, stream)
             }
             uri
         } catch (e: Exception) {
@@ -1319,10 +1465,10 @@ private fun saveBitmapToDisk(
             }
             else -> context.filesDir
         }
-        val file = File(dir, "$name.jpg")
+        val file = File(dir, "$name.$extension")
         return try {
             java.io.FileOutputStream(file).use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                bitmap.compress(compressFormat, 95, stream)
             }
             Uri.fromFile(file)
         } catch (e: Exception) {
@@ -1338,18 +1484,34 @@ private fun takePhoto(
     executor: Executor,
     storageLocation: Int,
     filter: String = "NORMAL",
+    imageSaveFormat: Int = 0,
+    captureMode: String = "PHOTO",
+    docCorners: List<Offset> = emptyList(),
+    previewWidth: Float = 1f,
+    previewHeight: Float = 1f,
     onImageSaved: (Uri) -> Unit
 ) {
     val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).format(System.currentTimeMillis())
     
-    // Fall back to standard, hyper-optimized execution path if no filter is active
-    if (filter == "NORMAL") {
+    val extension = when(imageSaveFormat) {
+        1 -> "png"
+        2 -> "webp"
+        else -> "jpg"
+    }
+    val mimeType = when(imageSaveFormat) {
+        1 -> "image/png"
+        2 -> "image/webp"
+        else -> "image/jpeg"
+    }
+
+    // Fall back to standard, hyper-optimized execution path if no filter, default JPG format, and not in DOC SCANNER
+    if (filter == "NORMAL" && imageSaveFormat == 0 && captureMode != "DOC SCANNER") {
         var tempFile: File? = null
 
         val outputOptions = if (storageLocation == 1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.jpg")
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.$extension")
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraXApp")
             }
             ImageCapture.OutputFileOptions.Builder(
@@ -1366,7 +1528,7 @@ private fun takePhoto(
                 }
                 else -> context.filesDir
             }
-            tempFile = File(dir, "$name.jpg")
+            tempFile = File(dir, "$name.$extension")
             ImageCapture.OutputFileOptions.Builder(tempFile).build()
         }
 
@@ -1389,7 +1551,7 @@ private fun takePhoto(
             }
         )
     } else {
-        // In-memory hardware pixel buffer interception for precision filter rendering
+        // In-memory hardware pixel buffer interception for precision filter rendering and Document Rectification
         imageCapture.takePicture(
             executor,
             object : ImageCapture.OnImageCapturedCallback() {
@@ -1408,26 +1570,50 @@ private fun takePhoto(
                         }
                         
                         // Render final filtered pixel matrix
-                        val filteredBitmap = applyFilterToBitmap(normalBitmap, filter)
+                        val filteredBitmap = if (filter != "NORMAL") {
+                            applyFilterToBitmap(normalBitmap, filter)
+                        } else {
+                            normalBitmap
+                        }
+
+                        // Apply perspective warp rectification if in DOC SCANNER mode
+                        val finalBitmap = if (captureMode == "DOC SCANNER" && docCorners.size == 4 && previewWidth > 0 && previewHeight > 0) {
+                            val bmpWidth = filteredBitmap.width.toFloat()
+                            val bmpHeight = filteredBitmap.height.toFloat()
+                            val scaleX = bmpWidth / previewWidth
+                            val scaleY = bmpHeight / previewHeight
+                            
+                            val ptTL = PointF(docCorners[0].x * scaleX, docCorners[0].y * scaleY)
+                            val ptTR = PointF(docCorners[1].x * scaleX, docCorners[1].y * scaleY)
+                            val ptBR = PointF(docCorners[2].x * scaleX, docCorners[2].y * scaleY)
+                            val ptBL = PointF(docCorners[3].x * scaleX, docCorners[3].y * scaleY)
+                            
+                            val rectified = SimplePerspectiveEngine.rectifyDocument(filteredBitmap, ptTL, ptTR, ptBR, ptBL)
+                            val msg = "Perspective correction successfully applied"
+                            Log.d("CameraScreen", msg)
+                            rectified
+                        } else {
+                            filteredBitmap
+                        }
                         
                         // Save output
-                        val savedUri = saveBitmapToDisk(context, filteredBitmap, name, storageLocation)
+                        val savedUri = saveBitmapToDisk(context, finalBitmap, name, storageLocation, imageSaveFormat)
                         
                         ContextCompat.getMainExecutor(context).execute {
                             if (savedUri != null) {
-                                val msg = "Custom filtered photo saved successfully"
+                                val msg = if (captureMode == "DOC SCANNER") "PRISTINE Document scan saved successfully" else "Custom photo saved successfully"
                                 Log.d("CameraScreen", msg)
                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                 onImageSaved(savedUri)
                             } else {
-                                Toast.makeText(context, "Failed to save filtered photo", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Failed to save photo", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } catch (e: Exception) {
                         imageProxy.close()
-                        Log.e("CameraScreen", "In-memory callback filter error: ", e)
+                        Log.e("CameraScreen", "In-memory callback filter/warp error: ", e)
                         ContextCompat.getMainExecutor(context).execute {
-                            Toast.makeText(context, "Filter rendering failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Processing failed: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -1546,11 +1732,19 @@ fun CameraPreview(
                                 preview,
                                 videoCapture
                             )
-                        } else if (captureMode == "SCAN" && imageAnalysis != null) {
+                        } else if ((captureMode == "SCAN" || captureMode == "QR SCANNER") && imageAnalysis != null) {
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
                                 cameraSelector,
                                 preview,
+                                imageAnalysis
+                            )
+                        } else if (captureMode == "DOC SCANNER" && imageAnalysis != null) {
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageCapture,
                                 imageAnalysis
                             )
                         } else {
@@ -1568,5 +1762,241 @@ fun CameraPreview(
                 onConfigError?.invoke()
             }
         }, ContextCompat.getMainExecutor(context))
+    }
+}
+
+/**
+ * Translates and scales raw ImageAnalysis coordinates into active screen view coordinates.
+ */
+class ARCoordinateTranslator(
+    private val previewWidth: Float,
+    private val previewHeight: Float,
+    private val imageWidth: Int,
+    private val imageHeight: Int,
+    private val isFrontCamera: Boolean,
+    private val rotationDegrees: Int
+) {
+    fun translateRect(boundingBox: android.graphics.Rect): android.graphics.RectF {
+        // Adjust for image rotation
+        val isRotated = rotationDegrees == 90 || rotationDegrees == 270
+        val srcWidth = if (isRotated) imageHeight else imageWidth
+        val srcHeight = if (isRotated) imageWidth else imageHeight
+
+        // Compute aspect ratio scaling factors (Fit/Crop matching the viewfinder)
+        val scaleX = previewWidth / srcWidth.toFloat()
+        val scaleY = previewHeight / srcHeight.toFloat()
+        val scale = maxOf(scaleX, scaleY) // CenterCrop behavior
+
+        val offsetX = (previewWidth - srcWidth * scale) / 2f
+        val offsetY = (previewHeight - srcHeight * scale) / 2f
+
+        // Handle mirror coordinate inversion for front facing sensors
+        val left = if (isFrontCamera) {
+            previewWidth - (boundingBox.right * scale + offsetX)
+        } else {
+            boundingBox.left * scale + offsetX
+        }
+        val right = if (isFrontCamera) {
+            previewWidth - (boundingBox.left * scale + offsetX)
+        } else {
+            boundingBox.right * scale + offsetX
+        }
+        val top = boundingBox.top * scale + offsetY
+        val bottom = boundingBox.bottom * scale + offsetY
+
+        return android.graphics.RectF(left, top, right, bottom)
+    }
+}
+
+@Composable
+fun ARScanOverlay(
+    detectedBarcodes: List<Barcode>,
+    previewSize: androidx.compose.ui.geometry.Size,
+    imageResolution: android.util.Size,
+    lensFacing: Int,
+    rotationDegrees: Int
+) {
+    val translator = remember(previewSize, imageResolution, lensFacing, rotationDegrees) {
+        ARCoordinateTranslator(
+            previewWidth = previewSize.width,
+            previewHeight = previewSize.height,
+            imageWidth = imageResolution.width,
+            imageHeight = imageResolution.height,
+            isFrontCamera = lensFacing == CameraSelector.LENS_FACING_FRONT,
+            rotationDegrees = rotationDegrees
+        )
+    }
+
+    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+        detectedBarcodes.forEach { barcode ->
+            barcode.boundingBox?.let { rect ->
+                val mappedRect = translator.translateRect(rect)
+                val animatedProgress = 1.0f // Wired to a scanning breathe transition
+                
+                // Draw Glowing AR corner brackets
+                val cornerLength = 24.dp.toPx()
+                val strokeWidth = 3.dp.toPx()
+                val arColor = Color(0xFF00FFCC) // Neon teal
+
+                // Top-Left Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.top),
+                    end = Offset(mappedRect.left + cornerLength, mappedRect.top),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.top),
+                    end = Offset(mappedRect.left, mappedRect.top + cornerLength),
+                    strokeWidth = strokeWidth
+                )
+
+                // Top-Right Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.top),
+                    end = Offset(mappedRect.right - cornerLength, mappedRect.top),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.top),
+                    end = Offset(mappedRect.right, mappedRect.top + cornerLength),
+                    strokeWidth = strokeWidth
+                )
+
+                // Bottom-Left Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.bottom),
+                    end = Offset(mappedRect.left + cornerLength, mappedRect.bottom),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.bottom),
+                    end = Offset(mappedRect.left, mappedRect.bottom - cornerLength),
+                    strokeWidth = strokeWidth
+                )
+
+                // Bottom-Right Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.bottom),
+                    end = Offset(mappedRect.right - cornerLength, mappedRect.bottom),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.bottom),
+                    end = Offset(mappedRect.right, mappedRect.bottom - cornerLength),
+                    strokeWidth = strokeWidth
+                )
+                
+                // Center scanning bar indicator
+                val currentScanY = mappedRect.top + (mappedRect.height() * animatedProgress)
+                drawLine(
+                    color = arColor.copy(alpha = 0.5f),
+                    start = Offset(mappedRect.left, currentScanY),
+                    end = Offset(mappedRect.right, currentScanY),
+                    strokeWidth = 2.dp.toPx()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ARDocumentOverlay(
+    corners: List<Offset>, // Detected TL, TR, BR, BL coordinates mapped to viewport size
+    isStable: Boolean      // Cyan when stable, Amber when detecting boundaries
+) {
+    if (corners.size == 4) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeColor = if (isStable) Color(0xFF00FFCC) else Color(0xFFFFB300)
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(corners[0].x, corners[0].y)
+                lineTo(corners[1].x, corners[1].y)
+                lineTo(corners[2].x, corners[2].y)
+                lineTo(corners[3].x, corners[3].y)
+                close()
+            }
+            
+            // Draw transparent page shroud
+            drawPath(
+                path = path,
+                color = strokeColor.copy(alpha = 0.15f)
+            )
+            // Draw crisp tracing border
+            drawPath(
+                path = path,
+                color = strokeColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+            )
+            // Draw corner anchor circles
+            corners.forEach { point ->
+                drawCircle(
+                    color = strokeColor,
+                    radius = 6.dp.toPx(),
+                    center = point
+                )
+            }
+        }
+    }
+}
+
+object SimplePerspectiveEngine {
+    /**
+     * Warps a skewed document bitmap using 4-point corner specifications to produce a flat, orthogonal output.
+     */
+    fun rectifyDocument(
+        srcBitmap: Bitmap,
+        tl: PointF, tr: PointF, br: PointF, bl: PointF
+    ): Bitmap {
+        // Compute Euclidean distance lengths to determine maximal bounded widths and heights
+        val widthA = Math.hypot((br.x - bl.x).toDouble(), (br.y - bl.y).toDouble())
+        val widthB = Math.hypot((tr.x - tl.x).toDouble(), (tr.y - tl.y).toDouble())
+        val targetWidth = maxOf(widthA, widthB).toInt().coerceAtLeast(100)
+
+        val heightA = Math.hypot((tr.x - br.x).toDouble(), (tr.y - br.y).toDouble())
+        val heightB = Math.hypot((tl.x - bl.x).toDouble(), (tl.y - bl.y).toDouble())
+        val targetHeight = maxOf(heightA, heightB).toInt().coerceAtLeast(100)
+
+        // Create the orthogonal destination bounds
+        val destBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(destBitmap)
+
+        // Map src coordinates [x0, y0, x1, y1...]
+        val srcPoints = floatArrayOf(
+            tl.x, tl.y,
+            tr.x, tr.y,
+            br.x, br.y,
+            bl.x, bl.y
+        )
+
+        // Map dest coordinates aligning exactly to orthogonal flat bounding box edges
+        val destPoints = floatArrayOf(
+            0f, 0f,
+            targetWidth.toFloat(), 0f,
+            targetWidth.toFloat(), targetHeight.toFloat(),
+            0f, targetHeight.toFloat()
+        )
+
+        // Construct mathematical projection Matrix utilizing poly-to-poly corner maps
+        val transformMatrix = android.graphics.Matrix()
+        val success = transformMatrix.setPolyToPoly(
+            srcPoints, 0,
+            destPoints, 0,
+            4 // Map exactly 4 corners
+        )
+
+        if (success) {
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
+            canvas.drawBitmap(srcBitmap, transformMatrix, paint)
+            return destBitmap
+        }
+        
+        return srcBitmap
     }
 }

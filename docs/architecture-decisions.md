@@ -113,3 +113,32 @@ When users export settings, they expect a complete recovery of the app's operati
 4. **Post-Import WorkManager Resynchronization**
    - **Choice**: Explicitly invoke `CronJobScheduler.syncJobsFromDatabase(context)` immediately after the Room database rows are completely cleared and restored from an exported JSON document.
    - **Reason**: Restoring database parameters is not enough for active schedules. Forcing an active resynchronization scan triggers background system registrations, meaning that background file downloads, notifications, and scheduled capturing scripts re-enroll in WorkManager automatically without requiring user interactions or a phone reboot.
+
+---
+
+## 6. Advanced AR Viewfinder, Native Perspective Rectification & Multi-Format Slices
+
+### Context
+Upgrading the local Camera applet to robust AR scanner capability requires:
+1. Translating raw vision coordinates from high-speed `ImageAnalysis` frames into physical screen viewport coordinates.
+2. Drawing responsive, interactive framing feedback (glow anchors and scanning bars) without causing rendering jitter or UI bottlenecks.
+3. Flat-projecting angled, skewed boundaries of photographed document pages into clean, flat rectangles (perspective correction).
+4. Providing flexible output format choices in user options (e.g., JPEG, PNG, WebP, MP4, MKV, WebM) aligned with Scoped Storage file-system conventions.
+
+### Decisions & Justification
+
+1. **Flexible Coordinate Mapping (`ARCoordinateTranslator`)**
+   - **Choice**: Implemented a standalone, lightweight aspect-ratio coordinate scaling translator. It maps ML Kit Vision and analysis coordinates into screen pixels while respecting camera lens source positions (front versus rear mirror flips) and variable sensor rotations.
+   - **Reason**: Standard viewfinders operate on center-crop or center-fit scales. Translating coordinates without scale adaptations draws offset bounding boxes. Native scaling mapping ensures high-accuracy overlay centering.
+
+2. **Glow Bracket Holographic Interception Overlays (`ARScanOverlay` & `ARDocumentOverlay`)**
+   - **Choice**: Configured specialized, hardware-accelerated Canvas composables drawing vector framing lines directly above the preview stream.
+   - **Reason**: Using traditional layouts or nested layout elements to construct tracking rectangles causes layout pass overhead and sluggish user experiences. Jetpack Compose's vector `Canvas` renders path lines on the GPU with negligible resource draw.
+
+3. **Zero-Dependency Vector Flat Projection (`SimplePerspectiveEngine`)**
+   - **Choice**: Coded an elegant Poly-to-Poly matrix projection engine utilizing Android's native graphics pipeline (`android.graphics.Matrix.setPolyToPoly`).
+   - **Reason**: Avoids pulling massive, heavy external dependency libraries like OpenCV which drastically increase the final APK size of the mobile package. Exploiting native, low-level Android hardware vector projections allows on-the-go perspective warping under $O(1)$ memory loads.
+
+4. **Multi-Format Media Exporters & Scoped Storage Integration**
+   - **Choice**: Extended `takePhoto` and `startVideoRecording` to support target format configurations (Images: JPEG, PNG, WebP; Videos: MP4, MKV, WebM) utilizing conditional MediaStore insertion records.
+   - **Reason**: Integrates seamlessly with Android's modern Sandboxed layout and Scoped Storage configurations. Assigning matching MIME types and extensions depending on config states guarantees successful registrations with systemic indexers, making photo assets discoverable across external file-explorer and gallery apps instantly.

@@ -235,5 +235,22 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement custom map markers with unique icons representing different event types (e.g., Star icons for "Secondary", Clock icons for "Alarms"), expand the Nominatim reverse geocoder to handle custom search parameters gracefully, and implement cached static OSM tile support for offline operations.
 - **Complexity**: Part 4
 
+### 37. AR Unified Viewfinder Modes & Multi-Image PDF Compilation Pipeline (20h)
+- **Reference**: `repo-android/docs/camera-applet-upgrade-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/CameraScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/ExplorerScreen.kt`
+- **Goal**: Master dual-engine camera scanning strategies (local offline contouring vs. Play Services API) configured via Settings, implement live on-screen tactile UX mode selector bands in Jetpack Compose, build Cross-Applet Image-to-PDF compilation pipelines, and support multi-format image and video saving selectors.
+- **Exercise**:
+  1. Extend `SettingsScreen` to add a radio-group selector for "Scanner Backend Service" (Contour Engine vs Play Services Doc Scanner API).
+  2. In `CameraScreen.kt`, build a swipeable horizontal mode carousel containing `PHOTO`, `VIDEO`, `QR SCANNER`, and `DOC SCANNER` options with smooth slide transitions.
+  3. Ensure selecting `DOC SCANNER` activates the dynamic canvas overlay drawing live page contours.
+  4. In `ExplorerScreen.kt` (Files Applet), implement a contextual option card that displays when multiple `PNG/JPEG` assets are checked. Selecting "Merge to PDF" must invoke a localized background compilation worker utilizing Android's native `android.graphics.pdf.PdfDocument` API to sequence and bundle the images into a single PDF output.
+  5. Add select options inside the `SettingsScreen` for camera file saving preferences (Images: compressed JPEG, lossless PNG, or WebP; Videos: standard MP4, MKV, or WebM). Update CameraX image/video capture bindings to initialize file options based on these configurations dynamically and save outputs with appropriate MIME-types and extensions.
+- **Complexity**: Part 4
+
+### 38. Jetpack Compose Context-Safe State Hoisting & Scoped Remembering in Dialogs (5h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Learn how to manage CompositionLocal contexts (such as `LocalContext.current`) safely within asynchronous scopes and Composable `remember` blocks without causing compilation errors or memory leaks.
+- **Exercise**: Identify and refactor instances where Composable getter properties are invoked inside non-composable callback lambdas (like the calculation lambda of `remember { ... }`). Correctly hoist context-aware states outside the remember function to guarantee compile-time safety and prevent runtime lifecycle/composition crashes.
+- **Complexity**: Part 2
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

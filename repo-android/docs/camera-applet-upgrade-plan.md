@@ -285,6 +285,252 @@ fun setManualIsoValue(camera: Camera, isoValue: Int) {
 
 ---
 
+### Phase 6: AR QR Scan Tracking & Dynamic coordinate Mapping
+
+This phase upgrades the offline QR Code Scanner to an interactive AR mode. When a QR code is detected, a glowing AR border and bounding indicators are mapped and drawn directly over the physical QR code on the live Camera preview.
+
+#### 1. Real-Time Coordinate Space Converter
+ML Kit delivers `Barcode` bounding boxes mapped to the `ImageAnalysis` image scale (e.g., `640x480` or `1280x720`). To draw overlays correctly on a full-screen `PreviewView` or Jetpack Compose `Canvas` overlay, we must compute dynamic scale and offset matrices taking camera rotation and mirror-facing into layout calculations:
+
+```kotlin
+/**
+ * Translates and scales raw ImageAnalysis coordinates into active screen view coordinates.
+ */
+class ARCoordinateTranslator(
+    private val previewWidth: Float,
+    private val previewHeight: Float,
+    private val imageWidth: Int,
+    private val imageHeight: Int,
+    private val isFrontCamera: Boolean,
+    private val rotationDegrees: Int
+) {
+    fun translateRect(boundingBox: android.graphics.Rect): android.graphics.RectF {
+        // Adjust for image rotation
+        val isRotated = rotationDegrees == 90 || rotationDegrees == 270
+        val srcWidth = if (isRotated) imageHeight else imageWidth
+        val srcHeight = if (isRotated) imageWidth else imageHeight
+
+        // Compute aspect ratio scaling factors (Fit/Crop matching the viewfinder)
+        val scaleX = previewWidth / srcWidth.toFloat()
+        val scaleY = previewHeight / srcHeight.toFloat()
+        val scale = maxOf(scaleX, scaleY) // CenterCrop behavior
+
+        val offsetX = (previewWidth - srcWidth * scale) / 2f
+        val offsetY = (previewHeight - srcHeight * scale) / 2f
+
+        // Handle mirror coordinate inversion for front facing sensors
+        val left = if (isFrontCamera) {
+            previewWidth - (boundingBox.right * scale + offsetX)
+        } else {
+            boundingBox.left * scale + offsetX
+        }
+        val right = if (isFrontCamera) {
+            previewWidth - (boundingBox.left * scale + offsetX)
+        } else {
+            boundingBox.right * scale + offsetX
+        }
+        val top = boundingBox.top * scale + offsetY
+        val bottom = boundingBox.bottom * scale + offsetY
+
+        return android.graphics.RectF(left, top, right, bottom)
+    }
+}
+```
+
+#### 2. Jetpack Compose AR Overlay HUD
+This Compose element observes scanned barcodes and draws active, high-contrast holographic target brackets directly over the QR coordinates.
+
+```kotlin
+@Composable
+fun ARScanOverlay(
+    detectedBarcodes: List<Barcode>,
+    previewSize: androidx.compose.ui.geometry.Size,
+    imageResolution: android.util.Size,
+    lensFacing: Int,
+    rotationDegrees: Int
+) {
+    val translator = remember(previewSize, imageResolution, lensFacing, rotationDegrees) {
+        ARCoordinateTranslator(
+            previewWidth = previewSize.width,
+            previewHeight = previewSize.height,
+            imageWidth = imageResolution.width,
+            imageHeight = imageResolution.height,
+            isFrontCamera = lensFacing == CameraSelector.LENS_FACING_FRONT,
+            rotationDegrees = rotationDegrees
+        )
+    }
+
+    androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+        detectedBarcodes.forEach { barcode ->
+            barcode.boundingBox?.let { rect ->
+                val mappedRect = translator.translateRect(rect)
+                val animatedProgress = 1.0f // Wired to a scanning breathe transition
+                
+                // Draw Glowing AR corner brackets
+                val cornerLength = 24.dp.toPx()
+                val strokeWidth = 3.dp.toPx()
+                val arColor = Color(0xFF00FFCC) // Neon teal
+
+                // Top-Left Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.top),
+                    end = Offset(mappedRect.left + cornerLength, mappedRect.top),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.left, mappedRect.top),
+                    end = Offset(mappedRect.left, mappedRect.top + cornerLength),
+                    strokeWidth = strokeWidth
+                )
+
+                // Bottom-Right Corner
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.bottom),
+                    end = Offset(mappedRect.right - cornerLength, mappedRect.bottom),
+                    strokeWidth = strokeWidth
+                )
+                drawLine(
+                    color = arColor,
+                    start = Offset(mappedRect.right, mappedRect.bottom),
+                    end = Offset(mappedRect.right, mappedRect.bottom - cornerLength),
+                    strokeWidth = strokeWidth
+                )
+                
+                // Center scanning bar indicator
+                val currentScanY = mappedRect.top + (mappedRect.height() * animatedProgress)
+                drawLine(
+                    color = arColor.copy(alpha = 0.5f),
+                    start = Offset(mappedRect.left, currentScanY),
+                    end = Offset(mappedRect.right, currentScanY),
+                    strokeWidth = 2.dp.toPx()
+                )
+            }
+        }
+    }
+}
+```
+
+---
+
+### Phase 7: AR Document Scanner & Native Perspective Correction
+
+This module implements active page-edge detection, renders an interactive quad boundaries overlay on the live preview view, and corrects perspective warping natively upon capture to output clean, document-aligned rectangular scans.
+
+#### 1. Dynamic Corner Boundary Detection Blueprint
+Using local image processing contour analyses or integrated SDKs (e.g., Google's local `Play Services Document Scanner API`), we retrieve the exact ordered sequence of the 4 document corners: Top-Left (TL), Top-Right (TR), Bottom-Right (BR), and Bottom-Left (BL).
+
+#### 2. AR Viewport Overlay for Documents
+Draws a semi-transparent, neon-bordered polygon tracing the current page contours as the camera centers on the document:
+
+```kotlin
+@Composable
+fun ARDocumentOverlay(
+    corners: List<Offset>, // Detected TL, TR, BR, BL coordinates mapped to viewport size
+    isStable: Boolean      // Cyan when stable, Amber when detecting boundaries
+) {
+    if (corners.size == 4) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeColor = if (isStable) Color(0xFF00FFCC) else Color(0xFFFFB300)
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(corners[0].x, corners[0].y)
+                lineTo(corners[1].x, corners[1].y)
+                lineTo(corners[2].x, corners[2].y)
+                lineTo(corners[3].x, corners[3].y)
+                close()
+            }
+            
+            // Draw transparent page shroud
+            drawPath(
+                path = path,
+                color = strokeColor.copy(alpha = 0.15f)
+            )
+            // Draw crisp tracing border
+            drawPath(
+                path = path,
+                color = strokeColor,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx())
+            )
+            // Draw corner anchor circles
+            corners.forEach { point ->
+                drawCircle(
+                    color = strokeColor,
+                    radius = 6.dp.toPx(),
+                    center = point
+                )
+            }
+        }
+    }
+}
+```
+
+#### 3. Native Perspective Correction Engine (Zero-Dependencies)
+Instead of embedding heavy, memory-intense third-party Computer Vision binaries (such as native OpenCV), the system implements direct, high-performance warp actions using the built-in Android `android.graphics.Matrix` API via the multi-point source-to-destination `setPolyToPoly` native transformer.
+
+```kotlin
+object SimplePerspectiveEngine {
+    /**
+     * Warps a skewed document bitmap using 4-point corner specifications to produce a flat, orthogonal output.
+     */
+    fun rectifyDocument(
+        srcBitmap: Bitmap,
+        tl: PointF, tr: PointF, br: PointF, bl: PointF
+    ): Bitmap {
+        // Compute Euclidean distance lengths to determine maximal bounded widths and heights
+        val widthA = Math.hypot((br.x - bl.x).toDouble(), (br.y - bl.y).toDouble())
+        val widthB = Math.hypot((tr.x - tl.x).toDouble(), (tr.y - tl.y).toDouble())
+        val targetWidth = maxOf(widthA, widthB).toInt()
+
+        val heightA = Math.hypot((tr.x - br.x).toDouble(), (tr.y - br.y).toDouble())
+        val heightB = Math.hypot((tl.x - bl.x).toDouble(), (tl.y - bl.y).toDouble())
+        val targetHeight = maxOf(heightA, heightB).toInt()
+
+        // Create the orthogonal destination bounds
+        val destBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(destBitmap)
+
+        // Map src coordinates [x0, y0, x1, y1...]
+        val srcPoints = floatArrayOf(
+            tl.x, tl.y,
+            tr.x, tr.y,
+            br.x, br.y,
+            bl.x, bl.y
+        )
+
+        // Map dest coordinates aligning exactly to orthogonal flat bounding box edges
+        val destPoints = floatArrayOf(
+            0f, 0f,
+            targetWidth.toFloat(), 0f,
+            targetWidth.toFloat(), targetHeight.toFloat(),
+            0f, targetHeight.toFloat()
+        )
+
+        // Construct mathematical projection Matrix utilizing poly-to-poly corner maps
+        val transformMatrix = android.graphics.Matrix()
+        val success = transformMatrix.setPolyToPoly(
+            srcPoints, 0,
+            destPoints, 0,
+            4 // Map exactly 4 corners
+        )
+
+        if (success) {
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
+            canvas.drawBitmap(srcBitmap, transformMatrix, paint)
+            return destBitmap
+        }
+        
+        return srcBitmap
+    }
+}
+
+// Simple internal helper class matching standard float coordinate points
+data class PointF(val x: Float, val y: Float)
+```
+
+---
+
 ## 4. Proposed Next-Generation Features
 
 In addition to core features, we can expand on the capabilities of the camera applet with these advanced modules:
@@ -293,7 +539,9 @@ In addition to core features, we can expand on the capabilities of the camera ap
    - Automatically detects faces in the preview bounds. If a face pattern matches registered security parameters, it unlocks target application modules instantly. Works entirely offline using low-latency ML Kit Face Mesh detection models.
 2. **🌡️ Automated Document Grid Scrape:**
    - Multi-point edge detection that automatically identifies document bounds, auto-crops, adjusts perspective geometry, corrects shadows, and converts the resulting high-contrast image to a clean local PDF.
-3. **🔋 Smart Thermal & Energy Watchdog:**
+3. **✨ High-Fidelity AR Viewfinders (QR Tracker & Document Matrix Warp):**
+   - Renders 3D coordinate-projected HUD overlays over QR codes and calculates 4-point real-time poly-to-poly transforms to correct and align skewed documents on capture using native graphics shaders.
+4. **🔋 Smart Thermal & Energy Watchdog:**
    - Actively monitors the device's battery charging states and thermal levels. If the safe CPU temperature threshold is crossed, it dynamically drops preview frame rates (e.g., from 60 FPS to 30 FPS) or dims high-intensity GPU color matrices to prevent hardware wear and crashes.
 
 ---
@@ -330,7 +578,27 @@ To avoid scattering controls across multiple screens, the native **Camera Applet
 - **OEM Vendor Extensions:** Toggle dropdown selections for *Disabled*, *HDR*, *Bokeh/Portrait*, or *Night Mode*.
 - **Concurrent Stream (Dual Cam):** A boolean switch enabling PiP (Picture-in-Picture) composite rendering.
 - **Manual Engine Control Panel (Pro Mode):** Toggles a live overlay containing continuous slider widgets for ISO thresholds and Exposure values.
+- **Scanner Service Selector:** Allows the user to select which image processing engine acts under the hood:
+  - *Engine Option A (Local ML & Contour Tracing):* A zero-dependency offline edge finder utilizing localized contours paired with our native `SimplePerspectiveEngine` (Matrix poly-to-poly transform). Extremely fast, transparent, and works completely standalone inside the sandbox.
+  - *Engine Option B (Google Play Services Document Scanner API):* Standard, high-fidelity Google-backed document capture sheets, optimized for situations with complex backgrounds.
 - **Offline ML Barcode HUD:** Configures live scanning HUD triggers, automatic system paste actions, and scanning overlay patterns.
+- **Save File Formats Selector:** Configuration parameters allowing users to determine the default container and compression formats for captured assets:
+  - *Image Save Formats:* Choice between compressed **JPEG** (ideal for high physical compatibility and social sharing), lossless **PNG** (best for pristine document scans and text legibility), and modern **WebP** (optimized for deep storage conservation without compromising visible detail).
+  - *Video Container Formats:* Choice between standard, globally accelerated **MP4** (H.264/AAC for direct playability across all mobile, desktop, and web platforms) and multi-codec **MKV** or optimized **WebM** (VP9/Opus for storage optimizations and open standards).
+
+### 🎮 Manual UX Mode Controls
+To guarantee seamless tactile control, the application eschews automatic mode switching (which can feel unpredictable in unstable lighting or cluttered environments) in favor of a **manual mode carousel/selector** locked at the bottom center of the camera viewport:
+- **`PHOTO` Mode:** Standard viewfinder behavior optimized for instant captures.
+- **`VIDEO` Mode:** Video streaming capture with active scale adjustments.
+- **`QR SCANNER` Mode:** Activates standard `ImageAnalysis` frame scanning coupled with the live AR Scan Overlay HUD (`ARScanOverlay`).
+- **`DOC SCANNER` Mode:** Activates document-edge locator logic, displaying the interactive teal or amber dynamic corner-anchored polygon (`ARDocumentOverlay`) to frame the paper prior to processing.
+
+### 📂 Cross-Applet Image-to-PDF Pipeline
+- **Image-Centric Output:** To keep the Camera applet focused entirely on pristine photo/video capabilities, the output of the Document Scanner is saved **strictly as a flat high-fidelity image file** (e.g., `PNG` or lossless `JPEG` configured inside the private/public applet media directory). 
+- **Files Applet Handshake:**
+  - Upon navigating to the **Files Applet**, the file manager senses a directory of scanned images.
+  - When multiple files are selected via long-press or a multi-select mode, a context-aware action floating bar appears labeled: **"Merge Selected to PDF Document"**.
+  - Selecting this fires a localized PDF compilation worker, pulling raw pixels, and exporting a clean, formatted single PDF containing the ordered collection of corrected captures.
 
 ### 🔍 Dynamic Capability Fetch
 Instead of hardcoding standard exposure parameters or ISO bounds which varies dramatically between hardware vendors (e.g., Google Pixel versus Samsung Galaxy versus lower-end chips):

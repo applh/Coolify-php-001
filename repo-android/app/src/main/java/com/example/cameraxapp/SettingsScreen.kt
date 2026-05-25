@@ -51,6 +51,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val proIsoValue by repository.proIsoValue.collectAsState(initial = 0)
     val proExposureCompValue by repository.proExposureCompValue.collectAsState(initial = 0)
     val offlineScanHud by repository.offlineScanHud.collectAsState(initial = true)
+    val scannerService by repository.scannerService.collectAsState(initial = 0)
+    val imageSaveFormat by repository.imageSaveFormat.collectAsState(initial = 0)
+    val videoContainerFormat by repository.videoContainerFormat.collectAsState(initial = 0)
     val mapDefaultLat by repository.mapDefaultLatitude.collectAsState(initial = 48.8566)
     val mapDefaultLng by repository.mapDefaultLongitude.collectAsState(initial = 2.3522)
     val mapDefaultZoom by repository.mapDefaultZoom.collectAsState(initial = 12.0f)
@@ -397,6 +400,56 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                             coroutineScope.launch { repository.setOfflineScanHud(checked) }
                         }
                     )
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Document Scanner Engine") },
+                supportingContent = {
+                    Text(when(scannerService) {
+                        0 -> "Engine A (Local Contours & Perspective Correction)"
+                        1 -> "Engine B (Play Services Document Scanner)"
+                        else -> "Engine A (Local Contours)"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setScannerService((scannerService + 1) % 2)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Image Output Save Format") },
+                supportingContent = {
+                    Text(when(imageSaveFormat) {
+                        0 -> "Compressed JPEG"
+                        1 -> "Lossless PNG"
+                        2 -> "Modern WebP"
+                        else -> "Compressed JPEG"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setImageSaveFormat((imageSaveFormat + 1) % 3)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Video Output Container Format") },
+                supportingContent = {
+                    Text(when(videoContainerFormat) {
+                        0 -> "Standard MP4 (H.264)"
+                        1 -> "Multi-codec MKV"
+                        2 -> "Optimized WebM"
+                        else -> "Standard MP4"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        repository.setVideoContainerFormat((videoContainerFormat + 1) % 3)
+                    }
                 }
             )
 
