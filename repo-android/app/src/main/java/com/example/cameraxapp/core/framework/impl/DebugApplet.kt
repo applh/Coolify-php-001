@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import com.example.cameraxapp.AppLogger
 import com.example.cameraxapp.DebugLogEntry
 import com.example.cameraxapp.core.framework.Applet
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -245,7 +246,7 @@ class DebugApplet : Applet {
             // Simple Notification toast equivalent in frame
             showToast?.let { msg ->
                 LaunchedEffect(msg) {
-                    kotlin.coroutines.delay(2000)
+                    delay(2000)
                     showToast = null
                 }
                 Box(
