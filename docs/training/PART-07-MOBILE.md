@@ -252,5 +252,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Identify and refactor instances where Composable getter properties are invoked inside non-composable callback lambdas (like the calculation lambda of `remember { ... }`). Correctly hoist context-aware states outside the remember function to guarantee compile-time safety and prevent runtime lifecycle/composition crashes.
 - **Complexity**: Part 2
 
+### 39. Jetpack Compose Dual-Engine Map Architecture & Google Maps JS API Integration (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/SettingsScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/AppPreferences.kt`
+- **Goal**: Understand how to develop an application-level Dual-Engine Map rendering architecture in Android utilizing WebViews. Learn how to decouple the map components dynamically from rendering constraints, persist engine states (such as OpenStreetMap/Leaflet vs Google Maps JS API) in Jetpack DataStore, configure external billing/credentials structures via on-screen user inputs, and build unified Javascript-Kotlin callback interfaces.
+- **Exercise**: Implement a system check or notification toast that triggers if the user boots the Google Maps JS engine without providing an API key, fallback gracefully to Leaflet GIS views, and explore extending the Google maps marker symbol paths to support dynamic sizing variables.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

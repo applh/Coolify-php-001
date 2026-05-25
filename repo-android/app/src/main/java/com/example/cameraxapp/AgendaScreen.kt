@@ -1238,6 +1238,8 @@ fun LeafletMapViewPane(
     val defaultLng by repo.mapDefaultLongitude.collectAsState(initial = 2.3522)
     val defaultZoom by repo.mapDefaultZoom.collectAsState(initial = 12f)
     val defaultLayer by repo.mapLastLayerType.collectAsState(initial = 1)
+    val mapEngineType by repo.mapEngineType.collectAsState(initial = 0)
+    val googleMapsApiKey by repo.googleMapsApiKey.collectAsState(initial = "")
 
     val tileUrl = when(defaultLayer) {
         2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -1262,155 +1264,340 @@ fun LeafletMapViewPane(
     jsonEventsBuilder.append("]")
     val markersJson = jsonEventsBuilder.toString()
 
-    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson) {
-        """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-            <style>
-                body, html, #map {
-                    margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
-                }
-                #search-box {
-                    position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
-                    display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-                    padding: 6px; gap: 6px;
-                }
-                #search-input {
-                    flex-grow: 1; border: none; outline: none; padding: 8px; font-size: 14px; border-radius: 4px;
-                }
-                #search-btn {
-                    background: #E91E63; color: white; border: none; padding: 8px 14px;
-                    border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
-                }
-                #search-btn:active {
-                    background: #c2185b;
-                }
-                .custom-marker {
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 50%;
-                    border: 2px solid white;
-                    box-shadow: 0 0 4px rgba(0,0,0,0.4);
-                }
-            </style>
-        </head>
-        <body>
-            <div id="search-box">
-                <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
-                <button id="search-btn" onclick="doSearch()">Search</button>
-            </div>
-            <div id="map"></div>
-            <script>
-                var map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
-                L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-                L.tileLayer('$tileUrl', {
-                    maxZoom: 19,
-                    attribution: '© OSM'
-                }).addTo(map);
-
-                // Add event markers
-                var events = $markersJson;
-                events.forEach(function(ev) {
-                    var color = ev.color || '#4CAF50';
-                    var iconElement = document.createElement('div');
-                    iconElement.className = 'custom-marker';
-                    iconElement.style.backgroundColor = color;
-                    
-                    var customIcon = L.divIcon({
-                        html: iconElement,
-                        className: 'dummy',
-                        iconSize: [18, 18],
-                        iconAnchor: [9, 9]
-                    });
-
-                    var marker = L.marker([ev.lat, ev.lng], { icon: customIcon }).addTo(map);
-                    marker.bindPopup(
-                        "<b>" + ev.title + "</b><br>" + 
-                        ev.notes + "<br>" +
-                        "<button style='margin-top:5px; padding:4px 8px; font-size:11px;' onclick='AndroidBridge.editEvent(" + ev.id + ")'>Edit Event</button>"
-                    );
-                });
-
-                // Drop temporary marker on map click
-                var tempMarker = null;
-                
-                function reverseGeocode(lat, lng, callback) {
-                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
-                        headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
-                        callback(name);
-                    })
-                    .catch(() => {
-                        callback(lat.toFixed(5) + ', ' + lng.toFixed(5));
-                    });
-                }
-
-                map.on('click', function(e) {
-                    var lat = e.latlng.lat;
-                    var lng = e.latlng.lng;
-                    
-                    if (tempMarker) {
-                        tempMarker.setLatLng([lat, lng]);
-                    } else {
-                        tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson, mapEngineType, googleMapsApiKey) {
+        if (mapEngineType == 1) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <style>
+                    body, html, #map {
+                        margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
                     }
-                    
-                    reverseGeocode(lat, lng, function(name) {
-                        tempMarker.bindPopup(
-                            "<b>Selected Location</b><br>" + name + "<br>" +
-                            "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
-                        ).openPopup();
-                    });
-                });
+                    #search-box {
+                        position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
+                        display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+                        padding: 6px; gap: 6px;
+                    }
+                    #search-input {
+                        flex-grow: 1; border: none; outline: none; padding: 8px; font-size: 14px; border-radius: 4px;
+                    }
+                    #search-btn {
+                        background: #E91E63; color: white; border: none; padding: 8px 14px;
+                        border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
+                    }
+                    #search-btn:active {
+                        background: #c2185b;
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="search-box">
+                    <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
+                    <button id="search-btn" onclick="doSearch()">Search</button>
+                </div>
+                <div id="map"></div>
+                <script>
+                    var map;
+                    var tempMarker = null;
+                    var tempInfoWindow = null;
 
-                function doSearch() {
-                    var query = document.getElementById('search-input').value;
-                    if (!query) return;
-                    document.getElementById('search-btn').innerText = '...';
-                    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
-                        headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
-                    })
-                    .then(r => r.json())
-                    .then(results => {
-                        document.getElementById('search-btn').innerText = 'Search';
-                        if (results.length > 0) {
-                            var first = results[0];
-                            var lat = parseFloat(first.lat);
-                            var lng = parseFloat(first.lon);
-                            var name = first.display_name;
-                            map.setView([lat, lng], 14);
+                    function initMap() {
+                        var myLatLng = {lat: $defaultLat, lng: $defaultLng};
+                        map = new google.maps.Map(document.getElementById('map'), {
+                            zoom: $defaultZoom,
+                            center: myLatLng,
+                            zoomControl: true,
+                            zoomControlOptions: {
+                                position: google.maps.ControlPosition.BOTTOM_RIGHT
+                            },
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false
+                        });
+
+                        // Add event markers
+                        var events = $markersJson;
+                        events.forEach(function(ev) {
+                            var color = ev.color || '#4CAF50';
+                            var marker = new google.maps.Marker({
+                                position: {lat: ev.lat, lng: ev.lng},
+                                map: map,
+                                title: ev.title,
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    fillColor: color,
+                                    fillOpacity: 1,
+                                    strokeColor: '#FFFFFF',
+                                    strokeWeight: 2,
+                                    scale: 8
+                                }
+                            });
+
+                            var infowindow = new google.maps.InfoWindow({
+                                content: "<b>" + ev.title + "</b><br>" + 
+                                         ev.notes + "<br>" +
+                                         "<button style='margin-top:5px; padding:4px 8px; font-size:11px;' onclick='AndroidBridge.editEvent(" + ev.id + ")'>Edit Event</button>"
+                            });
+
+                            marker.addListener('click', function() {
+                                infowindow.open(map, marker);
+                            });
+                        });
+
+                        // Handle map tap to drop a temporary pin to add event
+                        map.addListener('click', function(e) {
+                            var lat = e.latLng.lat();
+                            var lng = e.latLng.lng();
                             
                             if (tempMarker) {
-                                tempMarker.setLatLng([lat, lng]);
+                                tempMarker.setPosition(e.latLng);
                             } else {
-                                tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                                tempMarker = new google.maps.Marker({
+                                    position: e.latLng,
+                                    map: map,
+                                    draggable: true
+                                });
+                                
+                                tempMarker.addListener('dragend', function() {
+                                    var pos = tempMarker.getPosition();
+                                    reverseGeocode(pos.lat(), pos.lng());
+                                });
                             }
+                            
+                            reverseGeocode(lat, lng);
+                        });
+                    }
+
+                    function reverseGeocode(lat, lng) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
+                            showTempMarkerPopup(lat, lng, name);
+                        })
+                        .catch(() => {
+                            var name = lat.toFixed(5) + ', ' + lng.toFixed(5);
+                            showTempMarkerPopup(lat, lng, name);
+                        });
+                    }
+
+                    function showTempMarkerPopup(lat, lng, name) {
+                        if (!tempInfoWindow) {
+                            tempInfoWindow = new google.maps.InfoWindow();
+                        }
+                        tempInfoWindow.setContent(
+                            "<b>Selected Location</b><br>" + name + "<br>" +
+                            "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
+                        );
+                        if (tempMarker) {
+                            tempInfoWindow.open(map, tempMarker);
+                        }
+                    }
+
+                    function doSearch() {
+                        var query = document.getElementById('search-input').value;
+                        if (!query) return;
+                        document.getElementById('search-btn').innerText = '...';
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(results => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            if (results.length > 0) {
+                                var first = results[0];
+                                var lat = parseFloat(first.lat);
+                                var lng = parseFloat(first.lon);
+                                var name = first.display_name;
+                                var latLng = new google.maps.LatLng(lat, lng);
+                                map.setCenter(latLng);
+                                map.setZoom(14);
+                                
+                                if (tempMarker) {
+                                    tempMarker.setPosition(latLng);
+                                } else {
+                                    tempMarker = new google.maps.Marker({
+                                        position: latLng,
+                                        map: map,
+                                        draggable: true
+                                    });
+                                    
+                                    tempMarker.addListener('dragend', function() {
+                                        var pos = tempMarker.getPosition();
+                                        reverseGeocode(pos.lat(), pos.lng());
+                                    });
+                                }
+                                
+                                showTempMarkerPopup(lat, lng, name);
+                            } else {
+                                alert("Address not found.");
+                            }
+                        })
+                        .catch(() => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            alert("Search failed.");
+                        });
+                    }
+                </script>
+                <script src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap" async defer></script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>
+                    body, html, #map {
+                        margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                    }
+                    #search-box {
+                        position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
+                        display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+                        padding: 6px; gap: 6px;
+                    }
+                    #search-input {
+                        flex-grow: 1; border: none; outline: none; padding: 8px; font-size: 14px; border-radius: 4px;
+                    }
+                    #search-btn {
+                        background: #E91E63; color: white; border: none; padding: 8px 14px;
+                        border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
+                    }
+                    #search-btn:active {
+                        background: #c2185b;
+                    }
+                    .custom-marker {
+                        width: 14px;
+                        height: 14px;
+                        border-radius: 50%;
+                        border: 2px solid white;
+                        box-shadow: 0 0 4px rgba(0,0,0,0.4);
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="search-box">
+                    <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
+                    <button id="search-btn" onclick="doSearch()">Search</button>
+                </div>
+                <div id="map"></div>
+                <script>
+                    var map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
+                    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                    L.tileLayer('$tileUrl', {
+                        maxZoom: 19,
+                        attribution: '© OSM'
+                    }).addTo(map);
+
+                    // Add event markers
+                    var events = $markersJson;
+                    events.forEach(function(ev) {
+                        var color = ev.color || '#4CAF50';
+                        var iconElement = document.createElement('div');
+                        iconElement.className = 'custom-marker';
+                        iconElement.style.backgroundColor = color;
+                        
+                        var customIcon = L.divIcon({
+                            html: iconElement,
+                            className: 'dummy',
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
+                        });
+
+                        var marker = L.marker([ev.lat, ev.lng], { icon: customIcon }).addTo(map);
+                        marker.bindPopup(
+                            "<b>" + ev.title + "</b><br>" + 
+                            ev.notes + "<br>" +
+                            "<button style='margin-top:5px; padding:4px 8px; font-size:11px;' onclick='AndroidBridge.editEvent(" + ev.id + ")'>Edit Event</button>"
+                        );
+                    });
+
+                    // Drop temporary marker on map click
+                    var tempMarker = null;
+                    
+                    function reverseGeocode(lat, lng, callback) {
+                        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            var name = data.display_name || (lat.toFixed(5) + ', ' + lng.toFixed(5));
+                            callback(name);
+                        })
+                        .catch(() => {
+                            callback(lat.toFixed(5) + ', ' + lng.toFixed(5));
+                        });
+                    }
+
+                    map.on('click', function(e) {
+                        var lat = e.latlng.lat;
+                        var lng = e.latlng.lng;
+                        
+                        if (tempMarker) {
+                            tempMarker.setLatLng([lat, lng]);
+                        } else {
+                            tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                        }
+                        
+                        reverseGeocode(lat, lng, function(name) {
                             tempMarker.bindPopup(
-                                "<b>Found Checkpoint</b><br>" + name + "<br>" +
+                                "<b>Selected Location</b><br>" + name + "<br>" +
                                 "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
                             ).openPopup();
-                        } else {
-                            alert("Address not found.");
-                        }
-                    })
-                    .catch(() => {
-                        document.getElementById('search-btn').innerText = 'Search';
-                        alert("Search failed.");
+                        });
                     });
-                }
-            </script>
-        </body>
-        </html>
-        """.trimIndent()
+
+                    function doSearch() {
+                        var query = document.getElementById('search-input').value;
+                        if (!query) return;
+                        document.getElementById('search-btn').innerText = '...';
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+                            headers: { 'User-Agent': 'FraiseAgendaApp/1.0' }
+                        })
+                        .then(r => r.json())
+                        .then(results => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            if (results.length > 0) {
+                                var first = results[0];
+                                var lat = parseFloat(first.lat);
+                                var lng = parseFloat(first.lon);
+                                var name = first.display_name;
+                                map.setView([lat, lng], 14);
+                                
+                                if (tempMarker) {
+                                    tempMarker.setLatLng([lat, lng]);
+                                } else {
+                                    tempMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                                }
+                                tempMarker.bindPopup(
+                                    "<b>Found Checkpoint</b><br>" + name + "<br>" +
+                                    "<button style='margin-top:5px; background:#4CAF50; color:white; border:none; padding:4px 8px; border-radius:4px;' onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button>"
+                                ).openPopup();
+                            } else {
+                                alert("Address not found.");
+                            }
+                        })
+                        .catch(() => {
+                            document.getElementById('search-btn').innerText = 'Search';
+                            alert("Search failed.");
+                        });
+                    }
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        }
     }
 
     val webView = remember {

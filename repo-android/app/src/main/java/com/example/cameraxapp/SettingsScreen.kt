@@ -58,8 +58,11 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     val mapDefaultLng by repository.mapDefaultLongitude.collectAsState(initial = 2.3522)
     val mapDefaultZoom by repository.mapDefaultZoom.collectAsState(initial = 12.0f)
     val mapLastLayerType by repository.mapLastLayerType.collectAsState(initial = 1)
+    val mapEngineType by repository.mapEngineType.collectAsState(initial = 0)
+    val googleMapsApiKey by repository.googleMapsApiKey.collectAsState(initial = "")
 
     var showApiKeyDialog by remember { mutableStateOf(false) }
+    var showGoogleMapsKeyDialog by remember { mutableStateOf(false) }
     var showGalleryNameDialog by remember { mutableStateOf(false) }
     var showStartAppletDialog by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
@@ -596,6 +599,31 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                 }
             )
 
+            ListItem(
+                headlineContent = { Text("Map Rendering Engine") },
+                supportingContent = {
+                    Text(when(mapEngineType) {
+                        0 -> "OpenStreetMap (Leaflet Webview)"
+                        1 -> "Google Maps (API Webview)"
+                        else -> "OpenStreetMap (Leaflet Webview)"
+                    })
+                },
+                modifier = Modifier.clickable {
+                    coroutineScope.launch {
+                        val nextEngine = if (mapEngineType == 0) 1 else 0
+                        repository.setMapEngineType(nextEngine)
+                    }
+                }
+            )
+
+            ListItem(
+                headlineContent = { Text("Google Maps API Key") },
+                supportingContent = { Text(if (googleMapsApiKey.isEmpty()) "Not set" else "********" + googleMapsApiKey.takeLast(4)) },
+                modifier = Modifier.clickable {
+                    showGoogleMapsKeyDialog = true
+                }
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
             Text("Launcher & Desktop UX Customization", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
@@ -720,6 +748,35 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                 },
                 dismissButton = {
                     TextButton(onClick = { showApiKeyDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showGoogleMapsKeyDialog) {
+            var tempKey by remember { mutableStateOf(googleMapsApiKey) }
+            AlertDialog(
+                onDismissRequest = { showGoogleMapsKeyDialog = false },
+                title = { Text("Set Google Maps API Key") },
+                text = {
+                    OutlinedTextField(
+                        value = tempKey,
+                        onValueChange = { tempKey = it },
+                        label = { Text("Google Maps API Key") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        coroutineScope.launch { repository.setGoogleMapsApiKey(tempKey) }
+                        showGoogleMapsKeyDialog = false
+                    }) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGoogleMapsKeyDialog = false }) {
                         Text("Cancel")
                     }
                 }

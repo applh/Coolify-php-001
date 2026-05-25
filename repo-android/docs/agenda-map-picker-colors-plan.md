@@ -438,3 +438,39 @@ The total transitive code layer of Play Services SDK contains several translatio
    - Bind default camera positions, layout layers, and coordinate presets to the `SettingsRepository` reactive flows.
 4. **Milestone 4: Dual entry scheduling verification**
    - Unify the VM state routines to pre-fill coordinates on long-press map interactions, and handle opening coordinate selectors directly from the calendar forms.
+
+---
+
+## 10. Dual-Engine Map Architecture (Leaflet vs. Google Maps JS in WebView)
+
+To solve rendering blank map views across varying device support contexts, the system implements a modern, togglable Dual Map-Engine architecture inside `AgendaScreen.kt`.
+
+### A. Architectural Philosophy
+Instead of native maps-compose crashing in environments without Google Play services, maps are loaded inside a fully configured, secure `WebView`. The system provides two dynamic map templates:
+1. **Engine 0: OpenStreetMap (OSM) via Leaflet JS**: A fully standalone web-GIS setup using public Leaflet maps requiring no API key.
+2. **Engine 1: Google Maps JavaScript API**: An interactive web-GIS canvas built directly on Google Maps JS capabilities, initialized via a user-defined API key.
+
+```
+                    ┌───────────────────────────────┐
+                    │      UserSettings / Settings  │
+                    └───────────────┬───────────────┘
+                                    │ (mapEngineType Flow: 0 / 1)
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │       LeafletMapViewPane      │
+                    └───────────────┬───────────────┘
+                                    │
+            ┌───────────────────────┴───────────────────────┐
+            ▼ (Engine 0)                                    ▼ (Engine 1)
+┌─────────────────────────────────┐             ┌─────────────────────────────────┐
+│  OpenStreetMap + Leaflet JS     │             │    Google Maps JS API Engine    │
+│  - Public OSM Tile Layers       │             │    - Custom Colored Pins Symbol │
+│  - Lightweight, Keyless         │             │    - Google Maps Tiles Sets     │
+│  - Leaflet Map Click Handlers   │             │    - Places JS integration stub │
+└─────────────────────────────────┘             └─────────────────────────────────┘
+```
+
+### B. Secure Configurations Management
+1. **Map Engine Selection**: Handled inside `SettingsScreen` and persisted dynamically inside Preference DataStore as `MAP_ENGINE_TYPE`.
+2. **Google Maps API Key**: Users can save a customized GMP API Key inside Preference DataStore under `GOOGLE_MAPS_API_KEY`, secured with input masks in the Android settings view.
+3. **Javascript Bridge Communication**: Both map rendering pipelines stream callbacks to Android native components via `AndroidBridge` interface (e.g. `addEventAt(lat, lng)`, `editEvent(id)`). This guarantees identical UX flows regardless of the chosen engine underneath.

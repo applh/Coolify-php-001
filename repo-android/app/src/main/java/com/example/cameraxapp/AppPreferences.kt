@@ -50,6 +50,8 @@ object AppPreferences {
     val MAP_DEFAULT_LONGITUDE = stringPreferencesKey("map_default_longitude")
     val MAP_DEFAULT_ZOOM = floatPreferencesKey("map_default_zoom")
     val MAP_LAST_LAYER_TYPE = intPreferencesKey("map_last_layer_type")
+    val MAP_ENGINE_TYPE = intPreferencesKey("map_engine_type") // 0: OpenStreetMap (Leaflet Webview), 1: Google Maps (JS Webview)
+    val GOOGLE_MAPS_API_KEY = stringPreferencesKey("google_maps_api_key")
     val SCANNER_SERVICE = intPreferencesKey("scanner_service") // 0: Contour Tracing, 1: Play Services Document Scanner
     val IMAGE_SAVE_FORMAT = intPreferencesKey("image_save_format") // 0: JPEG, 1: PNG, 2: WebP
     val VIDEO_CONTAINER_FORMAT = intPreferencesKey("video_container_format") // 0: MP4, 1: MKV, 2: WebM
@@ -87,6 +89,8 @@ class SettingsRepository(private val context: Context) {
     val mapDefaultLongitude: Flow<Double> = context.dataStore.data.map { (it[AppPreferences.MAP_DEFAULT_LONGITUDE] ?: "2.3522").toDoubleOrNull() ?: 2.3522 }
     val mapDefaultZoom: Flow<Float> = context.dataStore.data.map { it[AppPreferences.MAP_DEFAULT_ZOOM] ?: 12.0f }
     val mapLastLayerType: Flow<Int> = context.dataStore.data.map { it[AppPreferences.MAP_LAST_LAYER_TYPE] ?: 1 }
+    val mapEngineType: Flow<Int> = context.dataStore.data.map { it[AppPreferences.MAP_ENGINE_TYPE] ?: 0 }
+    val googleMapsApiKey: Flow<String> = context.dataStore.data.map { it[AppPreferences.GOOGLE_MAPS_API_KEY] ?: "" }
     val scannerService: Flow<Int> = context.dataStore.data.map { it[AppPreferences.SCANNER_SERVICE] ?: 0 }
     val imageSaveFormat: Flow<Int> = context.dataStore.data.map { it[AppPreferences.IMAGE_SAVE_FORMAT] ?: 0 }
     val videoContainerFormat: Flow<Int> = context.dataStore.data.map { it[AppPreferences.VIDEO_CONTAINER_FORMAT] ?: 0 }
@@ -215,6 +219,18 @@ class SettingsRepository(private val context: Context) {
     suspend fun setMapLastLayerType(type: Int) {
         context.dataStore.edit { prefs ->
             prefs[AppPreferences.MAP_LAST_LAYER_TYPE] = type
+        }
+    }
+
+    suspend fun setMapEngineType(type: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[AppPreferences.MAP_ENGINE_TYPE] = type
+        }
+    }
+
+    suspend fun setGoogleMapsApiKey(key: String) {
+        context.dataStore.edit { prefs ->
+            prefs[AppPreferences.GOOGLE_MAPS_API_KEY] = key
         }
     }
 
