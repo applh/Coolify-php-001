@@ -276,5 +276,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom HTML testing page integrating a Leaflet/OpenStreetMap standard map with active click coordinators, and ensure the `initMap` loader checks both namespace `L` and DOM elements systematically to avoid JS-bridge crash regressions.
 - **Complexity**: Part 4
 
+### 43. Multi-Tab WebView Diagnostic Sandbox & Asynchronous Leaflet Recovery (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master full-stack diagnostics of multi-tab hybridization within Android WebViews. Understand how to design scrollable multi-tier diagnostic selectors in Jetpack Compose, build sandboxed test scopes verifying modern storage engines, geolocational adapters, and touch gesture handlers, and apply asynchronous polling fallback retry loops to guarantee Leaflet CDN initialization.
+- **Exercise**: Create a custom Test Page 9 focusing on evaluating CSS viewport relative measurements (such as modern `dvh`/`dvw` dynamic sizing vs standard viewport units), adding a custom selector option within the scrollable Compose diagnostic ribbon, and routing its HTML generation code appropriately inside `AgendaScreen.kt`.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

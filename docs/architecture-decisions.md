@@ -142,3 +142,50 @@ Upgrading the local Camera applet to robust AR scanner capability requires:
 4. **Multi-Format Media Exporters & Scoped Storage Integration**
    - **Choice**: Extended `takePhoto` and `startVideoRecording` to support target format configurations (Images: JPEG, PNG, WebP; Videos: MP4, MKV, WebM) utilizing conditional MediaStore insertion records.
    - **Reason**: Integrates seamlessly with Android's modern Sandboxed layout and Scoped Storage configurations. Assigning matching MIME types and extensions depending on config states guarantees successful registrations with systemic indexers, making photo assets discoverable across external file-explorer and gallery apps instantly.
+
+---
+
+## 7. Dynamic WebView Diagnostics & Device Auditing Suite
+
+### Context
+Maintaining web hybrid components (such as Leaflet GIS maps) inside Android WebViews presents silent runtime failures (broken JS bridges, blocked mixed-content CDN assets, container 0-height collapses, touch event hijacking by native parent Composable constraints, storage exception locks, and missing geolocation permissions). Finding the root origin of a map failure can be extremely difficult for developers and end-users.
+
+### Decisions & Justification
+
+1. **Multi-Tab Scrollable Diagnostic Ribbon**
+   - **Choice**: Implemented a scrollable container in Jetpack Compose featuring a total of nine distinct runtime diagnostic tests (Modes 0 to 8: Standard Map, JS Bridge, CDN Reachability, Leaflet API integrity, DOM Image loading, CSS Container height, Gesture Touch-pad capturing, Sandboxed Storage engines, and Android-core routed Geolocation inputs).
+   - **Reason**: Decoupling the tests into independent micro-environments allows targeted, separate evaluations of the different subsystems (Network vs JS Logic vs Composable layout vs Android Permissions) without cascading failures. Placing buttons inside a horizontally scrollable container prevents crowding in dense portrait screens.
+
+2. **Touch-Pad Gesture Capture Sandboxing (Test Mode 6)**
+   - **Choice**: Designed a custom gesture touch slate that intercepts, logs, and displays raw mouse/touch and multi-touch coordinates.
+   - **Reason**: Detects if native Compose container scopes (such as swipe-to-dismiss layers or tabbed page navigators) are capturing input pointer sweeps before they reach the nested WebView, ensuring standard user interactivity (like panning Leaflet maps) remains fluid.
+
+3. **Multi-Tier Sandboxed Storage Testing (Test Mode 7)**
+   - **Choice**: Evaluated and confirmed simultaneous operations across LocalStorage, SessionStorage, dynamic Cookie configuration, and full IndexedDB instances in the sandboxed WebView context.
+   - **Reason**: Ensures storage limits or security profiles do not lock standard mapping caching layers, allowing cached map tiles to write to local storage seamlessly on offline configurations.
+
+---
+
+## 8. Web Map Picker Race-Condition Elimination & Robust Asynchronous Loading
+
+### Context
+In the coordinate-picker components (`LeafletComposeMap`), Leaflet scripts are loaded asynchronously from cloud CDNs. Intermittent cellular networks or WebView thread priorities can cause the main inline map initialization script to execute *before* the external Leaflet script has completely loaded and instantiated the global `L` namespace, leading to immediate JS runtime crashes and blank screens.
+
+### Decisions & Justification
+
+1. **Self-Introspecting Polling Loader (`tryInitPickerMap`)**
+   - **Choice**: Refructured the JavaScript block to group all Leaflet initialization statements inside an asynchronous function `initPickerMap()`, guarded by a dynamic namespace check (`typeof L !== 'undefined'`).
+   - **Reason**: Completely breaks dependencies on immediate, synchronous script execution. If the global `L` namespace is not ready yet, initialization is aborted cleanly without crashing, and scheduled to retry.
+
+2. **Multi-Chained Lifecycles and Polling Resiliency**
+   - **Choice**: Registered three backup event listeners (`load`, `resize`, `DOMContentLoaded`) and five staggered time-interval execution fallbacks (`setTimeout`) ranging from 100ms up to 2500ms.
+   - **Reason**: Coordinates with web browser rendering life states. High-speed, cached page parses trigger initialization almost immediately at 100ms, whereas slower networks gracefully boot up on later intervals once CDN downloads complete.
+
+3. **Double-Safeguarded Marker Updates**
+   - **Choice**: Guarded all marker or reverse geocoding methods with explicit safety null checks (e.g., `if (!marker) return` and `if (map) { map.setView(...) }`).
+   - **Reason**: Avoids runtime exceptions if the user attempts to search for an address or click elements before Leaflet has fully initialized the map coordinates, guaranteeing absolute script reliability under any loading state.
+
+4. **Visual Layout Diagnostic Borders (Map and GIS Tiles)**
+   - **Choice**: Integrated high-contrast custom layout borders around map containers (green `#4CAF50` for standard map, blue `#2196F3` for map location picker) paired with vivid orange borders (`#FF5722`) on individual map layer image tiles (`.leaflet-tile`).
+   - **Reason**: Allows developers and quality auditors to visually confirm layout initialization, size correctness, and successful asset fetch within standard Android WebView sandbox environments.
+

@@ -1424,6 +1424,279 @@ fun LeafletMapViewPane(
             </body>
             </html>
             """.trimIndent()
+        } else if (diagnosticMode == 4) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #FFF3E0; color: #333; line-height: 1.4; }
+                    h1 { color: #E65100; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #FFB74D; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                    .tile-preview { max-width: 100%; border: 1px solid #ddd; margin: 10px 0; display: block; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 4: DOM Image Sizing & Mixed Content Security Check</h1>
+                <div class="box">
+                    <p><b>Checking image loading from standard tile servers:</b></p>
+                    <p id="image-status">Loading image element...</p>
+                    <img id="test-tile" class="tile-preview" src="https://tile.openstreetmap.org/12/2048/1360.png" />
+                </div>
+                <div class="box">
+                    <p><b>Image Dimensions Check:</b></p>
+                    <p id="size-status">Checking dimensions...</p>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 4: Initializing.");
+                    var img = document.getElementById('test-tile');
+                    img.onload = function() {
+                        document.getElementById('image-status').innerText = "✅ Image loaded successfully in DOM.";
+                        var w = img.naturalWidth;
+                        var h = img.naturalHeight;
+                        document.getElementById('size-status').innerText = "✅ DOM Loaded Dimensions: " + w + "x" + h + "px";
+                        console.log("Diag Success: DOM Image loaded. Size: " + w + "x" + h);
+                    };
+                    img.onerror = function() {
+                        document.getElementById('image-status').innerText = "❌ Image failed loading in DOM!";
+                        document.getElementById('size-status').innerText = "❌ Dimensions: N/A";
+                        console.error("Diag Error: DOM Image load failed.");
+                    };
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 5) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; background: #F3E5F5; }
+                    .container { padding: 16px; box-sizing: border-box; }
+                    h1 { color: #4A148C; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #BA68C8; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                    #map-sim { width: 100%; height: 200px; background: #eee; border: 2px dashed #888; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🧪 Test Page 5: Container Sizing & CSS Sandbox Check</h1>
+                    <div class="box">
+                        <p>We test container height. Leaflet maps fail completely if outer elements have 0 height (often due to % height parent elements).</p>
+                        <p><b>Window Inner Size:</b> <span id="win-size">Checking...</span></p>
+                        <p><b>Simulated Map Element (#map-sim):</b></p>
+                        <ul>
+                            <li>Computed Height: <span id="comp-height">Checking...</span></li>
+                            <li>Computed Width: <span id="comp-width">Checking...</span></li>
+                            <li>Client Sizing: <span id="client-size">Checking...</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="map-sim"></div>
+                <script>
+                    console.log("Diagnostic Test Page 5: Initializing.");
+                    function checkSize() {
+                        document.getElementById('win-size').innerText = window.innerWidth + "x" + window.innerHeight + "px";
+                        var el = document.getElementById('map-sim');
+                        var computedStyle = window.getComputedStyle(el);
+                        document.getElementById('comp-height').innerText = computedStyle.height;
+                        document.getElementById('comp-width').innerText = computedStyle.width;
+                        document.getElementById('client-size').innerText = el.clientWidth + "x" + el.clientHeight + "px";
+                        console.log("Diag Success: Window size is " + window.innerWidth + "x" + window.innerHeight + ", map-sim is " + el.clientWidth + "x" + el.clientHeight);
+                    }
+                    window.addEventListener('resize', checkSize);
+                    window.addEventListener('load', checkSize);
+                    checkSize();
+                    setTimeout(checkSize, 200);
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 6) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; background: #ECEFF1; }
+                    .container { padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; height: 100%; }
+                    h1 { color: #37474F; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #78909C; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                    #touch-pad { flex-grow: 1; background: #CFD8DC; border: 2px dashed #546E7A; min-height: 200px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #37474F; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🧪 Test Page 6: Gestures & Touch Hijacking Check</h1>
+                    <div class="box">
+                        <p>Interact with the slate below. Drag, tap, pinch. If events list remains empty, the Android host composables are capturing events before they hit the WebView!</p>
+                        <p><b>Last Event:</b> <span id="last-event">No touch yet</span></p>
+                        <p><b>Status:</b> <span id="event-stats">Active</span></p>
+                    </div>
+                    <div id="touch-pad">TOUCH & DRAG SLATE</div>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 6: Initializing.");
+                    var pad = document.getElementById('touch-pad');
+                    var counter = 0;
+                    function reportEvent(name, x, y) {
+                        counter++;
+                        document.getElementById('last-event').innerText = name + " (x: " + Math.round(x) + ", y: " + Math.round(y) + ")";
+                        document.getElementById('event-stats').innerText = "Count: " + counter;
+                        console.log("Diag Success: Touch recorded - " + name + " [" + x + "," + y + "]");
+                    }
+                    pad.addEventListener('touchstart', function(e) {
+                        var t = e.touches[0];
+                        reportEvent('touchstart', t.clientX, t.clientY);
+                    });
+                    pad.addEventListener('touchmove', function(e) {
+                        var t = e.touches[0];
+                        reportEvent('touchmove', t.clientX, t.clientY);
+                    });
+                    pad.addEventListener('touchend', function(e) {
+                        reportEvent('touchend', 0, 0);
+                    });
+                    pad.addEventListener('mousedown', function(e) {
+                        reportEvent('mousedown', e.clientX, e.clientY);
+                    });
+                    pad.addEventListener('mousemove', function(e) {
+                        if (e.buttons > 0) {
+                            reportEvent('drag/mousemove', e.clientX, e.clientY);
+                        }
+                    });
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 7) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #F5E0E0; color: #333; line-height: 1.4; }
+                    h1 { color: #8C1A1A; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #E59898; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 7: Browser Storage & Cookies Capability Check</h1>
+                <div class="box">
+                    <p><b>Local Storage Check:</b> <span id="ls-status">Checking...</span></p>
+                    <p><b>Session Storage Check:</b> <span id="ss-status">Checking...</span></p>
+                    <p><b>Cookies Check:</b> <span id="cookie-status">Checking...</span></p>
+                    <p><b>Indexed Database (IndexedDB) Access:</b> <span id="idb-status">Checking...</span></p>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 7: Initializing.");
+                    try {
+                        localStorage.setItem('diag_test', 'works');
+                        var val = localStorage.getItem('diag_test');
+                        document.getElementById('ls-status').innerText = (val === 'works') ? "✅ Read & Write Success" : "❌ Unexpected value: " + val;
+                        console.log("Diag Success: LocalStorage is functional.");
+                    } catch(e) {
+                        document.getElementById('ls-status').innerText = "❌ Failed: " + e.message;
+                        console.error("Diag Error: LocalStorage write failed: " + e.message);
+                    }
+
+                    try {
+                        sessionStorage.setItem('diag_test', 'works_session');
+                        var val = sessionStorage.getItem('diag_test');
+                        document.getElementById('ss-status').innerText = (val === 'works_session') ? "✅ Read & Write Success" : "❌ Unexpected value: " + val;
+                        console.log("Diag Success: SessionStorage is functional.");
+                    } catch(e) {
+                        document.getElementById('ss-status').innerText = "❌ Failed: " + e.message;
+                        console.error("Diag Error: SessionStorage write failed: " + e.message);
+                    }
+
+                    try {
+                        document.cookie = "diag_cookie=enabled_diag; max-age=60; path=/";
+                        var cookies = document.cookie;
+                        document.getElementById('cookie-status').innerText = (cookies.indexOf('diag_cookie=enabled_diag') !== -1) ? "✅ Configured successfully" : "❌ Disallowed/Blocked";
+                        console.log("Diag Success: Cookies are functional.");
+                    } catch(e) {
+                        document.getElementById('cookie-status').innerText = "❌ Blocked (" + e.message + ")";
+                        console.error("Diag Error: Cookies write failed: " + e.message);
+                    }
+
+                    try {
+                        var request = indexedDB.open("DiagDatabase", 1);
+                        request.onsuccess = function() {
+                            document.getElementById('idb-status').innerText = "✅ Interface and Database operations available";
+                            console.log("Diag Success: IndexedDB is functional.");
+                        };
+                        request.onerror = function() {
+                            document.getElementById('idb-status').innerText = "❌ Access permission denied";
+                            console.error("Diag Error: IndexedDB open failed.");
+                        };
+                    } catch(e) {
+                        document.getElementById('idb-status').innerText = "❌ Interface disabled (" + e.message + ")";
+                        console.error("Diag Error: IndexedDB disabled: " + e.message);
+                    }
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 8) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <style>
+                    body { font-family: sans-serif; padding: 16px; background: #E0F2F1; color: #333; line-height: 1.4; }
+                    h1 { color: #004D40; font-size: 18px; margin-top: 0; }
+                    .box { border: 1px solid #4DB6AC; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <h1>🧪 Test Page 8: Geolocation Capabilities & Access Check</h1>
+                <div class="box">
+                    <p><b>Is Geolocation Property Present?</b> <span id="has-geo">Checking...</span></p>
+                    <p><b>Current Location coordinates:</b> <span id="geo-status">Press button to request...</span></p>
+                    <button style="margin-top: 5px; padding: 8px 12px; background: #00796B; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="getGeo()">Request Location</button>
+                </div>
+                <script>
+                    console.log("Diagnostic Test Page 8: Initializing.");
+                    var hasGeo = ("geolocation" in navigator);
+                    document.getElementById('has-geo').innerText = hasGeo ? "✅ Yes (navigator.geolocation exists)" : "❌ No (Unsupported by browser engine)";
+                    
+                    function getGeo() {
+                        if (!hasGeo) {
+                            alert("Geolocation not supported.");
+                            return;
+                        }
+                        document.getElementById('geo-status').innerText = "Requesting details from Android Core...";
+                        navigator.geolocation.getCurrentPosition(
+                            function(pos) {
+                                document.getElementById('geo-status').innerText = "✅ Lat: " + pos.coords.latitude + ", Lng: " + pos.coords.longitude + " (Accuracy: " + pos.coords.accuracy + "m)";
+                                console.log("Diag Success: Geolocation reading succeeded.");
+                            },
+                            function(err) {
+                                var codeName = "UNKNOWN";
+                                if (err.code === 1) codeName = "PERMISSION_DENIED";
+                                else if (err.code === 2) codeName = "POSITION_UNAVAILABLE";
+                                else if (err.code === 3) codeName = "TIMEOUT";
+                                document.getElementById('geo-status').innerText = "❌ Failed (Error code: " + err.code + " - " + codeName + " - " + err.message + ")";
+                                console.error("Diag Error: Geolocation failed: " + err.message);
+                            },
+                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                        );
+                    }
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
         } else if (mapEngineType == 1) {
             """
             <!DOCTYPE html>
@@ -1780,6 +2053,12 @@ fun LeafletMapViewPane(
                     }
                     #map {
                         width: 100vw; height: 100vh;
+                        border: 6px solid #4CAF50 !important; /* Green diagnosis border around the map */
+                        box-sizing: border-box;
+                    }
+                    /* Diagnostic borders on each individual GIS tile layer */
+                    .leaflet-tile {
+                        border: 1px solid #FF5722 !important;
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -1913,6 +2192,7 @@ fun LeafletMapViewPane(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Row(
+                modifier = Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1951,6 +2231,46 @@ fun LeafletMapViewPane(
                 ) {
                     Text("3: Leaflet", fontSize = 10.sp, color = Color.White)
                 }
+                Button(
+                    onClick = { diagnosticMode = 4 },
+                    colors = if (diagnosticMode == 4) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("4: Images", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 5 },
+                    colors = if (diagnosticMode == 5) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("5: Sizing", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 6 },
+                    colors = if (diagnosticMode == 6) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("6: Gestures", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 7 },
+                    colors = if (diagnosticMode == 7) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("7: Storage", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 8 },
+                    colors = if (diagnosticMode == 8) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("8: Geo", fontSize = 10.sp, color = Color.White)
+                }
             }
         }
     }
@@ -1984,13 +2304,19 @@ fun LeafletComposeMap(
                 }, true);
             </script>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Picker Leaflet CSS CDN!')" onload="console.log('Picker Leaflet CSS CDN loaded successfully.')" />
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Picker Leaflet JS CDN!')" onload="console.log('Picker Leaflet JS CDN loaded successfully.')"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Picker Leaflet JS CDN!')" onload="tryInitPickerMap()"></script>
             <style>
                 body, html {
                     margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
                 }
                 #map {
                     width: 100vw; height: 100vh;
+                    border: 6px solid #2196F3 !important; /* Blue diagnosis border around the picker map */
+                    box-sizing: border-box;
+                }
+                /* Diagnostic borders on each individual GIS tile layer */
+                .leaflet-tile {
+                    border: 1px solid #FF5722 !important;
                 }
                 #search-box {
                     position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -2016,17 +2342,46 @@ fun LeafletComposeMap(
             </div>
             <div id="map"></div>
             <script>
-                console.log("Initializing Map Picker centering on [$initialLatitude, $initialLongitude]");
-                if (typeof L === 'undefined') {
-                    console.error("Critical Error: Leaflet namespace 'L' is undefined in Map Picker.");
-                }
-                var map = L.map('map', { zoomControl: false }).setView([$initialLatitude, $initialLongitude], $initialZoom);
-                L.control.zoom({ position: 'bottomright' }).addTo(map);
+                var map;
+                var mapInitialized = false;
+                var marker;
 
-                L.tileLayer('$tileUrl', {
-                    maxZoom: 19,
-                    attribution: '© OSM'
-                }).addTo(map);
+                function initPickerMap() {
+                    if (mapInitialized) return;
+                    if (typeof L === 'undefined') {
+                        console.error("Critical Error: Leaflet namespace 'L' is undefined in Map Picker. Will retry...");
+                        return;
+                    }
+                    mapInitialized = true;
+                    console.log("Initializing Map Picker centering on [$initialLatitude, $initialLongitude]");
+                    map = L.map('map', { zoomControl: false }).setView([$initialLatitude, $initialLongitude], $initialZoom);
+                    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+                    L.tileLayer('$tileUrl', {
+                        maxZoom: 19,
+                        attribution: '© OSM'
+                    }).addTo(map);
+
+                    marker = L.marker([$initialLatitude, $initialLongitude], { draggable: true }).addTo(map);
+                    marker.bindPopup("<b>Select Location</b><br>Drag me or click map.").openPopup();
+
+                    marker.on('dragend', function() {
+                        var latlng = marker.getLatLng();
+                        updateMarker(latlng.lat, latlng.lng, true);
+                    });
+
+                    map.on('click', function(e) {
+                        updateMarker(e.latlng.lat, e.latlng.lng, true);
+                    });
+
+                    fixMapSize();
+                }
+
+                function tryInitPickerMap() {
+                    if (typeof L !== 'undefined' && document.getElementById('map')) {
+                        initPickerMap();
+                    }
+                }
 
                 // Auto-resize / invalidate size to prevent blank map issues in WebView on layout/creation updates
                 function fixMapSize() {
@@ -2034,17 +2389,20 @@ fun LeafletComposeMap(
                         map.invalidateSize();
                     }
                 }
-                window.addEventListener('load', fixMapSize);
+                window.addEventListener('load', function() {
+                    tryInitPickerMap();
+                    fixMapSize();
+                });
                 window.addEventListener('resize', fixMapSize);
-                document.addEventListener('DOMContentLoaded', fixMapSize);
-                setTimeout(fixMapSize, 100);
-                setTimeout(fixMapSize, 300);
-                setTimeout(fixMapSize, 600);
-                setTimeout(fixMapSize, 1200);
-                setTimeout(fixMapSize, 2500);
-
-                var marker = L.marker([$initialLatitude, $initialLongitude], { draggable: true }).addTo(map);
-                marker.bindPopup("<b>Select Location</b><br>Drag me or click map.").openPopup();
+                document.addEventListener('DOMContentLoaded', function() {
+                    tryInitPickerMap();
+                    fixMapSize();
+                });
+                setTimeout(tryInitPickerMap, 100);
+                setTimeout(tryInitPickerMap, 300);
+                setTimeout(tryInitPickerMap, 600);
+                setTimeout(tryInitPickerMap, 1200);
+                setTimeout(tryInitPickerMap, 2500);
 
                 function reportLocation(lat, lng, address) {
                     if (window.AndroidBridge) {
@@ -2069,6 +2427,7 @@ fun LeafletComposeMap(
                 }
 
                 function updateMarker(lat, lng, shouldGeocode) {
+                    if (!marker) return;
                     marker.setLatLng([lat, lng]);
                     if (shouldGeocode) {
                         reverseGeocode(lat, lng, function(name) {
@@ -2080,15 +2439,7 @@ fun LeafletComposeMap(
                     }
                 }
 
-                marker.on('dragend', function() {
-                    var latlng = marker.getLatLng();
-                    updateMarker(latlng.lat, latlng.lng, true);
-                });
-
-                map.on('click', function(e) {
-                    updateMarker(e.latlng.lat, e.latlng.lng, true);
-                });
-
+                // Search standard address
                 function doSearch() {
                     var query = document.getElementById('search-input').value;
                     if (!query) return;
@@ -2104,9 +2455,13 @@ fun LeafletComposeMap(
                             var lat = parseFloat(first.lat);
                             var lng = parseFloat(first.lon);
                             var name = first.display_name;
-                            map.setView([lat, lng], 14);
+                            if (map) {
+                                map.setView([lat, lng], 14);
+                            }
                             updateMarker(lat, lng, false);
-                            marker.setPopupContent("<b>Found:</b><br>" + name).openPopup();
+                            if (marker) {
+                                marker.setPopupContent("<b>Found:</b><br>" + name).openPopup();
+                            }
                             reportLocation(lat, lng, name);
                         } else {
                             alert("Address not found.");
