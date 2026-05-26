@@ -375,6 +375,138 @@ fun BlackjackScreen(
                     onReset = { viewModel.resetLifetimeStats() }
                 )
             }
+
+            if (gameState == GameState.PAYS_OUT) {
+                val netGainLoss by viewModel.netGainLoss
+                if (netGainLoss != null) {
+                    val isGain = netGainLoss > 0
+                    val isLoss = netGainLoss < 0
+                    val isPush = netGainLoss == 0
+
+                    val color = when {
+                        isGain -> Color(0xFF4CAF50) // Green
+                        isLoss -> Color(0xFFF44336) // Red
+                        else -> Color(0xFFFFD700) // Gold for push
+                    }
+
+                    val badgeIcon = when {
+                        isGain -> "🏆" // Win/gain trophy
+                        isLoss -> "💸" // Loss fly-away money
+                        else -> "🤝" // Push shake hands
+                    }
+
+                    val badgeTitle = when {
+                        isGain -> "ROUND WON!"
+                        isLoss -> "ROUND LOST"
+                        else -> "PUSH (EVEN)"
+                    }
+
+                    val amountText = when {
+                        isGain -> "+$${netGainLoss}"
+                        isLoss -> "-$${kotlin.math.abs(netGainLoss)}"
+                        else -> "$0"
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .clickable { viewModel.nextRound() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.Black.copy(alpha = 0.85f),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(2.dp, color.copy(alpha = 0.6f)),
+                            modifier = Modifier
+                                .padding(32.dp)
+                                .shadow(12.dp, RoundedCornerShape(24.dp))
+                                .clickable(enabled = false) {}
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(vertical = 28.dp, horizontal = 36.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                // Centered badge icon with transparent 0.6
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .graphicsLayer { alpha = 0.6f }
+                                        .background(color.copy(alpha = 0.15f), CircleShape)
+                                        .border(2.dp, color, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = badgeIcon,
+                                        fontSize = 42.sp
+                                    )
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = badgeTitle,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.LightGray,
+                                            letterSpacing = 2.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = amountText,
+                                        style = MaterialTheme.typography.headlineLarge.copy(
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 36.sp,
+                                            color = color
+                                        )
+                                    )
+                                }
+
+                                if (roundResultText.isNotEmpty()) {
+                                    Text(
+                                        text = roundResultText,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontFamily = FontFamily.Monospace,
+                                            textAlign = TextAlign.Center,
+                                            color = Color.LightGray.copy(alpha = 0.8f)
+                                        ),
+                                        modifier = Modifier
+                                            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+
+                                Button(
+                                    onClick = { viewModel.nextRound() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = color,
+                                        contentColor = if (isLoss) Color.White else Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                ) {
+                                    Text(
+                                        "NEXT ROUND",
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = FontWeight.ExtraBold,
+                                            letterSpacing = 1.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -312,5 +312,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a dynamic emoji feedback animation overlay on the reactive Croupier's avatar when a player scores exactly 21, and enhance the transaction badge to play custom micro-haptic buzzes using Android's `Vibrator` utility.
 - **Complexity**: Part 4
 
+### 49. Android Blackjack UX Enhancement: Centered Results Badge Overlay & Dynamic Status Colorization (10h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackViewModel.kt`
+- **Goal**: Learn how to implement high-impact end-of-round visual feedback overlays in Jetpack Compose. Understand how to design a centered badge icon with an exact transparency mapping of 0.6 using alpha graphics layers, and differentiate round-level financial states with color-coded layouts (green for money gains, red for money loss).
+- **Exercise**: Add a custom scale animation or spring-based entry effect to the results badge dialog, making the centered emoji/payout indicator pulse into view when `GameState.PAYS_OUT` is initialized.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

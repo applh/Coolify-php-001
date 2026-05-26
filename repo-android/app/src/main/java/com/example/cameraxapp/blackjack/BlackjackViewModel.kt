@@ -67,6 +67,9 @@ class BlackjackViewModel(context: Context) : ViewModel() {
     var isDealerSecondCardHidden = mutableStateOf(true)
     var roundResultText = mutableStateOf("")
 
+    private val _netGainLoss = mutableStateOf<Int?>(null)
+    val netGainLoss: State<Int?> = _netGainLoss
+
     private val _moneyAnimation = mutableStateOf<Pair<String, Boolean>?>(null)
     val moneyAnimation: State<Pair<String, Boolean>?> = _moneyAnimation
 
@@ -185,6 +188,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
         _currentHandIndex.value = 0
         isDealerSecondCardHidden.value = true
         roundResultText.value = ""
+        _netGainLoss.value = null
 
         // Check cards shoe depletion to trigger auto-shuffle at 75%
         if (cardShoe.getPenetrationPercent() > 75f) {
@@ -511,6 +515,10 @@ class BlackjackViewModel(context: Context) : ViewModel() {
             }
         }
 
+        val totalBet = playerHands.sumOf { it.bet }
+        val netChange = totalWinnings - totalBet
+        _netGainLoss.value = netChange
+
         // Add back standard winnings
         if (totalWinnings > 0) {
             val netBalance = _walletBalance.value + totalWinnings
@@ -520,7 +528,6 @@ class BlackjackViewModel(context: Context) : ViewModel() {
                 dbHelper.updateBalance(netBalance)
             }
         } else {
-            val totalBet = playerHands.sumOf { it.bet }
             triggerMoneyAnimation("-$totalBet", false)
         }
 
@@ -547,6 +554,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
         dealerCards.clear()
         playerHands.clear()
         roundResultText.value = ""
+        _netGainLoss.value = null
         _adviceMessage.value = "Stamps ready. Place standard chip wagers."
     }
 
