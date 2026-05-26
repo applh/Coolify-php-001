@@ -317,6 +317,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Goal**: Learn how to implement high-impact end-of-round visual feedback overlays in Jetpack Compose. Understand how to design a centered badge icon with an exact transparency mapping of 0.6 using alpha graphics layers, and differentiate round-level financial states with color-coded layouts (green for money gains, red for money loss).
 - **Exercise**: Add a custom scale animation or spring-based entry effect to the results badge dialog, making the centered emoji/payout indicator pulse into view when `GameState.PAYS_OUT` is initialized.
 - **Complexity**: Part 3
+ 
+### 50. Android Blackjack UX Adaptive Overlay, Multi-Value Aces, and Strategic Advice HUD Relocation (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/CardsModel.kt`
+- **Goal**: Master the sizing of dynamic game elements using `LocalConfiguration` in Jetpack Compose to adapt to varying device aspects with `vmin` metrics. Learn how to compute and display soft vs. hard Ace card totals (e.g., "6/16") to handle multi-value Aces, and optimize the layout by contextually relocating the strategic advice banner directly above the player banner.
+- **Exercise**: Implement a user preference that allows dynamically resizing the square overlay between 40% and 70% of the computed `vmin` setting.
+- **Complexity**: Part 3
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

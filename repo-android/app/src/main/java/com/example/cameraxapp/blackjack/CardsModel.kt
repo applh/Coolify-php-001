@@ -69,5 +69,27 @@ data class BlackjackHand(
         return total
     }
 
+    fun hasSoftAce(): Boolean {
+        var total = cards.sumOf { it.rank.value }
+        var acesCount = cards.count { it.rank == Rank.ACE }
+        var adjusted = 0
+        while (total > 21 && acesCount > 0) {
+            total -= 10
+            acesCount--
+            adjusted++
+        }
+        val remainingAces = cards.count { it.rank == Rank.ACE } - adjusted
+        return remainingAces > 0 && total <= 21
+    }
+
+    fun getScoreDisplay(): String {
+        val score = calculateScore()
+        if (score <= 21 && hasSoftAce()) {
+            val hardScore = score - 10
+            return "$hardScore/$score"
+        }
+        return score.toString()
+    }
+
     fun isBlackjack(): Boolean = cards.size == 2 && calculateScore() == 21
 }
