@@ -58,7 +58,12 @@ To ensure pristine responsiveness, high-fidelity frame-based card animations, an
 - **Secure Transactional Rollback**: Bets are decremented on Deal, and updated dynamically upon hand outcomes to prevent physical state discrepancies or data losses if the application is killed during play.
 
 ### C. Visual Polishing & Fluid UX
-- **Card-Dealt Transitions**: Cards slide dynamically into view with a subtle scale-up and fade-in entry using Compose's dynamic `AnimatedVisibility` and offset tracking.
+- **Card-Dealt Transitions & Interactive 3D Flips**: Cards slide dynamically into view with a slot-dealing offset transition. To simulate real casino physics, card reveals triggers a hardware-accelerated 3D projection flip (using Jetpack Compose card graphicsLayer `rotationY` projections) rotating from 180° to 0° face angles.
+- **Floating Action Buttons (FAB) Interface**: Modern, floating round action controllers for core maneuvers (`HIT`, `STAND`, `DOUBLE`, `SPLIT`, `DEAL`) placed directly over the table canvas. Features elevated, vibration-responsive buttons with contextual color-states and high-contrast styling.
+- **Vibrant Money Gains & Loss Float Animations**: Financial transitions trigger a dynamic animation overlay. When a round settles, floating chip indicators (`+$150` in emerald or `-$100` in crimson) rise from the respective hand, rising and fading with smooth alpha transitions.
+- **Casino Personas & Avatars**: Dynamic visual badges for both the Dealer and Player:
+  - *Dealer Avatar (Croupier)*: A professional avatar with reactive emojis (e.g. 🤵 looking standard, 😎 when winning, 😮 when busted) representing table actions.
+  - *Player Avatar*: Circular persona rings representing a VIP profile badge, showing interactive play statuses (e.g., Guest Player, Premium Seat, High Roller).
 - **Active Hand Isolation**: In split states, the screen dims non-active hands, drawing a sharp, borders-pulsing selection ring around the currently controlled split hand for unmatched clarity.
 - **Outcome Toast Overlays**: High-contrast, custom notification overlays displaying "WIN (+1.5x)", "BLACKJACK (+2.5x)", "PUSH (Return)", or "BUST (Dealer Wins)" with vibrant success colors.
 

@@ -67,6 +67,19 @@ class BlackjackViewModel(context: Context) : ViewModel() {
     var isDealerSecondCardHidden = mutableStateOf(true)
     var roundResultText = mutableStateOf("")
 
+    private val _moneyAnimation = mutableStateOf<Pair<String, Boolean>?>(null)
+    val moneyAnimation: State<Pair<String, Boolean>?> = _moneyAnimation
+
+    private fun triggerMoneyAnimation(text: String, isPositive: Boolean) {
+        _moneyAnimation.value = Pair(text, isPositive)
+        viewModelScope.launch {
+            delay(1800)
+            if (_moneyAnimation.value?.first == text) {
+                _moneyAnimation.value = null
+            }
+        }
+    }
+
     // List of cards played in this shoe to track Hi-Lo counting
     private var cardsSeenInShoe = 0
 
@@ -161,6 +174,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
         // Deduct bet from balance
         val nextBalance = _walletBalance.value - bet
         _walletBalance.value = nextBalance
+        triggerMoneyAnimation("-$bet", false)
         viewModelScope.launch(Dispatchers.IO) {
             dbHelper.updateBalance(nextBalance)
         }
@@ -303,6 +317,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
             val doublingCost = hand.bet
             val nextBalance = _walletBalance.value - doublingCost
             _walletBalance.value = nextBalance
+            triggerMoneyAnimation("-$doublingCost", false)
             viewModelScope.launch(Dispatchers.IO) {
                 dbHelper.updateBalance(nextBalance)
             }
@@ -344,6 +359,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
             // Deduct secondary split bet from wallet
             val nextBalance = _walletBalance.value - hand.bet
             _walletBalance.value = nextBalance
+            triggerMoneyAnimation("-${hand.bet}", false)
             viewModelScope.launch(Dispatchers.IO) {
                 dbHelper.updateBalance(nextBalance)
             }
@@ -493,9 +509,13 @@ class BlackjackViewModel(context: Context) : ViewModel() {
         if (totalWinnings > 0) {
             val netBalance = _walletBalance.value + totalWinnings
             _walletBalance.value = netBalance
+            triggerMoneyAnimation("+$totalWinnings", true)
             viewModelScope.launch(Dispatchers.IO) {
                 dbHelper.updateBalance(netBalance)
             }
+        } else {
+            val totalBet = playerHands.sumOf { it.bet }
+            triggerMoneyAnimation("-$totalBet", false)
         }
 
         roundResultText.value = outcomeSummary.trim()

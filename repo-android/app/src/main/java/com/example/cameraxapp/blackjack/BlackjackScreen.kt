@@ -8,6 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +44,83 @@ fun getFeltColor(styleId: Int): Color {
         1 -> Color(0xFF6B1B29) // High-Roller Burgundy
         2 -> Color(0xFF1E2D4A) // Royal Indigo Lounge
         else -> Color(0xFF0F5A35)
+    }
+}
+
+// Reactive dealer emoji provider
+@Composable
+fun getDealerEmoji(gameState: GameState, dealerScore: Int): String {
+    return when (gameState) {
+        GameState.BETTING -> "🤵" // Croupier awaiting bets
+        GameState.PLAYER_TURN -> "🤔" // Croupier observing player turn
+        GameState.DEALER_TURN -> "🃏" // Croupier drawing cards
+        GameState.PAYS_OUT -> {
+            if (dealerScore > 21) "😮" // Dealer busted!
+            else if (dealerScore >= 20) "😎" // Dealer got strong hand!
+            else "🤝" // Standard payout face
+        }
+    }
+}
+
+@Composable
+fun DealerAvatar(gameState: GameState, score: Int) {
+    val emoji = getDealerEmoji(gameState = gameState, dealerScore = score)
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .background(Color.White.copy(alpha = 0.12f), CircleShape)
+            .border(1.5.dp, Color(0xFFFFD700), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(emoji, fontSize = 20.sp)
+    }
+}
+
+@Composable
+fun getPlayerRankAndEmoji(balance: Int): Pair<String, String> {
+    return when {
+        balance >= 5000 -> Pair("HIGH ROLLER", "👑")
+        balance >= 2500 -> Pair("DIAMOND VIP", "💎")
+        balance >= 1500 -> Pair("HOT HAND", "🔥")
+        else -> Pair("GUEST SEAT", "👤")
+    }
+}
+
+@Composable
+fun PlayerAvatar(balance: Int) {
+    val (rank, emoji) = getPlayerRankAndEmoji(balance = balance)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(Color.White.copy(alpha = 0.12f), CircleShape)
+                .border(1.2.dp, Color(0xFFE0B0FF), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(emoji, fontSize = 18.sp)
+        }
+        Column {
+            Text(
+                text = rank,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = Color(0xFFE0B0FF),
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp,
+                    fontSize = 10.sp
+                )
+            )
+            Text(
+                text = "Premium Seat",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.LightGray.copy(alpha = 0.7f),
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Light
+                )
+            )
+        }
     }
 }
 
@@ -146,7 +226,8 @@ fun BlackjackScreen(
                         viewModel.dealerCards.firstOrNull()?.rank?.value ?: 0
                     } else {
                         viewModel.dealerCards.sumOf { it.rank.value }
-                    }
+                    },
+                    gameState = gameState
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -160,7 +241,8 @@ fun BlackjackScreen(
                 PlayerSection(
                     hands = viewModel.playerHands,
                     activeHandIndex = currentHandIndex,
-                    gameState = gameState
+                    gameState = gameState,
+                    walletBalance = walletBalance
                 )
 
                 // Row D: Round Outcome Overlays
@@ -196,11 +278,46 @@ fun BlackjackScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    BankrollBar(
-                        balance = walletBalance,
-                        activeBet = activeBet,
-                        onReloadWallet = { viewModel.reloadWalletAccount() }
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BankrollBar(
+                            balance = walletBalance,
+                            activeBet = activeBet,
+                            onReloadWallet = { viewModel.reloadWalletAccount() }
+                        )
+
+                        // Floating transaction animation
+                        val moneyAnim by viewModel.moneyAnimation
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = moneyAnim != null,
+                            enter = fadeIn() + expandVertically() + slideInVertically(initialOffsetY = { 40 }),
+                            exit = fadeOut() + shrinkVertically() + slideOutVertically(targetOffsetY = { -60 }),
+                            modifier = Modifier.align(Alignment.TopCenter).offset(y = (-36).dp)
+                        ) {
+                            moneyAnim?.let { (text, isPositive) ->
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color.Black.copy(alpha = 0.9f)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.2.dp, if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336))
+                                ) {
+                                    Text(
+                                        text = text,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 20.sp,
+                                            color = if (isPositive) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                            letterSpacing = 1.sp
+                                        ),
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -367,7 +484,8 @@ fun CasinoFeltInscription(dealerRuleText: String) {
 fun DealerSection(
     cards: List<Card>,
     isSecondCardHidden: Boolean,
-    score: Int
+    score: Int,
+    gameState: GameState
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.25f)),
@@ -383,10 +501,16 @@ fun DealerSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Dealer Hand",
-                    style = MaterialTheme.typography.labelLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    DealerAvatar(gameState = gameState, score = score)
+                    Text(
+                        "Dealer Hand",
+                        style = MaterialTheme.typography.labelLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                    )
+                }
                 if (cards.isNotEmpty()) {
                     Text(
                         "Score: $score",
@@ -421,8 +545,8 @@ fun DealerSection(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    items(cards) { card ->
-                        PlayingCardView(card = card)
+                    itemsIndexed(cards) { index, card ->
+                        PlayingCardView(card = card, index = index)
                     }
                 }
             }
@@ -434,12 +558,32 @@ fun DealerSection(
 fun PlayerSection(
     hands: List<BlackjackHand>,
     activeHandIndex: Int,
-    gameState: GameState
+    gameState: GameState,
+    walletBalance: Int
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Render Player Avatar Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.3f)),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(10.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                PlayerAvatar(balance = walletBalance)
+                Text(
+                    text = "Seat #2",
+                    style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray.copy(alpha = 0.5f))
+                )
+            }
+        }
+
         hands.forEachIndexed { idx, hand ->
             val isActive = gameState == GameState.PLAYER_TURN && idx == activeHandIndex
 
@@ -520,8 +664,8 @@ fun PlayerSection(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(hand.cards) { card ->
-                            PlayingCardView(card = card)
+                        itemsIndexed(hand.cards) { index, card ->
+                            PlayingCardView(card = card, index = index)
                         }
                     }
                 }
@@ -530,86 +674,135 @@ fun PlayerSection(
     }
 }
 
-// Aspect ratio 3:2 card component (70 width x 105 height is exactly aspect ratio 2:3 playing card dimensions)
+// Aspect ratio 3:2 card component supporting 3D flip flips and diagonal dealing entries
 @Composable
-fun PlayingCardView(card: Card) {
-    if (!card.isFaceUp) {
-        // Render standard card back
+fun CardBackView() {
+    Box(
+        modifier = Modifier
+            .size(width = 72.dp, height = 108.dp)
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .border(1.5.dp, Color(0xFFC0C0C0), RoundedCornerShape(8.dp))
+            .padding(4.dp)
+    ) {
         Box(
             modifier = Modifier
-                .size(width = 70.dp, height = 105.dp)
-                .background(Color.White, RoundedCornerShape(6.dp))
-                .border(2.dp, Color.Gray, RoundedCornerShape(6.dp)),
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFF8B2535), Color(0xFF5A121D))
+                    ),
+                    RoundedCornerShape(6.dp)
+                )
+                .border(1.5.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(6.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(5.dp)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(Color(0xFF8B2535), Color(0xFFB83A4B), Color(0xFF8B2535))
-                        ),
-                        RoundedCornerShape(4.dp)
-                    )
-                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "♠♣♥♦",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White.copy(alpha = 0.4f),
-                        fontSize = 10.sp,
-                        letterSpacing = 0.2.sp
-                    )
-                )
-            }
-        }
-    } else {
-        // Red / Black suit coloring checks
-        val contentColor = if (card.suit.isRed) Color(0xFFC62828) else Color(0xFF212121)
-
-        Box(
-            modifier = Modifier
-                .size(width = 70.dp, height = 105.dp)
-                .background(Color.White, RoundedCornerShape(6.dp))
-                .border(1.dp, Color.LightGray, RoundedCornerShape(6.dp))
-                .padding(4.dp)
-        ) {
-            // Suit notation (Top-Left scale index)
             Text(
-                text = "${card.rank.representation}\n${card.suit.symbol}",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = contentColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    lineHeight = 11.sp
-                ),
-                modifier = Modifier.align(Alignment.TopStart)
-            )
-
-            // Centered prominent card suite icons
-            Text(
-                text = card.suit.symbol,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    color = contentColor,
-                    fontSize = 28.sp,
-                ),
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            // Suit notation (Bottom-Right scale inverted)
-            Text(
-                text = "${card.suit.symbol}\n${card.rank.representation}",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = contentColor,
+                text = "♠ ♣\n♥ ♦",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White.copy(alpha = 0.6f),
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
-                    lineHeight = 11.sp
-                ),
-                modifier = Modifier.align(Alignment.BottomEnd),
-                textAlign = TextAlign.End
+                    lineHeight = 14.sp
+                )
             )
+        }
+    }
+}
+
+@Composable
+fun CardFrontView(card: Card) {
+    val contentColor = if (card.suit.isRed) Color(0xFFD32F2F) else Color(0xFF1F1F1F)
+    Box(
+        modifier = Modifier
+            .size(width = 72.dp, height = 108.dp)
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
+            .padding(5.dp)
+    ) {
+        // Top-Left corner suit-rank index
+        Text(
+            text = "${card.rank.representation}\n${card.suit.symbol}",
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = contentColor,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 10.sp,
+                lineHeight = 11.sp
+            ),
+            modifier = Modifier.align(Alignment.TopStart)
+        )
+
+        // Center giant suit symbol
+        Text(
+            text = card.suit.symbol,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                color = contentColor,
+                fontSize = 32.sp,
+            ),
+            modifier = Modifier.align(Alignment.Center)
+        )
+
+        // Bottom-Right corner suit-rank index inverted
+        Text(
+            text = "${card.suit.symbol}\n${card.rank.representation}",
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = contentColor,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 11.sp,
+                lineHeight = 11.sp
+            ),
+            modifier = Modifier.align(Alignment.BottomEnd),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+@Composable
+fun PlayingCardView(card: Card, index: Int = 0) {
+    var isDealt by remember { mutableStateOf(false) }
+    LaunchedEffect(card) {
+        delay(index * 60L) // Staggered dealing feel
+        isDealt = true
+    }
+
+    val animatedOffset by animateDpAsState(
+        targetValue = if (isDealt) 0.dp else (-100).dp,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (isDealt) 1f else 0f,
+        animationSpec = tween(250)
+    )
+
+    // 3D flip angles
+    val flipAngle by animateFloatAsState(
+        targetValue = if (card.isFaceUp) 0f else 180f,
+        animationSpec = tween(durationMillis = 500)
+    )
+
+    Box(
+        modifier = Modifier
+            .offset(y = animatedOffset, x = animatedOffset / 2) // Slide diagonally simulating shoe draw
+            .alpha(animatedAlpha)
+            .graphicsLayer {
+                rotationY = flipAngle
+                cameraDistance = 12f * density
+            }
+            .shadow(
+                elevation = 3.dp,
+                shape = RoundedCornerShape(8.dp),
+                clip = false
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (flipAngle > 90f) {
+            Box(
+                modifier = Modifier.graphicsLayer { rotationY = 180f }
+            ) {
+                CardBackView()
+            }
+        } else {
+            CardFrontView(card = card)
         }
     }
 }
@@ -764,6 +957,7 @@ fun CasinoChip(
 }
 
 // Controller buttons suite managing Vegas maneuvers
+// Controller buttons suite managing Vegas maneuvers using elevated Floating Action Buttons (FAB)
 @Composable
 fun ActionControlBar(
     gameState: GameState,
@@ -778,83 +972,131 @@ fun ActionControlBar(
     onNextRound: () -> Unit
 ) {
     if (gameState == GameState.BETTING) {
-        Button(
+        ExtendedFloatingActionButton(
             onClick = onDeal,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(vertical = 4.dp)
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFFD700),
-                contentColor = Color.Black
-            ),
-            enabled = activeBet >= 5
+            containerColor = if (activeBet >= 5) Color(0xFFFFD700) else Color(0xFF555555),
+            contentColor = if (activeBet >= 5) Color.Black else Color.LightGray,
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
         ) {
-            Text("DEAL HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("🃏", fontSize = 18.sp)
+                Text("DEAL HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+            }
         }
     } else if (gameState == GameState.PLAYER_TURN) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Button(
+                ExtendedFloatingActionButton(
                     onClick = onHit,
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+                        .height(48.dp),
+                    containerColor = Color(0xFF1976D2),
+                    contentColor = Color.White,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
                 ) {
-                    Text("HIT", fontWeight = FontWeight.Bold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("➕", fontSize = 14.sp)
+                        Text("HIT", fontWeight = FontWeight.Bold)
+                    }
                 }
-                Button(
+                ExtendedFloatingActionButton(
                     onClick = onStand,
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))
+                        .height(48.dp),
+                    containerColor = Color(0xFF388E3C),
+                    contentColor = Color.White,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
                 ) {
-                    Text("STAND", fontWeight = FontWeight.Bold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("✋", fontSize = 14.sp)
+                        Text("STAND", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Button(
-                    onClick = onDouble,
+                val doubleColor = if (canDouble) Color(0xFFF57C00) else Color(0xFF424242)
+                val doubleTextColor = if (canDouble) Color.White else Color.Gray
+                ExtendedFloatingActionButton(
+                    onClick = { if (canDouble) onDouble() },
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00)),
-                    enabled = canDouble
+                        .height(48.dp),
+                    containerColor = doubleColor,
+                    contentColor = doubleTextColor,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (canDouble) 6.dp else 0.dp)
                 ) {
-                    Text("DOUBLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("⚡", fontSize = 14.sp)
+                        Text("DOUBLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
-                Button(
-                    onClick = onSplit,
+
+                val splitColor = if (canSplit) Color(0xFF8E24AA) else Color(0xFF424242)
+                val splitTextColor = if (canSplit) Color.White else Color.Gray
+                ExtendedFloatingActionButton(
+                    onClick = { if (canSplit) onSplit() },
                     modifier = Modifier
                         .weight(1f)
-                        .height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8E24AA)),
-                    enabled = canSplit
+                        .height(48.dp),
+                    containerColor = splitColor,
+                    contentColor = splitTextColor,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (canSplit) 6.dp else 0.dp)
                 ) {
-                    Text("SPLIT", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("✂", fontSize = 14.sp)
+                        Text("SPLIT", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }
     } else if (gameState == GameState.PAYS_OUT) {
-        Button(
+        ExtendedFloatingActionButton(
             onClick = onNextRound,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0B0FF), contentColor = Color.Black)
+            containerColor = Color(0xFFE0B0FF),
+            contentColor = Color.Black,
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
         ) {
-            Text("SETTLE NEXT HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("🪙", fontSize = 16.sp)
+                Text("SETTLE NEXT HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            }
         }
     } else {
         // DEALER_TURN loading ticker

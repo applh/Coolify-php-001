@@ -306,5 +306,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Explore the newly implemented compact Material 3 dropdown preset menu in `LeafletMapViewPane`. Add a fifth premium custom preset tile provider option (such as Stamen Watercolor tile templates or custom marker animations) inside the `DropdownMenu` layout, and update the state mapping logic to inject the associated dynamic JS code block into the live sandbox editor instantly.
 - **Complexity**: Part 4
 
+### 48. Android Blackjack UX: Material 3 FABs, 3D Card Flips & Interactive Transaction Float Animations (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackViewModel.kt`
+- **Goal**: Understand how to develop delightful UX interactions for mobile casino games in Jetpack Compose, including replacing standard buttons with custom Material 3 ExtendedFloatingActionButtons (FABs), executing 3D Y-axis card flip animations with reverse-mirrored back visuals, triggering staggered diagonal card deals using Compose target values with Spring kinematics, and designing interactive rising transaction floating badges.
+- **Exercise**: Implement a dynamic emoji feedback animation overlay on the reactive Croupier's avatar when a player scores exactly 21, and enhance the transaction badge to play custom micro-haptic buzzes using Android's `Vibrator` utility.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
