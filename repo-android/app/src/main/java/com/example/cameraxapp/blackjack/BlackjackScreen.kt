@@ -244,7 +244,7 @@ fun BlackjackScreen(
                     score = if (isSecondHidden && viewModel.dealerCards.size >= 2) {
                         viewModel.dealerCards.firstOrNull()?.rank?.value ?: 0
                     } else {
-                        viewModel.dealerCards.sumOf { it.rank.value }
+                        calculateHandScore(viewModel.dealerCards)
                     },
                     gameState = gameState
                 )
@@ -618,6 +618,16 @@ fun CasinoFeltInscription(dealerRuleText: String) {
     }
 }
 
+fun calculateHandScore(cards: List<Card>): Int {
+    var total = cards.sumOf { it.rank.value }
+    var acesCount = cards.count { it.rank == Rank.ACE }
+    while (total > 21 && acesCount > 0) {
+        total -= 10
+        acesCount--
+    }
+    return total
+}
+
 @Composable
 fun DealerSection(
     cards: List<Card>,
@@ -641,27 +651,28 @@ fun DealerSection(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    if (cards.isNotEmpty()) {
+                        val animatedDealerScore by animateIntAsState(
+                            targetValue = score,
+                            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+                        )
+                        Text(
+                            text = animatedDealerScore.toString(),
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                color = Color.Yellow,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 32.sp
+                            )
+                        )
+                    }
                     DealerAvatar(gameState = gameState, score = score)
                     Text(
                         "Dealer Hand",
                         style = MaterialTheme.typography.labelLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
                     )
                 }
-                if (cards.isNotEmpty()) {
-                    Text(
-                        "Score: $score",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = Color.Yellow,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -714,7 +725,28 @@ fun PlayerSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                PlayerAvatar(balance = walletBalance)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val activeHand = hands.getOrNull(activeHandIndex) ?: hands.firstOrNull()
+                    if (activeHand != null && activeHand.cards.isNotEmpty()) {
+                        val playerScore = activeHand.calculateScore()
+                        val animatedPlayerScore by animateIntAsState(
+                            targetValue = playerScore,
+                            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+                        )
+                        Text(
+                            text = animatedPlayerScore.toString(),
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                color = Color.Yellow,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 32.sp
+                            )
+                        )
+                    }
+                    PlayerAvatar(balance = walletBalance)
+                }
                 Text(
                     text = "Seat #2",
                     style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray.copy(alpha = 0.5f))
@@ -783,8 +815,12 @@ fun PlayerSection(
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )
+                            val animatedHandScore by animateIntAsState(
+                                targetValue = hand.calculateScore(),
+                                animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+                            )
                             Text(
-                                "Score: ${hand.calculateScore()}",
+                                "Score: $animatedHandScore",
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     color = Color.Yellow,
                                     fontWeight = FontWeight.Bold
