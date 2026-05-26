@@ -21,8 +21,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -448,7 +450,7 @@ fun PlayerSection(
             }
 
             val alphaModifier = if (gameState == GameState.PLAYER_TURN && !isActive) {
-                Modifier.shadow(2.dp, opacity = 0.3f)
+                Modifier.alpha(0.3f)
             } else {
                 Modifier
             }
