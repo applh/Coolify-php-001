@@ -378,10 +378,11 @@ fun BlackjackScreen(
 
             if (gameState == GameState.PAYS_OUT) {
                 val netGainLoss by viewModel.netGainLoss
-                if (netGainLoss != null) {
-                    val isGain = netGainLoss > 0
-                    val isLoss = netGainLoss < 0
-                    val isPush = netGainLoss == 0
+                val netGainValue = netGainLoss
+                if (netGainValue != null) {
+                    val isGain = netGainValue > 0
+                    val isLoss = netGainValue < 0
+                    val isPush = netGainValue == 0
 
                     val color = when {
                         isGain -> Color(0xFF4CAF50) // Green
@@ -402,8 +403,8 @@ fun BlackjackScreen(
                     }
 
                     val amountText = when {
-                        isGain -> "+$${netGainLoss}"
-                        isLoss -> "-$${kotlin.math.abs(netGainLoss)}"
+                        isGain -> "+$${netGainValue}"
+                        isLoss -> "-$${kotlin.math.abs(netGainValue)}"
                         else -> "$0"
                     }
 
