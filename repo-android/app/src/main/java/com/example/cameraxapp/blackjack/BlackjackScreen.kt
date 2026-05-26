@@ -673,6 +673,7 @@ fun DealerSection(
                         style = MaterialTheme.typography.labelLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
                     )
                 }
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
