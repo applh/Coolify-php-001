@@ -1,0 +1,1147 @@
+package com.example.cameraxapp.blackjack
+
+import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+
+// Visual felt colors mapping
+fun getFeltColor(styleId: Int): Color {
+    return when (styleId) {
+        0 -> Color(0xFF0F5A35) // Elegant Vegas Emerald
+        1 -> Color(0xFF6B1B29) // High-Roller Burgundy
+        2 -> Color(0xFF1E2D4A) // Royal Indigo Lounge
+        else -> Color(0xFF0F5A35)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BlackjackScreen(
+    onBack: () -> Unit,
+    viewModel: BlackjackViewModel
+) {
+    val gameState by viewModel.gameState
+    val walletBalance by viewModel.walletBalance
+    val activeBet by viewModel.activeBet
+    val currentHandIndex by viewModel.currentHandIndex
+    val runningCount by viewModel.runningCount
+    val trueCount by viewModel.trueCount
+    val adviceMessage by viewModel.adviceMessage
+    val stats by viewModel.stats
+    val settings by viewModel.settings
+    val isSecondHidden by viewModel.isDealerSecondCardHidden
+    val roundResultText by viewModel.roundResultText
+
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showStatsDialog by remember { mutableStateOf(false) }
+
+    val feltColor = getFeltColor(settings.tableColor)
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "♠ BLACKJACK PRO",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Return to Hub")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showStatsDialog = true }) {
+                        Icon(Icons.Default.Info, contentDescription = "Lifetime Stats")
+                    }
+                    IconButton(onClick = { showSettingsDialog = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Table Configuration")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Black,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                )
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(feltColor.copy(alpha = 1.0f), feltColor.copy(alpha = 0.85f)),
+                        radius = 1200f
+                    )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                // Row A: Optional Coaching & Cards Counting HUD Overlays
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (settings.showCardCountingHud) {
+                        CardCountingHud(runningCount = runningCount, trueCount = trueCount)
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+                    if (settings.showStrategyHud) {
+                        StrategyAdviceHud(adviceText = adviceMessage)
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+                }
+
+                // Row B: Dealer Section
+                DealerSection(
+                    cards = viewModel.dealerCards,
+                    isSecondCardHidden = isSecondHidden,
+                    score = if (isSecondHidden && viewModel.dealerCards.size >= 2) {
+                        viewModel.dealerCards.firstOrNull()?.rank?.value ?: 0
+                    } else {
+                        viewModel.dealerCards.sumOf { it.rank.value }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Golden Felt Inscription Label
+                CasinoFeltInscription(dealerRuleText = if (settings.dealerSoft17Hit) "Dealer Hits Soft 17" else "Dealer Stands on All 17s")
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Row C: Player Hands Section (Support Splits!)
+                PlayerSection(
+                    hands = viewModel.playerHands,
+                    activeHandIndex = currentHandIndex,
+                    gameState = gameState
+                )
+
+                // Row D: Round Outcome Overlays
+                if (roundResultText.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.85f),
+                            contentColor = Color.Yellow
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.Yellow.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                    ) {
+                        Text(
+                            text = roundResultText,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 14.sp
+                            ),
+                            modifier = Modifier.padding(12.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Row E: Wallet State & Betting Module
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    BankrollBar(
+                        balance = walletBalance,
+                        activeBet = activeBet,
+                        onReloadWallet = { viewModel.reloadWalletAccount() }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (gameState == GameState.BETTING) {
+                        ChipBettingRail(
+                            balance = walletBalance,
+                            onAddBet = { viewModel.addBet(it) },
+                            onClear = { viewModel.clearBet() },
+                            onRebet = { viewModel.rebet() }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Row F: Universal Game Controller Actions Block
+                ActionControlBar(
+                    gameState = gameState,
+                    activeBet = activeBet,
+                    canDouble = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 && walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0),
+                    canSplit = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 &&
+                            viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(0)?.rank?.value == viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(1)?.rank?.value &&
+                            walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0) &&
+                            viewModel.playerHands.size < settings.maxSplits + 1,
+                    onDeal = { viewModel.startGameDeal() },
+                    onHit = { viewModel.hit() },
+                    onStand = { viewModel.stand() },
+                    onDouble = { viewModel.doubleDown() },
+                    onSplit = { viewModel.split() },
+                    onNextRound = { viewModel.nextRound() }
+                )
+            }
+
+            // Slide out Overlay Dialogs configurations
+            if (showSettingsDialog) {
+                SettingsPanelDialog(
+                    settings = settings,
+                    onDismiss = { showSettingsDialog = false },
+                    onSave = { updated ->
+                        viewModel.updateSettings(updated)
+                        showSettingsDialog = false
+                    }
+                )
+            }
+
+            if (showStatsDialog) {
+                StatisticsPanelDialog(
+                    stats = stats,
+                    onDismiss = { showStatsDialog = false },
+                    onReset = { viewModel.resetLifetimeStats() }
+                )
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// CHILD UI COMPONENTS
+// -------------------------------------------------------------
+
+@Composable
+fun CardCountingHud(runningCount: Int, trueCount: Double) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Black.copy(alpha = 0.5f),
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Shoe Counting (Hi-Lo):",
+                style = MaterialTheme.typography.labelMedium.copy(color = Color.LightGray)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    "Running: ${if (runningCount > 0) "+$runningCount" else runningCount}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = if (runningCount > 0) Color(0xFF4EEEEA) else if (runningCount < 0) Color(0xFFFF5252) else Color.White
+                    )
+                )
+                Text(
+                    "True Count: ${if (trueCount > 0) "+$trueCount" else trueCount}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = if (trueCount > 0) Color(0xFF4EEEEA) else if (trueCount < 0) Color(0xFFFF5252) else Color.White
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StrategyAdviceHud(adviceText: String) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFDF7E7),
+            contentColor = Color(0xFF8A6D3B)
+        ),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFFFAEBCC), RoundedCornerShape(8.dp))
+    ) {
+        Row(
+            modifier = Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = "Coach Strategy Hint",
+                modifier = Modifier.size(18.dp),
+                tint = Color(0xFF8A6D3B)
+            )
+            Text(
+                text = adviceText,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 11.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun CasinoFeltInscription(dealerRuleText: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            "BLACKJACK PAYS 3 TO 2",
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = Color(0xFFFFD700).copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp,
+                fontSize = 11.sp
+            )
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            "$dealerRuleText • Insurance Pays 2 to 1",
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = Color.White.copy(alpha = 0.35f),
+                letterSpacing = 0.5.sp,
+                fontSize = 9.sp
+            )
+        )
+    }
+}
+
+@Composable
+fun DealerSection(
+    cards: List<Card>,
+    isSecondCardHidden: Boolean,
+    score: Int
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.25f)),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Dealer Hand",
+                    style = MaterialTheme.typography.labelLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                )
+                if (cards.isNotEmpty()) {
+                    Text(
+                        "Score: $score",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color.Yellow,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (cards.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(86.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Dealer awaiting player bets...",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.5f))
+                    )
+                }
+            } else {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(cards) { card ->
+                        PlayingCardView(card = card)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlayerSection(
+    hands: List<BlackjackHand>,
+    activeHandIndex: Int,
+    gameState: GameState
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        hands.forEachIndexed { idx, hand ->
+            val isActive = gameState == GameState.PLAYER_TURN && idx == activeHandIndex
+
+            val borderModifier = if (isActive) {
+                Modifier.border(2.dp, Color(0xFFE0B0FF), RoundedCornerShape(12.dp))
+            } else {
+                Modifier
+            }
+
+            val alphaModifier = if (gameState == GameState.PLAYER_TURN && !isActive) {
+                Modifier.shadow(2.dp, opacity = 0.3f)
+            } else {
+                Modifier
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isActive) Color.Black.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.2f)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(borderModifier)
+                    .then(alphaModifier)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Your Hand ${if (hands.size > 1) "#${idx + 1}" else ""}",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = if (isActive) Color(0xFFE0B0FF) else Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            if (isActive) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "[ACTIVE]",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = Color(0xFFE0B0FF),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Bet: $${hand.bet}",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    color = Color.LightGray,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                            Text(
+                                "Score: ${hand.calculateScore()}",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    color = Color.Yellow,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(hand.cards) { card ->
+                            PlayingCardView(card = card)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Aspect ratio 3:2 card component (70 width x 105 height is exactly aspect ratio 2:3 playing card dimensions)
+@Composable
+fun PlayingCardView(card: Card) {
+    if (!card.isFaceUp) {
+        // Render standard card back
+        Box(
+            modifier = Modifier
+                .size(width = 70.dp, height = 105.dp)
+                .background(Color.White, RoundedCornerShape(6.dp))
+                .border(2.dp, Color.Gray, RoundedCornerShape(6.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(5.dp)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(Color(0xFF8B2535), Color(0xFFB83A4B), Color(0xFF8B2535))
+                        ),
+                        RoundedCornerShape(4.dp)
+                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "♠♣♥♦",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.White.copy(alpha = 0.4f),
+                        fontSize = 10.sp,
+                        letterSpacing = 0.2.sp
+                    )
+                )
+            }
+        }
+    } else {
+        // Red / Black suit coloring checks
+        val contentColor = if (card.suit.isRed) Color(0xFFC62828) else Color(0xFF212121)
+
+        Box(
+            modifier = Modifier
+                .size(width = 70.dp, height = 105.dp)
+                .background(Color.White, RoundedCornerShape(6.dp))
+                .border(1.dp, Color.LightGray, RoundedCornerShape(6.dp))
+                .padding(4.dp)
+        ) {
+            // Suit notation (Top-Left scale index)
+            Text(
+                text = "${card.rank.representation}\n${card.suit.symbol}",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = contentColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    lineHeight = 11.sp
+                ),
+                modifier = Modifier.align(Alignment.TopStart)
+            )
+
+            // Centered prominent card suite icons
+            Text(
+                text = card.suit.symbol,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    color = contentColor,
+                    fontSize = 28.sp,
+                ),
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            // Suit notation (Bottom-Right scale inverted)
+            Text(
+                text = "${card.suit.symbol}\n${card.rank.representation}",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = contentColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    lineHeight = 11.sp
+                ),
+                modifier = Modifier.align(Alignment.BottomEnd),
+                textAlign = TextAlign.End
+            )
+        }
+    }
+}
+
+@Composable
+fun BankrollBar(
+    balance: Int,
+    activeBet: Int,
+    onReloadWallet: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Black.copy(alpha = 0.7f),
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Chip Wallet:",
+                    style = MaterialTheme.typography.labelLarge.copy(color = Color.LightGray)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "$${balance}",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (balance > 0) Color(0xFFB9F6CA) else Color(0xFFFF5252)
+                    )
+                )
+                if (balance == 0) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Button(
+                        onClick = onReloadWallet,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(26.dp)
+                    ) {
+                        Text("RELOAD", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Round Stakes:",
+                    style = MaterialTheme.typography.labelLarge.copy(color = Color.LightGray)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "$${activeBet}",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Yellow
+                    )
+                )
+            }
+        }
+    }
+}
+
+// Interactive chips visually styled like casino tokens
+@Composable
+fun ChipBettingRail(
+    balance: Int,
+    onAddBet: (Int) -> Unit,
+    onClear: () -> Unit,
+    onRebet: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f)),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CasinoChip(value = 5, color = Color(0xFFE0E0E0), border = Color.DarkGray, onClick = { onAddBet(5) })
+                CasinoChip(value = 10, color = Color(0xFF1E88E5), border = Color.Blue, onClick = { onAddBet(10) })
+                CasinoChip(value = 25, color = Color(0xFF43A047), border = Color.Green, onClick = { onAddBet(25) })
+                CasinoChip(value = 100, color = Color(0xFF000000), border = Color.White, labelColor = Color.White, onClick = { onAddBet(100) })
+                CasinoChip(value = 500, color = Color(0xFFE53935), border = Color.DarkGray, onClick = { onAddBet(500) })
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onClear,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
+                ) {
+                    Text("Clear Tables", fontSize = 11.sp)
+                }
+                Button(
+                    onClick = onRebet,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black)
+                ) {
+                    Text("Repeat Rebet", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CasinoChip(
+    value: Int,
+    color: Color,
+    border: Color,
+    labelColor: Color = Color.Black,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(46.dp)
+            .shadow(3.dp, CircleShape)
+            .background(color, CircleShape)
+            .border(2.5.dp, border, CircleShape)
+            .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "$$value",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = labelColor,
+                fontSize = 11.sp
+            )
+        )
+    }
+}
+
+// Controller buttons suite managing Vegas maneuvers
+@Composable
+fun ActionControlBar(
+    gameState: GameState,
+    activeBet: Int,
+    canDouble: Boolean,
+    canSplit: Boolean,
+    onDeal: () -> Unit,
+    onHit: () -> Unit,
+    onStand: () -> Unit,
+    onDouble: () -> Unit,
+    onSplit: () -> Unit,
+    onNextRound: () -> Unit
+) {
+    if (gameState == GameState.BETTING) {
+        Button(
+            onClick = onDeal,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFFD700),
+                contentColor = Color.Black
+            ),
+            enabled = activeBet >= 5
+        ) {
+            Text("DEAL HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
+        }
+    } else if (gameState == GameState.PLAYER_TURN) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onHit,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+                ) {
+                    Text("HIT", fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = onStand,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))
+                ) {
+                    Text("STAND", fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onDouble,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00)),
+                    enabled = canDouble
+                ) {
+                    Text("DOUBLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+                Button(
+                    onClick = onSplit,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8E24AA)),
+                    enabled = canSplit
+                ) {
+                    Text("SPLIT", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+        }
+    } else if (gameState == GameState.PAYS_OUT) {
+        Button(
+            onClick = onNextRound,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0B0FF), contentColor = Color.Black)
+        ) {
+            Text("SETTLE NEXT HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        }
+    } else {
+        // DEALER_TURN loading ticker
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+// Custom Sheet to set Table settings and Rules configs online
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsPanelDialog(
+    settings: BlackjackSettings,
+    onDismiss: () -> Unit,
+    onSave: (BlackjackSettings) -> Unit
+) {
+    var dealerSoft17 by remember { mutableStateOf(settings.dealerSoft17Hit) }
+    var doubleAnyTwo by remember { mutableStateOf(settings.doubleAnyTwo) }
+    var insuranceAvail by remember { mutableStateOf(settings.insuranceAvail) }
+    var splitLimit by remember { mutableStateOf(settings.maxSplits.toFloat()) }
+    var showStrategyHUD by remember { mutableStateOf(settings.showStrategyHud) }
+    var showCardCountingHUD by remember { mutableStateOf(settings.showCardCountingHud) }
+    var tableFeltChoice by remember { mutableStateOf(settings.tableColor) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Table Configuration Rules",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Felt selector
+                Text(
+                    "Atmospheric Felt Styling",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .background(Color(0xFF0F5A35), RoundedCornerShape(4.dp))
+                            .border(if (tableFeltChoice == 0) 2.dp else 0.dp, Color.White, RoundedCornerShape(4.dp))
+                            .clickable { tableFeltChoice = 0 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Emerald", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .background(Color(0xFF6B1B29), RoundedCornerShape(4.dp))
+                            .border(if (tableFeltChoice == 1) 2.dp else 0.dp, Color.White, RoundedCornerShape(4.dp))
+                            .clickable { tableFeltChoice = 1 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Burgundy", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .background(Color(0xFF1E2D4A), RoundedCornerShape(4.dp))
+                            .border(if (tableFeltChoice == 2) 2.dp else 0.dp, Color.White, RoundedCornerShape(4.dp))
+                            .clickable { tableFeltChoice = 2 },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Indigo", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Toggle elements
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Dealer Soft 17 Play", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Dealer Hits on Soft 17 index", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    Switch(checked = dealerSoft17, onCheckedChange = { dealerSoft17 = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Double down limitations", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Allow double on any custom ranks", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    Switch(checked = doubleAnyTwo, onCheckedChange = { doubleAnyTwo = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Insurance Options", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Prompt insurance when Dealer draws Ace", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    Switch(checked = insuranceAvail, onCheckedChange = { insuranceAvail = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Basic Advisor HUD", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Hints optimal betting strategies", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    Switch(checked = showStrategyHUD, onCheckedChange = { showStrategyHUD = it })
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Card Counting Coach HUD", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text("Exposes running and true count statistics", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    }
+                    Switch(checked = showCardCountingHUD, onCheckedChange = { showCardCountingHUD = it })
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text("Total Allowable splits limit: ${splitLimit.roundToInt()}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Slider(
+                        value = splitLimit,
+                        onValueChange = { splitLimit = it },
+                        valueRange = 1f..4f,
+                        steps = 2
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            onSave(
+                                BlackjackSettings(
+                                    dealerSoft17Hit = dealerSoft17,
+                                    doubleAnyTwo = doubleAnyTwo,
+                                    insuranceAvail = insuranceAvail,
+                                    maxSplits = splitLimit.roundToInt(),
+                                    showStrategyHud = showStrategyHUD,
+                                    showCardCountingHud = showCardCountingHUD,
+                                    tableColor = tableFeltChoice
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Stats dialogue tracker
+@Composable
+fun StatisticsPanelDialog(
+    stats: PlayerStats,
+    onDismiss: () -> Unit,
+    onReset: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Lifetime Analytics Practice",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "Performance telemetry recorded locally",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                StatsAttribute(label = "Hands Played Successfully", value = "${stats.handsPlayed}")
+                StatsAttribute(label = "Absolute Wins Record", value = "${stats.wins}")
+                StatsAttribute(label = "Absolute Losses Record", value = "${stats.losses}")
+                StatsAttribute(label = "Pushes (Returned Stakes)", value = "${stats.pushes}")
+                StatsAttribute(label = "Natural Blackjacks Won", value = "${stats.blackjacks}")
+                StatsAttribute(label = "Maximum Score Won Payout", value = "$${stats.maxWin}")
+                StatsAttribute(label = "Current Wins Streak", value = "${stats.currentStreak}")
+                StatsAttribute(label = "Historic Maximum Winning Streak", value = "${stats.maxStreak}")
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    IconButton(
+                        onClick = onReset,
+                        modifier = Modifier
+                            .background(Color.Red.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                            .size(48.dp)
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Reset Stats Data", tint = Color.Red)
+                    }
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Close Panel")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatsAttribute(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+    }
+}

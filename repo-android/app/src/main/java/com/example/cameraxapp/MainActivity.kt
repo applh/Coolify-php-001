@@ -60,6 +60,7 @@ import com.example.cameraxapp.core.framework.AppletRegistry
 import com.example.cameraxapp.core.framework.impl.BrowserApplet
 import com.example.cameraxapp.core.framework.impl.FilesApplet
 import com.example.cameraxapp.core.framework.impl.DebugApplet
+import com.example.cameraxapp.core.framework.impl.BlackjackApplet
 
 class MainActivity : ComponentActivity() {
 
@@ -88,6 +89,7 @@ class MainActivity : ComponentActivity() {
         AppletRegistry.register(BrowserApplet(appDependencyContainer))
         AppletRegistry.register(FilesApplet())
         AppletRegistry.register(DebugApplet())
+        AppletRegistry.register(BlackjackApplet())
 
         updatePermissionState()
         
@@ -152,7 +154,8 @@ class MainActivity : ComponentActivity() {
                         AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
                         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
                         AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
-                        AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics")
+                        AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
+                        AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor")
                     )
                 }
 
@@ -405,6 +408,7 @@ fun getAppletColor(route: String): androidx.compose.ui.graphics.Color {
         "backup" -> androidx.compose.ui.graphics.Color(0xFFA7FFEB)      // Soft Teal
         "settings" -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)    // Blue Grey
         "browser" -> androidx.compose.ui.graphics.Color(0xFFFFE082)     // Soft Gold/Yellow
+        "blackjack" -> androidx.compose.ui.graphics.Color(0xFF80C080)   // Casino Light Felt Green
         else -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)          // Fallback
     }
 }
@@ -529,7 +533,8 @@ fun HubScreen(
             AppletInfo("Backup Manager", "backup", Icons.Default.Refresh, "Secure system state saves and database ZIP packing"),
             AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
             AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
-            AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics")
+            AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
+            AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor")
         )
     }
 
