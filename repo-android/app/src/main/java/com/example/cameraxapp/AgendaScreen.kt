@@ -2050,10 +2050,15 @@ fun LeafletMapViewPane(
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Leaflet JS CDN!')" onload="tryInitMap()"></script>
                 <style>
                     body, html {
-                        margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                        margin: 0; padding: 0; width: 100%; height: 100%;
+                        overflow: hidden;
+                        position: relative;
+                        font-family: -apple-system, sans-serif;
                     }
                     #map {
-                        width: 100vw; height: 100vh;
+                        position: absolute;
+                        top: 0; bottom: 0; left: 0; right: 0;
+                        width: 100%; height: 100%;
                         border: 6px solid #4CAF50 !important; /* Green diagnosis border around the map */
                         box-sizing: border-box;
                     }
@@ -2308,10 +2313,15 @@ fun LeafletComposeMap(
             <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Picker Leaflet JS CDN!')" onload="tryInitPickerMap()"></script>
             <style>
                 body, html {
-                    margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                    margin: 0; padding: 0; width: 100%; height: 100%;
+                    overflow: hidden;
+                    position: relative;
+                    font-family: -apple-system, sans-serif;
                 }
                 #map {
-                    width: 100vw; height: 100vh;
+                    position: absolute;
+                    top: 0; bottom: 0; left: 0; right: 0;
+                    width: 100%; height: 100%;
                     border: 6px solid #2196F3 !important; /* Blue diagnosis border around the picker map */
                     box-sizing: border-box;
                 }
