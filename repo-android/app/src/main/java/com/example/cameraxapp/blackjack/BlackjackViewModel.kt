@@ -260,6 +260,9 @@ class BlackjackViewModel(context: Context) : ViewModel() {
 
         if (isPlayerBJ || isDealerBJ) {
             // End Round Immediately
+            if (dealerCards.size >= 2) {
+                dealerCards[1] = dealerCards[1].copy(isFaceUp = true)
+            }
             isDealerSecondCardHidden.value = false
             trackCardForCounting(dealerCards[1]) // Unhide second card for accurate count
             _gameState.value = GameState.PAYS_OUT
@@ -396,6 +399,9 @@ class BlackjackViewModel(context: Context) : ViewModel() {
 
     private fun playDealerTurn() {
         viewModelScope.launch {
+            if (dealerCards.size >= 2) {
+                dealerCards[1] = dealerCards[1].copy(isFaceUp = true)
+            }
             isDealerSecondCardHidden.value = false
             // Unhide dealer's second card for accuracy on screen and Hi-Lo calculation
             trackCardForCounting(dealerCards[1])

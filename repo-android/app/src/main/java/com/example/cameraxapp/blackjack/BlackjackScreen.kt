@@ -180,7 +180,25 @@ fun BlackjackScreen(
                     actionIconContentColor = Color.White
                 )
             )
-        }
+        },
+        floatingActionButton = {
+            ActionFabMenu(
+                gameState = gameState,
+                activeBet = activeBet,
+                canDouble = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 && walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0),
+                canSplit = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 &&
+                        viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(0)?.rank?.value == viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(1)?.rank?.value &&
+                        walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0) &&
+                        viewModel.playerHands.size < settings.maxSplits + 1,
+                onDeal = { viewModel.startGameDeal() },
+                onHit = { viewModel.hit() },
+                onStand = { viewModel.stand() },
+                onDouble = { viewModel.doubleDown() },
+                onSplit = { viewModel.split() },
+                onNextRound = { viewModel.nextRound() }
+            )
+        },
+        floatingActionButtonPosition = FabPosition.End
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -334,22 +352,8 @@ fun BlackjackScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Row F: Universal Game Controller Actions Block
-                ActionControlBar(
-                    gameState = gameState,
-                    activeBet = activeBet,
-                    canDouble = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 && walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0),
-                    canSplit = viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.size == 2 &&
-                            viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(0)?.rank?.value == viewModel.playerHands.getOrNull(currentHandIndex)?.cards?.get(1)?.rank?.value &&
-                            walletBalance >= (viewModel.playerHands.getOrNull(currentHandIndex)?.bet ?: 0) &&
-                            viewModel.playerHands.size < settings.maxSplits + 1,
-                    onDeal = { viewModel.startGameDeal() },
-                    onHit = { viewModel.hit() },
-                    onStand = { viewModel.stand() },
-                    onDouble = { viewModel.doubleDown() },
-                    onSplit = { viewModel.split() },
-                    onNextRound = { viewModel.nextRound() }
-                )
+                // Reserve spacing so the scrolling content clears the overlaid bottom FABs
+                Spacer(modifier = Modifier.height(115.dp))
             }
 
             // Slide out Overlay Dialogs configurations
@@ -718,39 +722,53 @@ fun CardFrontView(card: Card) {
         modifier = Modifier
             .size(width = 72.dp, height = 108.dp)
             .background(Color.White, RoundedCornerShape(8.dp))
-            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
+            .border(1.2.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
             .padding(5.dp)
     ) {
-        // Top-Left corner suit-rank index
+        // Top-Left corner suit-rank index - scaled up for high readability by kids
         Text(
             text = "${card.rank.representation}\n${card.suit.symbol}",
-            style = MaterialTheme.typography.labelSmall.copy(
+            style = MaterialTheme.typography.titleSmall.copy(
                 color = contentColor,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 10.sp,
-                lineHeight = 11.sp
+                fontWeight = FontWeight.Black,
+                fontSize = 13.sp,
+                lineHeight = 14.sp
             ),
             modifier = Modifier.align(Alignment.TopStart)
         )
 
-        // Center giant suit symbol
-        Text(
-            text = card.suit.symbol,
-            style = MaterialTheme.typography.headlineMedium.copy(
-                color = contentColor,
-                fontSize = 32.sp,
-            ),
-            modifier = Modifier.align(Alignment.Center)
-        )
+        // Center giant card value and suit - extremely clear for kids and easy to read
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = card.rank.representation,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = contentColor,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black
+                )
+            )
+            Text(
+                text = card.suit.symbol,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = contentColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
 
-        // Bottom-Right corner suit-rank index inverted
+        // Bottom-Right corner suit-rank index inverted - scaled up
         Text(
             text = "${card.suit.symbol}\n${card.rank.representation}",
-            style = MaterialTheme.typography.labelSmall.copy(
+            style = MaterialTheme.typography.titleSmall.copy(
                 color = contentColor,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 11.sp,
-                lineHeight = 11.sp
+                fontWeight = FontWeight.Black,
+                fontSize = 13.sp,
+                lineHeight = 14.sp
             ),
             modifier = Modifier.align(Alignment.BottomEnd),
             textAlign = TextAlign.End
@@ -1388,5 +1406,205 @@ fun StatsAttribute(label: String, value: String) {
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
         Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+    }
+}
+
+// Visual Floating Action Button (FAB) Speed Dial Menu for player turns
+@Composable
+fun ActionFabMenu(
+    gameState: GameState,
+    activeBet: Int,
+    canDouble: Boolean,
+    canSplit: Boolean,
+    onDeal: () -> Unit,
+    onHit: () -> Unit,
+    onStand: () -> Unit,
+    onDouble: () -> Unit,
+    onSplit: () -> Unit,
+    onNextRound: () -> Unit
+) {
+    when (gameState) {
+        GameState.BETTING -> {
+            ExtendedFloatingActionButton(
+                onClick = onDeal,
+                containerColor = if (activeBet >= 5) Color(0xFFFFD700) else Color(0xFF424242),
+                contentColor = if (activeBet >= 5) Color.Black else Color.Gray,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (activeBet >= 5) 6.dp else 2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🃏", fontSize = 18.sp)
+                    Text(
+                        text = if (activeBet >= 5) "DEAL HAND ($activeBet)" else "PLACE BET (Min $5)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
+        }
+        GameState.PLAYER_TURN -> {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Mini-FAB: SPLIT
+                AnimatedVisibility(
+                    visible = canSplit,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { 30 }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { 30 })
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                "SPLIT",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        SmallFloatingActionButton(
+                            onClick = onSplit,
+                            containerColor = Color(0xFF8E24AA),
+                            contentColor = Color.White,
+                            shape = CircleShape
+                        ) {
+                            Text("✂", fontSize = 16.sp)
+                        }
+                    }
+                }
+
+                // Mini-FAB: DOUBLE
+                AnimatedVisibility(
+                    visible = canDouble,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { 30 }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { 30 })
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                "DOUBLE",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        SmallFloatingActionButton(
+                            onClick = onDouble,
+                            containerColor = Color(0xFFF57C00),
+                            contentColor = Color.White,
+                            shape = CircleShape
+                        ) {
+                            Text("⚡", fontSize = 16.sp)
+                        }
+                    }
+                }
+
+                // Mini-FAB: STAND
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "STAND",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    SmallFloatingActionButton(
+                        onClick = onStand,
+                        containerColor = Color(0xFF388E3C),
+                        contentColor = Color.White,
+                        shape = CircleShape
+                    ) {
+                        Text("✋", fontSize = 16.sp)
+                    }
+                }
+
+                // Main/Most usual FAB action = HIT
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "HIT (Most Play)",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                    FloatingActionButton(
+                        onClick = onHit,
+                        containerColor = Color(0xFF1976D2),
+                        contentColor = Color.White,
+                        shape = CircleShape
+                    ) {
+                        Text("➕", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        GameState.DEALER_TURN -> {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.75f)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Text("Dealer drawing...", color = Color.White, fontSize = 12.sp)
+                }
+            }
+        }
+        GameState.PAYS_OUT -> {
+            ExtendedFloatingActionButton(
+                onClick = onNextRound,
+                containerColor = Color(0xFFE0B0FF),
+                contentColor = Color.Black,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🪙", fontSize = 18.sp)
+                    Text("SETTLE NEXT HAND", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
     }
 }
