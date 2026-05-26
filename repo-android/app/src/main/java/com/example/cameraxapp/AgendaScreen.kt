@@ -1257,7 +1257,59 @@ fun LeafletMapViewPane(
     jsonEventsBuilder.append("]")
     val markersJson = jsonEventsBuilder.toString()
 
-    val initialTutorialHtml = remember(defaultLat, defaultLng, defaultZoom, markersJson) {
+    val basicLeafletHtml = remember(defaultLat, defaultLng, defaultZoom) {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+            <style>
+                body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; }
+                #map { width: 100%; height: 100%; }
+                .custom-popup button {
+                    margin-top: 8px;
+                    background: #E91E63;
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                // Basic LeafletJS Tutorial Example
+                var map = L.map('map').setView([$defaultLat, $defaultLng], $defaultZoom);
+                
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{y}/{x}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Default center marker
+                var centerMarker = L.marker([$defaultLat, $defaultLng]).addTo(map);
+                centerMarker.bindPopup("<b>Leaflet Tutorial Center</b><br/>Latitude: " + $defaultLat + "<br/>Longitude: " + $defaultLng).openPopup();
+
+                // Put a tutorial circle
+                L.circle([$defaultLat + 0.005, $defaultLng + 0.005], {
+                    color: 'red',
+                    fillColor: '#f03',
+                    fillOpacity: 0.2,
+                    radius: 500
+                }).addTo(map).bindPopup("Tutorial Circle Overlay (500 meters)");
+            </script>
+        </body>
+        </html>
+        """.trimIndent()
+    }
+
+    val agendaAppletHtml = remember(defaultLat, defaultLng, defaultZoom, markersJson) {
         """
         <!DOCTYPE html>
         <html>
@@ -1300,7 +1352,7 @@ fun LeafletMapViewPane(
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
                 
-                // Retrieve and render existing Native Events if any
+                // Retrieve and render existing Native Events
                 var events = $markersJson;
                 events.forEach(function(ev) {
                     var color = ev.color || '#4CAF50';
@@ -1323,26 +1375,17 @@ fun LeafletMapViewPane(
                     );
                 });
                 
-                // Add Tutorial Marker
-                var testMarker = L.marker([$defaultLat + 0.003, $defaultLng - 0.003]).addTo(map);
-                testMarker.bindPopup("<div class='custom-popup'><b>Leaflet Tutorial Example</b><br/>Running inside Android WebView!<br/><button onclick='AndroidBridge.addEventAt(" + ($defaultLat + 0.003) + ", " + ($defaultLng - 0.003) + ")'>Plan Event Here</button></div>").openPopup();
-                
-                // Add Tutorial Circle
-                L.circle([$defaultLat + 0.005, $defaultLng + 0.005], {
-                    color: 'blue',
-                    fillColor: '#30f',
-                    fillOpacity: 0.3,
-                    radius: 400
-                }).addTo(map).bindPopup("Surrounding Area");
-
-                // Map Click Listener to prompt event schedule
+                // Click map to schedule/add event
                 map.on('click', function(e) {
                     var lat = e.latlng.lat;
                     var lng = e.latlng.lng;
-                    
                     L.popup()
                         .setLatLng(e.latlng)
-                        .setContent("<div class='custom-popup'><b>Coordinates Picker</b><br/>Lat: " + lat.toFixed(5) + "<br/>Lng: " + lng.toFixed(5) + "<br/><button onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button></div>")
+                        .setContent(
+                            "<div class='custom-popup'><b>Plan New Event</b><br/>" + 
+                            "Coords: " + lat.toFixed(5) + ", " + lng.toFixed(5) + "<br/>" + 
+                            "<button onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button></div>"
+                        )
                         .openOn(map);
                 });
             </script>
@@ -1351,15 +1394,148 @@ fun LeafletMapViewPane(
         """.trimIndent()
     }
 
+    val darkCartoHtml = remember(defaultLat, defaultLng, defaultZoom, markersJson) {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+            <style>
+                body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #111; font-family: sans-serif; }
+                #map { width: 100%; height: 100%; }
+                .custom-popup button {
+                    margin-top: 8px;
+                    background: #E91E63;
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    cursor: pointer;
+                }
+                .custom-marker {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+                }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                // Muted Dark Theme (CartoDB Dark Matter)
+                var map = L.map('map').setView([$defaultLat, $defaultLng], $defaultZoom);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20,
+                    attribution: '© OpenStreetMap, © CARTO'
+                }).addTo(map);
+
+                // Default center marker
+                var centerMarker = L.marker([$defaultLat, $defaultLng]).addTo(map);
+                centerMarker.bindPopup("<b>Muted Dark Map</b><br/>Latitude: " + $defaultLat + "<br/>Longitude: " + $defaultLng).openPopup();
+                
+                // Click map to schedule/add event
+                map.on('click', function(e) {
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+                    L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(
+                            "<div class='custom-popup'><b>Plan Event (Dark)</b><br/>" + 
+                            "Coords: " + lat.toFixed(5) + ", " + lng.toFixed(5) + "<br/>" + 
+                            "<button onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button></div>"
+                        )
+                        .openOn(map);
+                });
+            </script>
+        </body>
+        </html>
+        """.trimIndent()
+    }
+
+    val satelliteEsriHtml = remember(defaultLat, defaultLng, defaultZoom, markersJson) {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+            <style>
+                body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; }
+                #map { width: 100%; height: 100%; }
+                .custom-popup button {
+                    margin-top: 8px;
+                    background: #ffeb3b;
+                    color: black;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    cursor: pointer;
+                }
+                .custom-marker {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+                }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                // High Resolution Satellite Imagery (Esri World Imagery)
+                var map = L.map('map').setView([$defaultLat, $defaultLng], $defaultZoom);
+                
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19,
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                }).addTo(map);
+
+                // Default center marker
+                var centerMarker = L.marker([$defaultLat, $defaultLng]).addTo(map);
+                centerMarker.bindPopup("<b>Satellite Map Center</b><br/>Latitude: " + $defaultLat + "<br/>Longitude: " + $defaultLng).openPopup();
+
+                // Click map to schedule/add event
+                map.on('click', function(e) {
+                    var lat = e.latlng.lat;
+                    var lng = e.latlng.lng;
+                    L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(
+                            "<div class='custom-popup'><b>Satellite Waypoint</b><br/>" + 
+                            "Coords: " + lat.toFixed(5) + ", " + lng.toFixed(5) + "<br/>" + 
+                            "<button onclick='AndroidBridge.addEventAt(" + lat + "," + lng + ")'>Schedule Event</button></div>"
+                        )
+                        .openOn(map);
+                });
+            </script>
+        </body>
+        </html>
+        """.trimIndent()
+    }
+
+    var selectedPresetName by remember { mutableStateOf("Basic LeafletJS Tutorial") }
+    var showPresetDropdown by remember { mutableStateOf(false) }
+
     var userHtmlCode by remember { mutableStateOf("") }
     var loadedHtmlCode by remember { mutableStateOf("") }
 
-    LaunchedEffect(initialTutorialHtml) {
+    LaunchedEffect(basicLeafletHtml) {
         if (userHtmlCode.isBlank()) {
-            userHtmlCode = initialTutorialHtml
+            userHtmlCode = basicLeafletHtml
         }
         if (loadedHtmlCode.isBlank()) {
-            loadedHtmlCode = initialTutorialHtml
+            loadedHtmlCode = basicLeafletHtml
         }
     }
 
@@ -1449,10 +1625,63 @@ fun LeafletMapViewPane(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Edit Leaflet coordinates, styling, tiles or markers, then hit submit to update.",
+            text = "Edit Leaflet coordinates, styling, tiles or markers, then hit submit to update. Select a preset template below:",
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray
         )
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { showPresetDropdown = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Template Preset: $selectedPresetName", fontSize = 13.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+            }
+            DropdownMenu(
+                expanded = showPresetDropdown,
+                onDismissRequest = { showPresetDropdown = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Basic LeafletJS Tutorial") },
+                    onClick = {
+                        selectedPresetName = "Basic LeafletJS Tutorial"
+                        userHtmlCode = basicLeafletHtml
+                        loadedHtmlCode = basicLeafletHtml
+                        showPresetDropdown = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Agenda Applet Active Map") },
+                    onClick = {
+                        selectedPresetName = "Agenda Applet Active Map"
+                        userHtmlCode = agendaAppletHtml
+                        loadedHtmlCode = agendaAppletHtml
+                        showPresetDropdown = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Muted Dark Theme (CartoDB)") },
+                    onClick = {
+                        selectedPresetName = "Muted Dark Theme (CartoDB)"
+                        userHtmlCode = darkCartoHtml
+                        loadedHtmlCode = darkCartoHtml
+                        showPresetDropdown = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Satellite World Imagery (Esri)") },
+                    onClick = {
+                        selectedPresetName = "Satellite World Imagery (Esri)"
+                        userHtmlCode = satelliteEsriHtml
+                        loadedHtmlCode = satelliteEsriHtml
+                        showPresetDropdown = false
+                    }
+                )
+            }
+        }
 
         OutlinedTextField(
             value = userHtmlCode,

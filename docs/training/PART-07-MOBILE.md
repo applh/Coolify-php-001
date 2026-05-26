@@ -303,7 +303,7 @@ Bridge the gap between web and mobile with Android and Flutter.
 ### 47. Android Leaflet Map HTML Live Sandbox & Webview Injection (15h)
 - **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
 - **Goal**: Master dynamic WebView integration within Android Jetpack Compose, including loading live user-edited raw HTML/JS code safely into a sandbox environment, managing input states using OutlinedTextField controls, and maintaining bidirectional JavaScript communication over Android Bridges during live runtime updates.
-- **Exercise**: Create a custom HTML template helper or a new dropdown selector in `LeafletMapViewPane` to let the user select between distinct preset Leaflet map designs (such as a monochrome vintage look, a night-mode terrain overlay, or standard streets). Ensure selecting a design immediately updates the editable text area with the corresponding pre-filled HTML code.
+- **Exercise**: Explore the newly implemented compact Material 3 dropdown preset menu in `LeafletMapViewPane`. Add a fifth premium custom preset tile provider option (such as Stamen Watercolor tile templates or custom marker animations) inside the `DropdownMenu` layout, and update the state mapping logic to inject the associated dynamic JS code block into the live sandbox editor instantly.
 - **Complexity**: Part 4
 
 ## Recommended Reading
