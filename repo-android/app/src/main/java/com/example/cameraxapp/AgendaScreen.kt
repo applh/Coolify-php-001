@@ -1234,7 +1234,6 @@ fun LeafletMapViewPane(
     onEditEvent: (Int) -> Unit
 ) {
     val context = LocalContext.current
-    var diagnosticMode by remember { mutableStateOf(0) }
     val repo = remember { SettingsRepository(context) }
     val defaultLat by repo.mapDefaultLatitude.collectAsState(initial = 48.8566)
     val defaultLng by repo.mapDefaultLongitude.collectAsState(initial = 2.3522)
@@ -1242,31 +1241,6 @@ fun LeafletMapViewPane(
     val defaultLayer by repo.mapLastLayerType.collectAsState(initial = 1)
     val mapEngineType by repo.mapEngineType.collectAsState(initial = 0)
     val googleMapsApiKey by repo.googleMapsApiKey.collectAsState(initial = "")
-    var customHtml by remember { mutableStateOf("""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Quick Start - Leaflet</title>
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-            <style>
-                html, body { height: 100%; margin: 0; }
-                #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; background-color: lightgreen; box-sizing: border-box; }
-            </style>
-        </head>
-        <body>
-            <div id="map-container">
-                <div id="map"></div>
-            </div>
-            <script>
-                const map = L.map('map').setView([51.505, -0.09], 13);
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            </script>
-        </body>
-        </html>
-    """.trimIndent()) }
 
     val tileUrl = when(defaultLayer) {
         2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -1291,500 +1265,8 @@ fun LeafletMapViewPane(
     jsonEventsBuilder.append("]")
     val markersJson = jsonEventsBuilder.toString()
 
-    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson, mapEngineType, googleMapsApiKey, diagnosticMode) {
-        if (diagnosticMode == 1) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #FFF9C4; color: #333; line-height: 1.4; }
-                    h1 { color: #F57F17; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #FBC02D; padding: 10px; background: #FFFde7; border-radius: 4px; margin-bottom: 10px; }
-                    button { background: #F57F17; color: white; border: none; padding: 10px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-                </style>
-            </head>
-            <body>
-                <h1>🧪 Test Page 1: JS-Bridge Check</h1>
-                <div class="box">
-                    <p><b>Page URL:</b> <span id="url-text">Checking...</span></p>
-                    <p><b>Kotlin Bridge Status:</b> <span id="bridge-status">Checking...</span></p>
-                </div>
-                <div class="box">
-                    <p>Verify callback communication: Click below to dispatch coordinate simulation to Kotlin.</p>
-                    <button onclick="testBridge()">Simulate addEventAt(1.23, 4.56)</button>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 1: Initializing.");
-                    document.getElementById('url-text').innerText = window.location.href;
-                    var bridgeExists = (typeof window.AndroidBridge !== 'undefined');
-                    document.getElementById('bridge-status').innerText = bridgeExists ? "✅ Present" : "❌ Not found";
-                    if (!bridgeExists) {
-                        console.error("Javascript Error: window.AndroidBridge is undefined!");
-                    } else {
-                        console.log("Javascript Success: bridge registered.");
-                    }
-                    function testBridge() {
-                        if (bridgeExists) {
-                            console.log("Diag: dispatching select coordinates to kotlin.");
-                            window.AndroidBridge.addEventAt(1.23, 4.56);
-                        } else {
-                            alert("Native bridge unregistered.");
-                        }
-                    }
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 2) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #E3F2FD; color: #333; line-height: 1.4; }
-                    h1 { color: #1565C0; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #90CAF9; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                </style>
-            </head>
-            <body>
-                <h1>🧪 Test Page 2: CDN Network Reachability</h1>
-                <div class="box">
-                    <p><b>1. OpenStreetMap Tile Server Connection:</b></p>
-                    <p id="osm-status">Testing connection...</p>
-                </div>
-                <div class="box">
-                    <p><b>2. Cloudflare CDN (Leaflet JS/CSS) Reachability:</b></p>
-                    <p id="leaflet-status">Testing connection...</p>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 2: Initializing.");
-                    var img = new Image();
-                    img.onload = function() {
-                        document.getElementById('osm-status').innerText = "✅ Connection successful (Tiles can load)";
-                        console.log("Diag Success: Connection to OpenStreetMap tiles established.");
-                    };
-                    img.onerror = function() {
-                        document.getElementById('osm-status').innerText = "❌ Connection failed (Offline or server blocked)";
-                        console.error("Diag Error: OSM tile image failed loading.");
-                    };
-                    img.src = "https://tile.openstreetmap.org/12/2048/1360.png?diag=" + Date.now();
-
-                    fetch("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js", { method: 'HEAD', mode: 'no-cors' })
-                    .then(function() {
-                        document.getElementById('leaflet-status').innerText = "✅ CDN responds (Leaflet SDK accessible)";
-                        console.log("Diag Success: Cloudflare Leaflet JS is reachable.");
-                    })
-                    .catch(function(e) {
-                        document.getElementById('leaflet-status').innerText = "❌ Reachability failed (Offline or CDN blocked)";
-                        console.error("Diag Error: Leaflet CDN unreachable: " + e.message);
-                    });
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 3) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #E8F5E9; color: #333; line-height: 1.4; }
-                    h1 { color: #2E7D32; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #A5D6A7; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                </style>
-                <script>
-                    var verifyCalled = false;
-                    function verifyLeaflet() {
-                        if (verifyCalled) return;
-                        if (typeof L !== 'undefined') {
-                            var leafletCheck = document.getElementById('leaflet-check');
-                            var mapCheck = document.getElementById('map-check');
-                            if (leafletCheck && mapCheck) {
-                                leafletCheck.innerText = "✅ Leaflet L is present. Version: " + L.version;
-                                console.log("Diag Success: Leaflet L reference works.");
-                                try {
-                                    var testMap = L.map('dummy-layout').setView([0,0], 1);
-                                    mapCheck.innerText = "✅ SUCCESS (Map instance created)";
-                                    console.log("Diag Success: Leaflet Map object successfully instantiated.");
-                                    verifyCalled = true;
-                                } catch(e) {
-                                    mapCheck.innerText = "❌ Creation failed (" + e.message + ")";
-                                    console.error("Diag Error: Map instantiation failed: " + e.message);
-                                }
-                            }
-                        } else {
-                            var leafletCheck = document.getElementById('leaflet-check');
-                            if (leafletCheck) {
-                                leafletCheck.innerText = "❌ Leaflet Namespace is undefined!";
-                                console.error("Diag Error: 'L' namespace is missing.");
-                            }
-                        }
-                    }
-
-                    document.addEventListener('DOMContentLoaded', verifyLeaflet);
-                    window.addEventListener('load', verifyLeaflet);
-                    setTimeout(verifyLeaflet, 200);
-                    setTimeout(verifyLeaflet, 500);
-                    setTimeout(verifyLeaflet, 1000);
-                </script>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Diag Error: Leaflet CSS CDN fails to load.')" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Diag Error: Leaflet JS CDN fails to load.')" onload="verifyLeaflet()"></script>
-            </head>
-            <body>
-                <h1>🧪 Test Page 3: Leaflet Integrity API Check</h1>
-                <div class="box">
-                    <p><b>Leaflet Library Native Namespace:</b> <span id="leaflet-check">Checking...</span></p>
-                    <p><b>Map DOM Creation:</b> <span id="map-check">Pending Leaflet load...</span></p>
-                </div>
-                <div id="dummy-layout" style="display:none; width:10px; height:10px;"></div>
-                <script>
-                    console.log("Diagnostic Test Page 3: Initializing.");
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 4) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #FFF3E0; color: #333; line-height: 1.4; }
-                    h1 { color: #E65100; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #FFB74D; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                    .tile-preview { max-width: 100%; border: 1px solid #ddd; margin: 10px 0; display: block; }
-                </style>
-            </head>
-            <body>
-                <h1>🧪 Test Page 4: DOM Image Sizing & Mixed Content Security Check</h1>
-                <div class="box">
-                    <p><b>Checking image loading from standard tile servers:</b></p>
-                    <p id="image-status">Loading image element...</p>
-                    <img id="test-tile" class="tile-preview" src="https://tile.openstreetmap.org/12/2048/1360.png" />
-                </div>
-                <div class="box">
-                    <p><b>Image Dimensions Check:</b></p>
-                    <p id="size-status">Checking dimensions...</p>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 4: Initializing.");
-                    var img = document.getElementById('test-tile');
-                    img.onload = function() {
-                        document.getElementById('image-status').innerText = "✅ Image loaded successfully in DOM.";
-                        var w = img.naturalWidth;
-                        var h = img.naturalHeight;
-                        document.getElementById('size-status').innerText = "✅ DOM Loaded Dimensions: " + w + "x" + h + "px";
-                        console.log("Diag Success: DOM Image loaded. Size: " + w + "x" + h);
-                    };
-                    img.onerror = function() {
-                        document.getElementById('image-status').innerText = "❌ Image failed loading in DOM!";
-                        document.getElementById('size-status').innerText = "❌ Dimensions: N/A";
-                        console.error("Diag Error: DOM Image load failed.");
-                    };
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 5) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; background: #F3E5F5; }
-                    .container { padding: 16px; box-sizing: border-box; }
-                    h1 { color: #4A148C; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #BA68C8; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                    #map-sim { width: 100%; height: 200px; background: #eee; border: 2px dashed #888; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>🧪 Test Page 5: Container Sizing & CSS Sandbox Check</h1>
-                    <div class="box">
-                        <p>We test container height. Leaflet maps fail completely if outer elements have 0 height (often due to % height parent elements).</p>
-                        <p><b>Window Inner Size:</b> <span id="win-size">Checking...</span></p>
-                        <p><b>Simulated Map Element (#map-sim):</b></p>
-                        <ul>
-                            <li>Computed Height: <span id="comp-height">Checking...</span></li>
-                            <li>Computed Width: <span id="comp-width">Checking...</span></li>
-                            <li>Client Sizing: <span id="client-size">Checking...</span></li>
-                        </ul>
-                    </div>
-                </div>
-                <div id="map-sim"></div>
-                <script>
-                    console.log("Diagnostic Test Page 5: Initializing.");
-                    function checkSize() {
-                        document.getElementById('win-size').innerText = window.innerWidth + "x" + window.innerHeight + "px";
-                        var el = document.getElementById('map-sim');
-                        var computedStyle = window.getComputedStyle(el);
-                        document.getElementById('comp-height').innerText = computedStyle.height;
-                        document.getElementById('comp-width').innerText = computedStyle.width;
-                        document.getElementById('client-size').innerText = el.clientWidth + "x" + el.clientHeight + "px";
-                        console.log("Diag Success: Window size is " + window.innerWidth + "x" + window.innerHeight + ", map-sim is " + el.clientWidth + "x" + el.clientHeight);
-                    }
-                    window.addEventListener('resize', checkSize);
-                    window.addEventListener('load', checkSize);
-                    checkSize();
-                    setTimeout(checkSize, 200);
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 6) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; background: #ECEFF1; }
-                    .container { padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; height: 100%; }
-                    h1 { color: #37474F; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #78909C; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                    #touch-pad { flex-grow: 1; background: #CFD8DC; border: 2px dashed #546E7A; min-height: 200px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #37474F; text-align: center; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>🧪 Test Page 6: Gestures & Touch Hijacking Check</h1>
-                    <div class="box">
-                        <p>Interact with the slate below. Drag, tap, pinch. If events list remains empty, the Android host composables are capturing events before they hit the WebView!</p>
-                        <p><b>Last Event:</b> <span id="last-event">No touch yet</span></p>
-                        <p><b>Status:</b> <span id="event-stats">Active</span></p>
-                    </div>
-                    <div id="touch-pad">TOUCH & DRAG SLATE</div>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 6: Initializing.");
-                    var pad = document.getElementById('touch-pad');
-                    var counter = 0;
-                    function reportEvent(name, x, y) {
-                        counter++;
-                        document.getElementById('last-event').innerText = name + " (x: " + Math.round(x) + ", y: " + Math.round(y) + ")";
-                        document.getElementById('event-stats').innerText = "Count: " + counter;
-                        console.log("Diag Success: Touch recorded - " + name + " [" + x + "," + y + "]");
-                    }
-                    pad.addEventListener('touchstart', function(e) {
-                        var t = e.touches[0];
-                        reportEvent('touchstart', t.clientX, t.clientY);
-                    });
-                    pad.addEventListener('touchmove', function(e) {
-                        var t = e.touches[0];
-                        reportEvent('touchmove', t.clientX, t.clientY);
-                    });
-                    pad.addEventListener('touchend', function(e) {
-                        reportEvent('touchend', 0, 0);
-                    });
-                    pad.addEventListener('mousedown', function(e) {
-                        reportEvent('mousedown', e.clientX, e.clientY);
-                    });
-                    pad.addEventListener('mousemove', function(e) {
-                        if (e.buttons > 0) {
-                            reportEvent('drag/mousemove', e.clientX, e.clientY);
-                        }
-                    });
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 7) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #F5E0E0; color: #333; line-height: 1.4; }
-                    h1 { color: #8C1A1A; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #E59898; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                </style>
-            </head>
-            <body>
-                <h1>🧪 Test Page 7: Browser Storage & Cookies Capability Check</h1>
-                <div class="box">
-                    <p><b>Local Storage Check:</b> <span id="ls-status">Checking...</span></p>
-                    <p><b>Session Storage Check:</b> <span id="ss-status">Checking...</span></p>
-                    <p><b>Cookies Check:</b> <span id="cookie-status">Checking...</span></p>
-                    <p><b>Indexed Database (IndexedDB) Access:</b> <span id="idb-status">Checking...</span></p>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 7: Initializing.");
-                    try {
-                        localStorage.setItem('diag_test', 'works');
-                        var val = localStorage.getItem('diag_test');
-                        document.getElementById('ls-status').innerText = (val === 'works') ? "✅ Read & Write Success" : "❌ Unexpected value: " + val;
-                        console.log("Diag Success: LocalStorage is functional.");
-                    } catch(e) {
-                        document.getElementById('ls-status').innerText = "❌ Failed: " + e.message;
-                        console.error("Diag Error: LocalStorage write failed: " + e.message);
-                    }
-
-                    try {
-                        sessionStorage.setItem('diag_test', 'works_session');
-                        var val = sessionStorage.getItem('diag_test');
-                        document.getElementById('ss-status').innerText = (val === 'works_session') ? "✅ Read & Write Success" : "❌ Unexpected value: " + val;
-                        console.log("Diag Success: SessionStorage is functional.");
-                    } catch(e) {
-                        document.getElementById('ss-status').innerText = "❌ Failed: " + e.message;
-                        console.error("Diag Error: SessionStorage write failed: " + e.message);
-                    }
-
-                    try {
-                        document.cookie = "diag_cookie=enabled_diag; max-age=60; path=/";
-                        var cookies = document.cookie;
-                        document.getElementById('cookie-status').innerText = (cookies.indexOf('diag_cookie=enabled_diag') !== -1) ? "✅ Configured successfully" : "❌ Disallowed/Blocked";
-                        console.log("Diag Success: Cookies are functional.");
-                    } catch(e) {
-                        document.getElementById('cookie-status').innerText = "❌ Blocked (" + e.message + ")";
-                        console.error("Diag Error: Cookies write failed: " + e.message);
-                    }
-
-                    try {
-                        var request = indexedDB.open("DiagDatabase", 1);
-                        request.onsuccess = function() {
-                            document.getElementById('idb-status').innerText = "✅ Interface and Database operations available";
-                            console.log("Diag Success: IndexedDB is functional.");
-                        };
-                        request.onerror = function() {
-                            document.getElementById('idb-status').innerText = "❌ Access permission denied";
-                            console.error("Diag Error: IndexedDB open failed.");
-                        };
-                    } catch(e) {
-                        document.getElementById('idb-status').innerText = "❌ Interface disabled (" + e.message + ")";
-                        console.error("Diag Error: IndexedDB disabled: " + e.message);
-                    }
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 8) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <style>
-                    body { font-family: sans-serif; padding: 16px; background: #E0F2F1; color: #333; line-height: 1.4; }
-                    h1 { color: #004D40; font-size: 18px; margin-top: 0; }
-                    .box { border: 1px solid #4DB6AC; padding: 10px; background: #FFF; border-radius: 4px; margin-bottom: 10px; }
-                </style>
-            </head>
-            <body>
-                <h1>🧪 Test Page 8: Geolocation Capabilities & Access Check</h1>
-                <div class="box">
-                    <p><b>Is Geolocation Property Present?</b> <span id="has-geo">Checking...</span></p>
-                    <p><b>Current Location coordinates:</b> <span id="geo-status">Press button to request...</span></p>
-                    <button style="margin-top: 5px; padding: 8px 12px; background: #00796B; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="getGeo()">Request Location</button>
-                </div>
-                <script>
-                    console.log("Diagnostic Test Page 8: Initializing.");
-                    var hasGeo = ("geolocation" in navigator);
-                    document.getElementById('has-geo').innerText = hasGeo ? "✅ Yes (navigator.geolocation exists)" : "❌ No (Unsupported by browser engine)";
-                    
-                    function getGeo() {
-                        if (!hasGeo) {
-                            alert("Geolocation not supported.");
-                            return;
-                        }
-                        document.getElementById('geo-status').innerText = "Requesting details from Android Core...";
-                        navigator.geolocation.getCurrentPosition(
-                            function(pos) {
-                                document.getElementById('geo-status').innerText = "✅ Lat: " + pos.coords.latitude + ", Lng: " + pos.coords.longitude + " (Accuracy: " + pos.coords.accuracy + "m)";
-                                console.log("Diag Success: Geolocation reading succeeded.");
-                            },
-                            function(err) {
-                                var codeName = "UNKNOWN";
-                                if (err.code === 1) codeName = "PERMISSION_DENIED";
-                                else if (err.code === 2) codeName = "POSITION_UNAVAILABLE";
-                                else if (err.code === 3) codeName = "TIMEOUT";
-                                document.getElementById('geo-status').innerText = "❌ Failed (Error code: " + err.code + " - " + codeName + " - " + err.message + ")";
-                                console.error("Diag Error: Geolocation failed: " + err.message);
-                            },
-                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                        );
-                    }
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 9) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                <title>Test 9</title>
-                <style>
-                    body, html { margin: 0; padding: 0; background: #fff; width: 100vw; height: 100vh; overflow: hidden; }
-                    #map-container { width: 100vw; height: 100vh; position: relative; }
-                    #map { width: 100%; height: 100%; background-color: #fca; box-sizing: border-box; }
-                </style>
-            </head>
-            <body>
-                <div id="map-container">
-                    <div id="map"></div>
-                </div>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-                <script>
-                    window.onload = function() {
-                        var map = L.map('map', {zoomControl: false}).setView([$defaultLat, $defaultLng], $defaultZoom);
-                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                        console.log("Diag 9: 100vw/100vh container started.");
-                    };
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (diagnosticMode == 10) {
-            """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                <title>Test 10</title>
-                <style>
-                    body, html { margin: 0; padding: 0; background: #fff; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-                    #map-container { flex: 1; display: flex; position: relative; width: 100%; height: 100%; }
-                    #map { width: 100%; height: 100%; background-color: #acf; box-sizing: border-box; }
-                </style>
-            </head>
-            <body>
-                <div id="map-container">
-                    <div id="map"></div>
-                </div>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-                <script>
-                    window.onload = function() {
-                        var map = L.map('map', {zoomControl: false}).setView([$defaultLat, $defaultLng], $defaultZoom);
-                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                        console.log("Diag 10: flex container started.");
-                        setTimeout(function(){ map.invalidateSize(); }, 500);
-                    };
-                </script>
-            </body>
-            </html>
-            """.trimIndent()
-        } else if (mapEngineType == 1) {
+    val mapHtml = remember(defaultLat, defaultLng, defaultZoom, defaultLayer, markersJson, mapEngineType, googleMapsApiKey) {
+        if (mapEngineType == 1) {
             """
             <!DOCTYPE html>
             <html>
@@ -1792,9 +1274,9 @@ fun LeafletMapViewPane(
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
                 <script>
-                    console.log("HTML Init: Google Maps template loaded. System clock: " + Date.now());
+                    console.log("HTML Init: Google Maps template loaded.");
                     window.addEventListener('error', function(e) {
-                        console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
+                        console.error("HTML Runtime Error: " + e.message);
                     }, true);
                 </script>
                 <style>
@@ -1977,7 +1459,7 @@ fun LeafletMapViewPane(
                         });
                     }
                 </script>
-                <script src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap" async defer onerror="console.error('Failed to load Google Maps script (API key issue or internet failure)')" onload="console.log('Google Maps API script fetched successfully')"></script>
+                <script src="https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap" async defer onerror="console.error('Failed to load Google Maps script')" onload="console.log('Google Maps API script fetched successfully')"></script>
             </body>
             </html>
             """.trimIndent()
@@ -1989,9 +1471,9 @@ fun LeafletMapViewPane(
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
                 <script>
-                    console.log("HTML Init: Leaflet map template loaded. System clock: " + Date.now());
+                    console.log("HTML Init: Leaflet map template loaded.");
                     window.addEventListener('error', function(e) {
-                        console.error("HTML Runtime Error: " + e.message + " @ " + e.filename + ":" + e.lineno);
+                        console.error("HTML Runtime Error: " + e.message);
                     }, true);
 
                     var map;
@@ -2001,16 +1483,14 @@ fun LeafletMapViewPane(
                     function initMap() {
                         if (mapInitialized) return;
                         if (typeof L === 'undefined') {
-                            console.error("Critical: 'L' object is undefined! Map rendering will crash.");
+                            console.error("Critical: 'L' object is undefined!");
                             return;
                         }
                         var mapContainer = document.getElementById('map');
                         if (!mapContainer) return;
 
                         mapInitialized = true;
-                        console.log("Initializing Leaflet map instance centered on [lat: $defaultLat, lng: $defaultLng]");
                         map = L.map('map', { zoomControl: false }).setView([$defaultLat, $defaultLng], $defaultZoom);
-                        console.log("Leaflet map created successfully.");
                         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
                         var tLayer = L.tileLayer('$tileUrl', {
@@ -2018,14 +1498,7 @@ fun LeafletMapViewPane(
                             attribution: '© OSM',
                             crossOrigin: true
                         });
-                        tLayer.on('tileerror', function(error, tile) {
-                            console.error("TILE ERROR: Failed to load tile at coords: " + JSON.stringify(error.coords));
-                        });
-                        tLayer.on('tileload', function() {
-                            console.log("TILE LOADED successfully.");
-                        });
                         tLayer.addTo(map);
-                        console.log("Leaflet Tile layer set with tileUrl: $tileUrl");
 
                         // Add event markers
                         var events = $markersJson;
@@ -2142,8 +1615,8 @@ fun LeafletMapViewPane(
                     window.addEventListener('resize', fixMapSize);
                     setInterval(fixMapSize, 1500);
                 </script>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Leaflet CSS CDN!')" onload="console.log('Leaflet CSS CDN loaded.')" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="console.error('Failed to load Leaflet JS CDN!')" onload="tryInitMap()"></script>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onload="tryInitMap()"></script>
                 <style>
                     body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%;
@@ -2162,7 +1635,7 @@ fun LeafletMapViewPane(
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
-                        display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+                        display: flex; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.155);
                         padding: 6px; gap: 6px;
                     }
                     #search-input {
@@ -2267,138 +1740,14 @@ fun LeafletMapViewPane(
         }
     }
 
-    LaunchedEffect(mapHtml, diagnosticMode, customHtml) {
-        when (diagnosticMode) {
-            11 -> {
-                webView.loadUrl("https://leafletjs.com/examples/quick-start/example.html")
-            }
-            12 -> {
-                val directHtml = """
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="utf-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1">
-                        <title>Quick Start - Leaflet</title>
-                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                        <style>
-                            html, body { height: 100%; margin: 0; }
-                            #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; background-color: lightgreen; box-sizing: border-box; }
-                        </style>
-                    </head>
-                    <body>
-                        <div id="map-container">
-                            <div id="map"></div>
-                        </div>
-                        <script>
-                            const map = L.map('map').setView([51.505, -0.09], 13);
-                            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                            const marker = L.marker([51.5, -0.09]).addTo(map).bindPopup('<b>Hello world!</b><br />I am a popup.').openPopup();
-                            const circle = L.circle([51.508, -0.11], { color: 'red', fillColor: '#f03', fillOpacity: 0.5, radius: 500 }).addTo(map).bindPopup('I am a circle.');
-                            const polygon = L.polygon([ [51.509, -0.08], [51.503, -0.06], [51.51, -0.04] ]).addTo(map).bindPopup('I am a polygon.');
-                            const popup = L.popup().setLatLng([51.513, -0.09]).setContent('I am a standalone popup.').openOn(map);
-                            function onMapClick(e) { popup.setLatLng(e.latlng).setContent('You clicked the map at ' + e.latlng.toString()).openOn(map); }
-                            map.on('click', onMapClick);
-                        </script>
-                    </body>
-                    </html>
-                """.trimIndent()
-                webView.loadDataWithBaseURL("https://localhost/map_view.html", directHtml, "text/html", "UTF-8", null)
-            }
-            13 -> {
-                webView.loadDataWithBaseURL("https://localhost/map_view.html", customHtml, "text/html", "UTF-8", null)
-            }
-            else -> {
-                webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
-            }
-        }
+    LaunchedEffect(mapHtml) {
+        webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        androidx.compose.ui.viewinterop.AndroidView(
-            factory = { webView },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Diagnostic floating control bar overlay
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 70.dp, start = 16.dp, end = 16.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.85f),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "🔧 WebView Diagnostics (Senior Dev)",
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.labelSmall
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            var expanded by remember { mutableStateOf(false) }
-            val options = listOf(
-                13 to "13: Manual Code Editor",
-                12 to "12: Direct Injected Tutorial",
-                11 to "11: Remote Map Tutorial",
-                10 to "10: Flex Layout",
-                9 to "9: 100vw Layout",
-                8 to "8: Geo Access Check",
-                7 to "7: Storage Check",
-                6 to "6: Gestures",
-                5 to "5: Sizing",
-                4 to "4: Images",
-                3 to "3: Leaflet API",
-                2 to "2: Network",
-                1 to "1: Bridge",
-                0 to "Standard Map"
-            )
-
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(options.find { it.first == diagnosticMode }?.second ?: "Select test")
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                ) {
-                    options.forEach { (id, name) ->
-                        DropdownMenuItem(
-                            text = { Text(name) },
-                            onClick = {
-                                diagnosticMode = id
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        
-        if (diagnosticMode == 13) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.5f)
-                    .background(Color.White)
-            ) {
-                Text("Edit HTML here (changes apply instantly):", modifier = Modifier.padding(8.dp), color = Color.Black)
-                OutlinedTextField(
-                    value = customHtml,
-                    onValueChange = { customHtml = it },
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = Color.Black)
-                )
-            }
-        }
-    }
+    androidx.compose.ui.viewinterop.AndroidView(
+        factory = { webView },
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable
