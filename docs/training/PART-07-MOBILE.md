@@ -288,5 +288,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Program a Javascript/HTML loader displaying a state-driven count-down timer (e.g. 10s wait) within the map component placeholder style, preventing Leaflet initialization via strict boolean lock gates. Then, set absolute viewport boundaries (`50%` width and height, centered with 6px thick high-contrast green diagnosis borders) to guarantee clear container containment and rendering feedback.
 - **Complexity**: Part 3
 
+### 45. Android Blackjack Applet: Custom Card Engine, Split Logic & Local Database Persistence (20h)
+- **Reference**: `repo-android/docs/blackjack-applet-plan.md`
+- **Goal**: Master developing professional-grade offline casino card games in Android using Jetpack Compose, implementing custom deck dealing logic with shuffle thresholds, complex multi-hand "Split" mechanics, and robust Local SQLite persistence of balances, bets, and wins/losses state statistics.
+- **Exercise**: Review the full Kotlin implementations highlighted in `blackjack-applet-plan.md`. Extend the database helpers to store historical high scores, implement a basic strategy visual advisor overlay highlighting optimal Hit/Stand ratios based on current hand variables, and write a custom shuffle warning display triggering when more than 75% of the card shoe is depleted.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
