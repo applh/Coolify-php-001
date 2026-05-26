@@ -1242,6 +1242,29 @@ fun LeafletMapViewPane(
     val defaultLayer by repo.mapLastLayerType.collectAsState(initial = 1)
     val mapEngineType by repo.mapEngineType.collectAsState(initial = 0)
     val googleMapsApiKey by repo.googleMapsApiKey.collectAsState(initial = "")
+    var customHtml by remember { mutableStateOf("""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Quick Start - Leaflet</title>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <style>
+                html, body { height: 100%; margin: 0; }
+                #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box; }
+            </style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                const map = L.map('map').setView([51.505, -0.09], 13);
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            </script>
+        </body>
+        </html>
+    """.trimIndent()) }
 
     val tileUrl = when(defaultLayer) {
         2 -> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -1708,7 +1731,7 @@ fun LeafletMapViewPane(
                 <title>Test 9</title>
                 <style>
                     body, html { margin: 0; padding: 0; background: #fff; width: 100vw; height: 100vh; overflow: hidden; }
-                    #map { width: 100vw; height: 100vh; background-color: #fca; }
+                    #map { width: 100vw; height: 100vh; background-color: #fca; border: 4px solid red; box-sizing: border-box; }
                 </style>
             </head>
             <body>
@@ -1735,7 +1758,7 @@ fun LeafletMapViewPane(
                 <title>Test 10</title>
                 <style>
                     body, html { margin: 0; padding: 0; background: #fff; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-                    #map { flex: 1; background-color: #acf; }
+                    #map { flex: 1; background-color: #acf; border: 4px solid red; box-sizing: border-box; }
                 </style>
             </head>
             <body>
@@ -1767,8 +1790,11 @@ fun LeafletMapViewPane(
                     }, true);
                 </script>
                 <style>
-                    body, html, #map {
+                    body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
+                    }
+                    #map {
+                        margin: 0; padding: 0; width: 100%; height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box;
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -2228,8 +2254,50 @@ fun LeafletMapViewPane(
         }
     }
 
-    LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
+    LaunchedEffect(mapHtml, diagnosticMode, customHtml) {
+        when (diagnosticMode) {
+            11 -> {
+                webView.loadUrl("https://leafletjs.com/examples/quick-start/example.html")
+            }
+            12 -> {
+                val directHtml = """
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <title>Quick Start - Leaflet</title>
+                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                        <style>
+                            html, body { height: 100%; margin: 0; }
+                            #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box; }
+                        </style>
+                    </head>
+                    <body>
+                        <div id="map"></div>
+                        <script>
+                            const map = L.map('map').setView([51.505, -0.09], 13);
+                            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                            const marker = L.marker([51.5, -0.09]).addTo(map).bindPopup('<b>Hello world!</b><br />I am a popup.').openPopup();
+                            const circle = L.circle([51.508, -0.11], { color: 'red', fillColor: '#f03', fillOpacity: 0.5, radius: 500 }).addTo(map).bindPopup('I am a circle.');
+                            const polygon = L.polygon([ [51.509, -0.08], [51.503, -0.06], [51.51, -0.04] ]).addTo(map).bindPopup('I am a polygon.');
+                            const popup = L.popup().setLatLng([51.513, -0.09]).setContent('I am a standalone popup.').openOn(map);
+                            function onMapClick(e) { popup.setLatLng(e.latlng).setContent('You clicked the map at ' + e.latlng.toString()).openOn(map); }
+                            map.on('click', onMapClick);
+                        </script>
+                    </body>
+                    </html>
+                """.trimIndent()
+                webView.loadDataWithBaseURL("https://localhost/map_view.html", directHtml, "text/html", "UTF-8", null)
+            }
+            13 -> {
+                webView.loadDataWithBaseURL("https://localhost/map_view.html", customHtml, "text/html", "UTF-8", null)
+            }
+            else -> {
+                webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -2258,102 +2326,61 @@ fun LeafletMapViewPane(
                 style = MaterialTheme.typography.labelSmall
             )
             Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val btnColorSelected = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                val btnColorNormal = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+            var expanded by remember { mutableStateOf(false) }
+            val options = listOf(
+                13 to "13: Manual Code Editor",
+                12 to "12: Direct Injected Tutorial",
+                11 to "11: Remote Map Tutorial",
+                10 to "10: Flex Layout",
+                9 to "9: 100vw Layout",
+                8 to "8: Geo Access Check",
+                7 to "7: Storage Check",
+                6 to "6: Gestures",
+                5 to "5: Sizing",
+                4 to "4: Images",
+                3 to "3: Leaflet API",
+                2 to "2: Network",
+                1 to "1: Bridge",
+                0 to "Standard Map"
+            )
 
-                Button(
-                    onClick = { diagnosticMode = 0 },
-                    colors = if (diagnosticMode == 0) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("Standard Map", fontSize = 10.sp, color = Color.White)
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(options.find { it.first == diagnosticMode }?.second ?: "Select test")
                 }
-                Button(
-                    onClick = { diagnosticMode = 1 },
-                    colors = if (diagnosticMode == 1) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
                 ) {
-                    Text("1: Bridge", fontSize = 10.sp, color = Color.White)
+                    options.forEach { (id, name) ->
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = {
+                                diagnosticMode = id
+                                expanded = false
+                            }
+                        )
+                    }
                 }
-                Button(
-                    onClick = { diagnosticMode = 2 },
-                    colors = if (diagnosticMode == 2) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("2: Network", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 3 },
-                    colors = if (diagnosticMode == 3) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("3: Leaflet", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 4 },
-                    colors = if (diagnosticMode == 4) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("4: Images", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 5 },
-                    colors = if (diagnosticMode == 5) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("5: Sizing", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 6 },
-                    colors = if (diagnosticMode == 6) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("6: Gestures", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 7 },
-                    colors = if (diagnosticMode == 7) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("7: Storage", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 8 },
-                    colors = if (diagnosticMode == 8) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("8: Geo", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 9 },
-                    colors = if (diagnosticMode == 9) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("9: 100vw", fontSize = 10.sp, color = Color.White)
-                }
-                Button(
-                    onClick = { diagnosticMode = 10 },
-                    colors = if (diagnosticMode == 10) btnColorSelected else btnColorNormal,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text("10: Flex", fontSize = 10.sp, color = Color.White)
-                }
+            }
+        }
+        
+        if (diagnosticMode == 13) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f)
+                    .background(Color.White)
+            ) {
+                Text("Edit HTML here (changes apply instantly):", modifier = Modifier.padding(8.dp), color = Color.Black)
+                OutlinedTextField(
+                    value = customHtml,
+                    onValueChange = { customHtml = it },
+                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp, color = Color.Black)
+                )
             }
         }
     }
