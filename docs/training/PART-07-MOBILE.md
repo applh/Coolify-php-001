@@ -282,5 +282,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom Test Page 9 focusing on evaluating CSS viewport relative measurements (such as modern `dvh`/`dvw` dynamic sizing vs standard viewport units), adding a custom selector option within the scrollable Compose diagnostic ribbon, and routing its HTML generation code appropriately inside `AgendaScreen.kt`.
 - **Complexity**: Part 4
 
+### 44. Deferring Leaflet Map Creation & Custom Web Sizing in WebView (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Understand WebView execution deferral to solve race conditions in CDN asset loading, and use precise percentages and absolute overlay CSS styling (such as `50vw`/`50vh` or centered `50%` layouts with deep borders) around hybrid frames.
+- **Exercise**: Program a Javascript/HTML loader displaying a state-driven count-down timer (e.g. 10s wait) within the map component placeholder style, preventing Leaflet initialization via strict boolean lock gates. Then, set absolute viewport boundaries (`50%` width and height, centered with 6px thick high-contrast green diagnosis borders) to guarantee clear container containment and rendering feedback.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

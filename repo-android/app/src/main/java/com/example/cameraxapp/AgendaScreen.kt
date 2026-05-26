@@ -1903,6 +1903,33 @@ fun LeafletMapViewPane(
                     var map;
                     var mapInitialized = false;
                     var tempMarker = null;
+                    var isAllowedToInitialize = false;
+                    var countdown = 10;
+                    var countdownInterval;
+
+                    function startDeferredInit() {
+                        console.log("Page loaded. Starting 10s countdown for map creation...");
+                        var mapEl = document.getElementById('map');
+                        if (mapEl) {
+                            mapEl.innerHTML = "<div id='loader-status' style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f8fafc; color: #334155; font-family: sans-serif; text-align: center; padding: 12px; box-sizing: border-box;'><h3 style='margin: 0 0 6px 0; font-size: 15px;'>⏳ Deferred Init</h3><p style='margin: 0; font-size: 12px;'>Map will render in <span id='timer-count' style='color: #4CAF50; font-weight: bold; font-size: 16px;'>10</span>s...</p></div>";
+                        }
+                        countdownInterval = setInterval(function() {
+                            countdown--;
+                            var timerCountEl = document.getElementById('timer-count');
+                            if (timerCountEl) {
+                                timerCountEl.innerText = countdown;
+                            }
+                            if (countdown <= 0) {
+                                clearInterval(countdownInterval);
+                                isAllowedToInitialize = true;
+                                if (mapEl) {
+                                    mapEl.innerHTML = ""; // Clear loader
+                                }
+                                console.log("Initializing map after 10s deferral...");
+                                tryInitMap();
+                            }
+                        }, 1000);
+                    }
 
                     function initMap() {
                         if (mapInitialized) return;
@@ -1971,6 +1998,10 @@ fun LeafletMapViewPane(
                     }
 
                     function tryInitMap() {
+                        if (!isAllowedToInitialize) {
+                            console.log("tryInitMap bypassed: deferral in progress.");
+                            return;
+                        }
                         if (typeof L !== 'undefined' && document.getElementById('map')) {
                             initMap();
                         }
@@ -2033,17 +2064,11 @@ fun LeafletMapViewPane(
                         });
                     }
 
-                    window.addEventListener('load', fixMapSize);
-                    window.addEventListener('resize', fixMapSize);
-                    document.addEventListener('DOMContentLoaded', function() {
-                        tryInitMap();
+                    window.addEventListener('load', function() {
                         fixMapSize();
+                        startDeferredInit();
                     });
-                    setTimeout(tryInitMap, 100);
-                    setTimeout(tryInitMap, 300);
-                    setTimeout(tryInitMap, 600);
-                    setTimeout(tryInitMap, 1200);
-                    setTimeout(tryInitMap, 2500);
+                    window.addEventListener('resize', fixMapSize);
                     setInterval(fixMapSize, 1500);
                 </script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" onerror="console.error('Failed to load Leaflet CSS CDN!')" onload="console.log('Leaflet CSS CDN loaded.')" />
@@ -2057,8 +2082,10 @@ fun LeafletMapViewPane(
                     }
                     #map {
                         position: absolute;
-                        top: 0; bottom: 0; left: 0; right: 0;
-                        width: 100%; height: 100%;
+                        top: 25%;
+                        left: 25%;
+                        width: 50%;
+                        height: 50%;
                         border: 6px solid #4CAF50 !important; /* Green diagnosis border around the map */
                         box-sizing: border-box;
                     }
