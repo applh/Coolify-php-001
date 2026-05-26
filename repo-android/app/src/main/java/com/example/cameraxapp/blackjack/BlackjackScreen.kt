@@ -259,6 +259,8 @@ fun BlackjackScreen(
                     activeHandIndex = currentHandIndex,
                     gameState = gameState,
                     walletBalance = walletBalance,
+                    activeBet = activeBet,
+                    onReloadWallet = { viewModel.reloadWalletAccount() },
                     showStrategyHud = settings.showStrategyHud,
                     adviceMessage = adviceMessage
                 )
@@ -300,12 +302,6 @@ fun BlackjackScreen(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        BankrollBar(
-                            balance = walletBalance,
-                            activeBet = activeBet,
-                            onReloadWallet = { viewModel.reloadWalletAccount() }
-                        )
-
                         // Floating transaction animation
                         val moneyAnim by viewModel.moneyAnimation
                         androidx.compose.animation.AnimatedVisibility(
@@ -409,7 +405,7 @@ fun BlackjackScreen(
 
                     val configuration = LocalConfiguration.current
                     val vmin = minOf(configuration.screenWidthDp, configuration.screenHeightDp)
-                    val squareSize = (vmin * 0.50f).dp
+                    val circleSize = (vmin * 0.62f).dp
 
                     Box(
                         modifier = Modifier
@@ -420,21 +416,20 @@ fun BlackjackScreen(
                     ) {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = Color.Black.copy(alpha = 0.3f),
+                                containerColor = Color(0xFF1E1E1E),
                                 contentColor = Color.White
                             ),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.5.dp, color.copy(alpha = 0.3f)),
+                            shape = CircleShape,
+                            border = BorderStroke(1.5.dp, color.copy(alpha = 0.6f)),
                             modifier = Modifier
-                                .size(squareSize)
-                                .shadow(8.dp, RoundedCornerShape(16.dp))
+                                .size(circleSize)
+                                .shadow(8.dp, CircleShape)
                                 .clickable(enabled = false) {}
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
-                                    .padding(8.dp),
+                                    .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
@@ -501,9 +496,9 @@ fun BlackjackScreen(
                                         containerColor = color,
                                         contentColor = if (isLoss) Color.White else Color.Black
                                     ),
-                                    shape = RoundedCornerShape(8.dp),
+                                    shape = CircleShape,
                                     modifier = Modifier
-                                        .fillMaxWidth()
+                                        .width(130.dp)
                                         .height(34.dp),
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
@@ -723,6 +718,8 @@ fun PlayerSection(
     activeHandIndex: Int,
     gameState: GameState,
     walletBalance: Int,
+    activeBet: Int,
+    onReloadWallet: () -> Unit,
     showStrategyHud: Boolean,
     adviceMessage: String
 ) {
@@ -762,10 +759,63 @@ fun PlayerSection(
                     }
                     PlayerAvatar(balance = walletBalance)
                 }
-                Text(
-                    text = "Seat #2",
-                    style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray.copy(alpha = 0.5f))
-                )
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Wallet:",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.LightGray.copy(alpha = 0.8f),
+                                fontSize = 10.sp
+                            )
+                        )
+                        Text(
+                            text = "$${walletBalance}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (walletBalance > 0) Color(0xFFB9F6CA) else Color(0xFFFF5252),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        )
+                        if (walletBalance == 0) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Button(
+                                onClick = onReloadWallet,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                modifier = Modifier.height(20.dp),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text("RELOAD", fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Stakes:",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.LightGray.copy(alpha = 0.8f),
+                                fontSize = 10.sp
+                            )
+                        )
+                        Text(
+                            text = "$${activeBet}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.Yellow,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
+                }
             }
         }
 
@@ -1006,70 +1056,7 @@ fun PlayingCardView(card: Card, index: Int = 0) {
     }
 }
 
-@Composable
-fun BankrollBar(
-    balance: Int,
-    activeBet: Int,
-    onReloadWallet: () -> Unit
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.7f),
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Chip Wallet:",
-                    style = MaterialTheme.typography.labelLarge.copy(color = Color.LightGray)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    "$${balance}",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = if (balance > 0) Color(0xFFB9F6CA) else Color(0xFFFF5252)
-                    )
-                )
-                if (balance == 0) {
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Button(
-                        onClick = onReloadWallet,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                        modifier = Modifier.height(26.dp)
-                    ) {
-                        Text("RELOAD", fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Round Stakes:",
-                    style = MaterialTheme.typography.labelLarge.copy(color = Color.LightGray)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    "$${activeBet}",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Yellow
-                    )
-                )
-            }
-        }
-    }
-}
 
 // Interactive chips visually styled like casino tokens
 @Composable

@@ -324,5 +324,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a user preference that allows dynamically resizing the square overlay between 40% and 70% of the computed `vmin` setting.
 - **Complexity**: Part 3
 
+### 51. Android Blackjack Compact UI Layout, Dynamic Chip Wallet, and Circular Payout Modals (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Understand how to optimize horizontal screen space on mobile layouts by migrating decentralized bankroll info panels directly inside the avatar profile cards. Learn how to transform standard rectangular dialog cards into perfect responsive circular elements utilizing `CircleShape` and managing text bound clipping.
+- **Exercise**: Implement a secondary visual animation (such as a subtle rotating cyber-neon border stroke) around the circular payout popup, and add a setting to toggle between circular and standard rectangular round result modals.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
