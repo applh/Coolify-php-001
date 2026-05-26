@@ -189,3 +189,23 @@ In the coordinate-picker components (`LeafletComposeMap`), Leaflet scripts are l
    - **Choice**: Integrated high-contrast custom layout borders around map containers (green `#4CAF50` for standard map, blue `#2196F3` for map location picker) paired with vivid orange borders (`#FF5722`) on individual map layer image tiles (`.leaflet-tile`).
    - **Reason**: Allows developers and quality auditors to visually confirm layout initialization, size correctness, and successful asset fetch within standard Android WebView sandbox environments.
 
+---
+
+## 9. Android WebView Direct HTML Injection & Base64 Map Workaround
+
+### Context
+When loading dynamic HTML maps (e.g. Leaflet OSM or Google Maps JS API templates) into Android WebViews inside a Jetpack Compose UI state, several security and rendering issues can cause the maps to display as a completely blank screen:
+1. Origin Restrictions: Modern Android WebViews (particularly on Android 10+) enforce strict security policies that can block relative resource loads or external CDN script requests when the base HTML is loaded via `loadDataWithBaseURL` with custom hostname schemes (e.g. `https://localhost/map_view.html`).
+2. CSS/HTML Special Character Encoding: Dynamic color definitions (e.g. '#' in hex tags, or '%' in queries) can break WebView parsing of inline strings unless they are heavily escaped or base64 encoded.
+3. Measurement & Parent Collapse: Under dynamic Compose layouts, deep nested WebView composables (`AndroidView`) can easily collapse to a measured width or height of 0 on initial measurement or subsequent recompositions, rendering the canvas invisible.
+
+### Decisions & Justification
+
+1. **Direct HTML Injection via Base64 Payload Encoding (`loadData` base64)**
+   - **Choice**: Convert the HTML template strings directly to byte arrays and encode them as Base64 strings using `android.util.Base64.encodeToString(..., Base64.NO_PADDING or Base64.NO_WRAP)`, then load them via `webView.loadData(encodedHtml, "text/html; charset=utf-8", "base64")`.
+   - **Reason**: Direct Base64 injection completely bypasses all origin-based URL security boundaries and Mixed Content policies since the WebView is treating the string as raw data payload instead of a sandboxed local file URL. Furthermore, this technique natively handles all occurrences of `#` (extremely common in map marker color hex codes) and `%` characters without any manual escape/regex overhead, ensuring 100% rendering fidelity.
+
+2. **Outer Compaction Box Container (`androidx.compose.foundation.layout.Box`)**
+   - **Choice**: Wrapped the `AndroidView` inside an explicit Compose `Box` container with `Modifier.fillMaxSize()`.
+   - **Reason**: Forces Compose's layout subsystem to negotiate correct, non-zero parent measurement constraints before allocating bounds to the nested `AndroidView`. This completely eliminates the 0x0 scale collapses that frequently happen upon dynamic list updates or screen state transitions.
+

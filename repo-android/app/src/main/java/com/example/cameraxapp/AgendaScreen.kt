@@ -1741,13 +1741,18 @@ fun LeafletMapViewPane(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
+        val encodedHtml = android.util.Base64.encodeToString(mapHtml.toByteArray(Charsets.UTF_8), android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
+        webView.loadData(encodedHtml, "text/html; charset=utf-8", "base64")
     }
 
-    androidx.compose.ui.viewinterop.AndroidView(
-        factory = { webView },
+    androidx.compose.foundation.layout.Box(
         modifier = Modifier.fillMaxSize()
-    )
+    ) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { webView },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable
@@ -2028,13 +2033,18 @@ fun LeafletComposeMap(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://localhost/map_picker.html", mapHtml, "text/html", "UTF-8", null)
+        val encodedHtml = android.util.Base64.encodeToString(mapHtml.toByteArray(Charsets.UTF_8), android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP)
+        webView.loadData(encodedHtml, "text/html; charset=utf-8", "base64")
     }
 
-    androidx.compose.ui.viewinterop.AndroidView(
-        factory = { webView },
+    androidx.compose.foundation.layout.Box(
         modifier = modifier
-    )
+    ) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { webView },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable

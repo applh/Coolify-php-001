@@ -294,5 +294,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Review the full Kotlin implementations highlighted in `blackjack-applet-plan.md`. Extend the database helpers to store historical high scores, implement a basic strategy visual advisor overlay highlighting optimal Hit/Stand ratios based on current hand variables, and write a custom shuffle warning display triggering when more than 75% of the card shoe is depleted.
 - **Complexity**: Part 4
 
+### 46. Android WebView Direct HTML Injection & Base64 Map Workaround (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master eliminating CORS, file origin policy restrictions, and unescaped HTML special characters (such as '#' in hex colors or '%' in query parameters) inside Android hybrid WebView components by using direct Base64 HTML injection and responsive Box container boundaries.
+- **Exercise**: Extend the `LeafletComposeMap` to accept custom Map Options (like `doubleClickZoom` or `dragging` toggles) as a dynamic configuration dictionary, serialize these options down to the WebView, and decode them inside the injected JS setup to mold the Leaflet map behavior on the fly.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
