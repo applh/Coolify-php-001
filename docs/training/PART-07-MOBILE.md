@@ -330,5 +330,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary visual animation (such as a subtle rotating cyber-neon border stroke) around the circular payout popup, and add a setting to toggle between circular and standard rectangular round result modals.
 - **Complexity**: Part 3
 
+### 52. Android Blackjack Betting Speed-Dial & Circular Fan-Out Kinematics (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Understand advanced interactive speed-dial animation kinematics in Jetpack Compose, including translating static horizontal lists of betting button chips into dynamic, floating, semi-circular fan-out dials using trigonometric functions (`cos`/`sin`) relative to a central floating action button.
+- **Exercise**: Create a customized fanning pattern that expands the semi-circular betting arc from 90° up to 120° dynamically when the user rotates the device, allowing additional special high-risk $1000 and $5000 chip options to animate smoothly into view.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

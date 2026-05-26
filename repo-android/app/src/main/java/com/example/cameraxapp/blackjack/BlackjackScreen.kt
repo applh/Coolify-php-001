@@ -261,7 +261,9 @@ fun BlackjackScreen(
                 onStand = { viewModel.stand() },
                 onDouble = { viewModel.doubleDown() },
                 onSplit = { viewModel.split() },
-                onNextRound = { viewModel.nextRound() }
+                onNextRound = { viewModel.nextRound() },
+                balance = walletBalance,
+                onAddBet = { viewModel.addBet(it) }
             )
         },
         floatingActionButtonPosition = FabPosition.End
@@ -401,12 +403,24 @@ fun BlackjackScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     if (gameState == GameState.BETTING) {
-                        ChipBettingRail(
-                            balance = walletBalance,
-                            onAddBet = { viewModel.addBet(it) },
-                            onClear = { viewModel.clearBet() },
-                            onRebet = { viewModel.rebet() }
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.clearBet() },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
+                            ) {
+                                Text("CLEAR BET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Button(
+                                onClick = { viewModel.rebet() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black)
+                            ) {
+                                Text("REPEAT REBET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
 
@@ -1596,27 +1610,91 @@ fun ActionFabMenu(
     onStand: () -> Unit,
     onDouble: () -> Unit,
     onSplit: () -> Unit,
-    onNextRound: () -> Unit
+    onNextRound: () -> Unit,
+    balance: Int,
+    onAddBet: (Int) -> Unit
 ) {
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(gameState) {
+        isVisible = gameState == GameState.BETTING
+    }
+    val fanOutFraction by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+
     when (gameState) {
         GameState.BETTING -> {
-            ExtendedFloatingActionButton(
-                onClick = onDeal,
-                containerColor = if (activeBet >= 5) Color(0xFFFFD700) else Color(0xFF424242),
-                contentColor = if (activeBet >= 5) Color.Black else Color.Gray,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (activeBet >= 5) 6.dp else 2.dp)
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier.wrapContentSize()
             ) {
+                // Semi-circular Chips
+                if (fanOutFraction > 0f) {
+                    val radius = 125.dp * fanOutFraction
+                    // Chips properties: Value, Color, Border Color
+                    val chips = listOf(
+                        Triple(5, Color(0xFFE0E0E0), Color.DarkGray),
+                        Triple(10, Color(0xFF1E88E5), Color.Blue),
+                        Triple(25, Color(0xFF43A047), Color.Green),
+                        Triple(100, Color(0xFF000000), Color.White),
+                        Triple(500, Color(0xFFE53935), Color.DarkGray)
+                    )
+
+                    chips.forEachIndexed { index, chip ->
+                        val angleInRad = (index * 22.5) * Math.PI / 180.0
+                        val xOffset = (-5.dp.value - (radius.value * Math.cos(angleInRad))).dp
+                        val yOffset = (-5.dp.value - (radius.value * Math.sin(angleInRad))).dp
+
+                        Box(
+                            modifier = Modifier
+                                .offset(x = xOffset, y = yOffset)
+                                .graphicsLayer {
+                                    alpha = fanOutFraction
+                                    scaleX = fanOutFraction
+                                    scaleY = fanOutFraction
+                                }
+                        ) {
+                            val isDark = chip.first == 100
+                            CasinoChip(
+                                value = chip.first,
+                                color = chip.second,
+                                border = chip.third,
+                                labelColor = if (isDark) Color.White else Color.Black,
+                                onClick = { onAddBet(chip.first) }
+                            )
+                        }
+                    }
+                }
+
+                // Main circular Deal button with horizontal label Row matching player actions structure
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("🃏", fontSize = 18.sp)
-                    Text(
-                        text = if (activeBet >= 5) "DEAL HAND ($activeBet)" else "PLACE BET (Min $5)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp
-                    )
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = if (activeBet >= 5) "DEAL HAND ($activeBet)" else "PLACE BET (Min $5)",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                    FloatingActionButton(
+                        onClick = onDeal,
+                        containerColor = if (activeBet >= 5) Color(0xFFFFD700) else Color(0xFF424242),
+                        contentColor = if (activeBet >= 5) Color.Black else Color.Gray,
+                        shape = CircleShape
+                    ) {
+                        Text("🃏", fontSize = 24.sp)
+                    }
                 }
             }
         }
