@@ -37,14 +37,20 @@ To ensure pristine responsiveness, high-fidelity frame-based card animations, an
 
 ## 2. Core Features (The Requested Scope)
 
-### A. Professional Casino Rule Engine
-- **Standard Vegas Rules**: Game incorporates 8 standard 52-card decks shuffled together into a shoe. The virtual dealer strikes a classic hit-on-soft-17 policy (holds on hard 17, hits if Aces allow soft 17).
+### A. Professional Casino Rule Engine & Configurable Settings
+- **Modern 3:2 Payout Scale**: The game operates under standard professional casino rules, delivering a full 3:2 (1.5x profit) payout on natural Player Blackjacks, explicitly shunning modern inferior 6:5 traps.
+- **Rule Customization Settings Panel**: An in-app settings sheet lets users dynamically activate or deactivate specific table rules on the fly:
+  - *Dealer Soft 17 Behavior*: Toggle whether the dealer hits on a soft 17 or stands on all 17s.
+  - *Double Down Limitations*: Configure whether the player is allowed to "Double on Any Two Cards" or restricted to standard hard "9, 10, or 11" scores only.
+  - *Insurance Play Offertory*: Toggle the availability of Insurance when the dealer turns an Ace.
+  - *Total Split Allotment*: Configure the maximal split depth (allow splitting pair up to 2, 3, or 4 independent hands).
+  - *Advisor HUD Toggles*: Independent user toggles to show/hide the dynamic Basic Strategy Helper Advice and the Card Counting metrics in the visual top bar.
 - **Core Action Suite**:
   - **Hit**: Deal a card to the current active hand. Aces evaluate dynamically as 1 or 11 to maximize hand value without busting.
   - **Stand**: Conclude the action for the current hand and pass control to the next hand or the dealer.
-  - **Double Down**: Double the primary bet, obtain exactly one additional card, and stand immediately. Supported only on the initial two cards of a hand.
-  - **Split Pair Configuration**: If the initial two cards of a hand bear matching values (e.g., 8-8 or A-A), allow splitting them into two independent hands. Each hand receives its own secondary bet matching the primary stake, and is played out sequentially.
-  - **Insurance Offering**: When the dealer's face-up card is an Ace, the player can optionally buy insurance (amounting to 1/2 of their primary bet) against a dealer Blackjack, paying 2:1.
+  - **Double Down**: Double the primary bet, obtain exactly one additional card, and stand immediately. Supported only on the initial two cards of a hand, respecting the user's active settings.
+  - **Split Pair Configuration**: If the initial two cards of a hand bear matching values (e.g., 8-8 or A-A), allow splitting them into two independent hands. Each hand receives its own secondary bet matching the primary stake, and is played out sequentially up to the configured splits limit.
+  - **Insurance Offering**: When the dealer's face-up card is an Ace (and insurance is enabled in rules), the player can optionally buy insurance (amounting to 1/2 of their primary bet) against a dealer Blackjack, paying 2:1.
 
 ### B. Betting & Interactive Bankroll System
 - **Chip Betting Rail**: Visually intuitive betting rail containing clickable values: $5, $10, $25, $100, and $500 chips. Players can customize their primary bet, clear the table, or issue a "Rebet" matching their previous rounds.
