@@ -1903,33 +1903,6 @@ fun LeafletMapViewPane(
                     var map;
                     var mapInitialized = false;
                     var tempMarker = null;
-                    var isAllowedToInitialize = false;
-                    var countdown = 10;
-                    var countdownInterval;
-
-                    function startDeferredInit() {
-                        console.log("Page loaded. Starting 10s countdown for map creation...");
-                        var mapEl = document.getElementById('map');
-                        if (mapEl) {
-                            mapEl.innerHTML = "<div id='loader-status' style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f8fafc; color: #334155; font-family: sans-serif; text-align: center; padding: 12px; box-sizing: border-box;'><h3 style='margin: 0 0 6px 0; font-size: 15px;'>⏳ Deferred Init</h3><p style='margin: 0; font-size: 12px;'>Map will render in <span id='timer-count' style='color: #4CAF50; font-weight: bold; font-size: 16px;'>10</span>s...</p></div>";
-                        }
-                        countdownInterval = setInterval(function() {
-                            countdown--;
-                            var timerCountEl = document.getElementById('timer-count');
-                            if (timerCountEl) {
-                                timerCountEl.innerText = countdown;
-                            }
-                            if (countdown <= 0) {
-                                clearInterval(countdownInterval);
-                                isAllowedToInitialize = true;
-                                if (mapEl) {
-                                    mapEl.innerHTML = ""; // Clear loader
-                                }
-                                console.log("Initializing map after 10s deferral...");
-                                tryInitMap();
-                            }
-                        }, 1000);
-                    }
 
                     function initMap() {
                         if (mapInitialized) return;
@@ -1946,10 +1919,18 @@ fun LeafletMapViewPane(
                         console.log("Leaflet map created successfully.");
                         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-                        L.tileLayer('$tileUrl', {
+                        var tLayer = L.tileLayer('$tileUrl', {
                             maxZoom: 19,
-                            attribution: '© OSM'
-                        }).addTo(map);
+                            attribution: '© OSM',
+                            crossOrigin: true
+                        });
+                        tLayer.on('tileerror', function(error, tile) {
+                            console.error("TILE ERROR: Failed to load tile at coords: " + JSON.stringify(error.coords));
+                        });
+                        tLayer.on('tileload', function() {
+                            console.log("TILE LOADED successfully.");
+                        });
+                        tLayer.addTo(map);
                         console.log("Leaflet Tile layer set with tileUrl: $tileUrl");
 
                         // Add event markers
@@ -1998,10 +1979,6 @@ fun LeafletMapViewPane(
                     }
 
                     function tryInitMap() {
-                        if (!isAllowedToInitialize) {
-                            console.log("tryInitMap bypassed: deferral in progress.");
-                            return;
-                        }
                         if (typeof L !== 'undefined' && document.getElementById('map')) {
                             initMap();
                         }
@@ -2066,7 +2043,7 @@ fun LeafletMapViewPane(
 
                     window.addEventListener('load', function() {
                         fixMapSize();
-                        startDeferredInit();
+                        tryInitMap();
                     });
                     window.addEventListener('resize', fixMapSize);
                     setInterval(fixMapSize, 1500);
@@ -2082,10 +2059,8 @@ fun LeafletMapViewPane(
                     }
                     #map {
                         position: absolute;
-                        top: 25%;
-                        left: 25%;
-                        width: 50%;
-                        height: 50%;
+                        top: 0; bottom: 0; left: 0; right: 0;
+                        width: 100%; height: 100%;
                         border: 6px solid #4CAF50 !important; /* Green diagnosis border around the map */
                         box-sizing: border-box;
                     }
@@ -2137,6 +2112,10 @@ fun LeafletMapViewPane(
                 databaseEnabled = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
+                userAgentString = "FraiseAgendaApp/1.0 (Android; com.example.cameraxapp)"
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                }
             }
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
@@ -2195,7 +2174,7 @@ fun LeafletMapViewPane(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://agenda.local/map_view.html", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("http://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -2395,10 +2374,18 @@ fun LeafletComposeMap(
                     map = L.map('map', { zoomControl: false }).setView([$initialLatitude, $initialLongitude], $initialZoom);
                     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-                    L.tileLayer('$tileUrl', {
+                    var tLayer = L.tileLayer('$tileUrl', {
                         maxZoom: 19,
-                        attribution: '© OSM'
-                    }).addTo(map);
+                        attribution: '© OSM',
+                        crossOrigin: true
+                    });
+                    tLayer.on('tileerror', function(error, tile) {
+                        console.error("Picker TILE ERROR: Failed to load tile at coords: " + JSON.stringify(error.coords));
+                    });
+                    tLayer.on('tileload', function() {
+                        console.log("Picker TILE LOADED successfully.");
+                    });
+                    tLayer.addTo(map);
 
                     marker = L.marker([$initialLatitude, $initialLongitude], { draggable: true }).addTo(map);
                     marker.bindPopup("<b>Select Location</b><br>Drag me or click map.").openPopup();
@@ -2524,6 +2511,10 @@ fun LeafletComposeMap(
                 databaseEnabled = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
+                userAgentString = "FraiseAgendaApp/1.0 (Android; com.example.cameraxapp)"
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                }
             }
             webChromeClient = object : android.webkit.WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
@@ -2575,7 +2566,7 @@ fun LeafletComposeMap(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("https://agenda.local/map_picker.html", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("http://localhost/map_picker.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     androidx.compose.ui.viewinterop.AndroidView(
