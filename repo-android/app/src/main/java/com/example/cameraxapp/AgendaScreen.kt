@@ -1698,6 +1698,61 @@ fun LeafletMapViewPane(
             </body>
             </html>
             """.trimIndent()
+        } else if (diagnosticMode == 9) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <title>Test 9</title>
+                <style>
+                    body, html { margin: 0; padding: 0; background: #fff; width: 100vw; height: 100vh; overflow: hidden; }
+                    #map { width: 100vw; height: 100vh; background-color: #fca; }
+                </style>
+            </head>
+            <body>
+                <div id="map"></div>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+                <script>
+                    window.onload = function() {
+                        var map = L.map('map', {zoomControl: false}).setView([$defaultLat, $defaultLng], $defaultZoom);
+                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                        console.log("Diag 9: 100vw/100vh container started.");
+                    };
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
+        } else if (diagnosticMode == 10) {
+            """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <title>Test 10</title>
+                <style>
+                    body, html { margin: 0; padding: 0; background: #fff; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+                    #map { flex: 1; background-color: #acf; }
+                </style>
+            </head>
+            <body>
+                <div id="map"></div>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+                <script>
+                    window.onload = function() {
+                        var map = L.map('map', {zoomControl: false}).setView([$defaultLat, $defaultLng], $defaultZoom);
+                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                        console.log("Diag 10: flex container started.");
+                        setTimeout(function(){ map.invalidateSize(); }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+            """.trimIndent()
         } else if (mapEngineType == 1) {
             """
             <!DOCTYPE html>
@@ -2174,7 +2229,7 @@ fun LeafletMapViewPane(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("http://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("https://localhost/map_view.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -2282,6 +2337,22 @@ fun LeafletMapViewPane(
                     modifier = Modifier.height(28.dp)
                 ) {
                     Text("8: Geo", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 9 },
+                    colors = if (diagnosticMode == 9) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("9: 100vw", fontSize = 10.sp, color = Color.White)
+                }
+                Button(
+                    onClick = { diagnosticMode = 10 },
+                    colors = if (diagnosticMode == 10) btnColorSelected else btnColorNormal,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.height(28.dp)
+                ) {
+                    Text("10: Flex", fontSize = 10.sp, color = Color.White)
                 }
             }
         }
@@ -2566,7 +2637,7 @@ fun LeafletComposeMap(
     }
 
     LaunchedEffect(mapHtml) {
-        webView.loadDataWithBaseURL("http://localhost/map_picker.html", mapHtml, "text/html", "UTF-8", null)
+        webView.loadDataWithBaseURL("https://localhost/map_picker.html", mapHtml, "text/html", "UTF-8", null)
     }
 
     androidx.compose.ui.viewinterop.AndroidView(
