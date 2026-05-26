@@ -300,5 +300,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Extend the `LeafletComposeMap` to accept custom Map Options (like `doubleClickZoom` or `dragging` toggles) as a dynamic configuration dictionary, serialize these options down to the WebView, and decode them inside the injected JS setup to mold the Leaflet map behavior on the fly.
 - **Complexity**: Part 4
 
+### 47. Android Leaflet Map HTML Live Sandbox & Webview Injection (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AgendaScreen.kt`
+- **Goal**: Master dynamic WebView integration within Android Jetpack Compose, including loading live user-edited raw HTML/JS code safely into a sandbox environment, managing input states using OutlinedTextField controls, and maintaining bidirectional JavaScript communication over Android Bridges during live runtime updates.
+- **Exercise**: Create a custom HTML template helper or a new dropdown selector in `LeafletMapViewPane` to let the user select between distinct preset Leaflet map designs (such as a monochrome vintage look, a night-mode terrain overlay, or standard streets). Ensure selecting a design immediately updates the editable text area with the corresponding pre-filled HTML code.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
