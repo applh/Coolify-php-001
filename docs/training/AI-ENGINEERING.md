@@ -50,6 +50,16 @@ Modern fullstack development now includes a "Fourth Layer": The AI Layer. This m
     - **Task**: Look at `src/views/SiteEditor.vue`.
     - **Exercise**: Add a "Verify & Apply" step where the AI suggests a change, but the user must click a button to execute the file edit.
 
+## 5. Active Diagnostics & Multi-Stack Troubleshooting Protocols
+**Goal**: Master prompt structure formulation and dynamic tool call recovery routines to resolve integration blocks and API model deprecations.
+
+- **Lab 1: Prompt Construction for Multi-Stack Healing**
+    - **Reference**: `docs/user-guides/setup-and-troubleshooting.md`
+    - **Task**: Study the standard prompt templates for active API upgrades, responsive style debugging, TypeScript diagnostics, and docker-compose volume mapping permissions.
+    - **Exercise**: Create a new mock bug report with nested stack traces involving a 500 error from a deprecated Gemini SDK version. Write a high-fidelity diagnostic prompt that successfully guides an AI agent to resolve it without losing existing system logic or using mock data.
+    - **Complexity**: Part 4 Integration (Medium-High)
+
 ## Complexity Levels
 - **Part 3 Integration**: Prompt Engineering & API Basics.
+- **Part 4 Integration**: Multi-Stack Diagnostics & Prompt Engineering.
 - **Part 5 Integration**: Tool Calling & RAG Architecture.

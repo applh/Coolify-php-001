@@ -1253,7 +1253,7 @@ fun LeafletMapViewPane(
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
             <style>
                 html, body { height: 100%; margin: 0; }
-                #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box; }
+                #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; background-color: lightgreen; box-sizing: border-box; }
             </style>
         </head>
         <body>
@@ -1733,11 +1733,14 @@ fun LeafletMapViewPane(
                 <title>Test 9</title>
                 <style>
                     body, html { margin: 0; padding: 0; background: #fff; width: 100vw; height: 100vh; overflow: hidden; }
-                    #map { width: 100vw; height: 100vh; background-color: #fca; border: 4px solid red; box-sizing: border-box; }
+                    #map-container { width: 100vw; height: 100vh; position: relative; }
+                    #map { width: 100%; height: 100%; background-color: #fca; box-sizing: border-box; }
                 </style>
             </head>
             <body>
-                <div id="map"></div>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
                 <script>
@@ -1760,11 +1763,14 @@ fun LeafletMapViewPane(
                 <title>Test 10</title>
                 <style>
                     body, html { margin: 0; padding: 0; background: #fff; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-                    #map { flex: 1; background-color: #acf; border: 4px solid red; box-sizing: border-box; }
+                    #map-container { flex: 1; display: flex; position: relative; width: 100%; height: 100%; }
+                    #map { width: 100%; height: 100%; background-color: #acf; box-sizing: border-box; }
                 </style>
             </head>
             <body>
-                <div id="map"></div>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
                 <script>
@@ -1795,8 +1801,11 @@ fun LeafletMapViewPane(
                     body, html {
                         margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, sans-serif;
                     }
+                    #map-container {
+                        margin: 0; padding: 0; width: 100%; height: 100%; position: relative;
+                    }
                     #map {
-                        margin: 0; padding: 0; width: 100%; height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box;
+                        width: 100%; height: 100%; background-color: lightgreen; box-sizing: border-box;
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -1820,7 +1829,9 @@ fun LeafletMapViewPane(
                     <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
                     <button id="search-btn" onclick="doSearch()">Search</button>
                 </div>
-                <div id="map"></div>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
                 <script>
                     var map;
                     var tempMarker = null;
@@ -2140,16 +2151,14 @@ fun LeafletMapViewPane(
                         position: relative;
                         font-family: -apple-system, sans-serif;
                     }
-                    #map {
+                    #map-container {
                         position: absolute;
                         top: 0; bottom: 0; left: 0; right: 0;
                         width: 100%; height: 100%;
-                        border: 6px solid #4CAF50 !important; /* Green diagnosis border around the map */
-                        box-sizing: border-box;
                     }
-                    /* Diagnostic borders on each individual GIS tile layer */
-                    .leaflet-tile {
-                        border: 1px solid #FF5722 !important;
+                    #map {
+                        width: 100%; height: 100%;
+                        box-sizing: border-box;
                     }
                     #search-box {
                         position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -2180,7 +2189,9 @@ fun LeafletMapViewPane(
                     <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
                     <button id="search-btn" onclick="doSearch()">Search</button>
                 </div>
-                <div id="map"></div>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
             </body>
             </html>
             """.trimIndent()
@@ -2273,11 +2284,13 @@ fun LeafletMapViewPane(
                         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
                         <style>
                             html, body { height: 100%; margin: 0; }
-                            #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; border: 4px solid red; background-color: lightgreen; box-sizing: border-box; }
+                            #map { height: 400px; width: 600px; max-width: 100%; max-height: 100%; background-color: lightgreen; box-sizing: border-box; }
                         </style>
                     </head>
                     <body>
-                        <div id="map"></div>
+                        <div id="map-container">
+                            <div id="map"></div>
+                        </div>
                         <script>
                             const map = L.map('map').setView([51.505, -0.09], 13);
                             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -2424,16 +2437,14 @@ fun LeafletComposeMap(
                     position: relative;
                     font-family: -apple-system, sans-serif;
                 }
-                #map {
+                #map-container {
                     position: absolute;
                     top: 0; bottom: 0; left: 0; right: 0;
                     width: 100%; height: 100%;
-                    border: 6px solid #2196F3 !important; /* Blue diagnosis border around the picker map */
-                    box-sizing: border-box;
                 }
-                /* Diagnostic borders on each individual GIS tile layer */
-                .leaflet-tile {
-                    border: 1px solid #FF5722 !important;
+                #map {
+                    width: 100%; height: 100%;
+                    box-sizing: border-box;
                 }
                 #search-box {
                     position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000;
@@ -2457,7 +2468,9 @@ fun LeafletComposeMap(
                 <input type="text" id="search-input" placeholder="Search address, city..." onkeydown="if(event.key==='Enter') doSearch()" />
                 <button id="search-btn" onclick="doSearch()">Search</button>
             </div>
-            <div id="map"></div>
+            <div id="map-container">
+                <div id="map"></div>
+            </div>
             <script>
                 var map;
                 var mapInitialized = false;
