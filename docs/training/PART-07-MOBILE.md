@@ -396,5 +396,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an expanding/collapsing radial menu trigger on the bottom-left leave button that reveals additional utility items (e.g. sound toggle or help quick-view) with a smooth elastic entry animation when long-pressed.
 - **Complexity**: Part 3
 
+### 63. Android System Custom Keyboard: InputMethodService & Jetpack Compose IME Integration (15h)
+- **Reference**: `repo-android/docs/custom-keyboard-plan.md`
+- **Goal**: Master implementing a system-wide custom soft keyboard using Android's `InputMethodService` that hosts dynamic, theme-adaptive Jetpack Compose key setups (featuring tactile feedback controllers, database-hooked clipboard histories, and Gemini AI-prompter direct inline content streaming).
+- **Exercise**: Author the target QWERTY keyboard composable, configure the lifecycle owners inside the custom IME Service structure to ensure crash-free execution, and write background handlers that enable users to run text selection selections through remote Gemini rewrite engines to update target fields inline.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
