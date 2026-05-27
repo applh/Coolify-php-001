@@ -372,5 +372,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom setting that allows players to toggle between ascending and descending sort directions on the Hall of Fame leaderboard records list, and add a custom animation (such as a confetti or money shower particle effect) when a new high score is registered and saved.
 - **Complexity**: Part 4
 
+### 59. RogueCompose Applet: Procedural Dungeon Construction & Permadeath Auto-Saving (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/`
+- **Goal**: Understand procedural level generation algorithms (random carver setups), symmetrical board states, local database persistence across device lifecycles, real-time tone synthesis overlays with `ToneGenerator`, and enforcing permadeath in a mobile RPG.
+- **Exercise**: Implement a secondary merchant shop inside custom floor maps that allows players to trade gold for random health and mana potions, update the local SQLite database schema to support gold totals and potion inventories saving on every step, and trigger a synthesized chime when shopping.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

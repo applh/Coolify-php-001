@@ -61,6 +61,7 @@ import com.example.cameraxapp.core.framework.impl.BrowserApplet
 import com.example.cameraxapp.core.framework.impl.FilesApplet
 import com.example.cameraxapp.core.framework.impl.DebugApplet
 import com.example.cameraxapp.core.framework.impl.BlackjackApplet
+import com.example.cameraxapp.core.framework.impl.RoguelikeApplet
 
 class MainActivity : ComponentActivity() {
 
@@ -90,6 +91,7 @@ class MainActivity : ComponentActivity() {
         AppletRegistry.register(FilesApplet())
         AppletRegistry.register(DebugApplet())
         AppletRegistry.register(BlackjackApplet())
+        AppletRegistry.register(RoguelikeApplet())
 
         updatePermissionState()
         
@@ -155,7 +157,8 @@ class MainActivity : ComponentActivity() {
                         AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
                         AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
                         AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
-                        AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor")
+                        AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
+                        AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving")
                     )
                 }
 
