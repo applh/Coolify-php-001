@@ -336,5 +336,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a customized fanning pattern that expands the semi-circular betting arc from 90° up to 120° dynamically when the user rotates the device, allowing additional special high-risk $1000 and $5000 chip options to animate smoothly into view.
 - **Complexity**: Part 4
 
+### 53. Android Blackjack Betting UX: Conditional Wallet Handling & Corner Controls (10h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Understand how to implement custom context-aware UI/UX states in Jetpack Compose, specifically hiding standard betting controls when a player's wallet balance is depleted and conditionally displaying a recovery reload action in the bottom-left corner.
+- **Exercise**: Extend the bottom-left conditional controls to add a smooth fade-in/out transition using `AnimatedVisibility` when shifting from standard betting buttons (`CLEAR BET` / `SAME BET`) to the `RELOAD` button when the wallet balance hits 0.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
