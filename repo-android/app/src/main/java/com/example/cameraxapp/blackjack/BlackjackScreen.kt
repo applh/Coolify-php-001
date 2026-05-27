@@ -208,6 +208,7 @@ fun BlackjackScreen(
     val settings by viewModel.settings
     val isSecondHidden by viewModel.isDealerSecondCardHidden
     val roundResultText by viewModel.roundResultText
+    val previousBet by viewModel.previousBet
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showStatsDialog by remember { mutableStateOf(false) }
@@ -401,33 +402,46 @@ fun BlackjackScreen(
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    if (gameState == GameState.BETTING) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedButton(
-                                onClick = { viewModel.clearBet() },
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f))
-                            ) {
-                                Text("CLEAR BET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                            Button(
-                                onClick = { viewModel.rebet() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700), contentColor = Color.Black)
-                            ) {
-                                Text("REPEAT REBET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Reserve spacing so the scrolling content clears the overlaid bottom FABs
                 Spacer(modifier = Modifier.height(115.dp))
+            }
+
+            if (gameState == GameState.BETTING) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = { viewModel.clearBet() },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Black.copy(alpha = 0.6f),
+                            contentColor = Color.White
+                        ),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text("CLEAR BET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = { viewModel.rebet() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFD700),
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text("SAME BET ($$previousBet)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
 
             // Slide out Overlay Dialogs configurations
