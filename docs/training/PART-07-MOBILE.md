@@ -402,5 +402,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Author the target QWERTY keyboard composable, configure the lifecycle owners inside the custom IME Service structure to ensure crash-free execution, and write background handlers that enable users to run text selection selections through remote Gemini rewrite engines to update target fields inline.
 - **Complexity**: Part 4
 
+### 64. Custom Compose IME: Robust ViewTree Lifecycle and State Owner Registration (10h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/keyboard/FraiseInputMethodService.kt`
+- **Goal**: Understand how to register system-level lifecycle, view-model, and saved-state registry owners on individual `ComposeView` objects when they are inflated outside standard Activities (like in custom `InputMethodService` or background broadcast systems). Learn why fully-qualified class-level setter methods (e.g., `ViewTreeLifecycleOwner.set`) are more robust and prevent Kotlin package-level extension-function resolution errors.
+- **Exercise**: Explain the structural layout lifecycle of a virtual keyboard, and modify the IME View creation code to log current states during lifecycle transitions (ON_CREATE, ON_START, ON_DESTROY) to verify owners are fully registered.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

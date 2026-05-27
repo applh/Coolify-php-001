@@ -67,9 +67,9 @@ class FraiseInputMethodService : InputMethodService(), LifecycleOwner, ViewModel
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
 
         return ComposeView(this).apply {
-            androidx.lifecycle.setViewTreeLifecycleOwner(this, this@FraiseInputMethodService)
-            androidx.lifecycle.setViewTreeViewModelStoreOwner(this, this@FraiseInputMethodService)
-            androidx.savedstate.setViewTreeSavedStateRegistryOwner(this, this@FraiseInputMethodService)
+            ViewTreeLifecycleOwner.set(this, this@FraiseInputMethodService)
+            ViewTreeViewModelStoreOwner.set(this, this@FraiseInputMethodService)
+            ViewTreeSavedStateRegistryOwner.set(this, this@FraiseInputMethodService)
 
             setContent {
                 KeyboardRootScreen(
