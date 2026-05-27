@@ -568,7 +568,7 @@ fun KeyboardRootScreen(
                                                         onActionPress()
                                                     }
                                                     "Space" -> {
-                                                        onKeyPress(' '.toInt())
+                                                        onKeyPress(' '.code)
                                                     }
                                                     else -> {
                                                         val finalChar = if (shiftOn && !symbolsOn) {

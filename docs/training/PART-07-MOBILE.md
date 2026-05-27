@@ -408,5 +408,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Explain the structural layout lifecycle of a virtual keyboard, and modify the IME View creation code to log current states during lifecycle transitions (ON_CREATE, ON_START, ON_DESTROY) to verify owners are fully registered.
 - **Complexity**: Part 3
 
+### 65. Android Code Quality: Non-Deprecated API Migration & Material 3 Alignment (5h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/keyboard/FraiseInputMethodService.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/media/ImagePdfScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Understand how to identify, resolve, and migrate deprecated Kotlin and Jetpack Compose component patterns to modern APIs. Master replacing `Char.toInt()` with the robust standard Kotlin `Char.code` property, upgrading deprecated `Divider` components to Material 3 standard `HorizontalDivider` components, and migrating legacy direction-based icons (such as `KeyboardArrowLeft` and `KeyboardArrowRight`) to official Compose `Icons.AutoMirrored.Filled` equivalents to honor strict modern layout standards.
+- **Exercise**: Review the compiler warnings and deprecation logs in a Jetpack Compose project. Migrate any remaining directional cursor icons to their `Icons.AutoMirrored` counterparts, and convert deprecated simple custom dividers to modern Material 3 `HorizontalDivider` layouts with customized thick and color attributes.
+- **Complexity**: Part 2
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

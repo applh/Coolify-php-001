@@ -12,10 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -587,7 +587,7 @@ fun TouchDPad(onMove: (Int, Int) -> Unit) {
                     .background(Color(0xFF1A1A1A), RoundedCornerShape(20))
                     .size(42.dp)
             ) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Move Left", tint = Color.LightGray)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Move Left", tint = Color.LightGray)
             }
 
             // WAIT turn option
@@ -607,7 +607,7 @@ fun TouchDPad(onMove: (Int, Int) -> Unit) {
                     .background(Color(0xFF1A1A1A), RoundedCornerShape(20))
                     .size(42.dp)
             ) {
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Move Right", tint = Color.LightGray)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Move Right", tint = Color.LightGray)
             }
         }
 
@@ -662,7 +662,7 @@ fun InventoryDrawerModal(
                     }
                 }
 
-                Divider(color = Color(0xFF2C2C2C), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(color = Color(0xFF2C2C2C), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
 
                 if (items.isEmpty()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -813,7 +813,7 @@ fun ScoresView(
                 }
             }
 
-            Divider(color = Color.DarkGray, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(color = Color.DarkGray, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
 
             if (highScores.isEmpty()) {
                 Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {

@@ -389,7 +389,7 @@ fun ImagePdfScreen(
                         }
                     }
 
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
                     // Quality slider input
                     Row(
