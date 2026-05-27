@@ -384,5 +384,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a local test scenario that takes a multi-selected array of picture Uris, computes scale compression metrics dynamically displaying live simulated kilobyte savings, and merges them sequentially into a single target PDF document stored securely within the private Files directory.
 - **Complexity**: Part 4
 
+### 61. Android Applet Discovery & Launcher Integration Layout Refactoring (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/MainActivity.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/SettingsScreen.kt`
+- **Goal**: Understand the configuration of modular, dynamically listable, and draggable applets on the mobile launcher. Master aligning registration arrays between Settings, Main Hub, and Startup landing configuration dialogs, and diagnosing index discrepancies where existing screens are compiled but omitted from UI layouts.
+- **Exercise**: Add a brand-new custom background utility route `"system_monitor"` to all active launchers and layout configuration lists, define an appropriate high-contrast Material background color mapping within `getAppletColor`, and ensure list synchronization is preserved during user selection resets.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

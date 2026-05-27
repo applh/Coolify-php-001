@@ -109,7 +109,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 
     val activeRoutes = remember(launcherActiveAppletsStr) {
         if (launcherActiveAppletsStr.isEmpty()) {
-            listOf("camera", "files", "ai_team", "cronjobs", "db", "agenda", "wallpaper", "backup", "settings", "browser").toSet()
+            listOf(
+                "camera", "files", "ai_team", "cronjobs", "db", "agenda", "wallpaper", "backup", "settings", "browser",
+                "blackjack", "roguecompose", "debug"
+            ).toSet()
         } else {
             try {
                 val arr = org.json.JSONArray(launcherActiveAppletsStr)
@@ -137,7 +140,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             "wallpaper" to "Wallpaper Auto-Rotation",
             "backup" to "Backup Manager",
             "settings" to "Global App Settings",
-            "browser" to "Sandbox Web Browser"
+            "browser" to "Sandbox Web Browser",
+            "debug" to "Diagnostics & Debug Logs",
+            "blackjack" to "Vegas Blackjack Table",
+            "roguecompose" to "RogueCompose Level RPG"
         )
     }
 
@@ -151,7 +157,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             "agenda" to "Agenda & Calendar Scheduler",
             "wallpaper" to "Wallpaper Auto-Rotation",
             "backup" to "Backup Manager",
-            "browser" to "Sandbox Web Browser"
+            "browser" to "Sandbox Web Browser",
+            "debug" to "Diagnostics & Debug Logs",
+            "blackjack" to "Vegas Blackjack Table",
+            "roguecompose" to "RogueCompose Level RPG"
         )
     }
 
@@ -911,7 +920,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     "wallpaper" to "Wallpaper Auto-Rotation",
                     "backup" to "Backup Manager",
                     "settings" to "Global App Settings",
-                    "browser" to "Sandbox Web Browser"
+                    "browser" to "Sandbox Web Browser",
+                    "debug" to "Diagnostics & Debug Logs",
+                    "blackjack" to "Vegas Blackjack Table",
+                    "roguecompose" to "RogueCompose Level RPG"
                 )
             }
             AlertDialog(

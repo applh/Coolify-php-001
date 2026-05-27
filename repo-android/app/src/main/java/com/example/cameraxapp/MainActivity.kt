@@ -412,6 +412,8 @@ fun getAppletColor(route: String): androidx.compose.ui.graphics.Color {
         "settings" -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)    // Blue Grey
         "browser" -> androidx.compose.ui.graphics.Color(0xFFFFE082)     // Soft Gold/Yellow
         "blackjack" -> androidx.compose.ui.graphics.Color(0xFF80C080)   // Casino Light Felt Green
+        "roguecompose" -> androidx.compose.ui.graphics.Color(0xFFCE93D8) // Light Purple / Amethyst
+        "debug" -> androidx.compose.ui.graphics.Color(0xFFB0BEC5)       // System Gray
         else -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)          // Fallback
     }
 }
@@ -537,7 +539,8 @@ fun HubScreen(
             AppletInfo("Settings", "settings", Icons.Default.Settings, "Global app configuration"),
             AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
             AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
-            AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor")
+            AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
+            AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving")
         )
     }
 
