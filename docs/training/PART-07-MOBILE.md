@@ -414,5 +414,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Review the compiler warnings and deprecation logs in a Jetpack Compose project. Migrate any remaining directional cursor icons to their `Icons.AutoMirrored` counterparts, and convert deprecated simple custom dividers to modern Material 3 `HorizontalDivider` layouts with customized thick and color attributes.
 - **Complexity**: Part 2
 
+### 66. Android Responsive Jetpack Compose Gaming Canvas & Screen Orientation Metrics (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/docs/blackjack-responsive-layout-plan.md`
+- **Goal**: Learn how to implement highly responsive adaptive layouts in Jetpack Compose by targeting different device screen buckets (portrait and landscape orientations for both smartphones and premium tablets). Master configuring layout splits, dynamic scaling parameters (e.g. card sizes, avatar badges, spacer heights), and trigonometric speed-dial coordinates relative to dynamic viewport contexts.
+- **Exercise**: Implement a secondary conditional check inside the mobile header to show extra descriptive tooltip badges when in landscape mode, allowing players to view standard Vegas rules information in the header without collapsing existing items.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
