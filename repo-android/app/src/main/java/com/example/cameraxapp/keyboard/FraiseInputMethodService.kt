@@ -23,7 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.*
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.cameraxapp.AgendaDatabaseHelper
 import com.example.cameraxapp.SettingsRepository
 import com.example.cameraxapp.ClipboardItem
@@ -67,9 +70,9 @@ class FraiseInputMethodService : InputMethodService(), LifecycleOwner, ViewModel
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
 
         return ComposeView(this).apply {
-            ViewTreeLifecycleOwner.set(this, this@FraiseInputMethodService)
-            ViewTreeViewModelStoreOwner.set(this, this@FraiseInputMethodService)
-            ViewTreeSavedStateRegistryOwner.set(this, this@FraiseInputMethodService)
+            setViewTreeLifecycleOwner(this@FraiseInputMethodService)
+            setViewTreeViewModelStoreOwner(this@FraiseInputMethodService)
+            setViewTreeSavedStateRegistryOwner(this@FraiseInputMethodService)
 
             setContent {
                 KeyboardRootScreen(
