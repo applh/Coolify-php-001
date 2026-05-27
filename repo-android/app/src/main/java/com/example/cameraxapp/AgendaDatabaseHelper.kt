@@ -51,6 +51,12 @@ data class DebugLogEntry(
     val stackTrace: String? = null
 )
 
+data class ClipboardItem(
+    val id: Int,
+    val content: String,
+    val timestamp: Long
+)
+
 class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
@@ -102,6 +108,23 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val COL_DEBUG_LEVEL = "level"
         const val COL_DEBUG_MESSAGE = "message"
         const val COL_DEBUG_STACK_TRACE = "stack_trace"
+
+        // Keyboard Clipboard Table
+        const val TABLE_CLIPBOARD = "keyboard_clipboard"
+        const val COL_CLIPBOARD_ID = "id"
+        const val COL_CLIPBOARD_CONTENT = "content"
+        const val COL_CLIPBOARD_TIMESTAMP = "timestamp"
+    }
+
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS $TABLE_CLIPBOARD (
+                $COL_CLIPBOARD_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_CLIPBOARD_CONTENT TEXT NOT NULL,
+                $COL_CLIPBOARD_TIMESTAMP INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -163,6 +186,15 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 $COL_DEBUG_LEVEL TEXT NOT NULL,
                 $COL_DEBUG_MESSAGE TEXT NOT NULL,
                 $COL_DEBUG_STACK_TRACE TEXT
+            )
+        """.trimIndent())
+
+        // Create keyboard clipboard table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS $TABLE_CLIPBOARD (
+                $COL_CLIPBOARD_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COL_CLIPBOARD_CONTENT TEXT NOT NULL,
+                $COL_CLIPBOARD_TIMESTAMP INTEGER NOT NULL
             )
         """.trimIndent())
 
@@ -557,5 +589,52 @@ class AgendaDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
     fun clearDebugLogs(): Int {
         val db = writableDatabase
         return db.delete(TABLE_DEBUG_LOGS, null, null)
+    }
+
+    // --- Keyboard Clipboard API ---
+    fun getAllClipboardItems(): List<ClipboardItem> {
+        val list = mutableListOf<ClipboardItem>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_CLIPBOARD ORDER BY $COL_CLIPBOARD_TIMESTAMP DESC LIMIT 50", null)
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    list.add(
+                        ClipboardItem(
+                            id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_CLIPBOARD_ID)),
+                            content = cursor.getString(cursor.getColumnIndexOrThrow(COL_CLIPBOARD_CONTENT)),
+                            timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COL_CLIPBOARD_TIMESTAMP))
+                        )
+                    )
+                } while (cursor.moveToNext())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cursor.close()
+        }
+        return list
+    }
+
+    fun addClipboardItem(content: String): Long {
+        if (content.trim().isEmpty()) return -1
+        val db = writableDatabase
+        try {
+            // Avoid duplicate items in recent clipboard
+            db.delete(TABLE_CLIPBOARD, "$COL_CLIPBOARD_CONTENT = ?", arrayOf(content))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        val values = ContentValues().apply {
+            put(COL_CLIPBOARD_CONTENT, content)
+            put(COL_CLIPBOARD_TIMESTAMP, System.currentTimeMillis())
+        }
+        return db.insert(TABLE_CLIPBOARD, null, values)
+    }
+
+    fun deleteClipboardItem(id: Int): Int {
+        val db = writableDatabase
+        return db.delete(TABLE_CLIPBOARD, "$COL_CLIPBOARD_ID = ?", arrayOf(id.toString()))
     }
 }

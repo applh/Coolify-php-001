@@ -79,6 +79,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     var backupExpanded by remember { mutableStateOf(false) }
     var mappingExpanded by remember { mutableStateOf(false) }
     var launcherExpanded by remember { mutableStateOf(false) }
+    var keyboardSectionExpanded by remember { mutableStateOf(false) }
 
     val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
 
@@ -775,6 +776,50 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                         }
                     )
                 }
+            }
+
+            // Custom Soft Keyboard Collapsible Panel
+            CollapsibleSection(
+                title = "🍓 Fraise Custom Software Keyboard",
+                expanded = keyboardSectionExpanded,
+                onToggle = { keyboardSectionExpanded = !keyboardSectionExpanded }
+            ) {
+                ListItem(
+                    headlineContent = { Text("How to Enable Keyboard") },
+                    supportingContent = {
+                        Text("1. Open system settings and head to Languages & Input.\n2. Tap Manage On-screen Keyboards and toggle \"🍓 FRAISE Custom Keyboard\" on.\n3. Tap a text field, bring up your current keyboard, tap the bottom keyboard selector, and select Fraise Keyboard!")
+                    }
+                )
+
+                ListItem(
+                    headlineContent = { Text("Dynamic Clipboard Manager") },
+                    supportingContent = {
+                        Text("Stores standard clipboard copies directly inside local SQLite data. Use the visual Clipboard ribbon on the keyboard co-pilot bar to inspect and paste.")
+                    }
+                )
+
+                ListItem(
+                    headlineContent = { Text("Gemini AI Co-Pilot Integrals") },
+                    supportingContent = {
+                        Text("Enables lightning-fast direct inline text rewrites, rephrases and format summaries using the robust gemini-2.5-flash model.")
+                    }
+                )
+
+                ListItem(
+                    headlineContent = { Text("Open Android Input Settings") },
+                    supportingContent = {
+                        Text("Launch system settings directly to toggle input methods quickly.")
+                    },
+                    modifier = Modifier.clickable {
+                        try {
+                            val intent = android.content.Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS)
+                            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Could not open settings.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                )
             }
             
             Spacer(modifier = Modifier.height(32.dp))
