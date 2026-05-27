@@ -673,6 +673,36 @@ fun CardCountingHud(runningCount: Int, trueCount: Double) {
 }
 
 @Composable
+fun CompactStrategyAdvice(adviceText: String) {
+    Box(
+        modifier = Modifier
+            .background(Color(0xFFFDF7E7), RoundedCornerShape(20.dp))
+            .border(1.dp, Color(0xFFFAEBCC), RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Coach Strategy Hint",
+                modifier = Modifier.size(14.dp),
+                tint = Color(0xFF8A6D3B)
+            )
+            Text(
+                text = adviceText,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = Color(0xFF8A6D3B),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
 fun StrategyAdviceHud(adviceText: String) {
     Card(
         colors = CardDefaults.cardColors(
@@ -851,6 +881,14 @@ fun DealerSection(
     score: Int,
     gameState: GameState
 ) {
+    val animatedDealerScore by animateIntAsState(
+        targetValue = score,
+        animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+    )
+
+    val isBust = score > 21
+    val isBlackjack = !isSecondCardHidden && cards.size == 2 && score == 21
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.25f)),
         shape = RoundedCornerShape(12.dp),
@@ -877,28 +915,6 @@ fun DealerSection(
                             color = Color.White
                         )
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    if (cards.isNotEmpty()) {
-                        val animatedDealerScore by animateIntAsState(
-                            targetValue = score,
-                            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .background(Color.Yellow.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
-                                .border(1.5.dp, Color.Yellow, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = animatedDealerScore.toString(),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    color = Color.Yellow,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 20.sp
-                                )
-                            )
-                        }
-                    }
                 }
             }
 
@@ -915,6 +931,13 @@ fun DealerSection(
                 }
                 item {
                     Spacer(modifier = Modifier.width(110.dp))
+                }
+                item {
+                    TotalCard(
+                        scoreText = if (cards.isEmpty()) "0" else animatedDealerScore.toString(),
+                        isBust = isBust,
+                        isBlackjack = isBlackjack
+                    )
                 }
                 if (cards.isEmpty()) {
                     item {
@@ -1094,10 +1117,6 @@ fun PlayerSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        if (showStrategyHud) {
-            StrategyAdviceHud(adviceText = adviceMessage)
-        }
-
         val (rank, rankEmoji) = getPlayerRankAndEmoji(balance = walletBalance)
 
         if (hands.isEmpty()) {
@@ -1112,25 +1131,33 @@ fun PlayerSection(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "PLAYER",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                fontSize = 28.sp,
-                                color = Color.White
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "PLAYER",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 28.sp,
+                                    color = Color.White
+                                )
                             )
-                        )
-                        Text(
-                            text = "($rank $rankEmoji)",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = Color(0xFFE0B0FF),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                            Text(
+                                text = "($rank $rankEmoji)",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color(0xFFE0B0FF),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
                             )
-                        )
+                        }
+                        if (showStrategyHud && adviceMessage.isNotEmpty()) {
+                            CompactStrategyAdvice(adviceText = adviceMessage)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -1249,10 +1276,13 @@ fun PlayerSection(
                                                  fontSize = 10.sp
                                              )
                                          )
-                                     }
-                                 }
-                             }
-                         }
+                                    }
+                                }
+                            }
+                            if (isActive && showStrategyHud && adviceMessage.isNotEmpty()) {
+                                CompactStrategyAdvice(adviceText = adviceMessage)
+                            }
+                        }
 
                          Spacer(modifier = Modifier.height(10.dp))
 

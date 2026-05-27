@@ -353,6 +353,18 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Goal**: Learn how to restructure declarative layout models in Android Jetpack Compose. Master relocating score display modules directly alongside playing card viewports and reordering composite stats blocks dynamically, optimizing screen density and typography styling.
 - **Exercise**: Create a custom user setting to toggle the horizontal position of `TotalCard` between being dealt before the first card or placed after the last card inside the `LazyRow` layout.
 - **Complexity**: Part 3
+ 
+### 56. Android Blackjack UX: Symmetrical Dealer Total Card Alignment (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Understand how to enforce visual symmetry and structural layout consistency across both active player and dealer sections in Jetpack Compose. Master migrating score/total elements from title rows directly into card scrolling contexts (`LazyRow`) using reusable, state-aware UI elements like `TotalCard`.
+- **Exercise**: Implement a subtle glowing border effect or specialized color accent on the dealer's `TotalCard` only when the dealer's score matches exactly 21.
+- **Complexity**: Part 3
+
+### 57. Android Blackjack UX: Inline Action Strategy Recommendations (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Learn how to implement compact, inline context-aware feedback within parent header elements in Jetpack Compose. Master moving full-width alert banners into lightweight, pill-shaped strategy recommendation chips positioned dynamically at the end of the active player name header row.
+- **Exercise**: Add a custom tooltip or tap animation to the inline `CompactStrategyAdvice` chip that explains the basic strategy rationale (e.g. why staying or hitting is recommended) when clicked.
+- **Complexity**: Part 3
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
