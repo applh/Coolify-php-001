@@ -348,5 +348,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom transition or border highlight pulse effect on the `AvatarCard` whenever the coaching strategy shifts from "HIT" (👊) to "STAND" (✋), and add mini glowing indicators indicating whether the active advice matches standard Vegas rules.
 - **Complexity**: Part 4
 
+### 55. Android Blackjack UX: Player Card Row Total & Reordered Money Stacks (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Learn how to restructure declarative layout models in Android Jetpack Compose. Master relocating score display modules directly alongside playing card viewports and reordering composite stats blocks dynamically, optimizing screen density and typography styling.
+- **Exercise**: Create a custom user setting to toggle the horizontal position of `TotalCard` between being dealt before the first card or placed after the last card inside the `LazyRow` layout.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
