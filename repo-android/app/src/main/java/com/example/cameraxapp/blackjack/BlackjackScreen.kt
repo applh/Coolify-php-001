@@ -819,6 +819,142 @@ fun DealerSection(
     }
 }
 
+fun getPlayerAvatarEmoji(advice: String, walletBalance: Int): String {
+    val upperAdvice = advice.uppercase()
+    return when {
+        upperAdvice.contains("RELOAD") -> "🤕"
+        upperAdvice.contains("MINIMUM") -> "🪙"
+        upperAdvice.contains("DOUBLE") -> "🚀"
+        upperAdvice.contains("SPLIT") -> "✂️"
+        upperAdvice.contains("STAND") -> "✋"
+        upperAdvice.contains("HIT") -> "👊"
+        upperAdvice.contains("PLACE") && upperAdvice.contains("BET") -> "🪙"
+        upperAdvice.contains("PAYOUT") || upperAdvice.contains("WON") -> "🥳"
+        upperAdvice.contains("LOST") -> "😭"
+        else -> {
+            when {
+                walletBalance >= 5000 -> "👑"
+                walletBalance >= 2500 -> "💎"
+                walletBalance >= 1500 -> "🔥"
+                else -> "👤"
+            }
+        }
+    }
+}
+
+@Composable
+fun AvatarCard(
+    gameState: GameState,
+    adviceMessage: String,
+    walletBalance: Int,
+    activeBet: Int
+) {
+    val emoji = getPlayerAvatarEmoji(adviceMessage, walletBalance)
+    
+    Box(
+        modifier = Modifier
+            .size(width = 72.dp, height = 108.dp)
+            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            .border(1.5.dp, Color(0xFFE0B0FF), RoundedCornerShape(8.dp))
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = "PLAYER",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = Color(0xFFE0B0FF),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 9.sp,
+                    letterSpacing = 0.5.sp
+                )
+            )
+            
+            Text(
+                text = emoji,
+                fontSize = 28.sp,
+                modifier = Modifier.animateContentSize()
+            )
+            
+            Text(
+                text = "$${walletBalance}",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = Color(0xFFB9F6CA),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun TotalCard(
+    scoreText: String,
+    isBust: Boolean,
+    isBlackjack: Boolean
+) {
+    val borderColor = when {
+        isBust -> Color(0xFFFF5252)
+        isBlackjack -> Color(0xFFFFD700)
+        else -> Color.Yellow
+    }
+    
+    val bgColor = when {
+        isBust -> Color(0xFF421515)
+        isBlackjack -> Color(0xFF4C3B12)
+        else -> Color.Black.copy(alpha = 0.5f)
+    }
+
+    Box(
+        modifier = Modifier
+            .size(width = 72.dp, height = 108.dp)
+            .background(bgColor, RoundedCornerShape(8.dp))
+            .border(1.5.dp, borderColor, RoundedCornerShape(8.dp))
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = "TOTAL",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = Color.LightGray,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 9.sp,
+                    letterSpacing = 0.5.sp
+                )
+            )
+            
+            Text(
+                text = scoreText,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = if (isBust) Color(0xFFFF5252) else if (isBlackjack) Color(0xFFFFD700) else Color.Yellow,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 26.sp
+                )
+            )
+            
+            Text(
+                text = if (isBust) "BUSTED" else if (isBlackjack) "NATURAL" else "POINTS",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = if (isBust) Color(0xFFFF5252) else if (isBlackjack) Color(0xFFFFD700) else Color.LightGray,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 8.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 @Composable
 fun PlayerSection(
     hands: List<BlackjackHand>,
@@ -838,61 +974,81 @@ fun PlayerSection(
             StrategyAdviceHud(adviceText = adviceMessage)
         }
 
-        // Render Player Avatar Card
+        // Sleek horizontal Wallet and Rank info header
+        val (rank, rankEmoji) = getPlayerRankAndEmoji(balance = walletBalance)
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.3f)),
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f)),
             shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
-                modifier = Modifier.padding(10.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val activeHand = hands.getOrNull(activeHandIndex) ?: hands.firstOrNull()
-                if (activeHand != null && activeHand.cards.isNotEmpty()) {
+                Column {
                     Text(
-                        text = activeHand.getScoreDisplay(),
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            color = Color.Yellow,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 32.sp
-                        ),
-                        modifier = Modifier.padding(end = 12.dp)
+                        text = "WALLET",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.LightGray.copy(alpha = 0.6f),
+                            fontSize = 8.sp,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "$${walletBalance}",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = if (walletBalance > 0) Color(0xFFB9F6CA) else Color(0xFFFF5252),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        )
+                        if (walletBalance == 0) {
+                            Button(
+                                onClick = onReloadWallet,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                modifier = Modifier.height(20.dp),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text("RELOAD", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "RANK",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.LightGray.copy(alpha = 0.6f),
+                            fontSize = 8.sp,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                    Text(
+                        text = "$rank $rankEmoji",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            color = Color(0xFFE0B0FF),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
                     )
                 }
-                PlayerAvatar(
-                    balance = walletBalance,
-                    activeBet = activeBet,
-                    onReloadWallet = onReloadWallet
-                )
             }
         }
 
-        hands.forEachIndexed { idx, hand ->
-            val isActive = gameState == GameState.PLAYER_TURN && idx == activeHandIndex
-
-            val borderModifier = if (isActive) {
-                Modifier.border(2.dp, Color(0xFFE0B0FF), RoundedCornerShape(12.dp))
-            } else {
-                Modifier
-            }
-
-            val alphaModifier = if (gameState == GameState.PLAYER_TURN && !isActive) {
-                Modifier.alpha(0.3f)
-            } else {
-                Modifier
-            }
-
+        if (hands.isEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isActive) Color.Black.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.2f)
-                ),
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(borderModifier)
-                    .then(alphaModifier)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp),
@@ -903,26 +1059,119 @@ fun PlayerSection(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "Your Hand ${if (hands.size > 1) "#${idx + 1}" else ""}",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    color = if (isActive) Color(0xFFE0B0FF) else Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
+                        Text(
+                            "Your Hand",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
                             )
-                            if (isActive) {
-                                Spacer(modifier = Modifier.width(6.dp))
+                        )
+                        Text(
+                            "Bet: $${activeBet}",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = Color.LightGray,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        item {
+                            AvatarCard(
+                                gameState = gameState,
+                                adviceMessage = adviceMessage,
+                                walletBalance = walletBalance,
+                                activeBet = activeBet
+                            )
+                        }
+
+                        item {
+                            TotalCard(
+                                scoreText = "0",
+                                isBust = false,
+                                isBlackjack = false
+                            )
+                        }
+
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 72.dp, height = 108.dp)
+                                    .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                    .border(1.2.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text(
-                                    "[ACTIVE]",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = Color(0xFFE0B0FF),
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    "No Cards",
+                                    fontSize = 11.sp,
+                                    color = Color.LightGray.copy(alpha = 0.4f),
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    }
+                }
+            }
+        } else {
+            hands.forEachIndexed { idx, hand ->
+                val isActive = gameState == GameState.PLAYER_TURN && idx == activeHandIndex
+
+                val borderModifier = if (isActive) {
+                    Modifier.border(2.dp, Color(0xFFE0B0FF), RoundedCornerShape(12.dp))
+                } else {
+                    Modifier
+                }
+
+                val alphaModifier = if (gameState == GameState.PLAYER_TURN && !isActive) {
+                    Modifier.alpha(0.3f)
+                } else {
+                    Modifier
+                }
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isActive) Color.Black.copy(alpha = 0.4f) else Color.Black.copy(alpha = 0.2f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(borderModifier)
+                        .then(alphaModifier)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "Your Hand ${if (hands.size > 1) "#${idx + 1}" else ""}",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        color = if (isActive) Color(0xFFE0B0FF) else Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                                if (isActive) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        "[ACTIVE]",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = Color(0xFFE0B0FF),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                }
+                            }
                             Text(
                                 "Bet: $${hand.bet}",
                                 style = MaterialTheme.typography.labelMedium.copy(
@@ -930,27 +1179,35 @@ fun PlayerSection(
                                     fontWeight = FontWeight.SemiBold
                                 )
                             )
-                            Text(
-                                "Score: ${hand.getScoreDisplay()}",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = Color.Yellow,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                modifier = Modifier
-                                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        itemsIndexed(hand.cards) { index, card ->
-                            PlayingCardView(card = card, index = index)
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            item {
+                                AvatarCard(
+                                    gameState = gameState,
+                                    adviceMessage = adviceMessage,
+                                    walletBalance = walletBalance,
+                                    activeBet = hand.bet
+                                )
+                            }
+
+                            item {
+                                TotalCard(
+                                    scoreText = hand.getScoreDisplay(),
+                                    isBust = hand.isBust,
+                                    isBlackjack = hand.isBlackjack()
+                                )
+                            }
+
+                            itemsIndexed(hand.cards) { index, card ->
+                                PlayingCardView(card = card, index = index)
+                            }
                         }
                     }
                 }

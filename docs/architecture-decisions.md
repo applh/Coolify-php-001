@@ -209,3 +209,24 @@ When loading dynamic HTML maps (e.g. Leaflet OSM or Google Maps JS API templates
    - **Choice**: Wrapped the `AndroidView` inside an explicit Compose `Box` container with `Modifier.fillMaxSize()`.
    - **Reason**: Forces Compose's layout subsystem to negotiate correct, non-zero parent measurement constraints before allocating bounds to the nested `AndroidView`. This completely eliminates the 0x0 scale collapses that frequently happen upon dynamic list updates or screen state transitions.
 
+---
+
+## 10. Android Blackjack UX: Unified Row Cards Layout with Adaptive Recommendation Avatar and Size-Matched Totals
+
+### Context
+In mobile casino games, preserving and optimizing horizontal screen real estate is critical. Previously, the strategic advice HUD, player statistics, total wallet balance, active bets, and rank badges were spread out over bulky decentralized panels, taking up portrait view space and cluttering the card progression flow. In addition, the player's cards and hand score totals were rendered on different vertical blocks, hindering readability. The player avatar acted as a static placeholder without dynamically reflecting basic strategy recommendations.
+
+### Decisions & Justification
+
+1. **Unified Horizontal Flow (Vegas Strip Layout)**
+   - **Choice**: Moved the player's avatar profile, hand score totals, and physical card deck assets onto a single, cohesive horizontal row inside a scrollable `LazyRow` layout.
+   - **Reason**: Translates the gaming table into an intuitive left-to-right progression similar to real card placements on a blackjack table (Avatar first, then Total, then drawn playing cards). This leaves the surrounding screen entirely clean, spacious, and dedicated to gaming tension.
+
+2. **Perfect Dimensional Sizing Match (`72.dp x 108.dp`)**
+   - **Choice**: Encapsulated the player avatar indicator (`AvatarCard`) and the score metric panel (`TotalCard`) into custom Material 3 box containers styled with exact dimensions matching the playing card views (Width: `72.dp`, Height: `108.dp`).
+   - **Reason**: Establishes immaculate, professional structural rhythm and geometric consistency across the entire horizontal row. The layout alignment looks beautiful, unified, and intentional instead of feeling disjointed or offset.
+
+3. **Strategic Advice-Driven Avatar State Changes**
+   - **Choice**: Linked the player's avatar card dynamically to the strategic coaching advice engine string. When the coach recommends a strategic hit, stand, double down, or split, the avatar's emoji dynamically responds (e.g., Hit 👊, Stand ✋, Split ✂️, Double Down 🚀, Win 🥳, Lose 😭).
+   - **Reason**: Enhances gameplay engagement and visual instruction loops. Players receive immediate tactile and visual feedback reinforcing their strategy options right in their avatar badge without needing to scan background status texts or read external message lines.
+

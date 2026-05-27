@@ -342,5 +342,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Extend the bottom-left conditional controls to add a smooth fade-in/out transition using `AnimatedVisibility` when shifting from standard betting buttons (`CLEAR BET` / `SAME BET`) to the `RELOAD` button when the wallet balance hits 0.
 - **Complexity**: Part 3
 
+### 54. Android Blackjack UX: Unified Row Cards Layout with Adaptive Recommendation Avatar and Size-Matched Totals (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Master full optimization of mobile horizontal screen real estate in Android Jetpack Compose by unifying decentralized gaming metrics (player identity, advice-driven avatar emojis, and hand score totals) onto the exact same horizontal layout row as the playing cards. Learn how to size non-card elements (`AvatarCard` and `TotalCard`) to precisely match standard card dimensions (e.g., `72.dp x 108.dp`), and implement reactive avatar state changes that parse and display responsive emojis matching active basic strategy coaching recommendations.
+- **Exercise**: Create a custom transition or border highlight pulse effect on the `AvatarCard` whenever the coaching strategy shifts from "HIT" (👊) to "STAND" (✋), and add mini glowing indicators indicating whether the active advice matches standard Vegas rules.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
