@@ -38,6 +38,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.core.content.FileProvider
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -196,6 +197,15 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     var showRenameDialog by remember { mutableStateOf(false) }
     var fileToRename by remember { mutableStateOf<File?>(null) }
 
+    // Toolkit operation state variables
+    var isToolkitModeActive by remember { mutableStateOf(false) }
+    var showInPlaceCompressSheet by remember { mutableStateOf(false) }
+    var showInPlacePdfSheet by remember { mutableStateOf(false) }
+
+    val selectedFilesContainsImages = remember(selectedFiles.size) {
+        selectedFiles.any { !it.isDirectory && it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
+    }
+
     // Filter by search terms and sort choice
     val displayedFiles = remember(currentDirectoryItems, searchQuery, sortOption, refreshCounter) {
         currentDirectoryItems.filter { fileOrDir ->
@@ -230,6 +240,15 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isDualPane = maxWidth > 600.dp
+
+        if (isToolkitModeActive) {
+            com.example.cameraxapp.media.ImagePdfScreen(
+                baseFolder = baseFolder,
+                onBack = { isToolkitModeActive = false },
+                triggerNotification = triggerNotification
+            )
+            return@BoxWithConstraints
+        }
 
         // Fullscreen media preview pane (single pane representation)
         if (selectedFile != null && !isDualPane) {
@@ -355,6 +374,15 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                 Icon(Icons.Filled.Share, contentDescription = "Share")
                             }
 
+                            if (selectedFilesContainsImages) {
+                                IconButton(onClick = { showInPlaceCompressSheet = true }) {
+                                    Icon(Icons.Filled.Settings, contentDescription = "Compress Images", tint = MaterialTheme.colorScheme.primary)
+                                }
+                                IconButton(onClick = { showInPlacePdfSheet = true }) {
+                                    Icon(Icons.Filled.Create, contentDescription = "Compile to PDF", tint = MaterialTheme.colorScheme.secondary)
+                                }
+                            }
+
                             if (selectedFiles.size == 1) {
                                 IconButton(onClick = {
                                     fileToRename = selectedFiles.first()
@@ -449,6 +477,9 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                                         onClick = { sortOption = SortOption.SIZE_DESC; showSortMenu = false }
                                     )
                                 }
+                            }
+                            IconButton(onClick = { isToolkitModeActive = true }) {
+                                Icon(Icons.Default.Build, contentDescription = "Media Toolkit")
                             }
                             IconButton(onClick = onOpenRightDrawer) {
                                 Icon(Icons.Default.Menu, contentDescription = "Quick Tools")
@@ -964,6 +995,328 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     showRenameDialog = false
                     fileToRename = null
                 }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // In-Place Image Compression Dialog
+    if (showInPlaceCompressSheet) {
+        var qualityVal by remember { mutableStateOf(75f) }
+        var scaleVal by remember { mutableStateOf(80f) }
+        var formatVal by remember { mutableStateOf(com.example.cameraxapp.media.ImageReducerEngine.OutputFormat.JPEG) }
+        var isProcessingInPlace by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isProcessingInPlace) showInPlaceCompressSheet = false },
+            title = {
+                Text(
+                    text = "Compress Selected Images",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "${selectedFiles.size} original files selected.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Target Format Selectors
+                    Text("Target Format", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        com.example.cameraxapp.media.ImageReducerEngine.OutputFormat.values().forEach { fmt ->
+                            val isPicked = formatVal == fmt
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { formatVal = fmt },
+                                shape = RoundedCornerShape(6.dp),
+                                border = BorderStroke(1.dp, if (isPicked) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.3f)),
+                                color = if (isPicked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                            ) {
+                                Text(
+                                    text = fmt.name.replace("_", " "),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(vertical = 6.dp),
+                                    fontWeight = if (isPicked) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isPicked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    // Quality slider input
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Quality", style = MaterialTheme.typography.bodySmall)
+                        Text("${qualityVal.toInt()}%", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    }
+                    Slider(
+                        value = qualityVal,
+                        onValueChange = { qualityVal = it },
+                        valueRange = 1f..100f,
+                        steps = 99,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Resolution scale slider input
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Resolution Scale", style = MaterialTheme.typography.bodySmall)
+                        Text("${scaleVal.toInt()}%", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    }
+                    Slider(
+                        value = scaleVal,
+                        onValueChange = { scaleVal = it },
+                        valueRange = 10f..100f,
+                        steps = 9,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isProcessingInPlace = true
+                        scope.launch {
+                            val destFolder = File(baseFolder, "Pictures/Compressed").apply { mkdirs() }
+                            var compressedCount = 0
+                            var totalSavedBytes = 0L
+
+                            // Only process normal files which have image extensions
+                            val imageFilesToProcess = selectedFiles.filter { !it.isDirectory && it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
+                            
+                            imageFilesToProcess.forEach { fileItem ->
+                                try {
+                                    val conf = com.example.cameraxapp.media.ImageReducerEngine.CompressionConfig(
+                                        quality = qualityVal.toInt(),
+                                        scale = scaleVal / 100f,
+                                        targetFormat = formatVal
+                                    )
+                                    val result = com.example.cameraxapp.media.ImageReducerEngine.compressAndResizeImage(
+                                        context = context,
+                                        inputFile = fileItem,
+                                        outputDirectory = destFolder,
+                                        config = conf
+                                    )
+                                    totalSavedBytes += result.savedBytes
+                                    compressedCount++
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+
+                            refreshCounter++
+                            clearSelection()
+                            showInPlaceCompressSheet = false
+                            isProcessingInPlace = false
+                            
+                            val savedStr = if (totalSavedBytes < 1024) "$totalSavedBytes Bytes" else if (totalSavedBytes < 1024 * 1024) "${totalSavedBytes / 1024} KB" else "${totalSavedBytes / (1024 * 1024)} MB"
+                            triggerNotification("In-place compression of $compressedCount images completed. Saved ~$savedStr!")
+                        }
+                    },
+                    enabled = !isProcessingInPlace
+                ) {
+                    if (isProcessingInPlace) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Compress")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showInPlaceCompressSheet = false },
+                    enabled = !isProcessingInPlace
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // In-Place PDF Compilation Dialog
+    if (showInPlacePdfSheet) {
+        var pdfPageSizeVal by remember { mutableStateOf(com.example.cameraxapp.media.PdfCompilationEngine.PageSize.A4) }
+        var pdfOrientationVal by remember { mutableStateOf(com.example.cameraxapp.media.PdfCompilationEngine.PageOrientation.PORTRAIT) }
+        var pdfMarginVal by remember { mutableStateOf(36) }
+        var isProcessingInPlacePdf by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { if (!isProcessingInPlacePdf) showInPlacePdfSheet = false },
+            title = {
+                Text(
+                    text = "Compile Images to PDF",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "${selectedFiles.size} files will be rendered sequentially.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Page size selectors
+                    Text("Page Dimensions", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        com.example.cameraxapp.media.PdfCompilationEngine.PageSize.values().forEach { sizeOpt ->
+                            val isChosen = pdfPageSizeVal == sizeOpt
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { pdfPageSizeVal = sizeOpt },
+                                shape = RoundedCornerShape(6.dp),
+                                border = BorderStroke(1.dp, if (isChosen) MaterialTheme.colorScheme.secondary else Color.Gray.copy(alpha = 0.3f)),
+                                color = if (isChosen) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
+                            ) {
+                                Text(
+                                    text = sizeOpt.name.replace("_", " "),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(vertical = 6.dp),
+                                    fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isChosen) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    // Printed Page bounds orientation options
+                    Text("Orientation Layout", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        com.example.cameraxapp.media.PdfCompilationEngine.PageOrientation.values().forEach { orientOpt ->
+                            val isChosen = pdfOrientationVal == orientOpt
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { pdfOrientationVal = orientOpt },
+                                shape = RoundedCornerShape(6.dp),
+                                border = BorderStroke(1.dp, if (isChosen) MaterialTheme.colorScheme.secondary else Color.Gray.copy(alpha = 0.3f)),
+                                color = if (isChosen) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
+                            ) {
+                                Text(
+                                    text = orientOpt.name,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(vertical = 6.dp),
+                                    fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isChosen) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    // Canvas margins
+                    Text("Fittings Margins", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf(
+                            "0.5\"" to 36,
+                            "1.0\"" to 72,
+                            "None" to 0
+                        ).forEach { (label, valPx) ->
+                            val isChosen = pdfMarginVal == valPx
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { pdfMarginVal = valPx },
+                                shape = RoundedCornerShape(6.dp),
+                                border = BorderStroke(1.dp, if (isChosen) MaterialTheme.colorScheme.secondary else Color.Gray.copy(alpha = 0.3f)),
+                                color = if (isChosen) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
+                            ) {
+                                Text(
+                                    text = label,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(vertical = 6.dp),
+                                    fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isChosen) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isProcessingInPlacePdf = true
+                        scope.launch {
+                            val documentsFolder = File(baseFolder, "Documents/CompiledPDFs").apply { mkdirs() }
+                            val outFilename = "CompiledInPlace_${System.currentTimeMillis()}.pdf"
+                            val docOutput = File(documentsFolder, outFilename)
+
+                            val compileConfig = com.example.cameraxapp.media.PdfCompilationEngine.PdfConfig(
+                                pageSize = pdfPageSizeVal,
+                                orientation = pdfOrientationVal,
+                                marginPixels = pdfMarginVal
+                            )
+
+                            // Sequential filtering for on-disk images list
+                            val imageFilesToProcess = selectedFiles.filter { !it.isDirectory && it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
+                            
+                            val didSucceed = com.example.cameraxapp.media.PdfCompilationEngine.compileImagesToPdf(
+                                context = context,
+                                imageFiles = imageFilesToProcess,
+                                outputFile = docOutput,
+                                config = compileConfig
+                            )
+
+                            refreshCounter++
+                            clearSelection()
+                            showInPlacePdfSheet = false
+                            isProcessingInPlacePdf = false
+
+                            if (didSucceed && docOutput.exists()) {
+                                triggerNotification("Successfully compiled ${imageFilesToProcess.size} photos into PDF: ${outFilename}!")
+                            } else {
+                                triggerNotification("Canvas compiling returned error results")
+                            }
+                        }
+                    },
+                    enabled = !isProcessingInPlacePdf
+                ) {
+                    if (isProcessingInPlacePdf) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Compile")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showInPlacePdfSheet = false },
+                    enabled = !isProcessingInPlacePdf
+                ) {
                     Text("Cancel")
                 }
             }

@@ -379,7 +379,7 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 ### 60. Android Image Selection, Multi-Option Size Reduction & PDF Document Compiler (15h)
-- **Reference**: `repo-android/docs/image-compression-pdf-plan.md`
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/media/ImageReducerEngine.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/media/PdfCompilationEngine.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/media/ImagePdfScreen.kt`
 - **Goal**: Master system-level image loading, asynchronous lossy/lossless image compression and scaling with bitmap recycling caches inside background Coroutines scopes, and multi-page high-fidelity PDF Document generation using Android's native Graphics and `PdfDocument` canvas libraries in Jetpack Compose.
 - **Exercise**: Implement a local test scenario that takes a multi-selected array of picture Uris, computes scale compression metrics dynamically displaying live simulated kilobyte savings, and merges them sequentially into a single target PDF document stored securely within the private Files directory.
 - **Complexity**: Part 4

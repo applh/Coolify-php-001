@@ -230,3 +230,24 @@ In mobile casino games, preserving and optimizing horizontal screen real estate 
    - **Choice**: Linked the player's avatar card dynamically to the strategic coaching advice engine string. When the coach recommends a strategic hit, stand, double down, or split, the avatar's emoji dynamically responds (e.g., Hit 👊, Stand ✋, Split ✂️, Double Down 🚀, Win 🥳, Lose 😭).
    - **Reason**: Enhances gameplay engagement and visual instruction loops. Players receive immediate tactile and visual feedback reinforcing their strategy options right in their avatar badge without needing to scan background status texts or read external message lines.
 
+---
+
+## 11. Zero-Dependency Image Compression and PDF Compilation Toolkit
+
+### Context
+Allowing users within the "Files" applet to run heavy offline media operations (photo scaling/downscaling, image format transcoding, and multi-page document creation) requires robust and memory-dense pipelines. We must perform these actions offline without introducing external binary libraries (such as iText, Apache PDFBox, or specialized image processors) that would excessively bloat the application's package footprint and introduce security or licensing complexities.
+
+### Decisions & Justification
+
+1. **Zero-Dependency Native BitmapFactory & Matrix Scaling Pipeline**
+   - **Choice**: Implemented background image scaling and format transcoding inside `ImageReducerEngine.kt` using native `BitmapFactory` alongside `android.graphics.Matrix` fractional scaling.
+   - **Reason**: Leverages firmware-optimized OS components. Solves Android heap memory limitations by utilizing a two-step decoding strategy: first loading bounds-only metadata (`inJustDecodeBounds = true`) to calculate the optimal mathematical sample size (`inSampleSize`), and then decoding the downscaled bitmap safely to prevent Out-of-Memory (OOM) exceptions.
+
+2. **Native Graphics `PdfDocument` Canvas Building**
+   - **Choice**: Used the Android framework's native `android.graphics.pdf.PdfDocument` API to compile images sequentially as vector/raster canvases within standard paper standard dimensions (such as A4 or Letter sizes).
+   - **Reason**: Avoids heavy third-party PDF generators. Utilizing native `PdfDocument` ensures complete compliance with zero-dependency goals, zero licensing overhead, and minimal footprint increase, while providing standard margin calculations, orientation layouts, and perfect rendering accuracy.
+
+3. **Dual Access Paths: Context-First & Dedicated Media Terminal**
+   - **Choice**: Supported both **Workflow A** (contextual image scale/pdf merge shortcuts directly inside `ExplorerScreen.kt`'s selection action row) and **Workflow B** (a fully-interactive dedicated dashboard screen `ImagePdfScreen.kt` complete with multiple picker integrations, real-time file-size prediction heuristics, and a monospaced terminal activity log).
+   - **Reason**: Enhances user flexibility. Simple in-place conversions can be triggered immediately without changing screens, whereas advanced, complex document compilation tasks are executed inside a standalone workspace featuring detailed processing statuses.
+
