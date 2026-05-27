@@ -389,6 +389,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Goal**: Understand the configuration of modular, dynamically listable, and draggable applets on the mobile launcher. Master aligning registration arrays between Settings, Main Hub, and Startup landing configuration dialogs, and diagnosing index discrepancies where existing screens are compiled but omitted from UI layouts.
 - **Exercise**: Add a brand-new custom background utility route `"system_monitor"` to all active launchers and layout configuration lists, define an appropriate high-contrast Material background color mapping within `getAppletColor`, and ensure list synchronization is preserved during user selection resets.
 - **Complexity**: Part 3
+ 
+### 62. Android Blackjack UX: Persistent Exit Mechanisms and Smooth Transition Faded Badge Overlays (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Master the concepts of fluid, persistent user navigation patterns, and custom-interpolated animated transition effects in Jetpack Compose. Learn how to configure persistent action buttons spanning across multiple gameplay states without layout conflicts, and design time-sensitive mathematical scaling models converting configuration dimensions (`vmin`) dynamically to prevent screen clattering inside condensed overlays.
+- **Exercise**: Implement an expanding/collapsing radial menu trigger on the bottom-left leave button that reveals additional utility items (e.g. sound toggle or help quick-view) with a smooth elastic entry animation when long-pressed.
+- **Complexity**: Part 3
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

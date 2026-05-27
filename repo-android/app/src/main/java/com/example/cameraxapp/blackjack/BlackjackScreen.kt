@@ -400,14 +400,27 @@ fun BlackjackScreen(
                 Spacer(modifier = Modifier.height(115.dp))
             }
 
-            if (gameState == GameState.BETTING) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 16.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = onBack,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Black.copy(alpha = 0.6f),
+                        contentColor = Color(0xFFFF5252)
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFFFF5252).copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 ) {
+                    Text("LEAVE GAME", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+
+                if (gameState == GameState.BETTING) {
                     if (walletBalance == 0) {
                         Button(
                             onClick = { viewModel.reloadWalletAccount() },
@@ -416,9 +429,9 @@ fun BlackjackScreen(
                                 contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text("RELOAD", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("RELOAD", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         OutlinedButton(
@@ -429,9 +442,9 @@ fun BlackjackScreen(
                             ),
                             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
                             shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text("CLEAR BET", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("CLEAR BET", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                         Button(
                             onClick = { viewModel.rebet() },
@@ -440,9 +453,9 @@ fun BlackjackScreen(
                                 contentColor = Color.Black
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            Text("SAME BET ($$previousBet)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("SAME BET ($$previousBet)", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -503,12 +516,21 @@ fun BlackjackScreen(
 
                     val configuration = LocalConfiguration.current
                     val vmin = minOf(configuration.screenWidthDp, configuration.screenHeightDp)
-                    val circleSize = (vmin * 0.62f).dp
+                    val circleSize = (vmin * 0.30f).dp
+
+                    val alphaState = remember { Animatable(0f) }
+                    LaunchedEffect(netGainValue) {
+                        alphaState.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(durationMillis = 2000, easing = LinearOutSlowInEasing)
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.6f))
+                            .background(Color.Black.copy(alpha = 0.3f))
+                            .graphicsLayer(alpha = alphaState.value)
                             .clickable { viewModel.nextRound() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -527,66 +549,67 @@ fun BlackjackScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(16.dp),
+                                    .padding(4.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 // Centered badge icon
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp)
+                                        .size(24.dp)
                                         .background(color.copy(alpha = 0.15f), CircleShape)
-                                        .border(1.5.dp, color.copy(alpha = 0.6f), CircleShape),
+                                        .border(1.dp, color.copy(alpha = 0.6f), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = badgeIcon,
-                                        fontSize = 24.sp
+                                        fontSize = 12.sp
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(2.dp))
 
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                    verticalArrangement = Arrangement.spacedBy(1.dp)
                                 ) {
                                     Text(
                                         text = badgeTitle,
                                         style = MaterialTheme.typography.titleSmall.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = Color.LightGray,
-                                            fontSize = 11.sp,
-                                            letterSpacing = 1.sp
+                                            fontSize = 7.sp,
+                                            letterSpacing = 0.5.sp
                                         )
                                     )
                                     Text(
                                         text = amountText,
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.ExtraBold,
-                                            fontSize = 18.sp,
+                                            fontSize = 10.sp,
                                             color = color
                                         )
                                     )
                                 }
 
                                 if (roundResultText.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = roundResultText,
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontFamily = FontFamily.Monospace,
                                             textAlign = TextAlign.Center,
-                                            fontSize = 10.sp,
+                                            fontSize = 6.sp,
                                             color = Color.LightGray.copy(alpha = 0.8f)
                                         ),
                                         modifier = Modifier
-                                            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(6.dp))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(3.dp))
+                                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                                        maxLines = 1
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
 
                                 Button(
                                     onClick = { viewModel.nextRound() },
@@ -596,16 +619,16 @@ fun BlackjackScreen(
                                     ),
                                     shape = CircleShape,
                                     modifier = Modifier
-                                        .width(130.dp)
-                                        .height(34.dp),
+                                        .width(70.dp)
+                                        .height(18.dp),
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
                                     Text(
-                                        "NEXT ROUND",
+                                        "NEXT",
                                         style = MaterialTheme.typography.labelMedium.copy(
                                             fontWeight = FontWeight.ExtraBold,
-                                            fontSize = 11.sp,
-                                            letterSpacing = 0.5.sp
+                                            fontSize = 7.sp,
+                                            letterSpacing = 0.2.sp
                                         )
                                     )
                                 }
