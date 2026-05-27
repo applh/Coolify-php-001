@@ -133,18 +133,6 @@ fun PlayerAvatar(
                         fontSize = 12.sp
                     )
                 )
-                if (balance == 0) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Button(
-                        onClick = onReloadWallet,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-                        modifier = Modifier.height(20.dp),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text("RELOAD", fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -209,6 +197,8 @@ fun BlackjackScreen(
     val isSecondHidden by viewModel.isDealerSecondCardHidden
     val roundResultText by viewModel.roundResultText
     val previousBet by viewModel.previousBet
+    val isGameOver by viewModel.isGameOver
+    val sessionMaxWallet by viewModel.sessionMaxWallet
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showStatsDialog by remember { mutableStateOf(false) }
@@ -473,6 +463,7 @@ fun BlackjackScreen(
             if (showStatsDialog) {
                 StatisticsPanelDialog(
                     stats = stats,
+                    highScores = viewModel.highScores,
                     onDismiss = { showStatsDialog = false },
                     onReset = { viewModel.resetLifetimeStats() }
                 )
@@ -618,6 +609,131 @@ fun BlackjackScreen(
                                         )
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isGameOver) {
+                var playerNameInput by remember { mutableStateOf("") }
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.92f))
+                        .clickable(enabled = false) {}, // Intercept clicks and block content under it
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF1E1E1E),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.5.dp, Color(0xFFFF5252)),
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "💸 GAME OVER 💸",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFFFF5252),
+                                    letterSpacing = 1.sp
+                                )
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = "Your wallet is empty (balance below $5). You cannot make any more bets.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.LightGray,
+                                textAlign = TextAlign.Center
+                            )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.White.copy(alpha = 0.05f)
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f)),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Peak Wallet Balance Achieved:",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.LightGray
+                                    )
+                                    Text(
+                                        text = "$$sessionMaxWallet",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = Color(0xFFFFD700),
+                                        fontWeight = FontWeight.Black
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(20.dp))
+                            
+                            Text(
+                                text = "Enter your name for the Hall of Fame:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(6.dp))
+                            
+                            OutlinedTextField(
+                                value = playerNameInput,
+                                onValueChange = { if (it.length <= 15) playerNameInput = it },
+                                placeholder = { Text("Player Name", color = Color.Gray) },
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White,
+                                    focusedBorderColor = Color(0xFFE0B0FF),
+                                    unfocusedBorderColor = Color.Gray
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            
+                            Spacer(modifier = Modifier.height(20.dp))
+                            
+                            Button(
+                                onClick = {
+                                    viewModel.startNewGame(playerNameInput)
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFD700),
+                                    contentColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(46.dp)
+                            ) {
+                                Text(
+                                    text = "START NEW GAME ($1000)",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
                             }
                         }
                     }
@@ -855,21 +971,6 @@ fun StakesWalletCard(
                     )
                 )
             }
-
-            if (walletBalance == 0) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Button(
-                    onClick = onReloadWallet,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(20.dp),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text("RELOAD", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            }
         }
     }
 }
@@ -1059,7 +1160,7 @@ fun TotalCard(
 
     Box(
         modifier = Modifier
-            .size(width = 72.dp, height = 108.dp)
+            .size(width = 112.dp, height = 108.dp)
             .background(bgColor, RoundedCornerShape(8.dp))
             .border(1.5.dp, borderColor, RoundedCornerShape(8.dp))
             .padding(4.dp),
@@ -1085,7 +1186,7 @@ fun TotalCard(
                 style = MaterialTheme.typography.titleLarge.copy(
                     color = if (isBust) Color(0xFFFF5252) else if (isBlackjack) Color(0xFFFFD700) else Color.Yellow,
                     fontWeight = FontWeight.Black,
-                    fontSize = 26.sp
+                    fontSize = if (scoreText.length > 3) 18.sp else 26.sp
                 )
             )
             
@@ -1913,6 +2014,7 @@ fun SettingsPanelDialog(
 @Composable
 fun StatisticsPanelDialog(
     stats: PlayerStats,
+    highScores: List<Pair<String, Int>>,
     onDismiss: () -> Unit,
     onReset: () -> Unit
 ) {
@@ -1928,7 +2030,9 @@ fun StatisticsPanelDialog(
                 .padding(4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -1953,6 +2057,49 @@ fun StatisticsPanelDialog(
                 StatsAttribute(label = "Maximum Score Won Payout", value = "$${stats.maxWin}")
                 StatsAttribute(label = "Current Wins Streak", value = "${stats.currentStreak}")
                 StatsAttribute(label = "Historic Maximum Winning Streak", value = "${stats.maxStreak}")
+
+                if (highScores.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(
+                        "🏆 HALL OF FAME RANKINGS",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD700)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.2f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            highScores.forEachIndexed { rank, score ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${rank + 1}. ${score.first}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (rank == 0) Color(0xFFFFD700) else Color.White
+                                    )
+                                    Text(
+                                        text = "$${score.second}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFB9F6CA)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 

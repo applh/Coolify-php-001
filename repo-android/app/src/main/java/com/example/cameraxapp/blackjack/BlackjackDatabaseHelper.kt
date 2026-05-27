@@ -66,14 +66,45 @@ class BlackjackDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
             )
         """)
 
+        // High Score Ranking Table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS blackjack_highscores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_name TEXT NOT NULL,
+                max_wallet INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         // Bootstrap initial rows
         db.execSQL("INSERT OR IGNORE INTO blackjack_wallet (id, balance) VALUES (1, 1000)")
         db.execSQL("INSERT OR IGNORE INTO blackjack_stats (id, hands_played, wins, losses, pushes, blackjacks, max_win, max_streak, current_streak) VALUES (1, 0, 0, 0, 0, 0, 0, 0, 0)")
         db.execSQL("INSERT OR IGNORE INTO blackjack_settings (id, dealer_soft_17_hit, double_any_two, insurance_avail, max_splits, show_strategy_hud, show_card_counting_hud, table_color) VALUES (1, 1, 1, 1, 3, 1, 1, 0)")
     }
 
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS blackjack_highscores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_name TEXT NOT NULL,
+                max_wallet INTEGER NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    }
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Upgrade procedures if necessary
+        if (oldVersion < 2) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS blackjack_highscores (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_name TEXT NOT NULL,
+                    max_wallet INTEGER NOT NULL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        }
     }
 
     fun getBalance(): Int {
@@ -195,6 +226,43 @@ class BlackjackDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATA
             put("current_streak", 0)
         }
         db.update("blackjack_stats", values, "id = 1", null)
+    }
+
+    fun getHighScores(): List<Pair<String, Int>> {
+        val list = mutableListOf<Pair<String, Int>>()
+        try {
+            val db = readableDatabase
+            val cursor = db.rawQuery("SELECT player_name, max_wallet FROM blackjack_highscores ORDER BY max_wallet DESC LIMIT 10", null)
+            while (cursor.moveToNext()) {
+                list.add(Pair(cursor.getString(0), cursor.getInt(1)))
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    fun addHighScore(name: String, maxWallet: Int) {
+        try {
+            val db = writableDatabase
+            val values = ContentValues().apply {
+                put("player_name", name)
+                put("max_wallet", maxWallet)
+            }
+            db.insert("blackjack_highscores", null, values)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun resetHighScores() {
+        try {
+            val db = writableDatabase
+            db.execSQL("DELETE FROM blackjack_highscores")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     companion object {

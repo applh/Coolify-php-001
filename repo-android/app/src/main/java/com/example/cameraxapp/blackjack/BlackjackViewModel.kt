@@ -83,12 +83,22 @@ class BlackjackViewModel(context: Context) : ViewModel() {
         }
     }
 
+    private val _sessionMaxWallet = mutableStateOf(1000)
+    val sessionMaxWallet: State<Int> = _sessionMaxWallet
+
+    private val _isGameOver = mutableStateOf(false)
+    val isGameOver: State<Boolean> = _isGameOver
+
+    private val _highScores = mutableStateListOf<Pair<String, Int>>()
+    val highScores: List<Pair<String, Int>> = _highScores
+
     // List of cards played in this shoe to track Hi-Lo counting
     private var cardsSeenInShoe = 0
 
     init {
         loadDataFromDatabase()
         resetCounts()
+        loadHighScores()
     }
 
     private fun loadDataFromDatabase() {
@@ -99,8 +109,47 @@ class BlackjackViewModel(context: Context) : ViewModel() {
 
             viewModelScope.launch(Dispatchers.Main) {
                 _walletBalance.value = balance
+                _sessionMaxWallet.value = maxOf(_sessionMaxWallet.value, balance)
                 _stats.value = gameStats
                 _settings.value = activeSettings
+                _isGameOver.value = balance < 5
+            }
+        }
+    }
+
+    fun loadHighScores() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val scores = dbHelper.getHighScores()
+            viewModelScope.launch(Dispatchers.Main) {
+                _highScores.clear()
+                _highScores.addAll(scores)
+            }
+        }
+    }
+
+    fun startNewGame(playerName: String? = null) {
+        val nameToSubmit = if (playerName.isNullOrBlank()) "Player" else playerName.trim()
+        val peakWallet = _sessionMaxWallet.value
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            dbHelper.addHighScore(nameToSubmit, peakWallet)
+            dbHelper.updateBalance(1000)
+            
+            viewModelScope.launch(Dispatchers.Main) {
+                _walletBalance.value = 1000
+                _sessionMaxWallet.value = 1000
+                _isGameOver.value = false
+                _gameState.value = GameState.BETTING
+                _activeBet.value = 0
+                _previousBet.value = 0
+                dealerCards.clear()
+                playerHands.clear()
+                roundResultText.value = ""
+                _netGainLoss.value = null
+                _adviceMessage.value = "Stamps ready. Place standard chip wagers."
+                
+                loadHighScores()
+                loadDataFromDatabase()
             }
         }
     }
@@ -123,9 +172,11 @@ class BlackjackViewModel(context: Context) : ViewModel() {
     fun resetLifetimeStats() {
         viewModelScope.launch(Dispatchers.IO) {
             dbHelper.resetStats()
+            dbHelper.resetHighScores()
             val gameStats = dbHelper.getStats()
             viewModelScope.launch(Dispatchers.Main) {
                 _stats.value = gameStats
+                loadHighScores()
             }
         }
     }
@@ -152,15 +203,7 @@ class BlackjackViewModel(context: Context) : ViewModel() {
     }
 
     fun reloadWalletAccount() {
-        if (_walletBalance.value == 0 && _gameState.value == GameState.BETTING) {
-            viewModelScope.launch(Dispatchers.IO) {
-                dbHelper.updateBalance(500)
-                viewModelScope.launch(Dispatchers.Main) {
-                    _walletBalance.value = 500
-                    _adviceMessage.value = "Wallet reloaded with $500 loan. Play responsibly!"
-                }
-            }
-        }
+        // Reload features removed as requested. Since reload is deprecated, game over is handled natively.
     }
 
     fun startGameDeal() {

@@ -366,5 +366,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Add a custom tooltip or tap animation to the inline `CompactStrategyAdvice` chip that explains the basic strategy rationale (e.g. why staying or hitting is recommended) when clicked.
 - **Complexity**: Part 3
 
+### 58. Android Blackjack UX: Persistent Cross-Session High Scores & Interactive Game Over Flows (15h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackViewModel.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackDatabaseHelper.kt`
+- **Goal**: Master persistent schema modifications in SQLite on Android to support high score leaderboards, implement robust detection pipelines for game over states when the wallet balance drops below the minimum limit ($5), and design an immersive, interactive modal popup in Jetpack Compose to lock standard play, display cross-session peak wallet values, capture name registrations, and reset states safely back to $1000.
+- **Exercise**: Create a custom setting that allows players to toggle between ascending and descending sort directions on the Hall of Fame leaderboard records list, and add a custom animation (such as a confetti or money shower particle effect) when a new high score is registered and saved.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
