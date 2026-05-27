@@ -378,5 +378,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary merchant shop inside custom floor maps that allows players to trade gold for random health and mana potions, update the local SQLite database schema to support gold totals and potion inventories saving on every step, and trigger a synthesized chime when shopping.
 - **Complexity**: Part 4
 
+### 60. Android Image Selection, Multi-Option Size Reduction & PDF Document Compiler (15h)
+- **Reference**: `repo-android/docs/image-compression-pdf-plan.md`
+- **Goal**: Master system-level image loading, asynchronous lossy/lossless image compression and scaling with bitmap recycling caches inside background Coroutines scopes, and multi-page high-fidelity PDF Document generation using Android's native Graphics and `PdfDocument` canvas libraries in Jetpack Compose.
+- **Exercise**: Implement a local test scenario that takes a multi-selected array of picture Uris, computes scale compression metrics dynamically displaying live simulated kilobyte savings, and merges them sequentially into a single target PDF document stored securely within the private Files directory.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
