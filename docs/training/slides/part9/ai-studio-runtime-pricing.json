@@ -1,0 +1,50 @@
+{
+  "moduleId": "PHASE-9-AGENTS",
+  "title": "AI Studio Agent Execution & Pricing",
+  "totalSlides": 3,
+  "bundleId": 9,
+  "slides": [
+    {
+      "id": "S009-10",
+      "title": "Agent Turn Limits & Network Deadlines",
+      "content": "To build resilient agentic pipelines, developers must understand the physical constraints of the AI Studio execution runtime. Individual model transactions (each prompt-response turn) are governed by strict gateway and RPC constraints. In the Google Cloud infrastructure, the standard HTTP/gRPC relative deadline is capped at 10 minutes (600,000 milliseconds). If an agent attempts an excessively large build, deep dependency analysis, or a blocking web crawl that extends beyond this 10-minute threshold, the gateway will terminate the connection, throwing a 'URL_TIMEOUT' or 'INTERNAL' response exception. As a consequence, code agents should avoid running prolonged synchronous blocking actions. Instead, they must leverage non-blocking background runners—such as the 'run_command' tool configured in background mode—periodically checking state using poll loops or fallback timers, which preserves turn responsiveness.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fef2f2'/><rect x='40' y='50' width='320' height='20' rx='4' fill='#ef4444' fill-opacity='0.2'/><rect x='40' y='50' width='230' height='20' rx='4' fill='#ef4444'/><text x='200' y='110' text-anchor='middle' font-family='sans-serif' font-size='14' font-weight='bold' fill='#991b1b'>10-Minute Gateway Deadline</text><text x='200' y='140' text-anchor='middle' font-family='sans-serif' font-size='11' fill='#7f1d1d'>Synchronous model turns must complete within 600,000s</text></svg>",
+      "tags": ["timeouts", "deadlines", "runtime", "resilience"],
+      "links": ["docs/ai-agents/useful-agent-use-cases.md"],
+      "studentPrompts": [
+          "Explain the difference between a synchronous tool timeout and a background container process lifetime.",
+          "Identify how catching a standard URL_TIMEOUT at the client-side helps prevent application crashes.",
+          "Write a pseudocode pattern for checking if a background-launched task has finished compiling."
+      ],
+      "codeReferences": ["archive-uploader.ts"]
+    },
+    {
+      "id": "S009-11",
+      "title": "Sandbox Container Lifecycle Policies",
+      "content": "While individual model turns expire in 10 minutes, the associated headlessly provisioned Linux sandbox container environment has a separate lifecycle. When an developer launches a development session in Google AI Studio, the system provisions an ephemeral, sandboxed web execution chamber on Cloud Run. This container has a non-activity auto-sleep threshold typically ranging from 15 to 30 minutes of complete idle behavior. If the container finishes all processes and fails to receive requests or terminal sessions, it is automatically spun down to conserve computational resources. However, active containers running continuous development servers (such as Vite/Nginx on Port 3000) or scheduled cron tasks can remain active for the duration of the developer's session (typically up to several hours). Recognizing this separation between transient model turns and persistent container states is crucial for setting up long-running monitoring pipelines.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fafafa'/><circle cx='200' cy='90' r='50' fill='#737373' fill-opacity='0.1' stroke='#404040' stroke-width='2' stroke-dasharray='5 5'/><path d='M150 90 L250 90 M200 40 L200 140' stroke='#a3a3a3' stroke-width='1'/><text x='200' y='170' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#171717'>Cloud Run Ephemeral Sandbox Container</text></svg>",
+      "tags": ["sandbox", "containers", "cloud-run", "lifecycle"],
+      "links": ["docs/ai-agents/google-ai-studio-experience.md"],
+      "studentPrompts": [
+          "What processes are terminated when a sandboxed Cloud Run container is spun down due to inactivity?",
+          "How can custom cron jobs or API poll loops keep a server environment from falling asleep?",
+          "Why are local system file changes lost if a container spins down completely without synchronization?"
+      ],
+      "codeReferences": ["server.ts", "scheduler.ts"]
+    },
+    {
+      "id": "S009-12",
+      "title": "Operational Costs of Agent Workflows",
+      "content": "Developing autonomous agent toolchains requires careful analysis of token transaction economics. Google AI Studio features a dual-tier model. Under the Free Tier, prototyping, tool calling, and codebase reviews cost nothing, provided request thresholds (such as 15 RPM for Flash) are honored. In the Pay-as-you-go Paid Tier, costs are strictly calculated per million tokens. Gemini 1.5/2.5 Flash is highly economical ($0.075 per 1M input tokens, $0.30 per 1M output tokens for contexts below 128k), making rapid file scanning and UI testing extremely affordable. For heavy tasks requiring deep contextual reasoning, Gemini 1.5/2.5 Pro ($1.25 per 1M input, $5.00 per 1M output) provides complex AST parsing. Furthermore, Context Caching of massive code repo vectors (at ~$0.01875 per million tokens per hour on Flash) drastically reduces repeating input costs by up to 50%, transforming multi-file refactoring steps into fractions-of-a-cent computations.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='60' y='60' width='120' height='70' rx='6' fill='#16a34a' fill-opacity='0.1' stroke='#16a34a' stroke-width='1.5'/><rect x='220' y='60' width='120' height='70' rx='6' fill='#15803d' fill-opacity='0.1' stroke='#15803d' stroke-width='1.5'/><text x='120' y='100' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='#166534'>Gemini Flash</text><text x='120' y='118' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#166534'>$0.075 / 1M In</text><text x='280' y='100' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='#14532d'>Gemini Pro</text><text x='280' y='118' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#14532d'>$1.250 / 1M In</text><text x='200' y='175' text-anchor='middle' font-family='sans-serif' font-size='12' fill='#166534'>Dual-Tier Token Financial Anatomy</text></svg>",
+      "tags": ["pricing", "tokens", "economics", "caching"],
+      "links": ["https://ai.google.dev/pricing"],
+      "studentPrompts": [
+          "Under what conditions does Context Caching offer significant financial savings for a codebase agent?",
+          "Analyze the cost of a 10-turn conversation where each turn has a context of 100,000 input tokens on Gemini Pro.",
+          "Why is a multi-model approach (using Flash for simple tasks and Pro for deep logic) the gold standard for agent cost-reduction?"
+      ],
+      "codeReferences": [".env.example"]
+    }
+  ]
+}

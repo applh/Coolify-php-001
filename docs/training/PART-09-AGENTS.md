@@ -94,4 +94,12 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Exercise**: Create a detailed custom system prompt for the "Playwright/Puppeteer UI Auditor" agent that instructs the model to compile a list of visual bugs (e.g., overlapping text blocks, lack of screen margins, low color contrast) and draft actionable fix suggestions.
 - **Complexity**: Part 2 (Visual Design & UI/UX Principles)
 
+### 12. Cost Optimization & Sandbox Caching (10h)
+**Reference**: `docs/ai-agents/ai-studio-runtime-costs-timeouts.md`, `docs/training/slides/part9/ai-studio-runtime-pricing.json`
+- **Goal**: Understand the financial economics and timeout boundaries of running agents with token constraints.
+- **Task**: Study model turn limits (10-minute gateways) and token rates (Flash vs Pro).
+- **Exercise**: Design a scenario-based spreadsheet or calculation proving how Context Caching (32k+ tokens with 50% cost reductions) impacts price-per-turn in a 50-file workspace project model review vs standard un-cached requests.
+- **Complexity**: Part 3 (Engineering Fundamentals)
+
+
 

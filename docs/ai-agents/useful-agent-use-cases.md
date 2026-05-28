@@ -39,6 +39,13 @@ You are the Code Dispatch Agent. Your mission is to package the active workspace
 5. Clean up any temporary files upon execution.
 ```
 
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-3.5-flash` (Highly optimized for low latency and text automation).
+*   **Input Context (System instructions, workspace scanning results)**: ~2,500 tokens.
+*   **Output payload (Execution logs, gateway status confirmations)**: ~350 tokens.
+*   **Cost Vector**: Input: $0.075 / 1M tokens | Output: $0.30 / 1M tokens.
+*   **Total Cost**: **~$0.0003 USD** per execution.
+
 ---
 
 ## 🎨 Use Case 2: Playwright/Puppeteer UI Auditor
@@ -82,6 +89,13 @@ async function runAudit() {
 runAudit();
 ```
 
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-2.5-flash-image` (Multimodal analysis of mobile + desktop screenshot images).
+*   **Input Context (Audit rules, DOM layout schema, plus 2 screen PNG images)**: ~5,500 tokens (Standard screenshots consume ~258-1500 tokens per file).
+*   **Output payload (Components diagnostic checklist, responsive contrast/visual guidelines)**: ~1,200 tokens.
+*   **Cost Vector**: Input: $0.075 / 1M tokens | Output: $0.30 / 1M tokens.
+*   **Total Cost**: **~$0.0015 USD** per full responsive audit cycle.
+
 ---
 
 ## 🌉 Use Case 3: Polyglot API Bridge Generator
@@ -103,6 +117,13 @@ You are the API Bridge Specialist. Your role is to bridge the gap between our ba
 4. Report any missing endpoints or schema discrepancies as structured diagnostic errors in your summary.
 ```
 
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-3.1-pro-preview` (Demands premium reasoning for language alignment, syntax mappings, and dual-stack AST translation).
+*   **Input Context (Full database schemas, backend route tables, and front-end interface types)**: ~45,000 tokens.
+*   **Output payload (Perfect TypeScript models and type-safe Axios/Fetch services)**: ~3,500 tokens.
+*   **Cost Vector**: Input: $1.25 / 1M tokens | Output: $5.00 / 1M tokens.
+*   **Total Cost**: **~$0.0737 USD** per alignment operation (very viable relative to manual typing times).
+
 ---
 
 ## 🩺 Use Case 4: Autonomous Linter-Fixer Loop
@@ -118,6 +139,13 @@ The agent uses its workspace tools directly:
 1. `edit_file` / `multi_edit_file` -> Makes target code changes.
 2. `lint_applet` -> Evaluates code quality and retrieves exact lines that violate rules.
 3. Loops over compilation feedback, automatically repairing imports and syntax without asking for user hand-holding.
+
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-3.5-flash` (Highly responsive for iterative pattern correction).
+*   **Input Context (Target file, TS compiler errors, specific linter logs)**: ~8,000 tokens.
+*   **Output payload (Surgically isolated line replacements and corrected syntax blocks)**: ~800 tokens.
+*   **Cost Vector**: Input: $0.075 / 1M tokens | Output: $0.30 / 1M tokens.
+*   **Total Cost**: **~$0.0008 USD** per correction iteration (resolves blockages autonomously for less than a tenth of a cent).
 
 ---
 
@@ -148,6 +176,13 @@ async function translateContent(sourceText: string, targetLanguage: string) {
 }
 ```
 
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-3.5-flash` (Perfect balance of bilingual speed and translation quality formatting).
+*   **Input Context (Vocabulary dictionaries, localized string resources, and translation instructions)**: ~12,000 tokens.
+*   **Output payload (Fully aligned JSON dictionary containing all target translations)**: ~2,500 tokens.
+*   **Cost Vector**: Input: $0.075 / 1M tokens | Output: $0.30 / 1M tokens.
+*   **Total Cost**: **~$0.00165 USD** per module translation run.
+
 ---
 
 ## 🗄️ Use Case 6: Database Seeder & Schema Sync
@@ -157,6 +192,13 @@ Testing pagination controls, filtering algorithms, and visual charts requires ma
 
 ### The Agent Solution
 An agent that crawls your database schema files (`database.ts`, SQLite, or Postgres definitions) and uses structured LLM outputs to generate millions of rows of perfect mock data records that maintain direct referential integrity.
+
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-3.1-pro-preview` (Highly rigorous with relational graph structures & foreign key requirements).
+*   **Input Context (DB engine definitions, multi-table relation trees, schema guidelines)**: ~15,000 tokens.
+*   **Output payload (Relational seeder script mapping realistic seed inserts)**: ~4,000 tokens.
+*   **Cost Vector**: Input: $1.25 / 1M tokens | Output: $5.00 / 1M tokens.
+*   **Total Cost**: **~$0.0387 USD** per execution setup.
 
 ---
 
