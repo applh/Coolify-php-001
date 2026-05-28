@@ -14,6 +14,7 @@ This directory logs high-value, production-tested use cases for **AI Studio Codi
 | **4. Autonomous Linter-Fixer Loop** | Runs linters, parses diagnostics, and edits files systematically until clean. | Self-Correction | `lint_applet` / `compile_applet` Multi-Edit |
 | **5. AI-Powered Localization Agent** | Parses static UI text or templates and updates JSON dictionaries via Gemini. | Workflow / CLI Prompt | Translation APIs, JSON Manifest Schema |
 | **6. Database Seeder & Schema sync** | Inspects DB structures, synthesizes realistic relational seed data, and executes migrations. | CLI Task Runner | SQLite/Postgres Engines, Data Synthesis |
+| **7. Autonomous Android Compiler** | Runs Gradle compiles on Android files post-edit, parses log traces, and heals code until APK is built. | Self-Correction / Post-Edit Hook | Kotlin Compiler, Gradle Suite, Multi-edit |
 
 ---
 
@@ -199,6 +200,23 @@ An agent that crawls your database schema files (`database.ts`, SQLite, or Postg
 *   **Output payload (Relational seeder script mapping realistic seed inserts)**: ~4,000 tokens.
 *   **Cost Vector**: Input: $1.25 / 1M tokens | Output: $5.00 / 1M tokens.
 *   **Total Cost**: **~$0.0387 USD** per execution setup.
+
+---
+
+## 🤖 Use Case 7: Autonomous Android Compiler & Self-Healer
+
+### Business Context & Problem
+Writing Android applications using Jetpack Compose and Kotlin in a custom multi-app layout requires highly precise type matching, lifecycle bindings, and Gradle package coordinates. Introducing a minor visual shift, updating a camera dependency or modifying an API payload schema parameter can easily introduce subtle compiler breakages that are hard for standard text editors to trace.
+
+### The Agent Solution
+An agent configured inside the workspace that uses `gradle --project-dir repo-android assembleDebug` to run a headless container build after files are edited. When Gradle returns build logs holding unresolved symbols, deprecated components, or Kotlin syntax exceptions, the agent automatically isolates the offending files, performs surgical fixes, and recompiles the codebase in an automated, closed-loop debug cycle until a runnable APK package is compiled safely.
+
+### 💸 Cost & Token Estimation (Per Run)
+*   **Recommended Model**: `gemini-2.5-flash` (Extremely fast, cost-optimal processing for parsing standard compiler and linter stack traces).
+*   **Input Context (Gradle configuration files, target Kotlin files, and verbose Gradle compiler log blocks)**: ~22,000 tokens.
+*   **Output payload (Surgical edits and code corrections to resolve references)**: ~1,500 tokens.
+*   **Cost Vector**: Input: $0.075 / 1M tokens | Output: $0.30 / 1M tokens.
+*   **Total Cost**: **~$0.0021 USD** per self-repair iteration.
 
 ---
 

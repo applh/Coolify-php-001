@@ -1,0 +1,50 @@
+{
+  "moduleId": "PHASE-9-ANDROID-ORCHESTRATION",
+  "title": "Cross-Stack Architectures & Android Self-Healing",
+  "totalSlides": 3,
+  "bundleId": 9,
+  "slides": [
+    {
+      "id": "S009-13",
+      "title": "Unboxing Google AI Studio Tech Stacks",
+      "content": "To configure highly efficient coding environments, AI Studio provides precompiled compilers and system managers inside their sandboxed web container. Runtimes including Node.js Core, Python slim interpreters, Go compilers, Rust cargo environments, and Android SDK wrappers are available. Each selection demands a careful balance of memory constraints and compiler performance. Go remains the most agent-accessible due to explicit syntax paradigms and single-digit RAM execution loads, whereas Rust yields high compile-time bottlenecks. Full-stack developers can build rich backend APIs and headless platforms across all of these languages and verify execution instantly inside the container.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f8fafc'/><rect x='40' y='40' width='320' height='24' rx='4' fill='#38bdf8' fill-opacity='0.2'/><text x='50' y='56' font-family='sans-serif' font-size='10' font-weight='bold' fill='#0369a1'>AVAILABLE COMPILERS</text><text x='170' y='56' font-family='monospace' font-size='9' fill='#075985'>[Node.js | Go | Rust | PHP | Python | Android SDK]</text><circle cx='100' cy='120' r='25' fill='#38bdf8' fill-opacity='0.15' stroke='#0284c7' stroke-width='1.5'/><text x='100' y='123' text-anchor='middle' font-family='monospace' font-size='9' fill='#0369a1'>Go</text><circle cx='200' cy='120' r='25' fill='#f43f5e' fill-opacity='0.15' stroke='#e11d48' stroke-width='1.5'/><text x='200' y='123' text-anchor='middle' font-family='monospace' font-size='9' fill='#9f1239'>Node</text><circle cx='300' cy='120' r='25' fill='#e11d48' fill-opacity='0.15' stroke='#9f1239' stroke-width='1.5' stroke-dasharray='3 3'/><text x='300' y='123' text-anchor='middle' font-family='monospace' font-size='9' fill='#9f1239'>Rust</text></svg>",
+      "tags": ["runtimes", "compilers", "performance", "sandbox"],
+      "links": ["docs/ai-agents/tech-stacks-and-containers.md"],
+      "studentPrompts": [
+          "Compare the idle RAM footprint differences of a compiled Go service vs a Node development server.",
+          "Under what conditions should developers choose Rust cargo inside the sandbox?",
+          "Explain why Alpine-based Dockerfiles are preferred over default bloated runtime base images."
+      ],
+      "codeReferences": ["repo-android/Dockerfile"]
+    },
+    {
+      "id": "S009-14",
+      "title": "Unprivileged Sandbox Restrictions VS Remote CI/CD",
+      "content": "A foundational concept of AI Studio Sandboxes is container execution boundaries. The workspace container executes inside a gVisor unprivileged kernel environment to insulate tenant servers. Consequently, nesting Docker processes (Docker-in-Docker / DinD) via standard local CLI commands like 'docker build' is strictly blocked due to virtualization constraints. However, agents possess the complete tool capability to orchestrate remote cloud deployments. By utilizing secure API credentials, agents can trigger external server headless hooks (such as Coolify or Heroku webhook targets), push code to upstream Git branch triggers, or deploy serverless instances directly using standard cloud software providers.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#fffbeb'/><rect x='40' y='50' width='130' height='100' rx='6' fill='#ef4444' fill-opacity='0.1' stroke='#ef4444' stroke-width='2'/><text x='105' y='80' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='#991b1b'>Local Sandbox</text><text x='105' y='100' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#b91c1c'>Docker Blocked ❌</text><text x='105' y='120' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#b91c1c'>(Unprivileged)</text><rect x='230' y='50' width='130' height='100' rx='6' fill='#10b981' fill-opacity='0.1' stroke='#10b981' stroke-width='2'/><text x='295' y='80' text-anchor='middle' font-family='sans-serif' font-size='12' font-weight='bold' fill='#065f46'>Remote Host</text><text x='295' y='100' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#047857'>Trigger Hook ✅</text><text x='295' y='120' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#047857'>(Cloud Run / Webhook)</text><path d='M170 100 L230 100' stroke='#d97706' stroke-width='1.5' stroke-dasharray='4' marker-end='url(#arrow)'/></svg>",
+      "tags": ["virtualization", "security", "docker", "deployments"],
+      "links": ["docs/ai-agents/tech-stacks-and-containers.md"],
+      "studentPrompts": [
+          "State why running Docker command elements directly inside the sandbox CLI throws a privilege error.",
+          "Describe the interaction flow of triggering a remote Coolify redeploy from an agent prompt call.",
+          "Configure a Git-based headless workflow using target webhooks to compile release assets securely."
+      ],
+      "codeReferences": ["repo-android/docker-compose.yml"]
+    },
+    {
+      "id": "S009-15",
+      "title": "Closed-Loop Android Gradle Self-Healing Loops",
+      "content": "Kotlin compilation inside Compose repositories requires absolute symbol consistency. To avoid shipping regressions, a Self-Healing agent intercepts standard file modifications on Kotlin files. Immediately following edits, the agent triggers 'gradle --project-dir repo-android assembleDebug' synchronously inside the container. If build errors manifest, the agent parses the diagnostics logs, isolates target line numbers, maps un-imported types or deprecated components, and implements direct repairs. This iterative compilation cycle continues up to three turns until a pristine, compilable codebase is guaranteed and a final debug APK can be extracted and delivered securely.",
+      "svgContent": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'><rect width='100%' height='100%' fill='#f0fdf4'/><rect x='130' y='30' width='140' height='30' rx='4' fill='#15803d' fill-opacity='0.1' stroke='#15803d' stroke-width='1.5'/><text x='200' y='49' text-anchor='middle' font-family='sans-serif' font-size='11' font-weight='bold' fill='#166534'>Surgical Edit</text><rect x='50' y='100' width='110' height='30' rx='4' fill='#15803d' fill-opacity='0.1' stroke='#15803d' stroke-width='1.5'/><text x='105' y='119' text-anchor='middle' font-family='sans-serif' font-size='11' font-weight='bold' fill='#166534'>Assemble Debug</text><rect x='240' y='100' width='110' height='30' rx='4' fill='#b91c1c' fill-opacity='0.1' stroke='#b91c1c' stroke-width='1.5'/><text x='295' y='119' text-anchor='middle' font-family='sans-serif' font-size='11' font-weight='bold' fill='#991b1b'>Extract Error LOG</text><path d='M105 100 L200 60 L295 100 Z' fill='none' stroke='#166534' stroke-width='1.5'/></svg>",
+      "tags": ["gradle", "android", "self-correction", "loops"],
+      "links": ["docs/ai-agents/android-compilation-agent.md"],
+      "studentPrompts": [
+          "Illustrate how Gradle build flags like '--no-daemon' and '--parallel' affect container resources.",
+          "What pattern should be used to parse a relative line reference error from standard Kotlin compiler output?",
+          "How does enforcing post-edit automatic builds prevent silent development stack degradation over time?"
+      ],
+      "codeReferences": ["repo-android/app/build.gradle", "repo-android/app/src/main/AndroidManifest.xml"]
+    }
+  ]
+}

@@ -101,5 +101,21 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Exercise**: Design a scenario-based spreadsheet or calculation proving how Context Caching (32k+ tokens with 50% cost reductions) impacts price-per-turn in a 50-file workspace project model review vs standard un-cached requests.
 - **Complexity**: Part 3 (Engineering Fundamentals)
 
+### 13. Stack Selection & Container Optimization (10h)
+**Reference**: `docs/ai-agents/tech-stacks-and-containers.md`
+- **Goal**: Understand the structural footprint, runtime latency, and AI Agent Experience (AX) advantages across modern programming languages.
+- **Task**: Study the technical comparison matrix documenting Go, Rust, Node, Python, and PHP container profiles.
+- **Exercise**: Analyze a heavy, un-optimized ~800MB Python/FastAPI container baseline and write a highly structured, multi-stage Dockerfile using `python:3.11-alpine` that runs the service under a non-root user and compresses the final production layer below 120MB.
+- **Complexity**: Part 3 (Engineering Fundamentals)
+
+### 14. Autonomous Android Compilation & Self-Healing Loops (15h)
+**Reference**: `docs/ai-agents/android-compilation-agent.md`
+- **Goal**: Master setup of self-correcting post-edit compilation hooks implementing closed Gradle loop repairs.
+- **Task**: Study the autonomous debug loop, compiler trace extraction methods, and Compose symbol mappings.
+- **Exercise**: Author a mock Kotlin class `MainActivity.kt` with intentional reference errors (e.g. referencing a deprecated Compose Icon class or non-existent XML Resource). Execute a series of three simulated turns where the agent reads the Gradle stdout error log, executes targeted `edit_file` fixes, compiles the `/repo-android` project, and registers a success state.
+- **Complexity**: Part 3 (Engineering Fundamentals)
+
+
+
 
 
