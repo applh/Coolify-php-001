@@ -251,3 +251,24 @@ Allowing users within the "Files" applet to run heavy offline media operations (
    - **Choice**: Supported both **Workflow A** (contextual image scale/pdf merge shortcuts directly inside `ExplorerScreen.kt`'s selection action row) and **Workflow B** (a fully-interactive dedicated dashboard screen `ImagePdfScreen.kt` complete with multiple picker integrations, real-time file-size prediction heuristics, and a monospaced terminal activity log).
    - **Reason**: Enhances user flexibility. Simple in-place conversions can be triggered immediately without changing screens, whereas advanced, complex document compilation tasks are executed inside a standalone workspace featuring detailed processing statuses.
 
+---
+
+## 12. Multi-Driver Persistence & Database Access Layers (PostgreSQL & SQLite)
+
+### Context
+To support both simple low-resource installations and high-traffic or multi-container enterprise deployments of the multi-tenant PHP CMS, we need to offer an alternative to standard flat-file and localized SQLite databases. Specifically, the system must support **PostgreSQL** as a persistence layer while preserving **SQLite** as a fully zero-dependency alternative.
+
+### Decisions & Justification
+
+1. **Environment-Driven Configuration over Build-Time Locking**
+   - **Choice**: Store connection configs using generic environment variables (`DB_DRIVER=sqlite` or `DB_DRIVER=pgsql`) parsed at boot.
+   - **Reason**: Allows immediate environment transformations. System operators can swap persistence adapters dynamically without code changes or container image rebuilds.
+
+2. **Lightweight Repository Isolation instead of Bloating with full ORMs**
+   - **Choice**: Standardize on custom Repositories (e.g., `VisitsRepository`) paired with a dynamic `DB` Singleton PDO manager. We explicitly avoid heavyweight PHP ORMs like Eloquent or Doctrine.
+   - **Reason**: Retains maximum page performance. Massive ORMs bring dozens of packages that bloat `/vendor`, degrade bootstrapping execution speeds, and reduce portability. Custom Repositories achieve query safety, dynamic schema translation, and pristine code maintainability under a zero-dependency footprint.
+
+3. **Database-Agnostic Migration Hook**
+   - **Choice**: Run a specialized `DatabaseMigrator::initTables()` sequence reading the active driver dynamically on system init.
+   - **Reason**: Eliminates the risk of asynchronous migration state drift. Automatically sets up index patterns and dialect-appropriate field types on boot whether the system is loading onto a local SQLite container or connecting to a managed remote PostgreSQL cluster.
+

@@ -36,5 +36,11 @@ To continue evolving this project in AI Studio:
 2. **Automated Unit Testing**: Task the agent with generating specialized test suites for the PHP `Router` and the Express API.
 3. **Continuous Documentation**: Update the `docs/` folder every time a new stack-specific feature is added to keep the project's knowledge base "evergreen."
 
+## 🌟 Useful AI Agent Use Cases
+
+We have documented actionable architectural recipes, system prompts, automated scripts, and security details on running dedicated agents inside Google AI Studio. 
+
+Read the comprehensive guide here: **[Useful Agent Use Cases](./useful-agent-use-cases.md)**.
+
 ---
 *Created in Google AI Studio - A new era of collaborative development.*

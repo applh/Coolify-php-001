@@ -80,4 +80,18 @@ Harness the power of Large Language Models to build autonomous coding and conten
 - **Exercise**: Choose an applet from the complexity scaling (e.g., Camera or Backup Manager) and write a mock prompt that incorporates the layout, threading, and lifecycle directives, proving how context constraints prevent typical regression states.
 - **Complexity**: Part 1 (Documentation & AI Orchestration)
 
+### 10. Sovereign ZIP Shipper & Agent Tools (10h)
+**Reference**: `/docs/ai-agents/ai-studio-agent-archive-upload-plan.md`, `/archive-uploader.ts`
+- **Goal**: Learn how to design custom single-purpose agents that bundle workspace files and integrate with external APIs securely using environment variables.
+- **Task**: Review the system prompt and code design for the ZIP packager utility.
+- **Exercise**: Adapt the `/archive-uploader.ts` script to support standard `multipart/form-data` upload using Node's native `fetch` FormData representation, and verify that it handles dynamic network retry delays when encountering temporary HTTP 503 states.
+- **Complexity**: Part 3 (Engineering Fundamentals)
+
+### 11. AI Studio Agent Blueprints & Use Case Design (10h)
+**Reference**: `docs/ai-agents/useful-agent-use-cases.md`, `docs/ai-agents/google-ai-studio-experience.md`
+- **Goal**: Master the design and implementation of diverse high-value agent roles within Google AI Studio.
+- **Task**: Analyze the six core agent blueprints (ZIP Shipping, UI Auditing, Polyglot Bridging, Self-Correction, Localization, and Schema Syncing).
+- **Exercise**: Create a detailed custom system prompt for the "Playwright/Puppeteer UI Auditor" agent that instructs the model to compile a list of visual bugs (e.g., overlapping text blocks, lack of screen margins, low color contrast) and draft actionable fix suggestions.
+- **Complexity**: Part 2 (Visual Design & UI/UX Principles)
+
 
