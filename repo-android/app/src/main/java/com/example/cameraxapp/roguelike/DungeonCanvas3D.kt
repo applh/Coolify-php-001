@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import com.example.cameraxapp.core.math3d.RenderItem3D
 import com.example.cameraxapp.core.math3d.Vector3
 import kotlin.math.*
@@ -36,9 +37,9 @@ fun DungeonCanvas3D(
     heroClass: String,
     modifier: Modifier = Modifier
 ) {
-    var yawAngle by remember { mutableStateOf(-0.35f) }
-    var pitchAngle by remember { mutableStateOf(-0.55f) }
-    var zoomScale by remember { mutableStateOf(1.4f) }
+    var yawAngle by remember { mutableStateOf(-0.65f) }
+    var pitchAngle by remember { mutableStateOf(-0.75f) }
+    var zoomScale by remember { mutableStateOf(1.6f) }
     var lightingStrength by remember { mutableStateOf(1.5f) }
 
     val textPainter = remember {
@@ -54,7 +55,7 @@ fun DungeonCanvas3D(
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
                     yawAngle = (yawAngle + pan.x * 0.007f)
-                    pitchAngle = (pitchAngle - pan.y * 0.007f).coerceIn(-1.4f, -0.2f)
+                    pitchAngle = (pitchAngle - pan.y * 0.007f).coerceIn(-1.45f, -0.35f)
                     zoomScale = (zoomScale * zoom).coerceIn(0.4f, 3.0f)
                 }
             }
@@ -70,9 +71,15 @@ fun DungeonCanvas3D(
             val dFactor = 280f
             val W_s = 22f
 
+            // Orbit follow camera: offset and rotate all vectors relative to the player's character position
+            val pWorldX = (pX - 9f) * W_s
+            val pWorldZ = (pY - 9f) * W_s
+            val targetCenter = Vector3(pWorldX, 0f, pWorldZ)
+
             // Projections math mapping
             fun projectPoint(v: Vector3): Offset {
-                val rot = v.rotateY(yawAngle).rotateX(pitchAngle)
+                val rel = v - targetCenter
+                val rot = rel.rotateY(yawAngle).rotateX(pitchAngle)
                 val denom = rot.z + cameraZ
                 val sx = cX + (rot.x * dFactor * zoomScale) / if (denom != 0f) denom else 1f
                 val sy = cY + (rot.y * dFactor * zoomScale) / if (denom != 0f) denom else 1f
@@ -80,7 +87,8 @@ fun DungeonCanvas3D(
             }
 
             fun getRotatedZDeep(v: Vector3): Float {
-                return v.rotateY(yawAngle).rotateX(pitchAngle).z
+                val rel = v - targetCenter
+                return rel.rotateY(yawAngle).rotateX(pitchAngle).z
             }
 
             // Define light source centered at Player position (Y is light height overhead)
@@ -269,132 +277,159 @@ fun DungeonCanvas3D(
             }
         }
 
-        // Floating Instructions corner
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                .border(0.5.dp, Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 6.dp, vertical = 4.dp)
-        ) {
-            Text("DRAG / PINCH TO ROTATE & ZOOM", fontSize = 8.sp, color = Color.Yellow, letterSpacing = 0.5.sp)
-        }
+        var showSettings by remember { mutableStateOf(false) }
 
-        // 3D HUD Settings Control Panel Overlay
-        Column(
+        // Top Controls Panel (Instructions & Gear button)
+        Row(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp)
-                .background(Color.Black.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
-                .border(1.dp, Color.LightGray.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
-                .padding(vertical = 8.dp, horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Row 1: Zoom Manual & Reset Controls
-            Row(
-                modifier = Modifier.padding(bottom = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Box(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, Color.LightGray.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
             ) {
                 Text(
-                    text = "🔍 ZOOM: ${(zoomScale * 100).toInt()}%",
-                    fontSize = 9.sp,
-                    color = Color.White,
-                    modifier = Modifier.width(85.dp)
+                    text = "🖐️ SWIPE TO ROTATE • PINCH TO ZOOM",
+                    fontSize = 8.sp,
+                    color = Color(0xFFFFD700),
+                    letterSpacing = 0.5.sp,
+                    fontWeight = FontWeight.Bold
                 )
-                // Zoom Out Button (-)
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.4f, 3.0f) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("-", color = Color.White, fontSize = 12.sp)
-                }
-                // Zoom In Button (+)
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.4f, 3.0f) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("+", color = Color.White, fontSize = 12.sp)
-                }
-                // Reset Button
-                Box(
-                    modifier = Modifier
-                        .padding(start = 4.dp)
-                        .height(24.dp)
-                        .padding(horizontal = 6.dp)
-                        .background(Color(0xFF424242), RoundedCornerShape(4.dp))
-                        .clickable { zoomScale = 1.4f },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("RESET", color = Color.White, fontSize = 8.sp)
-                }
             }
 
-            // Row 2: Lighting Strength Selector
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Box(
+                modifier = Modifier
+                    .background(if (showSettings) Color(0xFFFFD700) else Color.Black.copy(alpha = 0.65f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, Color.LightGray.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                    .clickable { showSettings = !showSettings }
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text(
-                    text = "💡 TORCH: ${(lightingStrength * 100).toInt()}%",
-                    fontSize = 9.sp,
-                    color = Color.White,
-                    modifier = Modifier.width(85.dp)
+                    text = if (showSettings) "CLOSE 🛠️" else "VIEW OPT ⚙️",
+                    fontSize = 8.5.sp,
+                    color = if (showSettings) Color.Black else Color.White,
+                    fontWeight = FontWeight.Bold
                 )
-                
-                // Dim Preset Button
-                Box(
-                    modifier = Modifier
-                        .height(24.dp)
-                        .padding(horizontal = 6.dp)
-                        .background(if (lightingStrength == 0.8f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { lightingStrength = 0.8f },
-                    contentAlignment = Alignment.Center
+            }
+        }
+
+        // Expanded floating settings panel dropdown menu
+        if (showSettings) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 44.dp, end = 8.dp)
+                    .width(220.dp)
+                    .background(Color.Black.copy(alpha = 0.92f), RoundedCornerShape(8.dp))
+                    .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .padding(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "🛠️ DISPLAY CONFIG",
+                    fontSize = 11.sp,
+                    color = Color(0xFFFFD700),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Row 1: Zoom Control
+                Row(
+                    modifier = Modifier.padding(bottom = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("DIM", color = Color.White, fontSize = 8.sp)
-                }
-                
-                // Normal Preset Button
-                Box(
-                    modifier = Modifier
-                        .height(24.dp)
-                        .padding(horizontal = 6.dp)
-                        .background(if (lightingStrength == 1.5f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { lightingStrength = 1.5f },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("TORCH", color = Color.White, fontSize = 8.sp)
+                    Text(
+                        text = "🔍 ZOOM: ${(zoomScale * 100).toInt()}%",
+                        fontSize = 9.sp,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .background(Color(0xFF222222), RoundedCornerShape(4.dp))
+                                .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.4f, 3.0f) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("-", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .background(Color(0xFF222222), RoundedCornerShape(4.dp))
+                                .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.4f, 3.0f) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("+", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .height(22.dp)
+                                .padding(horizontal = 5.dp)
+                                .background(Color(0xFF333333), RoundedCornerShape(4.dp))
+                                .clickable { zoomScale = 1.6f },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("RST", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
 
-                // Bright Preset Button
-                Box(
+                // Custom separator line spacer
+                Spacer(
                     modifier = Modifier
-                        .height(24.dp)
-                        .padding(horizontal = 6.dp)
-                        .background(if (lightingStrength == 2.2f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { lightingStrength = 2.2f },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("LANTERN", color = Color.White, fontSize = 8.sp)
-                }
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.12f))
+                        .padding(bottom = 8.dp)
+                )
 
-                // Max Preset Button
-                Box(
-                    modifier = Modifier
-                        .height(24.dp)
-                        .padding(horizontal = 6.dp)
-                        .background(if (lightingStrength == 3.0f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
-                        .clickable { lightingStrength = 3.0f },
-                    contentAlignment = Alignment.Center
+                // Row 2: Lighting Control
+                Text(
+                    text = "💡 TORCH STRENGTH",
+                    fontSize = 9.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 6.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text("SUNLIGHT", color = Color.White, fontSize = 8.sp)
+                    val presets = listOf(
+                        "DIM" to 0.8f,
+                        "TORCH" to 1.5f,
+                        "LANTERN" to 2.2f,
+                        "SUN" to 3.0f
+                    )
+                    presets.forEach { (label, value) ->
+                        val active = lightingStrength == value
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(24.dp)
+                                .background(if (active) Color(0xFFFF9100) else Color(0xFF1E1E1E), RoundedCornerShape(4.dp))
+                                .clickable { lightingStrength = value },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (active) Color.Black else Color.White,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -120,50 +120,59 @@ fun RoguelikeScreen(
                             // 1. Level & Attributes Header
                             StatsHeader(char = char)
 
-                            // 2. Playable 2D Grid Canvas or 3D Isometric View
-                            if (is3DMode) {
-                                DungeonCanvas3D(
-                                    tiles = tiles,
-                                    monsters = monsters,
-                                    pX = playerX,
-                                    pY = playerY,
-                                    heroClass = char.heroClass,
+                            // 2. Playable Game Viewport (with overlays, no square aspect-ratio locking)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
+                                    .background(Color.Black)
+                            ) {
+                                if (is3DMode) {
+                                    DungeonCanvas3D(
+                                        tiles = tiles,
+                                        monsters = monsters,
+                                        pX = playerX,
+                                        pY = playerY,
+                                        heroClass = char.heroClass,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    DungeonCanvas(
+                                        tiles = tiles,
+                                        monsters = monsters,
+                                        pX = playerX,
+                                        pY = playerY,
+                                        heroClass = char.heroClass,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+
+                                // Interactive mobile console overlays
+                                Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .border(1.5.dp, Color(0xFF332211), RoundedCornerShape(4.dp))
-                                        .background(Color.Black)
-                                )
-                            } else {
-                                DungeonCanvas(
-                                    tiles = tiles,
-                                    monsters = monsters,
-                                    pX = playerX,
-                                    pY = playerY,
-                                    heroClass = char.heroClass,
+                                        .align(Alignment.BottomStart)
+                                        .padding(10.dp)
+                                ) {
+                                    GamepadDPad(onMove = { dx, dy -> viewModel.movePlayer(dx, dy) })
+                                }
+
+                                Box(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                        .border(1.5.dp, Color(0xFF332211), RoundedCornerShape(4.dp))
-                                        .background(Color.Black)
-                                )
+                                        .align(Alignment.BottomEnd)
+                                        .padding(10.dp)
+                                ) {
+                                    GamepadActions(
+                                        char = char,
+                                        inventory = inventory,
+                                        onOpenInventory = { viewModel.openInventory() },
+                                        onCastSpell = { viewModel.castClassSpell() }
+                                    )
+                                }
                             }
 
                             // 3. Game combat logger console
                             CombatLoggerView(logs = logs)
-
-                            // 4. Inventory quick belt / Spell triggers
-                            FloatingActionsBelt(
-                                char = char,
-                                inventory = inventory,
-                                onOpenInventory = { viewModel.openInventory() },
-                                onCastSpell = { viewModel.castClassSpell() }
-                            )
-
-                            // 5. Floating Touch Controller
-                            TouchDPad(onMove = { dx, dy -> viewModel.movePlayer(dx, dy) })
                         }
 
                         // Overlay drawer modal for inventory bag management
@@ -897,6 +906,159 @@ fun ScoresView(
                 ) {
                     Text("RETURN", color = Color.White, fontSize = 12.sp)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun GamepadDPad(onMove: (Int, Int) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(24.dp))
+            .border(0.8.dp, Color(0xFFFFD700).copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+            .padding(6.dp)
+    ) {
+        // UP Button
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                .clickable { onMove(0, -1) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("▲", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Row(
+            modifier = Modifier.padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // LEFT Button
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                    .clickable { onMove(-1, 0) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("◀", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // WAIT turn option (Center resting)
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(Color(0xFF332211).copy(alpha = 0.9f), RoundedCornerShape(18.dp))
+                    .clickable { onMove(0, 0) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("⏳", color = Color.White, fontSize = 14.sp)
+            }
+
+            // RIGHT Button
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                    .clickable { onMove(1, 0) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("▶", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // DOWN Button
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                .clickable { onMove(0, 1) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("▼", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun GamepadActions(
+    char: CharacterState,
+    inventory: List<InventoryItem>,
+    onOpenInventory: () -> Unit,
+    onCastSpell: () -> Unit
+) {
+    val spellLabel = when (char.heroClass) {
+        "Warrior" -> "Cleave"
+        "Mage" -> "Fireball"
+        else -> "Backstab"
+    }
+    val icon = when (char.heroClass) {
+        "Warrior" -> "🪓"
+        "Mage" -> "🔥"
+        else -> "🗡️"
+    }
+    val manaCost = when (char.heroClass) {
+        "Warrior" -> 6
+        "Mage" -> 15
+        else -> 10
+    }
+    val castable = char.currentMana >= manaCost
+    val consCount = inventory.count { it.type == "CONSUMABLE" }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        // Backpack circular action button
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(26.dp))
+                .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(26.dp))
+                .clickable { onOpenInventory() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("🎒", fontSize = 16.sp)
+                Text("BAG ($consCount)", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // Active Spell/Attack action button
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(
+                    if (castable) Color(0xFF4A148C).copy(alpha = 0.85f) 
+                    else Color(0xFF212121).copy(alpha = 0.6f), 
+                    RoundedCornerShape(32.dp)
+                )
+                .border(
+                    width = 1.dp, 
+                    color = if (castable) Color(0xFFBA68C8) else Color(0xFF424242).copy(alpha = 0.5f), 
+                    shape = RoundedCornerShape(32.dp)
+                )
+                .clickable(enabled = castable) { onCastSpell() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = icon, fontSize = 20.sp)
+                Text(
+                    text = spellLabel,
+                    fontSize = 8.5.sp,
+                    color = if (castable) Color.White else Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${manaCost}mp",
+                    fontSize = 8.sp,
+                    color = if (castable) Color(0xFFE1BEE7) else Color.Gray,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

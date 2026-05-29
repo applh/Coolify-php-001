@@ -450,5 +450,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Modify the cylindrical chip stack routine to support blue high-roller $500 chips (using color `Color(0xFF1E88E5)`) and update the deconstruction math so that any bet above $500 utilizes these premium chips to conserve vertical cylinder stack heights.
 - **Complexity**: Part 4
 
+### 72. Responsive Mobile HUD Overlays & Player-Centric 3D Dynamic Camera (20h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master implementing highly responsive mobile HUD overlays that overlap rendering widgets on Android. Learn how to design a dynamic player-centric camera projection tracking live coordinates in 3D projection algorithms, and implementing space-saving collapsible displaying controls with dropdown panels in Jetpack Compose to maximize game viewing spaces.
+- **Exercise**: Create a new customizable state inside the 3D Display Configuration dropdown panel (e.g., a "Camera Presets" dropdown containing Orthographic, Isometric, and Birdseye angles) and update the pitch/yaw rotation factors to snap the 3D viewport immediately to these angles when selected.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
