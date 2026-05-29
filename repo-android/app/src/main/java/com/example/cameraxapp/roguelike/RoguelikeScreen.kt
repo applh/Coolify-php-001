@@ -117,10 +117,7 @@ fun RoguelikeScreen(
                                 .padding(horizontal = 8.dp),
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // 1. Level & Attributes Header
-                            StatsHeader(char = char)
-
-                            // 2. Playable Game Viewport (with overlays, no square aspect-ratio locking)
+                            // 1. Playable Game Viewport (with overlays, no square aspect-ratio locking)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -171,8 +168,8 @@ fun RoguelikeScreen(
                                 }
                             }
 
-                            // 3. Game combat logger console
-                            CombatLoggerView(logs = logs)
+                            // 2. Unified Stats & Combat Logger Console (Bottom Bar)
+                            MergedBottomBar(char = char, logs = logs)
                         }
 
                         // Overlay drawer modal for inventory bag management
@@ -279,13 +276,13 @@ fun CharacterSelectionView(onSelectClass: (String) -> Unit) {
 }
 
 @Composable
-fun StatsHeader(char: CharacterState) {
+fun MergedBottomBar(char: CharacterState, logs: List<String>) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF141414)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F0F)),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .border(0.7.dp, Color(0xFF2D2A27), RoundedCornerShape(6.dp))
+            .border(0.6.dp, Color(0xFF332A20), RoundedCornerShape(6.dp))
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             // General Info row
@@ -297,19 +294,19 @@ fun StatsHeader(char: CharacterState) {
                 Text(
                     text = "${char.heroClass} [Lv ${char.level}]",
                     color = Color(0xFFFFD700),
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Floor ${char.floor}/10",
                     color = Color(0xFFE57373),
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "💰 ${char.gold}g",
                     color = Color(0xFFFFEE58),
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -363,6 +360,40 @@ fun StatsHeader(char: CharacterState) {
                         .height(4.dp)
                 )
                 Text(" ${char.exp}/${char.level * 100}", color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+            }
+
+            Spacer(Modifier.height(6.dp))
+            // Divider
+            Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2E251E)))
+            Spacer(Modifier.height(4.dp))
+
+            // Combat logger console embedded
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    reverseLayout = true
+                ) {
+                    items(logs.reversed()) { log ->
+                        val color = when {
+                            log.contains("LEVEL UP") -> Color(0xFF81C784)
+                            log.contains("VICTORY") -> Color(0xFFFFD700)
+                            log.contains("Defeat") || log.contains("Game Over") || log.contains("strikes you") -> Color(0xFFE57373)
+                            log.contains("treasure chest") || log.contains("gold") -> Color(0xFFFFEE58)
+                            else -> Color.LightGray
+                        }
+                        Text(
+                            text = "> $log",
+                            color = color,
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -496,42 +527,6 @@ fun DungeonCanvas(
         drawIntoCanvas { canvas ->
             val nativeY = pTileY + (tileSize * 0.74f)
             canvas.nativeCanvas.drawText(playerGlyph, pTileX + (tileSize / 2f), nativeY, textPainter)
-        }
-    }
-}
-
-@Composable
-fun CombatLoggerView(logs: List<String>) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F0F)),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(115.dp)
-            .padding(vertical = 4.dp)
-            .border(0.6.dp, Color(0xFF332A20), RoundedCornerShape(4.dp))
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp),
-            reverseLayout = true
-        ) {
-            items(logs.reversed()) { log ->
-                val color = when {
-                    log.contains("LEVEL UP") -> Color(0xFF81C784)
-                    log.contains("VICTORY") -> Color(0xFFFFD700)
-                    log.contains("Defeat") || log.contains("Game Over") || log.contains("strikes you") -> Color(0xFFE57373)
-                    log.contains("treasure chest") || log.contains("gold") -> Color(0xFFFFEE58)
-                    else -> Color.LightGray
-                }
-                Text(
-                    text = "> $log",
-                    color = color,
-                    fontSize = 11.5.sp,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-            }
         }
     }
 }
