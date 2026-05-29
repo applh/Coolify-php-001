@@ -1,6 +1,5 @@
-package com.example.cameraxapp.threed
-
 @file:Suppress("DEPRECATION")
+package com.example.cameraxapp.threed
 
 import android.graphics.Bitmap
 import android.graphics.Canvas as AndroidCanvas
