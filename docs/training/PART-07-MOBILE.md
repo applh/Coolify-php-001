@@ -469,9 +469,9 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 ### 75. 3D Navigation Alignment and Coordinate Inversion Techniques (15h) 🍓 NEW
-- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
-- **Goal**: Master calibration of spatial orientation systems by selectively swapping visual indicator vectors in dynamic orbital cameras. Understand how to realign visual feedback on a 3D canvas and HUD compass to match a fixed standard movement grid.
-- **Exercise**: Create a custom verification routine that ensures visual indicator alignments in the 3D Canvas match actual coordinate mutations precisely.
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master calibration of spatial orientation systems and user input controllers (D-pads). Understand how physical movement directions (East/West swapping) of a character in the game grid map to on-screen visuals and learning to calibrate coordinate offsets inside interaction event handles.
+- **Exercise**: Create a custom verification routine that ensures gamepad click directions trigger movement offsets matching on-screen interactive indicators precisely.
 - **Complexity**: Part 4
 
 ## Recommended Reading

@@ -946,7 +946,7 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit) {
                     .size(44.dp)
                     .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
                     .border(2.dp, ColorWest, RoundedCornerShape(10.dp))
-                    .clickable { onMove(-1, 0) },
+                    .clickable { onMove(1, 0) },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -974,7 +974,7 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit) {
                     .size(44.dp)
                     .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
                     .border(2.dp, ColorEast, RoundedCornerShape(10.dp))
-                    .clickable { onMove(1, 0) },
+                    .clickable { onMove(-1, 0) },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
