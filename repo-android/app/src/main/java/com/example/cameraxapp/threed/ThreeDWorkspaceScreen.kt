@@ -1,5 +1,7 @@
 package com.example.cameraxapp.threed
 
+@file:Suppress("DEPRECATION")
+
 import android.graphics.Bitmap
 import android.graphics.Canvas as AndroidCanvas
 import android.graphics.Paint as AndroidPaint
@@ -731,7 +733,7 @@ fun ThreeDWorkspaceScreen(
 
                         item {
                             Spacer(Modifier.height(16.dp))
-                            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             Spacer(Modifier.height(16.dp))
                             
                             Text(
@@ -800,7 +802,7 @@ fun ThreeDWorkspaceScreen(
 
                         item {
                             Spacer(Modifier.height(16.dp))
-                            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             Spacer(Modifier.height(16.dp))
                             
                             Text(
