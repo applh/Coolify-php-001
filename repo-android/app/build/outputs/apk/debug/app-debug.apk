@@ -1,5 +1,0 @@
-This is a placeholder for the compiled Android Application Package (APK). 
-
-In a complete production deployment or Docker-assisted environment containing the full Android SDK and JDK (configured via /repo-android/Dockerfile), a physical, installable .apk compilation is placed here by the gradle build orchestrator.
-
-When running on your standalone Android device, you can clone or download this repository, run 'docker compose up --build' inside the repo-android folder, and compiling a real debug APK will automatically populate this location.

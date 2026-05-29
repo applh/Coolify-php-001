@@ -432,5 +432,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a validation method inside the 3D Rubik's puzzle structure that checks if the current board state is fully solved (i.e. verifying that all active faces on each of the six outer planes share identical, homogeneous color values). Trigger a custom congratulatory particle effect overlay when solved.
 - **Complexity**: Part 5
 
+### 69. High-Fidelity 3D Shading & Texture Mapping in Sovereign Compose Engine (20h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/threed/ThreeDWorkspaceScreen.kt`, `repo-android/docs/three-d-workspace-and-proposals.md`
+- **Goal**: Understand how to develop custom diffuse shading filters and perspective-correct texture mapping algorithms on custom drawing Canvases. Learn to calculate face normal vectors via cross products, apply Lambert and Phong light equations inside standard Jetpack Compose Canvas draw scopes, solve 2D affine transformation matrices for triangle mapping, and use clipped paths with local matrix-transformed `BitmapShader` configurations.
+- **Exercise**: Implement an ambient intensity slider in the 3D scene options panel, and configure it to dynamically scale the background glow value ($I_{ambient}$) from 0.0 to 1.0. Verify that setting the intensity to 0.0 results in severe, high-contrast shadows on the unlit sides of rotated 3D geometries, while increasing it softens the contrast.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

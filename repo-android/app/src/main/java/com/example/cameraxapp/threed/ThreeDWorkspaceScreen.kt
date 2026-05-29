@@ -1,5 +1,16 @@
 package com.example.cameraxapp.threed
 
+import android.graphics.Bitmap
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Paint as AndroidPaint
+import android.graphics.BitmapShader
+import android.graphics.Shader
+import android.graphics.Matrix as AndroidMatrix
+import android.graphics.ColorMatrix as AndroidColorMatrix
+import android.graphics.ColorMatrixColorFilter as AndroidColorMatrixColorFilter
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -90,6 +101,7 @@ sealed class RenderItem3D {
         val isFilled: Boolean = true,
         val strokeWidth: Float = 1.5f,
         val tag: String = "",
+        val textureType: String? = null,
         override val depth: Float
     ) : RenderItem3D()
 
@@ -122,12 +134,19 @@ enum class SimulationMode {
 
 // 3D scene options
 data class SceneOptions(
-    val renderingStyle: String = "shaded", // shaded, wireframe, lines
+    val renderingStyle: String = "shaded", // shaded, textured, wireframe, lines
     val lightIntensity: Float = 0.8f,
+    val ambientIntensity: Float = 0.25f,
+    val specularIntensity: Float = 0.45f,
+    val shininess: Float = 16f,
+    val lightDirectionX: Float = -0.5f,
+    val lightDirectionY: Float = -1.0f,
+    val lightDirectionZ: Float = -0.6f,
     val backfaceCulling: Boolean = true,
     val showGrid: Boolean = true,
     val autoRotateY: Boolean = false,
-    val autoRotateSpeed: Float = 0.01f
+    val autoRotateSpeed: Float = 0.01f,
+    val enableTexture: Boolean = true
 )
 
 // ==========================================
@@ -584,6 +603,54 @@ fun ThreeDWorkspaceScreen(
                                     }
                                 }
                             }
+
+                            item {
+                                Spacer(Modifier.height(4.dp))
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        Text("LIGHTING & TEXTURES", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                                        Spacer(Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Textured Shaders", modifier = Modifier.weight(1f), fontSize = 11.sp)
+                                            Switch(
+                                                checked = options.renderingStyle == "textured",
+                                                onCheckedChange = { isTextured ->
+                                                    options = options.copy(renderingStyle = if (isTextured) "textured" else "shaded")
+                                                },
+                                                modifier = Modifier.scale(0.7f)
+                                            )
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            var tempAngle by remember { mutableStateOf(4.1f) }
+                                            Text("Light Angle: ${tempAngle.toInt()}", modifier = Modifier.weight(1.5f), fontSize = 11.sp)
+                                            Slider(
+                                                value = tempAngle,
+                                                onValueChange = { angle ->
+                                                    tempAngle = angle
+                                                    options = options.copy(
+                                                        lightDirectionX = cos(angle),
+                                                        lightDirectionZ = sin(angle)
+                                                    )
+                                                },
+                                                valueRange = 0f..(2 * PI.toFloat()),
+                                                modifier = Modifier.weight(2.5f).height(24.dp)
+                                            )
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Ambient: ${(options.ambientIntensity * 100).toInt()}%", modifier = Modifier.weight(1.5f), fontSize = 11.sp)
+                                            Slider(
+                                                value = options.ambientIntensity,
+                                                onValueChange = { options = options.copy(ambientIntensity = it) },
+                                                valueRange = 0f..1f,
+                                                modifier = Modifier.weight(2.5f).height(24.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -728,6 +795,78 @@ fun ThreeDWorkspaceScreen(
                                 ) {
                                     Text(if (options.showGrid) "Hide Grid" else "Show Grid", fontSize = 11.sp)
                                 }
+                            }
+                        }
+
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            Spacer(Modifier.height(16.dp))
+                            
+                            Text(
+                                "LIGHTING & TEXTURES",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Texture Shading", style = MaterialTheme.typography.bodySmall)
+                                Switch(
+                                    checked = options.renderingStyle == "textured",
+                                    onCheckedChange = { isTextured ->
+                                        options = options.copy(renderingStyle = if (isTextured) "textured" else "shaded")
+                                    },
+                                    modifier = Modifier.scale(0.8f)
+                                )
+                            }
+                        }
+
+                        item {
+                            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                                var tempAngle by remember { mutableStateOf(4.1f) }
+                                Text("Revolving Light Angle: ${tempAngle.toInt()}", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = tempAngle,
+                                    onValueChange = { angle ->
+                                        tempAngle = angle
+                                        options = options.copy(
+                                            lightDirectionX = cos(angle),
+                                            lightDirectionZ = sin(angle)
+                                        )
+                                    },
+                                    valueRange = 0f..(2 * PI.toFloat()),
+                                    modifier = Modifier.height(28.dp)
+                                )
+                            }
+                        }
+
+                        item {
+                            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                                Text("Ambient Intensity: ${(options.ambientIntensity * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = options.ambientIntensity,
+                                    onValueChange = { options = options.copy(ambientIntensity = it) },
+                                    valueRange = 0f..1f,
+                                    modifier = Modifier.height(28.dp)
+                                )
+                            }
+                        }
+
+                        item {
+                            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                                Text("Specular Shininess: ${options.shininess.toInt()}", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = options.shininess,
+                                    onValueChange = { options = options.copy(shininess = it) },
+                                    valueRange = 4f..64f,
+                                    modifier = Modifier.height(28.dp)
+                                )
                             }
                         }
                     }
@@ -1223,6 +1362,132 @@ fun RubikButton(label: String, onClick: () -> Unit) {
     }
 }
 
+object TextureManager {
+    private var checkerboardBitmap: Bitmap? = null
+    private var linesGridBitmap: Bitmap? = null
+
+    fun getCheckerboard(): Bitmap {
+        if (checkerboardBitmap == null) {
+            val bmp = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
+            val canvas = AndroidCanvas(bmp)
+            val paint = AndroidPaint()
+            val size = 16
+            for (i in 0 until 8) {
+                for (j in 0 until 8) {
+                    paint.color = if ((i + j) % 2 == 0) 0xFF3F51B5.toInt() else 0xFFFFC107.toInt()
+                    canvas.drawRect(
+                        (i * size).toFloat(),
+                        (j * size).toFloat(),
+                        ((i + 1) * size).toFloat(),
+                        ((j + 1) * size).toFloat(),
+                        paint
+                    )
+                }
+            }
+            checkerboardBitmap = bmp
+        }
+        return checkerboardBitmap!!
+    }
+
+    fun getGridLines(): Bitmap {
+        if (linesGridBitmap == null) {
+            val bmp = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
+            val canvas = AndroidCanvas(bmp)
+            val paint = AndroidPaint().apply {
+                color = 0xFF141724.toInt()
+            }
+            canvas.drawRect(0f, 0f, 128f, 128f, paint)
+
+            paint.color = 0xFF4AF2A1.toInt()
+            paint.strokeWidth = 2f
+            paint.style = AndroidPaint.Style.STROKE
+            
+            canvas.drawRect(0f, 0f, 128f, 128f, paint)
+            canvas.drawLine(0f, 64f, 128f, 64f, paint)
+            canvas.drawLine(64f, 0f, 64f, 128f, paint)
+            
+            linesGridBitmap = bmp
+        }
+        return linesGridBitmap!!
+    }
+}
+
+fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTexturedTriangle(
+    p0: Offset, p1: Offset, p2: Offset,
+    uv0: Offset, uv1: Offset, uv2: Offset,
+    bitmap: Bitmap,
+    lightMultiplier: Float,
+    specular: Float
+) {
+    val width = bitmap.width.toFloat()
+    val height = bitmap.height.toFloat()
+    
+    val t0x = uv0.x * width
+    val t0y = uv0.y * height
+    val t1x = uv1.x * width
+    val t1y = uv1.y * height
+    val t2x = uv2.x * width
+    val t2y = uv2.y * height
+
+    val uDet = (t1x - t0x) * (t2y - t0y) - (t2x - t0x) * (t1y - t0y)
+    if (abs(uDet) < 0.0001f) return
+
+    val invDet = 1.0f / uDet
+    
+    val m00 = ((p1.x - p0.x) * (t2y - t0y) - (p2.x - p0.x) * (t1y - t0y)) * invDet
+    val m01 = ((p2.x - p0.x) * (t1x - t0x) - (p1.x - p0.x) * (t2x - t0x)) * invDet
+    val m02 = p0.x - m00 * t0x - m01 * t0y
+
+    val m10 = ((p1.y - p0.y) * (t2y - t0y) - (p2.y - p0.y) * (t1y - t0y)) * invDet
+    val m11 = ((p2.y - p0.y) * (t1x - t0x) - (p1.y - p0.y) * (t2x - t0x)) * invDet
+    val m12 = p0.y - m10 * t0x - m11 * t0y
+
+    drawIntoCanvas { canvas ->
+        val nativeCanvas = canvas.nativeCanvas
+        
+        val path = android.graphics.Path().apply {
+            moveTo(p0.x, p0.y)
+            lineTo(p1.x, p1.y)
+            lineTo(p2.x, p2.y)
+            close()
+        }
+        
+        nativeCanvas.save()
+        nativeCanvas.clipPath(path)
+        
+        val shader = android.graphics.BitmapShader(
+            bitmap,
+            android.graphics.Shader.TileMode.CLAMP,
+            android.graphics.Shader.TileMode.CLAMP
+        )
+        val matrix = android.graphics.Matrix()
+        matrix.setValues(floatArrayOf(
+            m00, m01, m02,
+            m10, m11, m12,
+            0f,   0f,   1f
+        ))
+        shader.setLocalMatrix(matrix)
+        
+        val paint = android.graphics.Paint().apply {
+            isAntiAlias = true
+            setShader(shader)
+            
+            val r = (lightMultiplier * 255).coerceIn(0f, 255f).toInt()
+            val g = (lightMultiplier * 255).coerceIn(0f, 255f).toInt()
+            val b = (lightMultiplier * 255).coerceIn(0f, 255f).toInt()
+            val colMat = android.graphics.ColorMatrix(floatArrayOf(
+                r / 255f, 0f, 0f, 0f, specular * 255f,
+                0f, g / 255f, 0f, 0f, specular * 255f,
+                0f, 0f, b / 255f, 0f, specular * 255f,
+                0f, 0f, 0f, 1f, 0f
+            ))
+            colorFilter = android.graphics.ColorMatrixColorFilter(colMat)
+        }
+        nativeCanvas.drawPath(path, paint)
+        nativeCanvas.restore()
+    }
+}
+
 
 // ==========================================
 // 5. VIEWPORT 3D PAINTER PIPELINE CANVAS
@@ -1423,24 +1688,80 @@ fun Canvas3DViewport(
                                 close()
                             }
                             
-                            // Apply cosine light shading depending on normal matching a simulated light source angle (from top-left)
-                            val lightSourceVector = Vector3(-0.5f, -1.0f, -0.6f).normalize()
-                            val dotProduct = normal.dot(lightSourceVector).coerceIn(0.1f, 1.0f)
+                            // 1. Calculate lighting components using SceneOptions
+                            // Directional vector to light source
+                            val L = Vector3(-options.lightDirectionX, -options.lightDirectionY, -options.lightDirectionZ).normalize()
+                            
+                            // Diffuse Lambert factor
+                            val dotProduct = normal.dot(L).coerceIn(0.0f, 1.0f)
+                            
+                            // Specular view highlight factor (Phong model)
+                            // Camera resides in -Z direction conceptually in screen plane
+                            val V = Vector3(0f, 0f, -1f).normalize()
+                            val reflection = (normal * (2f * normal.dot(L))) - L
+                            val specFactor = maxOf(0f, reflection.dot(V))
+                            val specularCoeff = if (dotProduct > 0f) {
+                                Math.pow(specFactor.toDouble(), options.shininess.toDouble()).toFloat() * options.specularIntensity
+                            } else 0f
+                            
+                            // Combine ambient background and diffuse lighting
+                            val baseStrength = options.ambientIntensity + (dotProduct * options.lightIntensity * (1f - options.ambientIntensity))
                             
                             val rawColor = item.color
                             val shadedColor = Color(
-                                red = (rawColor.red * dotProduct).coerceIn(0f, 1f),
-                                green = (rawColor.green * dotProduct).coerceIn(0f, 1f),
-                                blue = (rawColor.blue * dotProduct).coerceIn(0f, 1f),
+                                red = ((rawColor.red * baseStrength) + specularCoeff).coerceIn(0f, 1f),
+                                green = ((rawColor.green * baseStrength) + specularCoeff).coerceIn(0f, 1f),
+                                blue = ((rawColor.blue * baseStrength) + specularCoeff).coerceIn(0f, 1f),
                                 alpha = rawColor.alpha
                             )
 
-                            if (item.isFilled) {
-                                drawPath(
-                                    path = path,
-                                    color = shadedColor
-                                )
+                            if (options.enableTexture && options.renderingStyle == "textured" && item.textureType != null) {
+                                val bmp = when (item.textureType) {
+                                    "checkerboard" -> TextureManager.getCheckerboard()
+                                    "grid" -> TextureManager.getGridLines()
+                                    else -> TextureManager.getCheckerboard()
+                                }
+                                if (screenPolygonPoints.size == 4) {
+                                    // Split quad to 2 textured triangles
+                                    drawTexturedTriangle(
+                                        screenPolygonPoints[0], screenPolygonPoints[1], screenPolygonPoints[2],
+                                        Offset(0f, 0f), Offset(1f, 0f), Offset(1f, 1f),
+                                        bmp,
+                                        baseStrength,
+                                        specularCoeff
+                                    )
+                                    drawTexturedTriangle(
+                                        screenPolygonPoints[0], screenPolygonPoints[2], screenPolygonPoints[3],
+                                        Offset(0f, 0f), Offset(1f, 1f), Offset(0f, 1f),
+                                        bmp,
+                                        baseStrength,
+                                        specularCoeff
+                                    )
+                                } else if (screenPolygonPoints.size == 3) {
+                                    drawTexturedTriangle(
+                                        screenPolygonPoints[0], screenPolygonPoints[1], screenPolygonPoints[2],
+                                        Offset(0f, 0f), Offset(1f, 0f), Offset(0.5f, 1f),
+                                        bmp,
+                                        baseStrength,
+                                        specularCoeff
+                                    )
+                                } else {
+                                    if (item.isFilled) {
+                                        drawPath(
+                                            path = path,
+                                            color = shadedColor
+                                        )
+                                    }
+                                }
+                            } else {
+                                if (item.isFilled) {
+                                    drawPath(
+                                        path = path,
+                                        color = shadedColor
+                                    )
+                                }
                             }
+                            
                             drawPath(
                                 path = path,
                                 color = item.outlineColor,
@@ -1677,6 +1998,7 @@ fun generateArchitecturalPrimitives(
                 Vector3(-90f, explodedGroundY, 90f)
             ),
             color = groundColor,
+            textureType = "checkerboard",
             depth = explodedGroundY
         )
     )
@@ -1693,6 +2015,7 @@ fun generateArchitecturalPrimitives(
                 Vector3(-80f, explodedGroundY + wH, -80f)
             ),
             color = wallColor.copy(alpha = 0.95f),
+            textureType = "grid",
             depth = -80f
         )
     )
@@ -1707,6 +2030,7 @@ fun generateArchitecturalPrimitives(
                 Vector3(-80f, explodedGroundY + wH, 80f)
             ),
             color = wallColor.copy(alpha = 0.95f),
+            textureType = "grid",
             depth = -0.5f
         )
     )
@@ -1962,6 +2286,7 @@ fun generateTopographicPrimitives(
                     ),
                     color = landColor,
                     outlineColor = Color.Black.copy(alpha = 0.15f),
+                    textureType = "grid",
                     depth = (gz1 + gz2) / 2f
                 )
             )
@@ -1974,6 +2299,7 @@ fun generateTopographicPrimitives(
                     ),
                     color = landColor,
                     outlineColor = Color.Black.copy(alpha = 0.15f),
+                    textureType = "grid",
                     depth = (gz1 + gz2) / 2f
                 )
             )
@@ -2384,6 +2710,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[0],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
@@ -2394,6 +2721,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[1],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
@@ -2404,6 +2732,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[2],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
@@ -2414,6 +2743,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[3],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
@@ -2424,6 +2754,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[4],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
@@ -2434,6 +2765,7 @@ fun generateRubikCubePrimitives(
                 color = minisc.colors[5],
                 outlineColor = outCol,
                 strokeWidth = strokeW,
+                textureType = "checkerboard",
                 depth = c.z
             )
         )
