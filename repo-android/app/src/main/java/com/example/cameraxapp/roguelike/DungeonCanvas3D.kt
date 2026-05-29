@@ -195,8 +195,6 @@ fun DungeonCanvas3D(
             }
 
             // 3. Build player hero entity shape
-            val pWorldX = (pX - 9f) * W_s
-            val pWorldZ = (pY - 9f) * W_s
             val pWorldY = W_s * 0.2f
 
             val playerCol = Color(0xFFFF9100)
