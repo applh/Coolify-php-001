@@ -32,6 +32,12 @@ Learn to build high-performance services using Node.js, Go, Rust, and Python.
 - **Exercise**: Implement a standardized `?cms_debug=true` environment diagnostic endpoint in either `repo-go` or `repo-python` that checks directory permissions, active plugins, and reports server metrics, matching the behavior of `PHP's CMS::validateSetup`.
 - **Complexity**: Part 3 (Medium difficulty).
 
+### 4. Stack Selection & Benchmarking (20h)
+**Reference**: `docs/stack-comparison.md`
+- **Goal**: Understand the trade-offs of code volume, performance, security, and DX/AX across Go, Rust, Python, React/Vue, and PHP.
+- **Exercise**: Conduct a load-testing benchmark using a tool like Apache Benchmark or `wrk` against the same endpoint (e.g., `/admin/api/sites`) hosted on Go, Rust, Python, and PHP. Document how the theoretical comparison in `stack-comparison.md` lines up with real-world latency, memory usage, and concurrency results.
+- **Complexity**: Part 4 (Advanced).
+
 ## Recommended Reading
 - `docs/backend/node-cms-features.md`
 - `docs/backend/multi-stack-equivalence-plan.md`
