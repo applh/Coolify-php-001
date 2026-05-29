@@ -218,6 +218,82 @@ fun DungeonCanvas3D(
             drawPipeline.add(RenderItem3D.TextLabel(Vector3(pWorldX, pWorldY - W_s * 0.85f, pWorldZ), pGlyph, Color.White, sizeMultiplier = 1.1f, depth = 0f))
             drawPipeline.add(RenderItem3D.TextLabel(Vector3(pWorldX, pWorldY - W_s * 1.25f, pWorldZ), "HERO", Color(0xFFFFD700), sizeMultiplier = 0.65f, depth = 0f))
 
+            // matched direction orientation helper colors
+            val ColorNorth = Color(0xFF3A86C8) // Sky Blue
+            val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
+            val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
+            val ColorEast = Color(0xFF2EC4B6)  // Teal Green
+
+            // 3D Axis Helpers to show player orientation in world space at feet height
+            val floorY = W_s * 0.5f
+            val floorAxisY = floorY - 2f
+            val axisLength = W_s * 1.2f
+            val labelOffset = W_s * 1.6f
+
+            // North (-Z)
+            drawPipeline.add(RenderItem3D.Line(
+                start = Vector3(pWorldX, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX, floorAxisY, pWorldZ - axisLength),
+                color = ColorNorth,
+                strokeWidth = 3f,
+                depth = 0f
+            ))
+            drawPipeline.add(RenderItem3D.TextLabel(
+                position = Vector3(pWorldX, floorAxisY, pWorldZ - labelOffset),
+                text = "N",
+                color = ColorNorth,
+                sizeMultiplier = 0.8f,
+                depth = 0f
+            ))
+
+            // South (+Z)
+            drawPipeline.add(RenderItem3D.Line(
+                start = Vector3(pWorldX, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX, floorAxisY, pWorldZ + axisLength),
+                color = ColorSouth,
+                strokeWidth = 3f,
+                depth = 0f
+            ))
+            drawPipeline.add(RenderItem3D.TextLabel(
+                position = Vector3(pWorldX, floorAxisY, pWorldZ + labelOffset),
+                text = "S",
+                color = ColorSouth,
+                sizeMultiplier = 0.8f,
+                depth = 0f
+            ))
+
+            // West (-X)
+            drawPipeline.add(RenderItem3D.Line(
+                start = Vector3(pWorldX, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX - axisLength, floorAxisY, pWorldZ),
+                color = ColorWest,
+                strokeWidth = 3f,
+                depth = 0f
+            ))
+            drawPipeline.add(RenderItem3D.TextLabel(
+                position = Vector3(pWorldX - labelOffset, floorAxisY, pWorldZ),
+                text = "W",
+                color = ColorWest,
+                sizeMultiplier = 0.8f,
+                depth = 0f
+            ))
+
+            // East (+X)
+            drawPipeline.add(RenderItem3D.Line(
+                start = Vector3(pWorldX, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX + axisLength, floorAxisY, pWorldZ),
+                color = ColorEast,
+                strokeWidth = 3f,
+                depth = 0f
+            ))
+            drawPipeline.add(RenderItem3D.TextLabel(
+                position = Vector3(pWorldX + labelOffset, floorAxisY, pWorldZ),
+                text = "E",
+                color = ColorEast,
+                sizeMultiplier = 0.8f,
+                depth = 0f
+            ))
+
             // 4. Sort Items using Painter's depth model (Z further is drawn first)
             val sortedList = drawPipeline.sortedByDescending { item ->
                 when (item) {
@@ -257,6 +333,16 @@ fun DungeonCanvas3D(
                             drawPath(path, color = Color.Black.copy(alpha = 0.35f), style = Stroke(width = 0.8f))
                         }
                     }
+                    is RenderItem3D.Line -> {
+                        val pStart = projectPoint(item.start)
+                        val pEnd = projectPoint(item.end)
+                        drawLine(
+                            color = item.color,
+                            start = pStart,
+                            end = pEnd,
+                            strokeWidth = item.strokeWidth
+                        )
+                    }
                     is RenderItem3D.TextLabel -> {
                         val pLabel = projectPoint(item.position)
                         drawIntoCanvas { canvas ->
@@ -270,9 +356,73 @@ fun DungeonCanvas3D(
                             )
                         }
                     }
-                    else -> {}
                 }
             }
+
+            // -------------------------------------------------------------
+            // 3D HUD Compass (UI overlay drawn on top of the 3D scene)
+            // -------------------------------------------------------------
+            val compassRadius = 24.dp.toPx()
+            val hudCX = 45.dp.toPx()
+            val hudCY = 85.dp.toPx()
+            val hudCenter = Offset(hudCX, hudCY)
+
+            // Draw circular backings
+            drawCircle(
+                color = Color.Black.copy(alpha = 0.65f),
+                radius = compassRadius,
+                center = hudCenter
+            )
+            drawCircle(
+                color = Color(0xFFFFD700).copy(alpha = 0.3f),
+                radius = compassRadius,
+                center = hudCenter,
+                style = Stroke(width = 1.dp.toPx())
+            )
+
+            // Axes definitions
+            val lineLen = compassRadius * 0.62f
+            val labelLen = compassRadius * 0.98f
+
+            fun rotateForHud(v: Vector3): Vector3 {
+                return v.rotateY(yawAngle).rotateX(pitchAngle)
+            }
+
+            // Direction Vectors
+            val rotN = rotateForHud(Vector3(0f, 0f, -1f))
+            val rotS = rotateForHud(Vector3(0f, 0f, 1f))
+            val rotW = rotateForHud(Vector3(-1f, 0f, 0f))
+            val rotE = rotateForHud(Vector3(1f, 0f, 0f))
+
+            // Helper to draw compass leg & text
+            fun drawCompassLeg(rotDir: Vector3, label: String, color: Color) {
+                val endPos = hudCenter + Offset(rotDir.x * lineLen, rotDir.y * lineLen)
+                drawLine(
+                    color = color,
+                    start = hudCenter,
+                    end = endPos,
+                    strokeWidth = 2.dp.toPx()
+                )
+                
+                // Slightly adjust baseline for centered letters
+                val labelPos = hudCenter + Offset(rotDir.x * labelLen, rotDir.y * labelLen)
+                drawIntoCanvas { canvas ->
+                    textPainter.color = color.toArgb()
+                    textPainter.textSize = 8.dp.toPx()
+                    canvas.nativeCanvas.drawText(
+                        label,
+                        labelPos.x,
+                        labelPos.y + 3.dp.toPx(),
+                        textPainter
+                    )
+                }
+            }
+
+            // Draw all 4 legs
+            drawCompassLeg(rotN, "N", ColorNorth)
+            drawCompassLeg(rotS, "S", ColorSouth)
+            drawCompassLeg(rotW, "W", ColorWest)
+            drawCompassLeg(rotE, "E", ColorEast)
         }
 
         var showSettings by remember { mutableStateOf(false) }

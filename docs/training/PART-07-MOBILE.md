@@ -462,5 +462,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary toggle inside the display configuration panel that switches the manual zoom click increment from a constant `0.15f` step to a variable log-based proportional step relative to the current zoom factor, allowing smoother controls when zoomed in.
 - **Complexity**: Part 4
 
+### 74. 3D Coordinate Axis Alignment and Color-Guided D-Pad Controls in Jetpack Compose (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Learn how to resolve 3D spatial navigation confusion in rotating orthographic and isometric camera systems. Master creating real-time rotating axis helpers at the character's feet using line primitives inside the Compose Canvas pipeline, synchronizing a floating orthographic 3D compass HUD in the corner of the viewport, and linking these indicators directly to color-coded, labeled direction buttons on the controller pad.
+- **Exercise**: Implement a secondary slider or dynamic opacity variable in the display configuration dropdown panel that scales the rendering alpha of the 3D floor axis line helpers and labels from 0.0f (fully hidden) to 1.0f (completely solid), preserving ideal visual contrast across dim and bright rendering scenarios.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

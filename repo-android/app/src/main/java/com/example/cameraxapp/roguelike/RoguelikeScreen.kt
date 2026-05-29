@@ -913,22 +913,31 @@ fun ScoresView(
 
 @Composable
 fun GamepadDPad(onMove: (Int, Int) -> Unit) {
+    val ColorNorth = Color(0xFF3A86C8) // Sky Blue
+    val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
+    val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
+    val ColorEast = Color(0xFF2EC4B6)  // Teal Green
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(24.dp))
-            .border(0.8.dp, Color(0xFFFFD700).copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-            .padding(6.dp)
+            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
+            .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+            .padding(8.dp)
     ) {
-        // UP Button
+        // UP Button (North)
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                .size(44.dp)
+                .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
+                .border(2.dp, ColorNorth, RoundedCornerShape(10.dp))
                 .clickable { onMove(0, -1) },
             contentAlignment = Alignment.Center
         ) {
-            Text("▲", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("▲", color = ColorNorth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("N", color = ColorNorth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+            }
         }
 
         Row(
@@ -936,49 +945,64 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // LEFT Button
+            // LEFT Button (West)
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                    .size(44.dp)
+                    .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
+                    .border(2.dp, ColorWest, RoundedCornerShape(10.dp))
                     .clickable { onMove(-1, 0) },
                 contentAlignment = Alignment.Center
             ) {
-                Text("◀", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("◀", color = ColorWest, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Text("W", color = ColorWest, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                }
             }
 
             // WAIT turn option (Center resting)
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .background(Color(0xFF332211).copy(alpha = 0.9f), RoundedCornerShape(18.dp))
+                    .size(44.dp)
+                    .background(Color(0xFF221100).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
+                    .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(22.dp))
                     .clickable { onMove(0, 0) },
                 contentAlignment = Alignment.Center
             ) {
                 Text("⏳", color = Color.White, fontSize = 14.sp)
             }
 
-            // RIGHT Button
+            // RIGHT Button (East)
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                    .size(44.dp)
+                    .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
+                    .border(2.dp, ColorEast, RoundedCornerShape(10.dp))
                     .clickable { onMove(1, 0) },
                 contentAlignment = Alignment.Center
             ) {
-                Text("▶", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("E", color = ColorEast, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                    Spacer(modifier = Modifier.width(1.dp))
+                    Text("▶", color = ColorEast, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
-        // DOWN Button
+        // DOWN Button (South)
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .background(Color(0xFF222222).copy(alpha = 0.8f), RoundedCornerShape(12.dp))
+                .size(44.dp)
+                .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
+                .border(2.dp, ColorSouth, RoundedCornerShape(10.dp))
                 .clickable { onMove(0, 1) },
             contentAlignment = Alignment.Center
         ) {
-            Text("▼", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("S", color = ColorSouth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                Text("▼", color = ColorSouth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
