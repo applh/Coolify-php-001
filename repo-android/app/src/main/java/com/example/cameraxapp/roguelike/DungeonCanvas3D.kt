@@ -262,32 +262,32 @@ fun DungeonCanvas3D(
                 depth = 0f
             ))
 
-            // West (-X) - Standard coordinate alignment
+            // West (+X) - Swapped to fix visual inversion relative to pad
             drawPipeline.add(RenderItem3D.Line(
                 start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX - axisLength, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX + axisLength, floorAxisY, pWorldZ),
                 color = ColorWest,
                 strokeWidth = 3f,
                 depth = 0f
             ))
             drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX - labelOffset, floorAxisY, pWorldZ),
+                position = Vector3(pWorldX + labelOffset, floorAxisY, pWorldZ),
                 text = "W",
                 color = ColorWest,
                 sizeMultiplier = 0.8f,
                 depth = 0f
             ))
 
-            // East (+X) - Standard coordinate alignment
+            // East (-X) - Swapped to fix visual inversion relative to pad
             drawPipeline.add(RenderItem3D.Line(
                 start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX + axisLength, floorAxisY, pWorldZ),
+                end = Vector3(pWorldX - axisLength, floorAxisY, pWorldZ),
                 color = ColorEast,
                 strokeWidth = 3f,
                 depth = 0f
             ))
             drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX + labelOffset, floorAxisY, pWorldZ),
+                position = Vector3(pWorldX - labelOffset, floorAxisY, pWorldZ),
                 text = "E",
                 color = ColorEast,
                 sizeMultiplier = 0.8f,
@@ -409,11 +409,11 @@ fun DungeonCanvas3D(
                 return v.rotateY(yawAngle).rotateX(pitchAngle)
             }
 
-            // Direction Vectors (standard coordinate alignment)
+            // Direction Vectors (W/E Swapped to fix visual inversion relative to pad)
             val rotN = rotateForHud(Vector3(0f, 0f, -1f))
             val rotS = rotateForHud(Vector3(0f, 0f, 1f))
-            val rotW = rotateForHud(Vector3(-1f, 0f, 0f))
-            val rotE = rotateForHud(Vector3(1f, 0f, 0f))
+            val rotW = rotateForHud(Vector3(1f, 0f, 0f))
+            val rotE = rotateForHud(Vector3(-1f, 0f, 0f))
 
             // Helper to draw compass leg & text
             fun drawCompassLeg(rotDir: Vector3, label: String, color: Color) {

@@ -468,10 +468,10 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary slider or dynamic opacity variable in the display configuration dropdown panel that scales the rendering alpha of the 3D floor axis line helpers and labels from 0.0f (fully hidden) to 1.0f (completely solid), preserving ideal visual contrast across dim and bright rendering scenarios.
 - **Complexity**: Part 4
 
-### 75. 3D Navigation Alignment and Inverted Control Debugging (15h) 🍓 NEW
+### 75. 3D Navigation Alignment and Coordinate Inversion Techniques (15h) 🍓 NEW
 - **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
-- **Goal**: Master debugging flipped spatial vectors in dynamic orbital cameras. Understand how manual coordinate swaps ("Swapped to fix inversion") in 3D axis pipelines can inadvertently invert user input movements relative to the visual labels, and learn how to trace button clicks to coordinate mutations to align visual helpers with physical world coordinates.
-- **Exercise**: Create a custom unit test or verification routine inside the Roguelike engine that asserts that moving the player with positive dx moves them strictly towards the East-labeled side of the virtual world, and moving with negative dx moves them to the West-labeled side.
+- **Goal**: Master calibration of spatial orientation systems by selectively swapping visual indicator vectors in dynamic orbital cameras. Understand how to realign visual feedback on a 3D canvas and HUD compass to match a fixed standard movement grid.
+- **Exercise**: Create a custom verification routine that ensures visual indicator alignments in the 3D Canvas match actual coordinate mutations precisely.
 - **Complexity**: Part 4
 
 ## Recommended Reading
