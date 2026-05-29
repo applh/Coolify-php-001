@@ -18,11 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -200,14 +202,40 @@ fun ThreeDWorkspaceScreen(
     // 5. Rubik's Cube State
     var rubikCubeState by remember { mutableStateOf(initRubikCube()) }
     var isScrambling by remember { mutableStateOf(false) }
+    var rubikMovesCount by remember { mutableStateOf(0) }
+    var rubikElapsedSeconds by remember { mutableStateOf(0) }
+    var isRubikTimerActive by remember { mutableStateOf(false) }
+    var isRubikSolved by remember { mutableStateOf(false) }
+
+    // Timer ticking loop
+    LaunchedEffect(isRubikTimerActive) {
+        if (isRubikTimerActive) {
+            while (isRubikTimerActive) {
+                delay(1000)
+                rubikElapsedSeconds++
+            }
+        }
+    }
     
     fun rotateCubeSlice(axis: String, sliceIndex: Int, directionClockwise: Boolean) {
         rubikCubeState = rotateRubikSlice(rubikCubeState, axis, sliceIndex, directionClockwise)
+        if (!isScrambling && !isRubikSolved) {
+            rubikMovesCount++
+            isRubikTimerActive = true
+            isRubikSolved = checkIfRubikSolved(rubikCubeState)
+            if (isRubikSolved) {
+                isRubikTimerActive = false
+            }
+        }
     }
 
     fun triggerScramble() {
         if (isScrambling) return
         isScrambling = true
+        isRubikSolved = false
+        rubikMovesCount = 0
+        rubikElapsedSeconds = 0
+        isRubikTimerActive = false
         coroutineScope.launch {
             val axes = listOf("X", "Y", "Z")
             val slices = listOf(-1, 0, 1)
@@ -261,220 +289,54 @@ fun ThreeDWorkspaceScreen(
             )
         }
     ) { paddingValues ->
-        Row(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            // Left sidebar: Control workspace
+        val configuration = LocalConfiguration.current
+        val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT || configuration.screenWidthDp < 600
+
+        if (isPortrait) {
+            // ==========================================
+            // PORTRAIT SMARTPHONE LAYOUT (Snug & Scrollable)
+            // ==========================================
             Column(
                 modifier = Modifier
-                    .width(320.dp)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    .padding(12.dp)
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .background(Color(0xFF0F111A))
             ) {
-                Text(
-                    "CHOOSE SIMULATION",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    item {
-                        SimulationSelectorCard(
-                            title = "Molecular Analytics",
-                            desc = "High-definition structural bonds, atomic scales.",
-                            icon = Icons.Default.Star,
-                            isSelected = currentMode == SimulationMode.MOLECULE,
-                            onClick = { currentMode = SimulationMode.MOLECULE }
-                        )
-                    }
-                    item {
-                        SimulationSelectorCard(
-                            title = "CAD Architecture",
-                            desc = "Smart-Home modular layout construction & lighting.",
-                            icon = Icons.Default.Home,
-                            isSelected = currentMode == SimulationMode.ARCH_CAD,
-                            onClick = { currentMode = SimulationMode.ARCH_CAD }
-                        )
-                    }
-                    item {
-                        SimulationSelectorCard(
-                            title = "Topographic Elevation",
-                            desc = "Procedural terrain voxels, water shifts & radar flight.",
-                            icon = Icons.Default.LocationOn,
-                            isSelected = currentMode == SimulationMode.TOPO_TERRAIN,
-                            onClick = { currentMode = SimulationMode.TOPO_TERRAIN }
-                        )
-                    }
-                    item {
-                        SimulationSelectorCard(
-                            title = "Gear & Piston Kinematics",
-                            desc = "Interdependent mechanical transmissions with axial split.",
-                            icon = Icons.Default.Refresh,
-                            isSelected = currentMode == SimulationMode.GEAR_MOTOR,
-                            onClick = { currentMode = SimulationMode.GEAR_MOTOR }
-                        )
-                    }
-                    item {
-                        SimulationSelectorCard(
-                            title = "3D Puzzle Sandbox",
-                            desc = "Interactable 3x3 Rubik's model with face layers.",
-                            icon = Icons.Default.PlayArrow,
-                            isSelected = currentMode == SimulationMode.RUBIK_CUBE,
-                            onClick = { currentMode = SimulationMode.RUBIK_CUBE }
-                        )
-                    }
-
-                    item {
-                        Spacer(Modifier.height(16.dp))
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        Spacer(Modifier.height(16.dp))
-                        
-                        Text(
-                            "CAMERA CONTROLS",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    // Global Camera Toggles & sliders
-                    item {
-                        Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                            Text("Zoom & Scale: ${(scaleFactor * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
-                            Slider(
-                                value = scaleFactor,
-                                onValueChange = { scaleFactor = it },
-                                valueRange = 0.4f..2.5f,
-                                modifier = Modifier.height(28.dp)
-                            )
-                        }
-                    }
-
-                    item {
-                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Orbit Y Lock", style = MaterialTheme.typography.bodySmall)
-                                Switch(
-                                    checked = options.autoRotateY,
-                                    onCheckedChange = { options = options.copy(autoRotateY = it) },
-                                    modifier = Modifier.scale(0.8f)
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) {
-                            Button(
-                                onClick = {
-                                    pitchAngle = -0.4f
-                                    yawAngle = 0.6f
-                                    scaleFactor = 1.0f
-                                },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Reset View", fontSize = 11.sp)
-                            }
-                            Button(
-                                onClick = {
-                                    options = options.copy(showGrid = !options.showGrid)
-                                },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(if (options.showGrid) "Hide Grid" else "Show Grid", fontSize = 11.sp)
-                            }
-                        }
-                    }
-                }
-                
-                // Active configuration / details panel inside sidebar bottom
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text(
-                            "Projections Detail",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Focal Length: ${focalLength.toInt()}px\nRender Mode: Perspective\nDepth Sort: Painters Alg.",
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Right region: Main 3D Canvas viewport & context controls
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(Color(0xFF0F111A)) // Deep space charcoal theme
-                    .padding(16.dp)
-            ) {
-                // Live Viewport Panel
+                // 1. 3D Viewport on top (fixed or weighted height)
                 Box(
                     modifier = Modifier
-                        .weight(1f)
                         .fillMaxWidth()
+                        .weight(1.3f)
+                        .padding(8.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF07080E)) // Cosmic Black viewport
+                        .background(Color(0xFF07080E))
                         .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
-                                // Drag changes camera view projection yaw & pitch
                                 yawAngle = (yawAngle + dragAmount.x * 0.007f) % (2 * PI.toFloat())
                                 pitchAngle = (pitchAngle - dragAmount.y * 0.007f).coerceIn(-1.5f, 1.5f)
                             }
                         }
                 ) {
-                    // 3D Canvas viewport drawings
                     Canvas3DViewport(
                         mode = currentMode,
                         yaw = yawAngle,
                         pitch = pitchAngle,
                         scale = scaleFactor,
                         options = options,
-                        
-                        // Molecular parameters
                         moleculeName = selectedMolecule,
                         chemistryStyle = chemistryStyle,
                         onHoverAtom = { hoveredAtomName = it },
-                        
-                        // Architectural CAD
                         explodeFactor = explodeFactor,
                         isDoorOpen = isDoorOpen,
                         lightingPreset = houseLightingMode,
-                        
-                        // Topography
                         waterHeight = waterLevelHeight,
                         terrainMeshSize = terrainMeshSize,
                         elevationScale = scaleElevation,
                         gliderTime = animatedGliderTime,
-                        
-                        // Gears
                         gearRotation = gearRotationAnimationAngle,
                         engineeringExplode = engineeringExplodeFactor,
-                        
-                        // Rubik
                         rubikCube = rubikCubeState
                     )
 
@@ -482,7 +344,7 @@ fun ThreeDWorkspaceScreen(
                     Column(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .padding(12.dp)
+                            .padding(10.dp)
                     ) {
                         Surface(
                             color = Color.Black.copy(alpha = 0.6f),
@@ -490,7 +352,7 @@ fun ThreeDWorkspaceScreen(
                             modifier = Modifier.padding(bottom = 6.dp)
                         ) {
                             Text(
-                                "MODAL: ${currentMode.name}",
+                                "MODE: ${currentMode.name}",
                                 color = Color(0xFF4AF2A1),
                                 style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -507,80 +369,574 @@ fun ThreeDWorkspaceScreen(
                     if (currentMode == SimulationMode.MOLECULE && hoveredAtomName != null) {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.75f)),
-                            modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)
+                            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)
                         ) {
-                            Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(Color.Red))
-                                Spacer(Modifier.width(6.dp))
-                                Text(hoveredAtomName!!, color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            Row(modifier = Modifier.padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Color.Red))
+                                Spacer(Modifier.width(4.dp))
+                                Text(hoveredAtomName!!, color = Color.White, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                            }
+                        }
+                    }
+
+                    // Rubik's HUD tracking stats
+                    if (currentMode == SimulationMode.RUBIK_CUBE) {
+                        RubikHudStatsOverlay(
+                            moves = rubikMovesCount,
+                            seconds = rubikElapsedSeconds,
+                            isSolved = isRubikSolved
+                        )
+                    }
+
+                    // Rubik solved congratulations overlay
+                    if (currentMode == SimulationMode.RUBIK_CUBE && isRubikSolved) {
+                        RubikSolvedCelebrationCard(
+                            moves = rubikMovesCount,
+                            seconds = rubikElapsedSeconds,
+                            onPlayAgain = {
+                                rubikCubeState = initRubikCube()
+                                isRubikSolved = false
+                                rubikMovesCount = 0
+                                rubikElapsedSeconds = 0
+                                isRubikTimerActive = false
+                            },
+                            onScramble = {
+                                isRubikSolved = false
+                                rubikMovesCount = 0
+                                rubikElapsedSeconds = 0
+                                triggerScramble()
+                            }
+                        )
+                    }
+                }
+
+                // 2. Quick Simulations Mode Selector (Scrollable horizontally)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(6.dp)) {
+                        Text(
+                            "SELECT WORKBENCH 3D SIMULATION",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+                            color = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                        )
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            item {
+                                FilterChip(
+                                    selected = currentMode == SimulationMode.MOLECULE,
+                                    onClick = { currentMode = SimulationMode.MOLECULE },
+                                    label = { Text("Molecules", fontSize = 10.sp) }
+                                )
+                            }
+                            item {
+                                FilterChip(
+                                    selected = currentMode == SimulationMode.ARCH_CAD,
+                                    onClick = { currentMode = SimulationMode.ARCH_CAD },
+                                    label = { Text("CAD House", fontSize = 10.sp) }
+                                )
+                            }
+                            item {
+                                FilterChip(
+                                    selected = currentMode == SimulationMode.TOPO_TERRAIN,
+                                    onClick = { currentMode = SimulationMode.TOPO_TERRAIN },
+                                    label = { Text("Terrain", fontSize = 10.sp) }
+                                )
+                            }
+                            item {
+                                FilterChip(
+                                    selected = currentMode == SimulationMode.GEAR_MOTOR,
+                                    onClick = { currentMode = SimulationMode.GEAR_MOTOR },
+                                    label = { Text("Gearbox", fontSize = 10.sp) }
+                                )
+                            }
+                            item {
+                                FilterChip(
+                                    selected = currentMode == SimulationMode.RUBIK_CUBE,
+                                    onClick = { currentMode = SimulationMode.RUBIK_CUBE },
+                                    label = { Text("Rubik 3D", fontSize = 10.sp) }
+                                )
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
-
-                // Bottom Controls customized according to selected mode
+                // 3. Bottom controls column (Weighted to take remaining space)
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .weight(1.0f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, bottom = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    AnimatedContent(
-                        targetState = currentMode,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() }
-                    ) { targetMode ->
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            when (targetMode) {
-                                SimulationMode.MOLECULE -> {
-                                    MoleculeBottomControls(
-                                        selected = selectedMolecule,
-                                        onSelect = { selectedMolecule = it },
-                                        style = chemistryStyle,
-                                        onStyleSelect = { chemistryStyle = it }
-                                    )
+                    Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            item {
+                                AnimatedContent(
+                                    targetState = currentMode,
+                                    transitionSpec = { fadeIn() togetherWith fadeOut() }
+                                ) { targetMode ->
+                                    when (targetMode) {
+                                        SimulationMode.MOLECULE -> {
+                                            MoleculeBottomControls(
+                                                selected = selectedMolecule,
+                                                onSelect = { selectedMolecule = it },
+                                                style = chemistryStyle,
+                                                onStyleSelect = { chemistryStyle = it }
+                                            )
+                                        }
+                                        SimulationMode.ARCH_CAD -> {
+                                            ArchitecturalBottomControls(
+                                                explode = explodeFactor,
+                                                onExplodeChange = { explodeFactor = it },
+                                                isDoorOpen = isDoorOpen,
+                                                onDoorToggle = { isDoorOpen = it },
+                                                lightingPreset = houseLightingMode,
+                                                onLightingChange = { houseLightingMode = it }
+                                            )
+                                        }
+                                        SimulationMode.TOPO_TERRAIN -> {
+                                            TopographyBottomControls(
+                                                water = waterLevelHeight,
+                                                onWaterChange = { waterLevelHeight = it },
+                                                gridSize = terrainMeshSize,
+                                                onGridSizeChange = { terrainMeshSize = it },
+                                                heightScale = scaleElevation,
+                                                onHeightScaleChange = { scaleElevation = it }
+                                            )
+                                        }
+                                        SimulationMode.GEAR_MOTOR -> {
+                                            MechanicalBottomControls(
+                                                velocity = gearVelocity,
+                                                onVelocityChange = { gearVelocity = it },
+                                                explode = engineeringExplodeFactor,
+                                                onExplodeChange = { engineeringExplodeFactor = it }
+                                            )
+                                        }
+                                        SimulationMode.RUBIK_CUBE -> {
+                                            RubikBottomControls(
+                                                isScrambling = isScrambling,
+                                                onScramble = { triggerScramble() },
+                                                onReset = {
+                                                    rubikCubeState = initRubikCube()
+                                                    isRubikSolved = false
+                                                    rubikMovesCount = 0
+                                                    rubikElapsedSeconds = 0
+                                                    isRubikTimerActive = false
+                                                },
+                                                onRotate = { axis, slice, dir ->
+                                                    rotateCubeSlice(axis, slice, dir)
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
-                                SimulationMode.ARCH_CAD -> {
-                                    ArchitecturalBottomControls(
-                                        explode = explodeFactor,
-                                        onExplodeChange = { explodeFactor = it },
-                                        isDoorOpen = isDoorOpen,
-                                        onDoorToggle = { isDoorOpen = it },
-                                        lightingPreset = houseLightingMode,
-                                        onLightingChange = { houseLightingMode = it }
-                                    )
-                                }
-                                SimulationMode.TOPO_TERRAIN -> {
-                                    TopographyBottomControls(
-                                        water = waterLevelHeight,
-                                        onWaterChange = { waterLevelHeight = it },
-                                        gridSize = terrainMeshSize,
-                                        onGridSizeChange = { terrainMeshSize = it },
-                                        heightScale = scaleElevation,
-                                        onHeightScaleChange = { scaleElevation = it }
-                                    )
-                                }
-                                SimulationMode.GEAR_MOTOR -> {
-                                    MechanicalBottomControls(
-                                        velocity = gearVelocity,
-                                        onVelocityChange = { gearVelocity = it },
-                                        explode = engineeringExplodeFactor,
-                                        onExplodeChange = { engineeringExplodeFactor = it }
-                                    )
-                                }
-                                SimulationMode.RUBIK_CUBE -> {
-                                    RubikBottomControls(
-                                        isScrambling = isScrambling,
-                                        onScramble = { triggerScramble() },
-                                        onReset = { rubikCubeState = initRubikCube() },
-                                        onRotate = { axis, slice, dir -> rotateCubeSlice(axis, slice, dir) }
-                                    )
+                            }
+
+                            item {
+                                Spacer(Modifier.height(4.dp))
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        Text("FAST VIEWPORT CONFIG", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
+                                        Spacer(Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Scale: ${(scaleFactor * 100).toInt()}%", modifier = Modifier.weight(1f), fontSize = 11.sp)
+                                            Slider(
+                                                value = scaleFactor,
+                                                onValueChange = { scaleFactor = it },
+                                                valueRange = 0.4f..2.5f,
+                                                modifier = Modifier.weight(2.5f).height(24.dp)
+                                            )
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Auto Orbit", modifier = Modifier.weight(1f), fontSize = 11.sp)
+                                            Switch(
+                                                checked = options.autoRotateY,
+                                                onCheckedChange = { options = options.copy(autoRotateY = it) },
+                                                modifier = Modifier.scale(0.7f)
+                                            )
+                                            Button(
+                                                onClick = {
+                                                    pitchAngle = -0.4f
+                                                    yawAngle = 0.6f
+                                                    scaleFactor = 1.0f
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                                modifier = Modifier.height(28.dp)
+                                            ) {
+                                                Text("Reset Cam", fontSize = 10.sp)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
+        } else {
+            // ==========================================
+            // LANDSCAPE DESKTOP/TABLET LAYOUT (Split Frame)
+            // ==========================================
+            Row(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+                // Left sidebar: Control workspace
+                Column(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        "CHOOSE SIMULATION",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        item {
+                            SimulationSelectorCard(
+                                title = "Molecular Analytics",
+                                desc = "High-definition structural bonds, atomic scales.",
+                                icon = Icons.Default.Star,
+                                isSelected = currentMode == SimulationMode.MOLECULE,
+                                onClick = { currentMode = SimulationMode.MOLECULE }
+                            )
+                        }
+                        item {
+                            SimulationSelectorCard(
+                                title = "CAD Architecture",
+                                desc = "Smart-Home modular layout construction & lighting.",
+                                icon = Icons.Default.Home,
+                                isSelected = currentMode == SimulationMode.ARCH_CAD,
+                                onClick = { currentMode = SimulationMode.ARCH_CAD }
+                            )
+                        }
+                        item {
+                            SimulationSelectorCard(
+                                title = "Topographic Elevation",
+                                desc = "Procedural terrain voxels, water shifts & radar flight.",
+                                icon = Icons.Default.LocationOn,
+                                isSelected = currentMode == SimulationMode.TOPO_TERRAIN,
+                                onClick = { currentMode = SimulationMode.TOPO_TERRAIN }
+                            )
+                        }
+                        item {
+                            SimulationSelectorCard(
+                                title = "Gear & Piston Kinematics",
+                                desc = "Interdependent mechanical transmissions with axial split.",
+                                icon = Icons.Default.Refresh,
+                                isSelected = currentMode == SimulationMode.GEAR_MOTOR,
+                                onClick = { currentMode = SimulationMode.GEAR_MOTOR }
+                            )
+                        }
+                        item {
+                            SimulationSelectorCard(
+                                title = "3D Puzzle Sandbox",
+                                desc = "Interactable 3x3 Rubik's model with face layers.",
+                                icon = Icons.Default.PlayArrow,
+                                isSelected = currentMode == SimulationMode.RUBIK_CUBE,
+                                onClick = { currentMode = SimulationMode.RUBIK_CUBE }
+                            )
+                        }
+
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            Spacer(Modifier.height(16.dp))
+                            
+                            Text(
+                                "CAMERA CONTROLS",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Global Camera Toggles & sliders
+                        item {
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                Text("Zoom & Scale: ${(scaleFactor * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+                                Slider(
+                                    value = scaleFactor,
+                                    onValueChange = { scaleFactor = it },
+                                    valueRange = 0.4f..2.5f,
+                                    modifier = Modifier.height(28.dp)
+                                )
+                            }
+                        }
+
+                        item {
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Orbit Y Lock", style = MaterialTheme.typography.bodySmall)
+                                    Switch(
+                                        checked = options.autoRotateY,
+                                        onCheckedChange = { options = options.copy(autoRotateY = it) },
+                                        modifier = Modifier.scale(0.8f)
+                                    )
+                                }
+                            }
+                        }
+
+                        item {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(vertical = 4.dp)) {
+                                Button(
+                                    onClick = {
+                                        pitchAngle = -0.4f
+                                        yawAngle = 0.6f
+                                        scaleFactor = 1.0f
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Reset View", fontSize = 11.sp)
+                                }
+                                Button(
+                                    onClick = {
+                                        options = options.copy(showGrid = !options.showGrid)
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(if (options.showGrid) "Hide Grid" else "Show Grid", fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Active configuration / details panel inside sidebar bottom
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(
+                                "Projections Detail",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Focal Length: ${focalLength.toInt()}px\nRender Mode: Perspective\nDepth Sort: Painters Alg.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // Right region: Main 3D Canvas viewport & context controls
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(Color(0xFF0F111A)) // Deep space charcoal theme
+                        .padding(16.dp)
+                ) {
+                    // Live Viewport Panel
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF07080E)) // Cosmic Black viewport
+                            .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .pointerInput(Unit) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
+                                    yawAngle = (yawAngle + dragAmount.x * 0.007f) % (2 * PI.toFloat())
+                                    pitchAngle = (pitchAngle - dragAmount.y * 0.007f).coerceIn(-1.5f, 1.5f)
+                                }
+                            }
+                    ) {
+                        Canvas3DViewport(
+                            mode = currentMode,
+                            yaw = yawAngle,
+                            pitch = pitchAngle,
+                            scale = scaleFactor,
+                            options = options,
+                            moleculeName = selectedMolecule,
+                            chemistryStyle = chemistryStyle,
+                            onHoverAtom = { hoveredAtomName = it },
+                            explodeFactor = explodeFactor,
+                            isDoorOpen = isDoorOpen,
+                            lightingPreset = houseLightingMode,
+                            waterHeight = waterLevelHeight,
+                            terrainMeshSize = terrainMeshSize,
+                            elevationScale = scaleElevation,
+                            gliderTime = animatedGliderTime,
+                            gearRotation = gearRotationAnimationAngle,
+                            engineeringExplode = engineeringExplodeFactor,
+                            rubikCube = rubikCubeState
+                        )
+
+                        // Overlay HUD Indicators
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(12.dp)
+                        ) {
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            ) {
+                                Text(
+                                    "MODE: ${currentMode.name}",
+                                    color = Color(0xFF4AF2A1),
+                                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            Text(
+                                "Yaw: ${(yawAngle * 180 / PI).toInt()}° | Pitch: ${(pitchAngle * 180 / PI).toInt()}°",
+                                color = Color.White.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace)
+                            )
+                        }
+
+                        // Hovered details
+                        if (currentMode == SimulationMode.MOLECULE && hoveredAtomName != null) {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.75f)),
+                                modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)
+                            ) {
+                                Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(modifier = Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(Color.Red))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(hoveredAtomName!!, color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                                }
+                            }
+                        }
+
+                        // Rubik's HUD tracking stats
+                        if (currentMode == SimulationMode.RUBIK_CUBE) {
+                            RubikHudStatsOverlay(
+                                moves = rubikMovesCount,
+                                seconds = rubikElapsedSeconds,
+                                isSolved = isRubikSolved
+                            )
+                        }
+
+                        // Rubik solved congratulations overlay
+                        if (currentMode == SimulationMode.RUBIK_CUBE && isRubikSolved) {
+                            RubikSolvedCelebrationCard(
+                                moves = rubikMovesCount,
+                                seconds = rubikElapsedSeconds,
+                                onPlayAgain = {
+                                    rubikCubeState = initRubikCube()
+                                    isRubikSolved = false
+                                    rubikMovesCount = 0
+                                    rubikElapsedSeconds = 0
+                                    isRubikTimerActive = false
+                                },
+                                onScramble = {
+                                    isRubikSolved = false
+                                    rubikMovesCount = 0
+                                    rubikElapsedSeconds = 0
+                                    triggerScramble()
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Bottom Controls customized according to selected mode
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        AnimatedContent(
+                            targetState = currentMode,
+                            transitionSpec = { fadeIn() togetherWith fadeOut() }
+                        ) { targetMode ->
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                when (targetMode) {
+                                    SimulationMode.MOLECULE -> {
+                                        MoleculeBottomControls(
+                                            selected = selectedMolecule,
+                                            onSelect = { selectedMolecule = it },
+                                            style = chemistryStyle,
+                                            onStyleSelect = { chemistryStyle = it }
+                                        )
+                                    }
+                                    SimulationMode.ARCH_CAD -> {
+                                        ArchitecturalBottomControls(
+                                            explode = explodeFactor,
+                                            onExplodeChange = { explodeFactor = it },
+                                            isDoorOpen = isDoorOpen,
+                                            onDoorToggle = { isDoorOpen = it },
+                                            lightingPreset = houseLightingMode,
+                                            onLightingChange = { houseLightingMode = it }
+                                        )
+                                    }
+                                    SimulationMode.TOPO_TERRAIN -> {
+                                        TopographyBottomControls(
+                                            water = waterLevelHeight,
+                                            onWaterChange = { waterLevelHeight = it },
+                                            gridSize = terrainMeshSize,
+                                            onGridSizeChange = { terrainMeshSize = it },
+                                            heightScale = scaleElevation,
+                                            onHeightScaleChange = { scaleElevation = it }
+                                        )
+                                    }
+                                    SimulationMode.GEAR_MOTOR -> {
+                                        MechanicalBottomControls(
+                                            velocity = gearVelocity,
+                                            onVelocityChange = { gearVelocity = it },
+                                            explode = engineeringExplodeFactor,
+                                            onExplodeChange = { engineeringExplodeFactor = it }
+                                        )
+                                    }
+                                    SimulationMode.RUBIK_CUBE -> {
+                                        RubikBottomControls(
+                                            isScrambling = isScrambling,
+                                            onScramble = { triggerScramble() },
+                                            onReset = {
+                                                rubikCubeState = initRubikCube()
+                                                isRubikSolved = false
+                                                rubikMovesCount = 0
+                                                rubikElapsedSeconds = 0
+                                                isRubikTimerActive = false
+                                            },
+                                            onRotate = { axis, slice, dir ->
+                                                rotateCubeSlice(axis, slice, dir)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } }
     }
 }
 
@@ -2080,5 +2436,184 @@ fun generateRubikCubePrimitives(
                 depth = c.z
             )
         )
+    }
+}
+
+// Check if all faces on each of the six planes of Rubik's Cube have homogeneous colors
+fun checkIfRubikSolved(cube: List<RubikMinisc>): Boolean {
+    // Check Right Face (+X = 1)
+    val rightCubes = cube.filter { it.gridX == 1 }
+    if (rightCubes.isEmpty()) return false
+    val rightColor = rightCubes.first().colors[0]
+    if (!rightCubes.all { it.colors[0] == rightColor }) return false
+
+    // Check Left Face (-X = -1)
+    val leftCubes = cube.filter { it.gridX == -1 }
+    if (leftCubes.isEmpty()) return false
+    val leftColor = leftCubes.first().colors[1]
+    if (!leftCubes.all { it.colors[1] == leftColor }) return false
+
+    // Check Top Face (+Y = 1)
+    val topCubes = cube.filter { it.gridY == 1 }
+    if (topCubes.isEmpty()) return false
+    val topColor = topCubes.first().colors[2]
+    if (!topCubes.all { it.colors[2] == topColor }) return false
+
+    // Check Bottom Face (-Y = -1)
+    val bottomCubes = cube.filter { it.gridY == -1 }
+    if (bottomCubes.isEmpty()) return false
+    val bottomColor = bottomCubes.first().colors[3]
+    if (!bottomCubes.all { it.colors[3] == bottomColor }) return false
+
+    // Check Front Face (+Z = 1)
+    val frontCubes = cube.filter { it.gridZ == 1 }
+    if (frontCubes.isEmpty()) return false
+    val frontColor = frontCubes.first().colors[4]
+    if (!frontCubes.all { it.colors[4] == frontColor }) return false
+
+    // Check Back Face (-Z = -1)
+    val backCubes = cube.filter { it.gridZ == -1 }
+    if (backCubes.isEmpty()) return false
+    val backColor = backCubes.first().colors[5]
+    if (!backCubes.all { it.colors[5] == backColor }) return false
+
+    return true
+}
+
+@Composable
+fun RubikHudStatsOverlay(
+    moves: Int,
+    seconds: Int,
+    isSolved: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        contentAlignment = Alignment.TopEnd
+    ) {
+        Surface(
+            color = Color.Black.copy(alpha = 0.7f),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.border(1.dp, Color(0xFF4AF2A1).copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+        ) {
+            Column(
+                modifier = Modifier.padding(10.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    "📊 PUZZLE PROGRESS",
+                    color = Color(0xFF4AF2A1),
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Moves Made: $moves",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                )
+                val min = seconds / 60
+                val sec = seconds % 60
+                val minStr = if (min < 10) "0$min" else "$min"
+                val secStr = if (sec < 10) "0$sec" else "$sec"
+                val timeString = "$minStr:$secStr"
+                Text(
+                    "Time elapsed: $timeString",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                )
+                if (isSolved) {
+                    Text(
+                        "🎉 SOLVED!",
+                        color = Color(0xFF4AF2A1),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RubikSolvedCelebrationCard(
+    moves: Int,
+    seconds: Int,
+    onPlayAgain: () -> Unit,
+    onScramble: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.75f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .width(280.dp)
+                .padding(16.dp)
+                .border(2.dp, Color(0xFF4AF2A1), RoundedCornerShape(16.dp))
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "🏆 Congratulations!",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color(0xFF4AF2A1)),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "You solved the 3D Rubik's Cube!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(12.dp))
+                
+                // Stats
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Moves", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Text("$moves", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold))
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val min = seconds / 60
+                        val sec = seconds % 60
+                        val minStr = if (min < 10) "0$min" else "$min"
+                        val secStr = if (sec < 10) "0$sec" else "$sec"
+                        val timeString = "$minStr:$secStr"
+                        Text("Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Text(timeString, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Monospace))
+                    }
+                }
+                
+                Spacer(Modifier.height(18.dp))
+                
+                Button(
+                    onClick = onScramble,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4AF2A1), contentColor = Color.Black),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Scramble & Replay")
+                }
+                
+                Spacer(Modifier.height(8.dp))
+                
+                OutlinedButton(
+                    onClick = onPlayAgain,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset Board")
+                }
+            }
+        }
     }
 }
