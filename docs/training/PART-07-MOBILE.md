@@ -444,5 +444,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Author a prototype math model that calculates the standard X, Y, Z world space coordinate offsets for an item dealt to Player Hand #4 in 3D Blackjack, and implement the corresponding unit tests to verify the card starts in the shoe at (200, -180, -120) and finishes at your custom calculated target coordinates when progress reaches 1.0f.
 - **Complexity**: Part 4
 
+### 71. Volumetric Chip Stacking & Extruded Wood Rim 3D graphics (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Learn how to assemble high-fidelity three-dimensional vectors into custom-drawn volumetric shapes inside a pure Android Canvas. Understand how to extrude wood rim curves downward to build solid 3D boundaries, and stack physical cylinders whose vertical extent correlates directly with dollar counts.
+- **Exercise**: Modify the cylindrical chip stack routine to support blue high-roller $500 chips (using color `Color(0xFF1E88E5)`) and update the deconstruction math so that any bet above $500 utilizes these premium chips to conserve vertical cylinder stack heights.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

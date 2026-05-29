@@ -203,6 +203,7 @@ fun BlackjackScreen(
 
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showStatsDialog by remember { mutableStateOf(false) }
+    var is3DMode by remember { mutableStateOf(true) }
 
     val feltColor = getFeltColor(settings.tableColor)
 
@@ -234,6 +235,15 @@ fun BlackjackScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { is3DMode = !is3DMode }) {
+                        Text(
+                            text = if (is3DMode) "2D Retro" else "3D Felt",
+                            color = Color(0xFFFFD700),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
                     IconButton(onClick = { showStatsDialog = true }) {
                         Icon(Icons.Default.Info, contentDescription = "Lifetime Stats")
                     }
@@ -304,41 +314,61 @@ fun BlackjackScreen(
                     }
                 }
 
-                // Row B: Dealer Section
-                DealerSection(
-                    cards = viewModel.dealerCards,
-                    isSecondCardHidden = isSecondHidden,
-                    score = if (isSecondHidden && viewModel.dealerCards.size >= 2) {
-                        viewModel.dealerCards.firstOrNull()?.rank?.value ?: 0
-                    } else {
-                        calculateHandScore(viewModel.dealerCards)
-                    },
-                    gameState = gameState,
-                    isCompact = isCompact
-                )
+                // Row B & C: Main Table viewport (Support 3D & 2D fallback toggles!)
+                if (is3DMode) {
+                    BlackjackCanvas3D(
+                        dealerCards = viewModel.dealerCards,
+                        isSecondHidden = isSecondHidden,
+                        playerHands = viewModel.playerHands,
+                        activeHandIndex = currentHandIndex,
+                        gameState = gameState,
+                        walletBalance = walletBalance,
+                        activeBet = activeBet,
+                        tableFeltStyleId = settings.tableColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(if (isCompactHeight) 260.dp else if (isCompact) 320.dp else 420.dp)
+                            .border(1.2.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Black.copy(alpha = 0.15f))
+                    )
+                } else {
+                    // Row B: Dealer Section
+                    DealerSection(
+                        cards = viewModel.dealerCards,
+                        isSecondCardHidden = isSecondHidden,
+                        score = if (isSecondHidden && viewModel.dealerCards.size >= 2) {
+                            viewModel.dealerCards.firstOrNull()?.rank?.value ?: 0
+                        } else {
+                            calculateHandScore(viewModel.dealerCards)
+                        },
+                        gameState = gameState,
+                        isCompact = isCompact
+                    )
 
-                Spacer(modifier = Modifier.height(tableSpacing))
+                    Spacer(modifier = Modifier.height(tableSpacing))
 
-                // Golden Felt Inscription Label
-                CasinoFeltInscription(
-                    dealerRuleText = if (settings.dealerSoft17Hit) "Dealer Hits Soft 17" else "Dealer Stands on All 17s",
-                    isCompact = isCompact
-                )
+                    // Golden Felt Inscription Label
+                    CasinoFeltInscription(
+                        dealerRuleText = if (settings.dealerSoft17Hit) "Dealer Hits Soft 17" else "Dealer Stands on All 17s",
+                        isCompact = isCompact
+                    )
 
-                Spacer(modifier = Modifier.height(tableSpacing))
+                    Spacer(modifier = Modifier.height(tableSpacing))
 
-                // Row C: Player Hands Section (Support Splits!)
-                PlayerSection(
-                    hands = viewModel.playerHands,
-                    activeHandIndex = currentHandIndex,
-                    gameState = gameState,
-                    walletBalance = walletBalance,
-                    activeBet = activeBet,
-                    onReloadWallet = { viewModel.reloadWalletAccount() },
-                    showStrategyHud = settings.showStrategyHud,
-                    adviceMessage = adviceMessage,
-                    isCompact = isCompact
-                )
+                    // Row C: Player Hands Section (Support Splits!)
+                    PlayerSection(
+                        hands = viewModel.playerHands,
+                        activeHandIndex = currentHandIndex,
+                        gameState = gameState,
+                        walletBalance = walletBalance,
+                        activeBet = activeBet,
+                        onReloadWallet = { viewModel.reloadWalletAccount() },
+                        showStrategyHud = settings.showStrategyHud,
+                        adviceMessage = adviceMessage,
+                        isCompact = isCompact
+                    )
+                }
 
                 // Row D: Round Outcome Overlays
                 if (roundResultText.isNotEmpty()) {

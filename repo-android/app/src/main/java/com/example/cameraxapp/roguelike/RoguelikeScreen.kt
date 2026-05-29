@@ -52,6 +52,8 @@ fun RoguelikeScreen(
     val playerX by viewModel.playerX
     val playerY by viewModel.playerY
 
+    var is3DMode by remember { mutableStateOf(true) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -62,6 +64,17 @@ fun RoguelikeScreen(
                     }
                 },
                 actions = {
+                    if (status == GameStatus.EXPLORING || status == GameStatus.INVENTORY_MODAL) {
+                        IconButton(onClick = { is3DMode = !is3DMode }) {
+                            Text(
+                                text = if (is3DMode) "2D Retro" else "3D Cube",
+                                color = Color(0xFFFFD700),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
                     if (status != GameStatus.CHARACTER_SELECT && status != GameStatus.SCORES_SCREEN) {
                         IconButton(onClick = { viewModel.restartGame() }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Forfeit", tint = Color.Red)
@@ -107,20 +120,36 @@ fun RoguelikeScreen(
                             // 1. Level & Attributes Header
                             StatsHeader(char = char)
 
-                            // 2. Playable 2D Grid Canvas
-                            DungeonCanvas(
-                                tiles = tiles,
-                                monsters = monsters,
-                                pX = playerX,
-                                pY = playerY,
-                                heroClass = char.heroClass,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .border(1.5.dp, Color(0xFF332211), RoundedCornerShape(4.dp))
-                                    .background(Color.Black)
-                            )
+                            // 2. Playable 2D Grid Canvas or 3D Isometric View
+                            if (is3DMode) {
+                                DungeonCanvas3D(
+                                    tiles = tiles,
+                                    monsters = monsters,
+                                    pX = playerX,
+                                    pY = playerY,
+                                    heroClass = char.heroClass,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .border(1.5.dp, Color(0xFF332211), RoundedCornerShape(4.dp))
+                                        .background(Color.Black)
+                                )
+                            } else {
+                                DungeonCanvas(
+                                    tiles = tiles,
+                                    monsters = monsters,
+                                    pX = playerX,
+                                    pY = playerY,
+                                    heroClass = char.heroClass,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .border(1.5.dp, Color(0xFF332211), RoundedCornerShape(4.dp))
+                                        .background(Color.Black)
+                                )
+                            }
 
                             // 3. Game combat logger console
                             CombatLoggerView(logs = logs)
