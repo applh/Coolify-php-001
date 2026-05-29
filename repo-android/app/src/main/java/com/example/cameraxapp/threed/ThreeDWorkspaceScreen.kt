@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -472,7 +474,7 @@ fun ThreeDWorkspaceScreen(
                     modifier = Modifier
                         .weight(1.0f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, bottom = 8.dp),
+                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
@@ -1082,8 +1084,7 @@ fun ArchitecturalBottomControls(
                         FilterChip(
                             selected = lightingPreset == mode,
                             onClick = { onLightingChange(mode) },
-                            label = { Text(mode, fontSize = 10.sp) },
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                            label = { Text(mode, fontSize = 10.sp) }
                         )
                     }
                 }
