@@ -26,5 +26,13 @@ Learn to build high-performance services using Node.js, Go, Rust, and Python.
 - **Task**: See how Python handles site data.
 - **Exercise**: Create a script that generates a summary of all site configs.
 
+### 3. Multi-Stack Feature Equivalence (30h)
+**Reference**: `/docs/backend/multi-stack-equivalence-plan.md`
+- **Goal**: Understand how different application runtimes (Express/Vite, FastAPI, Go, PHP) handle multi-tenant routing, ZIP archive transfers, and secure administrative dashboards.
+- **Exercise**: Implement a standardized `?cms_debug=true` environment diagnostic endpoint in either `repo-go` or `repo-python` that checks directory permissions, active plugins, and reports server metrics, matching the behavior of `PHP's CMS::validateSetup`.
+- **Complexity**: Part 3 (Medium difficulty).
+
 ## Recommended Reading
 - `docs/backend/node-cms-features.md`
+- `docs/backend/multi-stack-equivalence-plan.md`
+
