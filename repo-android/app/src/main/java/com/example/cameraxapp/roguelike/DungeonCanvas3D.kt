@@ -4,7 +4,9 @@ import android.graphics.Paint as AndroidPaint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,7 +38,8 @@ fun DungeonCanvas3D(
 ) {
     var yawAngle by remember { mutableStateOf(-0.35f) }
     var pitchAngle by remember { mutableStateOf(-0.55f) }
-    val zoomScale by remember { mutableStateOf(1.0f) }
+    var zoomScale by remember { mutableStateOf(1.4f) }
+    var lightingStrength by remember { mutableStateOf(1.5f) }
 
     val textPainter = remember {
         android.graphics.Paint().apply {
@@ -49,11 +52,10 @@ fun DungeonCanvas3D(
     Box(
         modifier = modifier
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Rotate layout in real-time
-                    yawAngle = (yawAngle + dragAmount.x * 0.007f)
-                    pitchAngle = (pitchAngle - dragAmount.y * 0.007f).coerceIn(-1.4f, -0.2f)
+                detectTransformGestures { _, pan, zoom, _ ->
+                    yawAngle = (yawAngle + pan.x * 0.007f)
+                    pitchAngle = (pitchAngle - pan.y * 0.007f).coerceIn(-1.4f, -0.2f)
+                    zoomScale = (zoomScale * zoom).coerceIn(0.4f, 3.0f)
                 }
             }
     ) {
@@ -66,7 +68,7 @@ fun DungeonCanvas3D(
             // 3D Scene setup constraints
             val cameraZ = 320f
             val dFactor = 280f
-            val W_s = 22f // block coordinate horizontal scaling size
+            val W_s = 22f
 
             // Projections math mapping
             fun projectPoint(v: Vector3): Offset {
@@ -100,9 +102,10 @@ fun DungeonCanvas3D(
                         buildWallCube(
                             cx = tileX, cy = floorY - W_s / 2f, cz = tileZ,
                             sizeX = W_s * 0.96f, sizeY = W_s, sizeZ = W_s * 0.96f,
-                            color = Color(0xFF3E352C), // Solid deep grey stone brick
+                            color = Color(0xFF3E352C),
                             outList = drawPipeline,
-                            lightSource = lightSource
+                            lightSource = lightSource,
+                            lightingStrength = lightingStrength
                         )
                     } else {
                         // Drawing flat Ground tile
@@ -116,13 +119,13 @@ fun DungeonCanvas3D(
 
                         // Light calculation
                         val dist = (Vector3(tileX, floorY, tileZ) - lightSource).length()
-                        val attenuation = 1f / (1.0f + 0.0016f * dist * dist)
-                        val lightFactor = (0.10f + 0.90f * attenuation).coerceIn(0f, 1f)
+                        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+                        val lightFactor = (0.10f * lightingStrength + 0.90f * attenuation).coerceIn(0f, 1f)
 
                         val tileColor = when (tile.tileType) {
-                            "STAIRS_DOWN" -> Color(0xFF2E1C3F) // Deep arcane stairwell
-                            "CHEST" -> Color(0xFF4A341E) // Rusty wood chest
-                            else -> Color(0xFF141312) // Cracked standard floor tile
+                            "STAIRS_DOWN" -> Color(0xFF2E1C3F)
+                            "CHEST" -> Color(0xFF4A341E)
+                            else -> Color(0xFF141312)
                         }
 
                         val shadedCol = Color(
@@ -135,7 +138,6 @@ fun DungeonCanvas3D(
                         drawPipeline.add(RenderItem3D.Polygon(corners, shadedCol, depth = 0f))
 
                         if (tile.tileType == "STAIRS_DOWN") {
-                            // Draw stair step overlapping sheets
                             drawPipeline.add(RenderItem3D.TextLabel(Vector3(tileX, floorY - 3f, tileZ), "🪜", Color.White, sizeMultiplier = 0.9f, depth = 0f))
                         } else if (tile.tileType == "CHEST") {
                             drawPipeline.add(RenderItem3D.TextLabel(Vector3(tileX, floorY - 3f, tileZ), "📦", Color.White, sizeMultiplier = 0.85f, depth = 0f))
@@ -153,10 +155,10 @@ fun DungeonCanvas3D(
                     val mY = W_s * 0.15f
 
                     val monsterCol = when (monster.type) {
-                        "DRAGON" -> Color(0xFFC62828) // Crimson red massive boss
-                        "NECROMANCER" -> Color(0xFF6A1B9A) // Violet glowing elite
-                        "GOBLIN" -> Color(0xFF2E7D32) // Forest green goblin
-                        else -> Color(0xFF757575) // Skeleton warrior
+                        "DRAGON" -> Color(0xFFC62828)
+                        "NECROMANCER" -> Color(0xFF6A1B9A)
+                        "GOBLIN" -> Color(0xFF2E7D32)
+                        else -> Color(0xFF757575)
                     }
 
                     val glyph = when (monster.type) {
@@ -172,19 +174,19 @@ fun DungeonCanvas3D(
                         radX = W_s * 0.32f, radY = W_s * 0.45f, radZ = W_s * 0.32f,
                         color = monsterCol,
                         outList = drawPipeline,
-                        lightSource = lightSource
+                        lightSource = lightSource,
+                        lightingStrength = lightingStrength
                     )
 
                     // Add floating tag emoji above the entity heading
                     drawPipeline.add(RenderItem3D.TextLabel(Vector3(mX, mY - W_s * 0.70f, mZ), glyph, Color.White, sizeMultiplier = 1.0f, depth = 0f))
                     
-                    // Small floating health percentage summary label
                     val hpPercent = (monster.currentHp * 100 / monster.maxHp).toString() + "%"
                     drawPipeline.add(RenderItem3D.TextLabel(Vector3(mX, mY - W_s * 1.05f, mZ), hpPercent, Color(0xFF81C784), sizeMultiplier = 0.65f, depth = 0f))
                 }
             }
 
-            // 3. Build player hero entity shape!
+            // 3. Build player hero entity shape
             val pWorldX = (pX - 9f) * W_s
             val pWorldZ = (pY - 9f) * W_s
             val pWorldY = W_s * 0.2f
@@ -196,13 +198,14 @@ fun DungeonCanvas3D(
                 else -> "🗡️"
             }
 
-            // Core 3D model: dual stacking pyramids or high octahedron
+            // Core 3D model
             buildVolumetricOctahedron(
                 cx = pWorldX, cy = pWorldY, cz = pWorldZ,
                 radX = W_s * 0.30f, radY = W_s * 0.45f, radZ = W_s * 0.30f,
                 color = playerCol,
                 outList = drawPipeline,
-                lightSource = lightSource
+                lightSource = lightSource,
+                lightingStrength = lightingStrength
             )
 
             // Dynamic float action labels
@@ -275,7 +278,125 @@ fun DungeonCanvas3D(
                 .border(0.5.dp, Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
-            Text("DRAG TO ROTATE SCENE", fontSize = 8.sp, color = Color.Yellow, letterSpacing = 0.5.sp)
+            Text("DRAG / PINCH TO ROTATE & ZOOM", fontSize = 8.sp, color = Color.Yellow, letterSpacing = 0.5.sp)
+        }
+
+        // 3D HUD Settings Control Panel Overlay
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+                .background(Color.Black.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+                .border(1.dp, Color.LightGray.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Row 1: Zoom Manual & Reset Controls
+            Row(
+                modifier = Modifier.padding(bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "🔍 ZOOM: ${(zoomScale * 100).toInt()}%",
+                    fontSize = 9.sp,
+                    color = Color.White,
+                    modifier = Modifier.width(85.dp)
+                )
+                // Zoom Out Button (-)
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.4f, 3.0f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("-", color = Color.White, fontSize = 12.sp)
+                }
+                // Zoom In Button (+)
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.4f, 3.0f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("+", color = Color.White, fontSize = 12.sp)
+                }
+                // Reset Button
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(Color(0xFF424242), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = 1.4f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("RESET", color = Color.White, fontSize = 8.sp)
+                }
+            }
+
+            // Row 2: Lighting Strength Selector
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "💡 TORCH: ${(lightingStrength * 100).toInt()}%",
+                    fontSize = 9.sp,
+                    color = Color.White,
+                    modifier = Modifier.width(85.dp)
+                )
+                
+                // Dim Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingStrength == 0.8f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingStrength = 0.8f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("DIM", color = Color.White, fontSize = 8.sp)
+                }
+                
+                // Normal Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingStrength == 1.5f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingStrength = 1.5f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("TORCH", color = Color.White, fontSize = 8.sp)
+                }
+
+                // Bright Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingStrength == 2.2f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingStrength = 2.2f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("LANTERN", color = Color.White, fontSize = 8.sp)
+                }
+
+                // Max Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingStrength == 3.0f) Color(0xFFFF9100) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingStrength = 3.0f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("SUNLIGHT", color = Color.White, fontSize = 8.sp)
+                }
+            }
         }
     }
 }
@@ -285,7 +406,8 @@ private fun buildWallCube(
     sizeX: Float, sizeY: Float, sizeZ: Float,
     color: Color,
     outList: MutableList<RenderItem3D>,
-    lightSource: Vector3
+    lightSource: Vector3,
+    lightingStrength: Float
 ) {
     val hx = sizeX / 2f
     val hy = sizeY / 2f
@@ -302,17 +424,11 @@ private fun buildWallCube(
     val v8 = Vector3(cx - hx, cy + hy, cz + hz)
 
     val faces = listOf(
-        // Front (near Z)
         listOf(v1, v2, v3, v4),
-        // Back (far Z)
         listOf(v6, v5, v8, v7),
-        // Top (ceiling)
         listOf(v1, v5, v6, v2),
-        // Bottom (floor)
         listOf(v4, v3, v7, v8),
-        // Left (-X)
         listOf(v1, v4, v8, v5),
-        // Right (+X)
         listOf(v2, v6, v7, v3)
     )
 
@@ -323,10 +439,9 @@ private fun buildWallCube(
             pts.sumOf { it.z.toDouble() }.toFloat() / 4f
         )
         val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + 0.0016f * dist * dist)
-        val lightFactor = (0.16f + 0.84f * attenuation).coerceIn(0f, 1f)
+        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val lightFactor = (0.16f * lightingStrength + 0.84f * attenuation).coerceIn(0f, 1f)
 
-        // Give a slight height angle shading contrast
         val topBonus = if (pts == faces[2]) 1.2f else 0.88f
         val finalFactor = (lightFactor * topBonus).coerceIn(0f, 1f)
 
@@ -346,7 +461,8 @@ private fun buildVolumetricOctahedron(
     radX: Float, radY: Float, radZ: Float,
     color: Color,
     outList: MutableList<RenderItem3D>,
-    lightSource: Vector3
+    lightSource: Vector3,
+    lightingStrength: Float
 ) {
     val top = Vector3(cx, cy - radY, cz)
     val bottom = Vector3(cx, cy + radY, cz)
@@ -373,8 +489,8 @@ private fun buildVolumetricOctahedron(
             pts.sumOf { it.z.toDouble() }.toFloat() / 3f
         )
         val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + 0.001f * dist * dist)
-        val lightFactor = (0.22f + 0.78f * attenuation).coerceIn(0f, 1f)
+        val attenuation = 1f / (1.0f + (0.001f / lightingStrength) * dist * dist)
+        val lightFactor = (0.22f * lightingStrength + 0.78f * attenuation).coerceIn(0f, 1f)
 
         val shadedCol = Color(
             red = (color.red * lightFactor).coerceIn(0f, 1f),

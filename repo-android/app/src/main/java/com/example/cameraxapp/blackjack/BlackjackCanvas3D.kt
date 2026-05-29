@@ -4,7 +4,9 @@ import android.graphics.Paint as AndroidPaint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -25,6 +27,15 @@ import com.example.cameraxapp.core.math3d.RenderItem3D
 import com.example.cameraxapp.core.math3d.Vector3
 import kotlin.math.*
 
+private fun adjustColorBrightness(color: Color, intensity: Float): Color {
+    return Color(
+        red = (color.red * intensity).coerceIn(0f, 1f),
+        green = (color.green * intensity).coerceIn(0f, 1f),
+        blue = (color.blue * intensity).coerceIn(0f, 1f),
+        alpha = color.alpha
+    )
+}
+
 @Composable
 fun BlackjackCanvas3D(
     dealerCards: List<Card>,
@@ -39,7 +50,8 @@ fun BlackjackCanvas3D(
 ) {
     var yawAngle by remember { mutableStateOf(0.0f) }
     var pitchAngle by remember { mutableStateOf(-0.55f) }
-    val zoomScale by remember { mutableStateOf(0.95f) }
+    var zoomScale by remember { mutableStateOf(1.35f) }
+    var lightingIntensity by remember { mutableStateOf(1.35f) }
 
     val textPainter = remember {
         android.graphics.Paint().apply {
@@ -60,11 +72,10 @@ fun BlackjackCanvas3D(
     Box(
         modifier = modifier
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Rotate the board
-                    yawAngle = (yawAngle + dragAmount.x * 0.007f)
-                    pitchAngle = (pitchAngle - dragAmount.y * 0.007f).coerceIn(-1.3f, -0.3f)
+                detectTransformGestures { _, pan, zoom, _ ->
+                    yawAngle = (yawAngle + pan.x * 0.007f)
+                    pitchAngle = (pitchAngle - pan.y * 0.007f).coerceIn(-1.3f, -0.3f)
+                    zoomScale = (zoomScale * zoom).coerceIn(0.4f, 3.0f)
                 }
             }
     ) {
@@ -207,7 +218,7 @@ fun BlackjackCanvas3D(
                 }
             }
 
-            // 6. Draw Sorted Elements
+            // 6. Draw Sorted Elements with Dynamic Lighting / Brightness Adjustment
             sortedItems.forEach { item ->
                 when (item) {
                     is RenderItem3D.Polygon -> {
@@ -220,21 +231,30 @@ fun BlackjackCanvas3D(
                             }
                             path.close()
 
-                            drawPath(path, color = item.color)
-                            if (item.outlineColor != Color.Transparent) {
-                                drawPath(path, color = item.outlineColor, style = Stroke(width = item.strokeWidth * zoomScale))
+                            val litColor = adjustColorBrightness(item.color, lightingIntensity)
+                            val litOutlineColor = if (item.outlineColor != Color.Transparent) {
+                                adjustColorBrightness(item.outlineColor, lightingIntensity)
+                            } else {
+                                Color.Transparent
+                            }
+
+                            drawPath(path, color = litColor)
+                            if (litOutlineColor != Color.Transparent) {
+                                drawPath(path, color = litOutlineColor, style = Stroke(width = item.strokeWidth * zoomScale))
                             }
                         }
                     }
                     is RenderItem3D.Line -> {
                         val p1 = projectPoint(item.start)
                         val p2 = projectPoint(item.end)
-                        drawLine(color = item.color, start = p1, end = p2, strokeWidth = item.strokeWidth * zoomScale)
+                        val litColor = adjustColorBrightness(item.color, lightingIntensity)
+                        drawLine(color = litColor, start = p1, end = p2, strokeWidth = item.strokeWidth * zoomScale)
                     }
                     is RenderItem3D.TextLabel -> {
                         val pLabel = projectPoint(item.position)
                         drawIntoCanvas { canvas ->
-                            textPainter.color = item.color.toArgb()
+                            val litColor = adjustColorBrightness(item.color, lightingIntensity + 0.15f)
+                            textPainter.color = litColor.toArgb()
                             textPainter.textSize = (9.dp.toPx() * item.sizeMultiplier)
                             canvas.nativeCanvas.drawText(
                                 item.text,
@@ -258,7 +278,125 @@ fun BlackjackCanvas3D(
                 .border(0.5.dp, Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
-            Text("DRAG FELT TO ROTATE CAMERA", fontSize = 8.sp, color = Color(0xFFFFD700), letterSpacing = 0.5.sp)
+            Text("DRAG / PINCH TO ROTATE & ZOOM", fontSize = 8.sp, color = Color(0xFFFFD700), letterSpacing = 0.5.sp)
+        }
+
+        // 3D HUD Settings Control Panel Overlay
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+                .background(Color.Black.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+                .border(1.dp, Color.LightGray.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Row 1: Zoom Manual & Reset Controls
+            Row(
+                modifier = Modifier.padding(bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "🔍 ZOOM: ${(zoomScale * 100).toInt()}%",
+                    fontSize = 9.sp,
+                    color = Color.White,
+                    modifier = Modifier.width(85.dp)
+                )
+                // Zoom Out Button (-)
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.4f, 3.0f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("-", color = Color.White, fontSize = 12.sp)
+                }
+                // Zoom In Button (+)
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.4f, 3.0f) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("+", color = Color.White, fontSize = 12.sp)
+                }
+                // Reset Button
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(Color(0xFF424242), RoundedCornerShape(4.dp))
+                        .clickable { zoomScale = 1.35f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("RESET", color = Color.White, fontSize = 8.sp)
+                }
+            }
+
+            // Row 2: Lighting Intensity Selector
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "💡 LIGHTS: ${(lightingIntensity * 100).toInt()}%",
+                    fontSize = 9.sp,
+                    color = Color.White,
+                    modifier = Modifier.width(85.dp)
+                )
+                
+                // Dim Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingIntensity == 0.8f) Color(0xFFE0A030) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingIntensity = 0.8f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("DIM", color = Color.White, fontSize = 8.sp)
+                }
+                
+                // Normal Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingIntensity == 1.35f) Color(0xFFE0A030) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingIntensity = 1.35f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("NORMAL", color = Color.White, fontSize = 8.sp)
+                }
+
+                // Bright Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingIntensity == 1.9f) Color(0xFFE0A030) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingIntensity = 1.9f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("BRIGHT", color = Color.White, fontSize = 8.sp)
+                }
+
+                // Max Preset Button
+                Box(
+                    modifier = Modifier
+                        .height(24.dp)
+                        .padding(horizontal = 6.dp)
+                        .background(if (lightingIntensity == 2.6f) Color(0xFFE0A030) else Color(0xFF2E2E2E), RoundedCornerShape(4.dp))
+                        .clickable { lightingIntensity = 2.6f },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("MAX", color = Color.White, fontSize = 8.sp)
+                }
+            }
         }
     }
 }
