@@ -62,6 +62,7 @@ import com.example.cameraxapp.core.framework.impl.FilesApplet
 import com.example.cameraxapp.core.framework.impl.DebugApplet
 import com.example.cameraxapp.core.framework.impl.BlackjackApplet
 import com.example.cameraxapp.core.framework.impl.RoguelikeApplet
+import com.example.cameraxapp.core.framework.impl.ThreeDApplet
 
 class MainActivity : ComponentActivity() {
 
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
         AppletRegistry.register(DebugApplet())
         AppletRegistry.register(BlackjackApplet())
         AppletRegistry.register(RoguelikeApplet())
+        AppletRegistry.register(ThreeDApplet())
 
         updatePermissionState()
         
@@ -158,7 +160,8 @@ class MainActivity : ComponentActivity() {
                         AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
                         AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
                         AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
-                        AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving")
+                        AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
+                        AppletInfo("3D Workspace", "threed_sandbox", Icons.Default.Build, "Interactive 3D structural, molecular, topographic and mechanical engineering workbench")
                     )
                 }
 
@@ -413,6 +416,7 @@ fun getAppletColor(route: String): androidx.compose.ui.graphics.Color {
         "browser" -> androidx.compose.ui.graphics.Color(0xFFFFE082)     // Soft Gold/Yellow
         "blackjack" -> androidx.compose.ui.graphics.Color(0xFF80C080)   // Casino Light Felt Green
         "roguecompose" -> androidx.compose.ui.graphics.Color(0xFFCE93D8) // Light Purple / Amethyst
+        "threed_sandbox" -> androidx.compose.ui.graphics.Color(0xFF80DEEA) // Light Cyan 3D Accent
         "debug" -> androidx.compose.ui.graphics.Color(0xFFB0BEC5)       // System Gray
         else -> androidx.compose.ui.graphics.Color(0xFFCFD8DC)          // Fallback
     }
@@ -540,7 +544,8 @@ fun HubScreen(
             AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
             AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
             AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
-            AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving")
+            AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
+            AppletInfo("3D Workspace", "threed_sandbox", Icons.Default.Build, "Interactive 3D structural, molecular, topographic and mechanical engineering workbench")
         )
     }
 

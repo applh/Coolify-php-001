@@ -420,5 +420,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary conditional check inside the mobile header to show extra descriptive tooltip badges when in landscape mode, allowing players to view standard Vegas rules information in the header without collapsing existing items.
 - **Complexity**: Part 3
 
+### 67. Sovereign 3D Compose Engine: Mathematical Projections, Depth Sorting, and Simulation Workspaces (20h)
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/threed/ThreeDWorkspaceScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/ThreeDApplet.kt`, `repo-android/docs/three-d-workspace-and-proposals.md`
+- **Goal**: Understand how to develop a standalone 3D graphics rendering pipeline in pure Kotlin/Jetpack Compose, leveraging standard 3-axis rotation matrices, perspective camera projection formulas, Backface Culling normal vectors, and Painter's Algorithm sorting to resolve overlapping surfaces without hardware depth buffs or heavy external rendering frameworks.
+- **Exercise**: Implement an additional chemical compound (e.g., Ethanol $C_2H_5OH$) in the Molecular generator, configuring correct atomic coordinates (Carbons in dark grey, Oxygens in red, Hydrogens in light grey), and adding appropriate connecting covalent bonds. Verify that rotating the molecule orbits all base nodes in perfect perspective alignment.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
