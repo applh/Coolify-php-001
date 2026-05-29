@@ -343,6 +343,26 @@ fun DungeonCanvas3D(
                             strokeWidth = item.strokeWidth
                         )
                     }
+                    is RenderItem3D.Sphere -> {
+                        val pCenter = projectPoint(item.center)
+                        val rotZ = getRotatedZDeep(item.center)
+                        val denom = rotZ + cameraZ
+                        val radiusRatio = if (denom > 0f) dFactor / denom else 1f
+                        val screenRadius = item.radius * zoomScale * radiusRatio
+                        if (screenRadius > 0.5f) {
+                            drawCircle(
+                                color = item.color,
+                                center = pCenter,
+                                radius = screenRadius
+                            )
+                            drawCircle(
+                                color = Color.Black.copy(alpha = 0.35f),
+                                center = pCenter,
+                                radius = screenRadius,
+                                style = Stroke(width = 0.8f)
+                            )
+                        }
+                    }
                     is RenderItem3D.TextLabel -> {
                         val pLabel = projectPoint(item.position)
                         drawIntoCanvas { canvas ->
@@ -356,6 +376,7 @@ fun DungeonCanvas3D(
                             )
                         }
                     }
+                    else -> {}
                 }
             }
 
