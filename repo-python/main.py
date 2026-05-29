@@ -130,6 +130,30 @@ async def admin_delete_form(request: Request, valid: bool = Depends(verify_admin
 async def admin_get_submissions(site: str, form_id: str, request: Request, valid: bool = Depends(verify_admin)):
     return {"status": "success", "submissions": []}
 
+@app.get("/admin/api/ai/tasks")
+async def admin_get_tasks(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success", "tasks": []}
+
+@app.post("/admin/api/ai/tasks/add")
+async def admin_add_task(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.get("/admin/api/ai/heartbeat")
+async def admin_ai_heartbeat(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.post("/admin/api/sync")
+async def admin_sync(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.get("/admin/api/sites/{site}/download")
+async def admin_download_site(site: str, request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.post("/admin/api/sites/{site}/upload")
+async def admin_upload_site(site: str, request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
 @app.get("/admin/api/sites")
 async def admin_get_sites(request: Request, valid: bool = Depends(verify_admin)):
     return {"status": "success", "sites": [s.get("domain") for s in load_sites()]}

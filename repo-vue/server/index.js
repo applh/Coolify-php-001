@@ -107,6 +107,30 @@ app.get('/admin/api/forms/submissions', verifyAdmin, (req, res) => {
     res.json({ status: 'success', submissions: [] });
 });
 
+app.get('/admin/api/ai/tasks', verifyAdmin, (req, res) => {
+    res.json({ status: 'success', tasks: [] });
+});
+
+app.post('/admin/api/ai/tasks/add', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.get('/admin/api/ai/heartbeat', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.post('/admin/api/sync', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.get('/admin/api/sites/:site/download', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.post('/admin/api/sites/:site/upload', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../admin.html'));
 });

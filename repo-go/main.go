@@ -134,6 +134,36 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success", "submissions": []interface{}{}})
 	})
 
+	http.HandleFunc("/admin/api/ai/tasks", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success", "tasks": []interface{}{}})
+	})
+
+	http.HandleFunc("/admin/api/ai/tasks/add", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
+	http.HandleFunc("/admin/api/ai/heartbeat", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
+	http.HandleFunc("/admin/api/sync", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
+	http.HandleFunc("/admin/api/sites/", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
 	http.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "admin.html")
 	})
