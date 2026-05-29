@@ -43,7 +43,10 @@ app.use((req, res, next) => {
                 fs.accessSync(contentPath, fs.constants.W_OK);
                 isWritable = true;
             }
-        } catch (e) {}
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
+            // ignore
+        }
 
         return res.json({
             content_path: contentPath,
@@ -62,7 +65,8 @@ function loadSites() {
     try {
         const data = fs.readFileSync(path.join(__dirname, '../src/sites.json'), 'utf8');
         return JSON.parse(data);
-    } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_e) {
         return [];
     }
 }
