@@ -38,7 +38,7 @@ fun DungeonCanvas3D(
     modifier: Modifier = Modifier
 ) {
     var yawAngle by remember { mutableStateOf(-0.65f) }
-    var pitchAngle by remember { mutableStateOf(-0.75f) }
+    var pitchAngle by remember { mutableStateOf(0.75f) }
     var zoomScale by remember { mutableStateOf(1.6f) }
     var lightingStrength by remember { mutableStateOf(1.5f) }
 
@@ -55,8 +55,8 @@ fun DungeonCanvas3D(
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
                     yawAngle = (yawAngle + pan.x * 0.007f)
-                    pitchAngle = (pitchAngle - pan.y * 0.007f).coerceIn(-1.45f, -0.35f)
-                    zoomScale = (zoomScale * zoom).coerceIn(0.4f, 3.0f)
+                    pitchAngle = (pitchAngle + pan.y * 0.007f).coerceIn(0.15f, 1.48f)
+                    zoomScale = (zoomScale * zoom).coerceIn(0.15f, 10.0f)
                 }
             }
     ) {
@@ -355,7 +355,7 @@ fun DungeonCanvas3D(
                             modifier = Modifier
                                 .size(22.dp)
                                 .background(Color(0xFF222222), RoundedCornerShape(4.dp))
-                                .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.4f, 3.0f) },
+                                .clickable { zoomScale = (zoomScale - 0.15f).coerceIn(0.15f, 10.0f) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text("-", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -364,7 +364,7 @@ fun DungeonCanvas3D(
                             modifier = Modifier
                                 .size(22.dp)
                                 .background(Color(0xFF222222), RoundedCornerShape(4.dp))
-                                .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.4f, 3.0f) },
+                                .clickable { zoomScale = (zoomScale + 0.15f).coerceIn(0.15f, 10.0f) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text("+", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)

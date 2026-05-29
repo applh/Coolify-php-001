@@ -456,5 +456,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a new customizable state inside the 3D Display Configuration dropdown panel (e.g., a "Camera Presets" dropdown containing Orthographic, Isometric, and Birdseye angles) and update the pitch/yaw rotation factors to snap the 3D viewport immediately to these angles when selected.
 - **Complexity**: Part 4
 
+### 73. 3D Camera Projection Alignment & Dynamic Zoom Range Control (12h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Understand the coordinate alignments of three-dimensional orthographic/isometric drawing planes in custom graphics rendering components. Learn how incorrect vertical camera rotation bounds can invert perspective matrices, leading to underground views, and how to calibrate the tactile gestural panning calculations to maintain a consistent high-altitude viewport angle. Master designing rich zoom ranges from zoomed-out isometric maps down to near close-up views.
+- **Exercise**: Implement a secondary toggle inside the display configuration panel that switches the manual zoom click increment from a constant `0.15f` step to a variable log-based proportional step relative to the current zoom factor, allowing smoother controls when zoomed in.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
