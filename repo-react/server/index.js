@@ -71,6 +71,46 @@ function loadSites() {
     }
 }
 
+// Passkey verification middleware
+const verifyAdmin = (req, res, next) => {
+    const expectedPasskey = process.env.APP_ADMIN_PASSKEY || process.env.app_admin_passkey;
+    if (!expectedPasskey) return res.status(403).json({ error: 'No passkey configured' });
+    
+    const passkey = req.headers['x-admin-passkey'] || req.cookies?.admin_passkey;
+    if (passkey !== expectedPasskey) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    next();
+};
+
+// Mount shared PHP admin JS components so Vue UI works out-of-the-box
+app.use('/js', express.static(path.join(__dirname, '../../repo-php/public/js')));
+
+app.get('/admin/api/sites', verifyAdmin, (req, res) => {
+    const sites = loadSites().map(s => s.domain);
+    res.json({ status: 'success', sites });
+});
+
+app.get('/admin/api/forms', verifyAdmin, (req, res) => {
+    res.json({ status: 'success', forms: [] });
+});
+
+app.post('/admin/api/forms/save', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.post('/admin/api/forms/delete', verifyAdmin, (req, res) => {
+    res.json({ status: 'success' });
+});
+
+app.get('/admin/api/forms/submissions', verifyAdmin, (req, res) => {
+    res.json({ status: 'success', submissions: [] });
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../admin.html'));
+});
+
 // Serve Vite build outputs securely, routing __site/domains if needed
 app.use(express.static(path.join(__dirname, '../dist')));
 

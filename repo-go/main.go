@@ -58,11 +58,85 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+func getAdminPasskey() string {
+	passkey := os.Getenv("APP_ADMIN_PASSKEY")
+	if passkey == "" {
+		passkey = os.Getenv("app_admin_passkey")
+	}
+	return passkey
+}
+
+func verifyAdmin(r *http.Request) bool {
+	expectedPasskey := getAdminPasskey()
+	if expectedPasskey == "" {
+		return false
+	}
+
+	passkey := r.Header.Get("X-Admin-Passkey")
+	if passkey == "" {
+		passkey = r.Header.Get("x-admin-passkey")
+	}
+	if passkey == "" {
+		cookie, err := r.Cookie("admin_passkey")
+		if err == nil {
+			passkey = cookie.Value
+		}
+	}
+	return passkey == expectedPasskey
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("../repo-php/public/js"))))
+
+	http.HandleFunc("/admin/api/sites", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized"})
+			return
+		}
+		
+		sites := getSitesFromContent("content")
+		data := map[string]interface{}{
+			"status": "success",
+			"sites":  sites,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
+	})
+
+	http.HandleFunc("/admin/api/forms", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success", "forms": []interface{}{}})
+	})
+
+	http.HandleFunc("/admin/api/forms/save", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
+	http.HandleFunc("/admin/api/forms/delete", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success"})
+	})
+
+	http.HandleFunc("/admin/api/forms/submissions", func(w http.ResponseWriter, r *http.Request) {
+		if !verifyAdmin(r) { w.WriteHeader(http.StatusForbidden); return }
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "success", "submissions": []interface{}{}})
+	})
+
+	http.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "admin.html")
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("cms_debug") == "true" {

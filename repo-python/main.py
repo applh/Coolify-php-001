@@ -1,14 +1,31 @@
 import json
 import os
 import platform
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
+
+# Mount shared PHP admin JS components so Vue UI works out-of-the-box
+app.mount("/js", StaticFiles(directory=os.path.join(os.path.dirname(__file__), '../repo-php/public/js')), name="js")
+
+def get_admin_passkey():
+    return os.environ.get('APP_ADMIN_PASSKEY') or os.environ.get('app_admin_passkey')
+
+def verify_admin(request: Request):
+    expected_passkey = get_admin_passkey()
+    if not expected_passkey:
+        raise HTTPException(status_code=403, detail="No passkey configured")
+        
+    passkey = request.headers.get("x-admin-passkey") or request.cookies.get("admin_passkey")
+    if passkey != expected_passkey:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    return True
 
 def get_sites_from_content(content_path):
     sites = []
@@ -88,6 +105,34 @@ async def read_site(request: Request):
 @app.get("/api/sites")
 async def get_sites():
     return load_sites()
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_app(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={}
+    )
+
+@app.get("/admin/api/forms")
+async def admin_get_forms(site: str, request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success", "forms": []}
+
+@app.post("/admin/api/forms/save")
+async def admin_save_form(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.post("/admin/api/forms/delete")
+async def admin_delete_form(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success"}
+
+@app.get("/admin/api/forms/submissions")
+async def admin_get_submissions(site: str, form_id: str, request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success", "submissions": []}
+
+@app.get("/admin/api/sites")
+async def admin_get_sites(request: Request, valid: bool = Depends(verify_admin)):
+    return {"status": "success", "sites": [s.get("domain") for s in load_sites()]}
 
 if __name__ == "__main__":
     import uvicorn
