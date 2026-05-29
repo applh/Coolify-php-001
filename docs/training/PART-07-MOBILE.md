@@ -426,5 +426,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an additional chemical compound (e.g., Ethanol $C_2H_5OH$) in the Molecular generator, configuring correct atomic coordinates (Carbons in dark grey, Oxygens in red, Hydrogens in light grey), and adding appropriate connecting covalent bonds. Verify that rotating the molecule orbits all base nodes in perfect perspective alignment.
 - **Complexity**: Part 4
 
+### 68. Responsive 3D Rubik's Cube Puzzle Sandbox & Matrix State Snapping (25h)
+- **Reference**: `repo-android/docs/rubiks-cube-applet-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/threed/ThreeDWorkspaceScreen.kt`
+- **Goal**: Master the construction of high-precision multi-axial coordinate rotators and state snapping algorithms in a purely custom-projected 3D view. Understand how to design a smartphone-responsive UX that adapts canvas aspect-ratios, partitions controller sections dynamically based on Portrait versus Landscape screens, and handles gestural swipe vectors.
+- **Exercise**: Implement a validation method inside the 3D Rubik's puzzle structure that checks if the current board state is fully solved (i.e. verifying that all active faces on each of the six outer planes share identical, homogeneous color values). Trigger a custom congratulatory particle effect overlay when solved.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
