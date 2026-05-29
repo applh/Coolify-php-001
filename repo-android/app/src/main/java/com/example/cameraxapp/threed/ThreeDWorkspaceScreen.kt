@@ -936,7 +936,7 @@ fun ThreeDWorkspaceScreen(
                     }
                 }
             }
-        } }
+        }
     }
 }
 
