@@ -438,5 +438,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an ambient intensity slider in the 3D scene options panel, and configure it to dynamically scale the background glow value ($I_{ambient}$) from 0.0 to 1.0. Verify that setting the intensity to 0.0 results in severe, high-contrast shadows on the unlit sides of rotated 3D geometries, while increasing it softens the contrast.
 - **Complexity**: Part 4
 
+### 70. Sovereign 3D Game Upgrades: Spatial Rotations & Parabolic Physics (20h) 🍓 NEW
+- **Reference**: `repo-android/docs/rogue-blackjack-3d-upgrade-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Understand how to bridge 2D flat matrices (like turn-based RPG grids and card tables) into a three-dimensional coordinate engine. Master designing orthographic/elevated camera projection transformations, distance-based light attenuation to simulate 3D fog of war, physical parabolic dealing trajectories using 3D Bezier equations, and vertical Z-axis rendering for layered cylinders (stacked chips).
+- **Exercise**: Author a prototype math model that calculates the standard X, Y, Z world space coordinate offsets for an item dealt to Player Hand #4 in 3D Blackjack, and implement the corresponding unit tests to verify the card starts in the shoe at (200, -180, -120) and finishes at your custom calculated target coordinates when progress reaches 1.0f.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
