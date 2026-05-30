@@ -480,5 +480,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary toggle button inside the left-bottom other-buttons panel that rotates the D-pad orientation clockwise by 45 degrees, updating coordinate offsets dynamically.
 - **Complexity**: Part 4
 
+### 77. MORIA Rogue UX optimization: Logs-Stats Swap and Organized Bag Categorization (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master mobile HUD readability and organized collections representation in Jetpack Compose modal overlays. Understand the user friction of scanning mixed arrays, and learn how to sort and partition item lists into distinct, high-contrast visual categories (Weapons, Armors, Consumables) sorted descending by their structural value bonuses to support rapid decision-making. Learn how to place vital status metrics right next to the active action region (below bottom-scrolling message logs) to minimize scanning distances.
+- **Exercise**: Implement a client-side search query input bar at the top of the `InventoryDrawerModal` that dynamically filters the item list by name as characters type, maintaining matching sorting-by-bonus priorities in real-time.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

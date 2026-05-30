@@ -335,11 +335,13 @@ fun HudPanel(
             .padding(4.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Stats section at the top of HUD Panel
+        // Combat Logs at the top, expanding to fill available space
+        HudLogsCard(logs = logs, modifier = Modifier.weight(1f).padding(bottom = 4.dp))
+
+        // Stats section positioned directly under the logs card (and above controls)
         HudStatsCard(char = char)
 
-        // Combat Logs in the center of HUD Panel (expanding to fill space)
-        HudLogsCard(logs = logs, modifier = Modifier.weight(1f).padding(vertical = 4.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Controller row at the bottom
         ControlPanel(
@@ -925,57 +927,114 @@ fun InventoryDrawerModal(
                         Text("Your inventory backpack is empty.", color = Color.Gray, fontSize = 12.sp)
                     }
                 } else {
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(items) { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .background(Color(0xFF1F1F1F), RoundedCornerShape(4.dp))
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    val title = if (item.isEquipped) "${item.name} [EQUIPPED]" else item.name
-                                    val titleColor = if (item.isEquipped) Color(0xFF81C784) else Color.White
-                                    Text(title, color = titleColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                    
-                                    val subText = when (item.type) {
-                                        "WEAPON" -> "Weapon rating: +${item.statMod} Attack strength"
-                                        "ARMOR" -> "Armor rating: +${item.statMod} Shield defense"
-                                        else -> "Restore potion: Recovers +${item.statMod} points"
-                                    }
-                                    Text(subText, color = Color.LightGray, fontSize = 11.sp)
-                                }
+                    val sortedWeapons = items.filter { it.type == "WEAPON" }.sortedByDescending { it.statMod }
+                    val sortedArmors = items.filter { it.type == "ARMOR" }.sortedByDescending { it.statMod }
+                    val sortedConsumables = items.filter { it.type == "CONSUMABLE" }.sortedByDescending { it.statMod }
 
-                                if (item.type == "CONSUMABLE") {
-                                    Button(
-                                        onClick = { onUse(item) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(30.dp)
-                                    ) {
-                                        Text("Use", color = Color.White, fontSize = 12.sp)
-                                    }
-                                } else {
-                                    Button(
-                                        onClick = { onEquip(item) },
-                                        enabled = !item.isEquipped,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF0D47A1),
-                                            disabledContainerColor = Color.Transparent
-                                        ),
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                        modifier = Modifier.height(30.dp)
-                                    ) {
-                                        Text(if (item.isEquipped) "Armed" else "Equip", color = Color.White, fontSize = 12.sp)
-                                    }
-                                }
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        if (sortedWeapons.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "🗡️ WEAPONS (Attack Bonus)",
+                                    color = Color(0xFFFFB74D),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                                )
+                            }
+                            items(sortedWeapons) { item ->
+                                InventoryItemRow(item, onEquip, onUse)
+                            }
+                        }
+                        if (sortedArmors.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "🛡️ ARMORS (Defense Bonus)",
+                                    color = Color(0xFF64B5F6),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                                )
+                            }
+                            items(sortedArmors) { item ->
+                                InventoryItemRow(item, onEquip, onUse)
+                            }
+                        }
+                        if (sortedConsumables.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "🧪 CONSUMABLES (Recovery)",
+                                    color = Color(0xFF81C784),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                                )
+                            }
+                            items(sortedConsumables) { item ->
+                                InventoryItemRow(item, onEquip, onUse)
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun InventoryItemRow(
+    item: InventoryItem,
+    onEquip: (InventoryItem) -> Unit,
+    onUse: (InventoryItem) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .background(Color(0xFF1F1F1F), RoundedCornerShape(4.dp))
+            .border(
+                width = if (item.isEquipped) 1.dp else 0.dp,
+                color = if (item.isEquipped) Color(0xFF81C784) else Color.Transparent,
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            val title = if (item.isEquipped) "${item.name} [EQUIPPED]" else item.name
+            val titleColor = if (item.isEquipped) Color(0xFF81C784) else Color.White
+            Text(title, color = titleColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            
+            val subText = when (item.type) {
+                "WEAPON" -> "Weapon rating: +${item.statMod} Attack strength"
+                "ARMOR" -> "Armor rating: +${item.statMod} Shield defense"
+                else -> "Restore potion: Recovers +${item.statMod} points"
+            }
+            Text(subText, color = Color.LightGray, fontSize = 11.sp)
+        }
+
+        if (item.type == "CONSUMABLE") {
+            Button(
+                onClick = { onUse(item) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B5E20)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                modifier = Modifier.height(30.dp)
+            ) {
+                Text("Use", color = Color.White, fontSize = 12.sp)
+            }
+        } else {
+            Button(
+                onClick = { onEquip(item) },
+                enabled = !item.isEquipped,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF0D47A1),
+                    disabledContainerColor = Color.Transparent
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                modifier = Modifier.height(30.dp)
+            ) {
+                Text(if (item.isEquipped) "Armed" else "Equip", color = if (item.isEquipped) Color(0xFF81C784) else Color.White, fontSize = 12.sp)
             }
         }
     }
