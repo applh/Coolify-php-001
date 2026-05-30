@@ -41,7 +41,7 @@ data class MonsterState(
 )
 
 data class InventoryItem(
-    val id: Int = 0,
+    val id: Int = (1..100000000).random(),
     val name: String,
     val type: String, // WEAPON, ARMOR, CONSUMABLE
     val statMod: Int = 0,
