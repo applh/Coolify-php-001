@@ -486,5 +486,17 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a client-side search query input bar at the top of the `InventoryDrawerModal` that dynamically filters the item list by name as characters type, maintaining matching sorting-by-bonus priorities in real-time.
 - **Complexity**: Part 3
 
+### 78. Interactive 3D World Globe Applet: Parametric Spheres & Dynamic Texture Selectors (20h) 🍓 NEW
+- **Reference**: `repo-android/docs/world-applet-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/world/`
+- **Goal**: Understand how to map, project, and rotate a 3D spherical point cloud using parametric equations in Jetpack Compose, and build an interactive file-picker to dynamically load local device images onto the 3D sphere as a BitmapShader texture.
+- **Exercise**: Implement a parametric grid density slider (e.g., latitude/longitude subdivision steps) and verify that lower density settings yield a lightweight polyhedral sphere while higher density settings yield high-precision smoothness.
+- **Complexity**: Part 5
+
+### 79. Interactive 3D World Globe Applet: Remote URL Texture Mapping and Quick Planet Presets (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldViewModel.kt`
+- **Goal**: Master remote resource retrieval, network-safety constraints, and background bitmap scaling operations in Android. Understand how to manage asynchronous URL text inputs, download images efficiently via HttpURLConnection inside Dispatchers.IO, dynamically downscale high-resolution planetary maps to optimize memory bandwidth, and build a quick-click preset deck that triggers immediate download and planetary mapping with a single touch.
+- **Exercise**: Create a custom URL testing field with real-time network reachability validation, and implement a fallback system that loads the default high-contrast "Cyber Grid" procedural custom texture if a remote texture download suffers an SSL handshake failure or a 404 response.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
