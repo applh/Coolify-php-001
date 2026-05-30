@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +101,7 @@ fun DrawScreen(
                     }
                     IconButton(onClick = { showLayersPanel = !showLayersPanel }) {
                         Icon(
-                            imageVector = if (showLayersPanel) Icons.Default.Check else Icons.Default.List,
+                            imageVector = if (showLayersPanel) Icons.Default.Check else Icons.AutoMirrored.Filled.List,
                             contentDescription = "Toggle Layers Stack Manager",
                             tint = if (showLayersPanel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
@@ -397,7 +398,7 @@ fun DrawScreen(
                             }
                         }
 
-                        Divider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                         // Scrollable list of active layers representing ordered stack indexes
                         LazyColumn(
