@@ -214,19 +214,6 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         _playerY.value = nextY
         audioEngine.playMove()
 
-        // Handle floor tile props
-        if (targetTile != null) {
-            when (targetTile.tileType) {
-                "CHEST" -> {
-                    openChest(nextX, nextY)
-                }
-                "STAIRS_DOWN" -> {
-                    advanceFloor(char)
-                    return
-                }
-            }
-        }
-
         recalculateFogOfWar(nextX, nextY)
         triggerMonsterTurns()
 
@@ -236,6 +223,56 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             turns = char.turns + 1
         )
         saveCurrentTurnState()
+    }
+
+    fun enableAction() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+
+        val currentTile = _tiles.value.find { it.x == _playerX.value && it.y == _playerY.value }
+        if (currentTile != null) {
+            when (currentTile.tileType) {
+                "STAIRS_DOWN" -> {
+                    advanceFloor(char)
+                    return
+                }
+                "CHEST" -> {
+                    openChest(_playerX.value, _playerY.value)
+                    triggerMonsterTurns()
+                    _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
+                    saveCurrentTurnState()
+                    return
+                }
+            }
+        }
+
+        // Default or wait action
+        addCombatLog("Nothing to interact with here. You wait a turn.")
+        triggerMonsterTurns()
+        _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
+        saveCurrentTurnState()
+    }
+
+    fun drinkHealthPotion() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+        val hpPotion = _inventory.value.find { it.name.contains("Health Potion") && it.type == "CONSUMABLE" }
+        if (hpPotion != null) {
+            useItem(hpPotion)
+        } else {
+            addCombatLog("No Health Potions available!")
+        }
+    }
+
+    fun drinkManaPotion() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+        val mpPotion = _inventory.value.find { it.name.contains("Mana Potion") && it.type == "CONSUMABLE" }
+        if (mpPotion != null) {
+            useItem(mpPotion)
+        } else {
+            addCombatLog("No Mana Potions available!")
+        }
     }
 
     fun useItem(item: InventoryItem) {

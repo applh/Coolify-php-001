@@ -528,5 +528,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement dynamic visual fade indicators on the `WorldControlPanel` scrollable container that show/hide a subtle chevron shadow at the bottom to notify users that additional configuration items are available to scroll down to.
 - **Complexity**: Part 4
 
+### 85. Moria Roguelike: Enable Interaction, Potion Quick-drinking, and 3x3 Shortcut Grid (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Understand how to decouple movement from action inside turn-based game loops on mobile devices, and master high-density handheld button layout grids built alongside custom Gamepad controllers in Jetpack Compose.
+- **Exercise**: Create an exercise where students add an interactive status banner that changes color or size based on whether they have a consumable potion available in their current inventory, and toggle its visibility in the 3x3 grid dynamically.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

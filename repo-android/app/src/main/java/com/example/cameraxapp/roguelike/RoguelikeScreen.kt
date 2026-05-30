@@ -162,6 +162,9 @@ fun RoguelikeScreen(
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
+                                        onEnable = { viewModel.enableAction() },
+                                        onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
+                                        onDrinkManaPotion = { viewModel.drinkManaPotion() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -208,6 +211,9 @@ fun RoguelikeScreen(
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
+                                        onEnable = { viewModel.enableAction() },
+                                        onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
+                                        onDrinkManaPotion = { viewModel.drinkManaPotion() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -327,6 +333,9 @@ fun HudPanel(
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
+    onEnable: () -> Unit,
+    onDrinkHealthPotion: () -> Unit,
+    onDrinkManaPotion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -351,7 +360,10 @@ fun HudPanel(
             onToggle3DMode = onToggle3DMode,
             onMove = onMove,
             onOpenInventory = onOpenInventory,
-            onCastSpell = onCastSpell
+            onCastSpell = onCastSpell,
+            onEnable = onEnable,
+            onDrinkHealthPotion = onDrinkHealthPotion,
+            onDrinkManaPotion = onDrinkManaPotion
         )
     }
 }
@@ -490,7 +502,10 @@ fun ControlPanel(
     onToggle3DMode: () -> Unit,
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
-    onCastSpell: () -> Unit
+    onCastSpell: () -> Unit,
+    onEnable: () -> Unit,
+    onDrinkHealthPotion: () -> Unit,
+    onDrinkManaPotion: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -499,7 +514,7 @@ fun ControlPanel(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Left Column: Other Buttons (Wait, Toggle mode)
+        // Left Column: Other Buttons (Enable, Toggle mode)
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.Start,
@@ -525,17 +540,17 @@ fun ControlPanel(
             }
 
             Button(
-                onClick = { onMove(0, 0) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF332314)),
+                onClick = onEnable,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A1E)),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .width(76.dp)
                     .height(36.dp)
-                    .border(0.6.dp, Color(0xFFE76F51).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                    .border(0.6.dp, Color(0xFF81C784).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
             ) {
                 Text(
-                    text = "⏳ Wait",
+                    text = "⚡ Enable",
                     fontSize = 10.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
@@ -544,83 +559,23 @@ fun ControlPanel(
             }
         }
 
-        // Center: Attack & Backpack buttons close
-        val spellLabel = when (char.heroClass) {
-            "Warrior" -> "Cleave"
-            "Mage" -> "Fireball"
-            else -> "Backstab"
-        }
-        val icon = when (char.heroClass) {
-            "Warrior" -> "🪓"
-            "Mage" -> "🔥"
-            else -> "🗡️"
-        }
-        val manaCost = when (char.heroClass) {
-            "Warrior" -> 6
-            "Mage" -> 15
-            else -> 10
-        }
-        val castable = char.currentMana >= manaCost
-        val consCount = inventory.count { it.type == "CONSUMABLE" }
-
+        // Right Column: Action Grid & DPad next to each other
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier.padding(bottom = 2.dp)
         ) {
-            // Backpack circular action button (Bag)
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .background(Color(0xFF15181C), RoundedCornerShape(27.dp))
-                    .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(27.dp))
-                    .clickable { onOpenInventory() },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🎒", fontSize = 16.sp)
-                    Text("BAG ($consCount)", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            }
+            GamepadActionGrid3x3(
+                char = char,
+                inventory = inventory,
+                onOpenInventory = onOpenInventory,
+                onCastSpell = onCastSpell,
+                onDrinkHealthPotion = onDrinkHealthPotion,
+                onDrinkManaPotion = onDrinkManaPotion
+            )
 
-            // Active Spell/Attack action button (Attack)
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(
-                        if (castable) Color(0xFF4A148C).copy(alpha = 0.85f) 
-                        else Color(0xFF212121).copy(alpha = 0.6f), 
-                        RoundedCornerShape(30.dp)
-                    )
-                    .border(
-                        width = 1.6.dp, 
-                        color = if (castable) Color(0xFFBA68C8) else Color(0xFF424242).copy(alpha = 0.5f), 
-                        shape = RoundedCornerShape(30.dp)
-                    )
-                    .clickable(enabled = castable) { onCastSpell() },
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = icon, fontSize = 20.sp)
-                    Text(
-                        text = spellLabel,
-                        fontSize = 8.sp,
-                        color = if (castable) Color.White else Color.Gray,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${manaCost}mp",
-                        fontSize = 7.5.sp,
-                        color = if (castable) Color(0xFFE1BEE7) else Color.Gray,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+            GamepadDPad(onMove = onMove, onEnable = onEnable)
         }
-
-        // Right side: GamepadDPad inside the bottom right corner
-        GamepadDPad(onMove = onMove)
     }
 }
 
@@ -815,7 +770,7 @@ fun FloatingActionsBelt(
 }
 
 @Composable
-fun TouchDPad(onMove: (Int, Int) -> Unit) {
+fun TouchDPad(onMove: (Int, Int) -> Unit, onEnable: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -832,7 +787,7 @@ fun TouchDPad(onMove: (Int, Int) -> Unit) {
             Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", tint = Color.LightGray)
         }
 
-        // Row 2: LEFT | WAIT | RIGHT
+        // Row 2: LEFT | ENABLE | RIGHT
         Row(
             modifier = Modifier
                 .padding(vertical = 4.dp),
@@ -848,15 +803,15 @@ fun TouchDPad(onMove: (Int, Int) -> Unit) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Move Left", tint = Color.LightGray)
             }
 
-            // WAIT turn option
+            // ENABLE turn option
             Box(
                 modifier = Modifier
                     .size(42.dp)
-                    .background(Color(0xFF2C2216), RoundedCornerShape(20))
-                    .clickable { onMove(0, 0) },
+                    .background(Color(0xFF1E3A1E), RoundedCornerShape(20))
+                    .clickable { onEnable() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("⏳", color = Color.White, fontSize = 14.sp)
+                Text("⚡", color = Color.White, fontSize = 14.sp)
             }
 
             IconButton(
@@ -1189,7 +1144,7 @@ fun ScoresView(
 }
 
 @Composable
-fun GamepadDPad(onMove: (Int, Int) -> Unit) {
+fun GamepadDPad(onMove: (Int, Int) -> Unit, onEnable: () -> Unit) {
     val ColorNorth = Color(0xFF3A86C8) // Sky Blue
     val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
     val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
@@ -1238,16 +1193,16 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit) {
                 }
             }
 
-            // WAIT turn option (Center resting)
+            // ENABLE interaction option (Center resting)
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .background(Color(0xFF221100).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
-                    .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(22.dp))
-                    .clickable { onMove(0, 0) },
+                    .background(Color(0xFF1E3A1E).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
+                    .border(1.dp, Color(0xFF81C784).copy(alpha = 0.4f), RoundedCornerShape(22.dp))
+                    .clickable { onEnable() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("⏳", color = Color.White, fontSize = 14.sp)
+                Text("⚡", color = Color.White, fontSize = 16.sp)
             }
 
             // RIGHT Button (East)
@@ -1280,6 +1235,206 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit) {
                 Text("S", color = ColorSouth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
                 Text("▼", color = ColorSouth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+fun GamepadActionGrid3x3(
+    char: CharacterState,
+    inventory: List<InventoryItem>,
+    onOpenInventory: () -> Unit,
+    onCastSpell: () -> Unit,
+    onDrinkHealthPotion: () -> Unit,
+    onDrinkManaPotion: () -> Unit
+) {
+    val hpCount = inventory.count { it.name.contains("Health Potion") && it.type == "CONSUMABLE" }
+    val hpAvailable = hpCount > 0
+
+    val mpCount = inventory.count { it.name.contains("Mana Potion") && it.type == "CONSUMABLE" }
+    val mpAvailable = mpCount > 0
+
+    val spellLabel = when (char.heroClass) {
+        "Warrior" -> "Cleave"
+        "Mage" -> "Fireball"
+        else -> "Backstab"
+    }
+    val icon = when (char.heroClass) {
+        "Warrior" -> "🪓"
+        "Mage" -> "🔥"
+        else -> "🗡️"
+    }
+    val manaCost = when (char.heroClass) {
+        "Warrior" -> 6
+        "Mage" -> 15
+        else -> 10
+    }
+    val castable = char.currentMana >= manaCost
+    val consCount = inventory.count { it.type == "CONSUMABLE" }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
+            .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+            .padding(8.dp)
+    ) {
+        // Row 1
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // HP Potion
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (hpAvailable) Color(0xFF2C1616).copy(alpha = 0.85f)
+                        else Color(0xFF141414).copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        2.dp,
+                        if (hpAvailable) Color(0xFFE57373) else Color(0xFF423333),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable(enabled = hpAvailable) { onDrinkHealthPotion() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text("❤️", fontSize = 11.sp)
+                    Text("HP ($hpCount)", color = if (hpAvailable) Color.White else Color.Gray, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Placeholder Center
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+            )
+
+            // MP Potion
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (mpAvailable) Color(0xFF112233).copy(alpha = 0.85f)
+                        else Color(0xFF141414).copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        2.dp,
+                        if (mpAvailable) Color(0xFF64B5F6) else Color(0xFF333E48),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable(enabled = mpAvailable) { onDrinkManaPotion() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text("💙", fontSize = 11.sp)
+                    Text("MP ($mpCount)", color = if (mpAvailable) Color.White else Color.Gray, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Row 2
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Placeholder Left
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+            )
+
+            // Special Attack (Spell)
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (castable) Color(0xFF4A148C).copy(alpha = 0.85f)
+                        else Color(0xFF141414).copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        2.dp,
+                        if (castable) Color(0xFFBA68C8) else Color(0xFF424242).copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable(enabled = castable) { onCastSpell() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text(text = icon, fontSize = 11.sp)
+                    Text(
+                        text = spellLabel,
+                        fontSize = 7.5.sp,
+                        color = if (castable) Color.White else Color.Gray,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${manaCost}mp",
+                        fontSize = 7.sp,
+                        color = if (castable) Color(0xFFE1BEE7) else Color.Gray,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Placeholder Right
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Row 3
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Placeholder Left
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+            )
+
+            // Bag
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF15181C), RoundedCornerShape(10.dp))
+                    .border(2.dp, Color(0xFFFFD700).copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                    .clickable { onOpenInventory() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text("🎒", fontSize = 11.sp)
+                    Text("BAG ($consCount)", fontSize = 7.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Placeholder Right
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
+            )
         }
     }
 }
