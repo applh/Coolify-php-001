@@ -57,7 +57,7 @@ fun RoguelikeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🗡️ RogueCompose RPG", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold) },
+                title = { Text("🗡️ MORIA", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -111,65 +111,107 @@ fun RoguelikeScreen(
                 }
                 GameStatus.EXPLORING, GameStatus.INVENTORY_MODAL -> {
                     charState?.let { char ->
-                        Column(
+                        BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 8.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
+                                .padding(4.dp)
                         ) {
-                            // 1. Playable Game Viewport (with overlays, no square aspect-ratio locking)
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                                    .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
-                                    .background(Color.Black)
-                            ) {
-                                if (is3DMode) {
-                                    DungeonCanvas3D(
-                                        tiles = tiles,
-                                        monsters = monsters,
-                                        pX = playerX,
-                                        pY = playerY,
-                                        heroClass = char.heroClass,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    DungeonCanvas(
-                                        tiles = tiles,
-                                        monsters = monsters,
-                                        pX = playerX,
-                                        pY = playerY,
-                                        heroClass = char.heroClass,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
+                            val isLandscape = maxWidth > maxHeight
+                            val vmin = minOf(maxWidth, maxHeight)
 
-                                // Interactive mobile console overlays
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomStart)
-                                        .padding(10.dp)
+                            if (isLandscape) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    GamepadDPad(onMove = { dx, dy -> viewModel.movePlayer(dx, dy) })
-                                }
+                                    // 3D/2D Viewport: square of vmin size, left of screen
+                                    Box(
+                                        modifier = Modifier
+                                            .size(vmin)
+                                            .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
+                                            .background(Color.Black)
+                                    ) {
+                                        if (is3DMode) {
+                                            DungeonCanvas3D(
+                                                tiles = tiles,
+                                                monsters = monsters,
+                                                pX = playerX,
+                                                pY = playerY,
+                                                heroClass = char.heroClass,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            DungeonCanvas(
+                                                tiles = tiles,
+                                                monsters = monsters,
+                                                pX = playerX,
+                                                pY = playerY,
+                                                heroClass = char.heroClass,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
 
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .padding(10.dp)
-                                ) {
-                                    GamepadActions(
+                                    // Remaining space: HUD Panel
+                                    HudPanel(
                                         char = char,
+                                        logs = logs,
                                         inventory = inventory,
+                                        is3DMode = is3DMode,
+                                        onToggle3DMode = { is3DMode = !is3DMode },
+                                        onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
-                                        onCastSpell = { viewModel.castClassSpell() }
+                                        onCastSpell = { viewModel.castClassSpell() },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            } else {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // 3D/2D Viewport: square of vmin size, top of screen
+                                    Box(
+                                        modifier = Modifier
+                                            .size(vmin)
+                                            .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
+                                            .background(Color.Black)
+                                    ) {
+                                        if (is3DMode) {
+                                            DungeonCanvas3D(
+                                                tiles = tiles,
+                                                monsters = monsters,
+                                                pX = playerX,
+                                                pY = playerY,
+                                                heroClass = char.heroClass,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            DungeonCanvas(
+                                                tiles = tiles,
+                                                monsters = monsters,
+                                                pX = playerX,
+                                                pY = playerY,
+                                                heroClass = char.heroClass,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
+
+                                    // Remaining space: HUD Panel
+                                    HudPanel(
+                                        char = char,
+                                        logs = logs,
+                                        inventory = inventory,
+                                        is3DMode = is3DMode,
+                                        onToggle3DMode = { is3DMode = !is3DMode },
+                                        onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
+                                        onOpenInventory = { viewModel.openInventory() },
+                                        onCastSpell = { viewModel.castClassSpell() },
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
-
-                            // 2. Unified Stats & Combat Logger Console (Bottom Bar)
-                            MergedBottomBar(char = char, logs = logs)
                         }
 
                         // Overlay drawer modal for inventory bag management
@@ -276,16 +318,51 @@ fun CharacterSelectionView(onSelectClass: (String) -> Unit) {
 }
 
 @Composable
-fun MergedBottomBar(char: CharacterState, logs: List<String>) {
+fun HudPanel(
+    char: CharacterState,
+    logs: List<String>,
+    inventory: List<InventoryItem>,
+    is3DMode: Boolean,
+    onToggle3DMode: () -> Unit,
+    onMove: (Int, Int) -> Unit,
+    onOpenInventory: () -> Unit,
+    onCastSpell: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(4.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        // Stats section at the top of HUD Panel
+        HudStatsCard(char = char)
+
+        // Combat Logs in the center of HUD Panel (expanding to fill space)
+        HudLogsCard(logs = logs, modifier = Modifier.weight(1f).padding(vertical = 4.dp))
+
+        // Controller row at the bottom
+        ControlPanel(
+            char = char,
+            inventory = inventory,
+            is3DMode = is3DMode,
+            onToggle3DMode = onToggle3DMode,
+            onMove = onMove,
+            onOpenInventory = onOpenInventory,
+            onCastSpell = onCastSpell
+        )
+    }
+}
+
+@Composable
+fun HudStatsCard(char: CharacterState) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F0F)),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
             .border(0.6.dp, Color(0xFF332A20), RoundedCornerShape(6.dp))
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            // General Info row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -294,19 +371,19 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
                 Text(
                     text = "${char.heroClass} [Lv ${char.level}]",
                     color = Color(0xFFFFD700),
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Floor ${char.floor}/10",
                     color = Color(0xFFE57373),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "💰 ${char.gold}g",
                     color = Color(0xFFFFEE58),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -316,7 +393,7 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
             // HP Bar
             val hpRatio = char.currentHp.toFloat() / char.maxHp
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("HP: ", color = Color.Gray, fontSize = 11.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(36.dp))
+                Text("HP", color = Color.Gray, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(32.dp))
                 LinearProgressIndicator(
                     progress = { hpRatio.coerceIn(0f, 1f) },
                     color = Color(0xFFE57373),
@@ -325,7 +402,7 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
                         .weight(1f)
                         .height(6.dp)
                 )
-                Text(" ${char.currentHp}/${char.maxHp}", color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Text(" ${char.currentHp}/${char.maxHp}", color = Color.White, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
             }
 
             Spacer(Modifier.height(2.dp))
@@ -333,7 +410,7 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
             // Mana Bar
             val mpRatio = if (char.maxMana == 0) 0f else char.currentMana.toFloat() / char.maxMana
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("MANA: ", color = Color.Gray, fontSize = 11.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(36.dp))
+                Text("MANA", color = Color.Gray, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(32.dp))
                 LinearProgressIndicator(
                     progress = { mpRatio.coerceIn(0f, 1f) },
                     color = Color(0xFF64B5F6),
@@ -342,7 +419,7 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
                         .weight(1f)
                         .height(6.dp)
                 )
-                Text(" ${char.currentMana}/${char.maxMana}", color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Text(" ${char.currentMana}/${char.maxMana}", color = Color.White, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
             }
 
             Spacer(Modifier.height(2.dp))
@@ -350,7 +427,7 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
             // EXP Bar
             val expRatio = char.exp.toFloat() / (char.level * 100)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("EXP: ", color = Color.Gray, fontSize = 11.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(36.dp))
+                Text("EXP", color = Color.Gray, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(32.dp))
                 LinearProgressIndicator(
                     progress = { expRatio.coerceIn(0f, 1f) },
                     color = Color(0xFF81C784),
@@ -359,43 +436,189 @@ fun MergedBottomBar(char: CharacterState, logs: List<String>) {
                         .weight(1f)
                         .height(4.dp)
                 )
-                Text(" ${char.exp}/${char.level * 100}", color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Text(" ${char.exp}/${char.level * 100}", color = Color.White, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
             }
+        }
+    }
+}
 
-            Spacer(Modifier.height(6.dp))
-            // Divider
-            Spacer(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF2E251E)))
-            Spacer(Modifier.height(4.dp))
-
-            // Combat logger console embedded
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
+@Composable
+fun HudLogsCard(logs: List<String>, modifier: Modifier = Modifier) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0A0A0A)),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(0.6.dp, Color(0xFF222222), RoundedCornerShape(6.dp))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp)
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                reverseLayout = true
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    reverseLayout = true
-                ) {
-                    items(logs.reversed()) { log ->
-                        val color = when {
-                            log.contains("LEVEL UP") -> Color(0xFF81C784)
-                            log.contains("VICTORY") -> Color(0xFFFFD700)
-                            log.contains("Defeat") || log.contains("Game Over") || log.contains("strikes you") -> Color(0xFFE57373)
-                            log.contains("treasure chest") || log.contains("gold") -> Color(0xFFFFEE58)
-                            else -> Color.LightGray
-                        }
-                        Text(
-                            text = "> $log",
-                            color = color,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
-                            modifier = Modifier.padding(bottom = 2.dp)
-                        )
+                items(logs.reversed()) { log ->
+                    val color = when {
+                        log.contains("LEVEL UP") -> Color(0xFF81C784)
+                        log.contains("VICTORY") -> Color(0xFFFFD700)
+                        log.contains("Defeat") || log.contains("Game Over") || log.contains("strikes you") -> Color(0xFFE57373)
+                        log.contains("treasure chest") || log.contains("gold") -> Color(0xFFFFEE58)
+                        else -> Color.LightGray
                     }
+                    Text(
+                        text = "> $log",
+                        color = color,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(bottom = 1.dp)
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ControlPanel(
+    char: CharacterState,
+    inventory: List<InventoryItem>,
+    is3DMode: Boolean,
+    onToggle3DMode: () -> Unit,
+    onMove: (Int, Int) -> Unit,
+    onOpenInventory: () -> Unit,
+    onCastSpell: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        // Left Column: Other Buttons (Wait, Toggle mode)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.padding(bottom = 2.dp)
+        ) {
+            Button(
+                onClick = onToggle3DMode,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF212529)),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .width(76.dp)
+                    .height(36.dp)
+                    .border(0.6.dp, Color(0xFFFFD700).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = if (is3DMode) "2D Retro" else "3D Cube",
+                    fontSize = 10.sp,
+                    color = Color(0xFFFFD700),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Button(
+                onClick = { onMove(0, 0) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF332314)),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .width(76.dp)
+                    .height(36.dp)
+                    .border(0.6.dp, Color(0xFFE76F51).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = "⏳ Wait",
+                    fontSize = 10.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // Center: Attack & Backpack buttons close
+        val spellLabel = when (char.heroClass) {
+            "Warrior" -> "Cleave"
+            "Mage" -> "Fireball"
+            else -> "Backstab"
+        }
+        val icon = when (char.heroClass) {
+            "Warrior" -> "🪓"
+            "Mage" -> "🔥"
+            else -> "🗡️"
+        }
+        val manaCost = when (char.heroClass) {
+            "Warrior" -> 6
+            "Mage" -> 15
+            else -> 10
+        }
+        val castable = char.currentMana >= manaCost
+        val consCount = inventory.count { it.type == "CONSUMABLE" }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier.padding(bottom = 2.dp)
+        ) {
+            // Backpack circular action button (Bag)
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .background(Color(0xFF15181C), RoundedCornerShape(27.dp))
+                    .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(27.dp))
+                    .clickable { onOpenInventory() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🎒", fontSize = 16.sp)
+                    Text("BAG ($consCount)", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Active Spell/Attack action button (Attack)
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(
+                        if (castable) Color(0xFF4A148C).copy(alpha = 0.85f) 
+                        else Color(0xFF212121).copy(alpha = 0.6f), 
+                        RoundedCornerShape(30.dp)
+                    )
+                    .border(
+                        width = 1.6.dp, 
+                        color = if (castable) Color(0xFFBA68C8) else Color(0xFF424242).copy(alpha = 0.5f), 
+                        shape = RoundedCornerShape(30.dp)
+                    )
+                    .clickable(enabled = castable) { onCastSpell() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = icon, fontSize = 20.sp)
+                    Text(
+                        text = spellLabel,
+                        fontSize = 8.sp,
+                        color = if (castable) Color.White else Color.Gray,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${manaCost}mp",
+                        fontSize = 7.5.sp,
+                        color = if (castable) Color(0xFFE1BEE7) else Color.Gray,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // Right side: GamepadDPad inside the bottom right corner
+        GamepadDPad(onMove = onMove)
     }
 }
 

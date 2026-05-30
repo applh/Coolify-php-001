@@ -160,7 +160,7 @@ class MainActivity : ComponentActivity() {
                         AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
                         AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
                         AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
-                        AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
+                        AppletInfo("MORIA", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
                         AppletInfo("3D Workspace", "threed_sandbox", Icons.Default.Build, "Interactive 3D structural, molecular, topographic and mechanical engineering workbench")
                     )
                 }

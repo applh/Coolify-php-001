@@ -474,5 +474,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom verification routine that ensures gamepad click directions trigger movement offsets matching on-screen interactive indicators precisely.
 - **Complexity**: Part 4
 
+### 76. MORIA Layout: Adaptive Screen-Fitting Dual Layout & Control Clustering (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master implementing highly responsive dual-aspect dynamic layouts (using `BoxWithConstraints` to compute `vmin` viewport bounding boxes) that reorganize layouts based on screen rotation. Learn how to construct a side-by-side landscape setup (split-screen) and a top-to-bottom portrait layout. Acquire experience grouping action button clusters (Attack/Spell & Bag close together) and positioning directional controllers (D-pad right-bottom) without viewport overlaps.
+- **Exercise**: Implement a secondary toggle button inside the left-bottom other-buttons panel that rotates the D-pad orientation clockwise by 45 degrees, updating coordinate offsets dynamically.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
