@@ -522,5 +522,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary toggle inside the advanced settings modal to change the polar lines thickness from `3f` to a sliding range value (1f..8f), and verify that drawing updates reactive values instantaneously.
 - **Complexity**: Part 4
 
+### 84. Adaptive Layouts & Non-Nested Scroll Containers in Jetpack Compose (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`
+- **Goal**: Master the design of adaptive, responsive mobile/tablet layouts in Jetpack Compose (`isMultiSplit` Row vs Compact Column). Understand the constraints of nesting vertical scrolls in Compose, and learn how to safely delegate `Modifier.verticalScroll` parameter-passing to let parent containers control scrollability of nested columns dynamically without infinite-height exceptions.
+- **Exercise**: Implement dynamic visual fade indicators on the `WorldControlPanel` scrollable container that show/hide a subtle chevron shadow at the bottom to notify users that additional configuration items are available to scroll down to.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

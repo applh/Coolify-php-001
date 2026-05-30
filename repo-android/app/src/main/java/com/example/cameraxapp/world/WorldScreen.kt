@@ -448,7 +448,8 @@ fun WorldScreen(
                         onSelectTexture = { viewModel.selectTexture(it) },
                         onLaunchPicker = { photoPickerLauncher.launch("image/*") },
                         onUrlValueChange = { viewModel.urlInputValue.value = it },
-                        onDownloadClick = { viewModel.downloadTextureFromUrl(it) }
+                        onDownloadClick = { viewModel.downloadTextureFromUrl(it) },
+                        modifier = Modifier.verticalScroll(rememberScrollState())
                     )
                 }
             }
@@ -806,7 +807,8 @@ fun WorldControlPanel(
     onSelectTexture: (Int) -> Unit,
     onLaunchPicker: () -> Unit,
     onUrlValueChange: (String) -> Unit,
-    onDownloadClick: (String) -> Unit
+    onDownloadClick: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var showAdvancedDialog by remember { mutableStateOf(false) }
     var textureMenuExpanded by remember { mutableStateOf(false) }
@@ -820,7 +822,7 @@ fun WorldControlPanel(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
