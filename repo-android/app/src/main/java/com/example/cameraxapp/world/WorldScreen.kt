@@ -20,6 +20,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -409,9 +411,11 @@ fun WorldScreen(
                         specular = specularValue,
                         wireframe = isWireframeOnly,
                         bitmap = currentBitmap,
+                        autoRotate = autoRotateEnabled,
                         onYawChange = { viewModel.yaw.value = it },
                         onPitchChange = { viewModel.pitch.value = it },
-                        onScaleChange = { viewModel.scale.value = it }
+                        onScaleChange = { viewModel.scale.value = it },
+                        onAutoRotateToggle = { viewModel.autoRotate.value = it }
                     )
                 }
 
@@ -474,9 +478,11 @@ fun WorldScreen(
                         specular = specularValue,
                         wireframe = isWireframeOnly,
                         bitmap = currentBitmap,
+                        autoRotate = autoRotateEnabled,
                         onYawChange = { viewModel.yaw.value = it },
                         onPitchChange = { viewModel.pitch.value = it },
-                        onScaleChange = { viewModel.scale.value = it }
+                        onScaleChange = { viewModel.scale.value = it },
+                        onAutoRotateToggle = { viewModel.autoRotate.value = it }
                     )
                 }
 
@@ -526,9 +532,11 @@ fun Globe3DInteractiveBox(
     specular: Float,
     wireframe: Boolean,
     bitmap: Bitmap?,
+    autoRotate: Boolean,
     onYawChange: (Float) -> Unit,
     onPitchChange: (Float) -> Unit,
-    onScaleChange: (Float) -> Unit
+    onScaleChange: (Float) -> Unit,
+    onAutoRotateToggle: (Boolean) -> Unit
 ) {
     val outlineBorderColor = MaterialTheme.colorScheme.outlineVariant
     val gridLineColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -577,11 +585,12 @@ fun Globe3DInteractiveBox(
                 val dFactor = 280f // coordinate compression factor to fit perfectly in drawing coordinates
 
                 // Project 3D vector vertex into 2D Offset points on the Compose DrawScope screen
+                // Inverting rot.y corrects the Cartesian to Screen Y-coordinate projection mapping bug
                 fun projectToScreen(v: WorldVector3): Offset {
                     val rot = v.rotateY(yaw).rotateX(pitch)
                     val denom = rot.z + cameraZ
                     val screenX = cX + (rot.x * dFactor * scale) / if (denom != 0f) denom else 1f
-                    val screenY = cY + (rot.y * dFactor * scale) / if (denom != 0f) denom else 1f
+                    val screenY = cY - (rot.y * dFactor * scale) / if (denom != 0f) denom else 1f
                     return Offset(screenX, screenY)
                 }
 
@@ -630,29 +639,111 @@ fun Globe3DInteractiveBox(
                         gridLineColor = gridLineColor
                     )
                 }
+
+                // Draw Polar Lines Segment-by-segment on front hemisphere
+                val arcticLatitude = 66.56f * PI.toFloat() / 180f
+                val antarcticLatitude = -66.56f * PI.toFloat() / 180f
+
+                fun drawPolarLine(latitudeRad: Float, strokeColor: Color) {
+                    val steps = 180
+                    val points = (0..steps).map { step ->
+                        val phi = (step.toFloat() / steps) * 2f * PI.toFloat()
+                        val rCircle = radius * cos(latitudeRad)
+                        val x = rCircle * cos(phi)
+                        val y = radius * sin(latitudeRad)
+                        val z = rCircle * sin(phi)
+                        WorldVector3(x, y, z)
+                    }
+
+                    for (i in 0 until steps) {
+                        val pA = points[i]
+                        val pB = points[i + 1]
+
+                        val rotA = pA.rotateY(yaw).rotateX(pitch)
+                        val rotB = pB.rotateY(yaw).rotateX(pitch)
+
+                        val avgZ = (rotA.z + rotB.z) / 2f
+                        if (avgZ <= 0f) { // Visible on front-side hemisphere
+                            val screenA = projectToScreen(pA)
+                            val screenB = projectToScreen(pB)
+                            drawLine(
+                                color = strokeColor,
+                                start = screenA,
+                                end = screenB,
+                                strokeWidth = 3f
+                            )
+                        }
+                    }
+                }
+
+                drawPolarLine(arcticLatitude, Color(0xFF2979FF)) // blue for North polar line
+                drawPolarLine(antarcticLatitude, Color(0xFFFF1744)) // red for South polar line
             }
         }
 
-        // Action touch zoom buttons (Plus/Minus Zoom controllers)
-        Column(
+        // Action controllers box at bottom-right (unified horizontal Row to clean up bottom-right controls)
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                .padding(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(12.dp)
+                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FilledIconButton(
-                onClick = { onScaleChange((scale + 0.15f).coerceIn(0.4f, 2.5f)) },
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            // Auto-rotate Pause/Play Button
+            IconButton(
+                onClick = { onAutoRotateToggle(!autoRotate) },
+                modifier = Modifier.size(36.dp)
             ) {
-                Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(
+                    imageVector = if (autoRotate) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (autoRotate) "Pause Rotation" else "Resume Rotation",
+                    tint = Color(0xFF64FFDA),
+                    modifier = Modifier.size(20.dp)
+                )
             }
-            FilledIconButton(
-                onClick = { onScaleChange((scale - 0.15f).coerceIn(0.4f, 2.5f)) },
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            
+            // Reset Camera Orbit Button
+            IconButton(
+                onClick = {
+                    onPitchChange(-0.2f)
+                    onYawChange(0.0f)
+                    onScaleChange(1.0f)
+                },
+                modifier = Modifier.size(36.dp)
             ) {
-                Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Reset Camera",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Separator line
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(20.dp)
+                    .background(Color.White.copy(alpha = 0.2f))
+            )
+
+            // Zoom Out Button
+            IconButton(
+                onClick = { onScaleChange((scale - 0.15f).coerceIn(0.4f, 2.5f)) },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Text("-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+
+            // Zoom In Button
+            IconButton(
+                onClick = { onScaleChange((scale + 0.15f).coerceIn(0.4f, 2.5f)) },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
 
@@ -696,256 +787,337 @@ fun WorldControlPanel(
     onUrlValueChange: (String) -> Unit,
     onDownloadClick: (String) -> Unit
 ) {
+    var showAdvancedDialog by remember { mutableStateOf(false) }
+    var textureMenuExpanded by remember { mutableStateOf(false) }
+    var demoMenuExpanded by remember { mutableStateOf(false) }
+
+    val activeTextureLabel = when (activeTexture) {
+        0 -> "Earth Preset"
+        1 -> "Neon Cyber Grid"
+        2 -> "Custom Texture Map"
+        else -> "Select Texture"
+    }
+
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Globe Mapping Presets",
+            text = "Globe Mapping Configuration",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
 
-        // Preset Selector Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = { onSelectTexture(0) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (activeTexture == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = if (activeTexture == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Earth Preset", fontSize = 11.sp)
-            }
-
-            Button(
-                onClick = { onSelectTexture(1) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (activeTexture == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = if (activeTexture == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Neon Grid", fontSize = 11.sp)
-            }
-        }
-
-        // Custom device image selector button
-        Button(
-            onClick = onLaunchPicker,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (activeTexture == 2 && !hasUploaded) MaterialTheme.colorScheme.outlineVariant else if (activeTexture == 2) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
-                contentColor = if (activeTexture == 2 && !hasUploaded) MaterialTheme.colorScheme.onSurfaceVariant else if (activeTexture == 2) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(if (hasUploaded) "Change Custom Image File" else "Load Custom Photo Image File", fontSize = 12.sp)
-        }
-
-        if (hasUploaded && activeTexture == 2) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "✓ Loaded custom device image bitmap texture",
-                    color = Color(0xFF4CAF50),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
-
-        // Direct Texture URL Downloader Form Section
-        Text(
-            text = "Download Texture via URL",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        OutlinedTextField(
-            value = urlInputValue,
-            onValueChange = onUrlValueChange,
-            label = { Text("Texture Image Map URL", fontSize = 11.sp) },
-            placeholder = { Text("https://example.com/texture.jpg", fontSize = 11.sp) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        // Dropdown selection for Active Texture Style
+        Column {
+            Text(
+                text = "Active Texture Source",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
             )
-        )
-
-        Button(
-            onClick = { onDownloadClick(urlInputValue) },
-            enabled = urlInputValue.isNotBlank() && downloadStatus != "Downloading...",
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        ) {
-            Text("Download & Map Space Texture", fontSize = 12.sp)
-        }
-
-        // Live download Status messages
-        if (downloadStatus != "Idle") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        when {
-                            downloadStatus == "Downloading..." -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-                            downloadStatus == "Success" -> Color(0xFF2E7D32).copy(alpha = 0.15f)
-                            else -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
-                        }
-                    )
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = when (downloadStatus) {
-                        "Downloading..." -> "⏳ Pulling map texture from server. Please wait..."
-                        "Success" -> "🏆 Map downloaded successfully! Rendering planetary projections..."
-                        else -> "⚠️ $downloadStatus"
-                    },
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = when {
-                        downloadStatus == "Downloading..." -> MaterialTheme.colorScheme.onSecondaryContainer
-                        downloadStatus == "Success" -> Color(0xFF81C784)
-                        else -> MaterialTheme.colorScheme.onErrorContainer
-                    }
-                )
-            }
-        }
-
-        // Quick Preset URL Helper List
-        Text(
-            text = "Quick Demo Planetary Maps:",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        val demoMaps = remember {
-            listOf(
-                "NASA Earth (2K)" to "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/land_ocean_ice_cloud_2048.jpg",
-                "Blue Marble (1K)" to "https://upload.wikimedia.org/wikipedia/commons/c/c4/Earthmap1000x500compac.jpg",
-                "Jupiter Map (1K)" to "https://upload.wikimedia.org/wikipedia/commons/e/e2/Jupiter_Map_Equirectangular.jpg",
-                "Moon Map (0.4K)" to "https://upload.wikimedia.org/wikipedia/commons/1/10/Lro_nearside_unlabelled_composite_384.jpg",
-                "Osiris Mars (1K)" to "https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg"
-            )
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            demoMaps.forEach { (name, link) ->
-                OutlinedButton(
-                    onClick = {
-                        onUrlValueChange(link)
-                        onDownloadClick(link)
-                    },
+            Box {
+                Button(
+                    onClick = { textureMenuExpanded = true },
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Text(name, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.weight(1f))
-                    Text("Auto Load ↩", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Text("$activeTextureLabel ▾")
+                }
+                DropdownMenu(
+                    expanded = textureMenuExpanded,
+                    onDismissRequest = { textureMenuExpanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Earth Preset (Standard Map)") },
+                        onClick = {
+                            onSelectTexture(0)
+                            textureMenuExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Neon Cyber Grid (Procedural)") },
+                        onClick = {
+                            onSelectTexture(1)
+                            textureMenuExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Custom Map (File or URL)") },
+                        onClick = {
+                            onSelectTexture(2)
+                            textureMenuExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        // Contextual UI depending on active texture (only show for Custom or URL textures)
+        if (activeTexture == 2) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Custom Texture Source Settings",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+
+                    // 1. File Picker Button
+                    Button(
+                        onClick = onLaunchPicker,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (hasUploaded) "Change Custom Image File" else "Load Custom Photo File", fontSize = 12.sp)
+                    }
+
+                    if (hasUploaded) {
+                        Text(
+                            text = "✓ Custom upload bitmap active",
+                            color = Color(0xFF4CAF50),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    // 2. Direct URL Downloader
+                    OutlinedTextField(
+                        value = urlInputValue,
+                        onValueChange = onUrlValueChange,
+                        label = { Text("Texture Image Map URL", fontSize = 11.sp) },
+                        placeholder = { Text("https://example.com/texture.jpg", fontSize = 11.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+
+                    Button(
+                        onClick = { onDownloadClick(urlInputValue) },
+                        enabled = urlInputValue.isNotBlank() && downloadStatus != "Downloading...",
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    ) {
+                        Text("Download & Map URL", fontSize = 12.sp)
+                    }
+
+                    // Interactive planetary maps drop-down select to save massive space
+                    Column {
+                        Text(
+                            text = "Or Load Demo Planet Mapping Setup",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        Box {
+                            OutlinedButton(
+                                onClick = { demoMenuExpanded = true },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Select Demo Planetary Map ▾", fontSize = 11.sp)
+                            }
+
+                            val demoMaps = remember {
+                                listOf(
+                                    "NASA Earth (2K)" to "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/land_ocean_ice_cloud_2048.jpg",
+                                    "Blue Marble (1K)" to "https://upload.wikimedia.org/wikipedia/commons/c/c4/Earthmap1000x500compac.jpg",
+                                    "Jupiter Map (1K)" to "https://upload.wikimedia.org/wikipedia/commons/e/e2/Jupiter_Map_Equirectangular.jpg",
+                                    "Moon Map (0.4K)" to "https://upload.wikimedia.org/wikipedia/commons/1/10/Lro_nearside_unlabelled_composite_384.jpg",
+                                    "Osiris Mars (1K)" to "https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg"
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = demoMenuExpanded,
+                                onDismissRequest = { demoMenuExpanded = false }
+                            ) {
+                                demoMaps.forEach { (name, link) ->
+                                    DropdownMenuItem(
+                                        text = { Text(name) },
+                                        onClick = {
+                                            onUrlValueChange(link)
+                                            onDownloadClick(link)
+                                            demoMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Live download Status messages
+                    if (downloadStatus != "Idle") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    when {
+                                        downloadStatus == "Downloading..." -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                                        downloadStatus == "Success" -> Color(0xFF2E7D32).copy(alpha = 0.15f)
+                                        else -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+                                    }
+                                )
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = when (downloadStatus) {
+                                    "Downloading..." -> "⏳ Downloading map texture..."
+                                    "Success" -> "🏆 Map loaded successfully!"
+                                    else -> "⚠️ $downloadStatus"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = when {
+                                    downloadStatus == "Downloading..." -> MaterialTheme.colorScheme.onSecondaryContainer
+                                    downloadStatus == "Success" -> Color(0xFF81C784)
+                                    else -> MaterialTheme.colorScheme.onErrorContainer
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-        Text(
-            text = "3D Rendering Properties",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // Custom density slider (Parametric mesh details)
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Grid Poly Density (Complexity):", style = MaterialTheme.typography.bodySmall)
-                Text("$density steps", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
-            }
-            Slider(
-                value = density.toFloat(),
-                onValueChange = { onDensityChange(it.toInt()) },
-                valueRange = 8f..40f,
-                steps = 32
+        // Open Advanced Settings Modal Button
+        Button(
+            onClick = { showAdvancedDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
             )
+        ) {
+            Text("Advanced Shader & Mesh Settings ⚙")
         }
 
-        // Lighting sliders
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Lambert Direct Light Intensity:", style = MaterialTheme.typography.bodySmall)
-                Text("%.2f".format(lightIntensity), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
-            }
-            Slider(
-                value = lightIntensity,
-                onValueChange = onLightChange,
-                valueRange = 0.2f..1.2f
+        // The Modal Dialog for Advanced Controls to declutter page margins and panels
+        if (showAdvancedDialog) {
+            AlertDialog(
+                onDismissRequest = { showAdvancedDialog = false },
+                title = {
+                    Text(
+                        text = "Advanced Engine Configs",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Custom density slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Mesh Step Density:", style = MaterialTheme.typography.bodySmall)
+                                Text("$density steps", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Slider(
+                                value = density.toFloat(),
+                                onValueChange = { onDensityChange(it.toInt()) },
+                                valueRange = 8f..40f,
+                                steps = 32
+                            )
+                        }
+
+                        // Lambert Light slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Lambert Direct Light:", style = MaterialTheme.typography.bodySmall)
+                                Text("%.2f".format(lightIntensity), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Slider(
+                                value = lightIntensity,
+                                onValueChange = onLightChange,
+                                valueRange = 0.2f..1.2f
+                            )
+                        }
+
+                        // Specular Highlight slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Specular Reflection:", style = MaterialTheme.typography.bodySmall)
+                                Text("%.2f".format(specular), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Slider(
+                                value = specular,
+                                onValueChange = onSpecularChange,
+                                valueRange = 0.0f..0.8f
+                            )
+                        }
+
+                        // Switches in columns
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Auto-Rotate Orbit", style = MaterialTheme.typography.bodyMedium)
+                            Switch(
+                                checked = autoRotate,
+                                onCheckedChange = onAutoRotateToggle
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Wireframe Polygon Mode", style = MaterialTheme.typography.bodyMedium)
+                            Switch(
+                                checked = wireframe,
+                                onCheckedChange = onWireframeToggle
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAdvancedDialog = false }) {
+                        Text("Apply Settings")
+                    }
+                }
             )
         }
-
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Specular Highlight Light Reflection:", style = MaterialTheme.typography.bodySmall)
-                Text("%.2f".format(specular), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
-            }
-            Slider(
-                value = specular,
-                onValueChange = onSpecularChange,
-                valueRange = 0.0f..0.8f
-            )
-        }
-
-        // Simple Toggles
-        ListItem(
-            headlineContent = { Text("Planet Auto-Rotate Mode", fontSize = 13.sp) },
-            trailingContent = {
-                Switch(
-                    checked = autoRotate,
-                    onCheckedChange = onAutoRotateToggle
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
-
-        ListItem(
-            headlineContent = { Text("Outline Wireframe Mode Only", fontSize = 13.sp) },
-            trailingContent = {
-                Switch(
-                    checked = wireframe,
-                    onCheckedChange = onWireframeToggle
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
     }
 }

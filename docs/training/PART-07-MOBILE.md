@@ -516,5 +516,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Add a custom numeric height/width text input boundary fields selector with aspect-ratio locked toggles inside the export compiler dialogue card and verify that the compiled bitmap renders cleanly.
 - **Complexity**: Part 4
 
+### 83. 3D Globe Projection Alignment, Polar Indicators & Jetpack Compose Space De-cluttering (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldGlobeCanvas.kt`
+- **Goal**: Understand 3D projection mathematical inversions in 2D coordinate spaces, learn to plot geographic polar lines dynamically on rotating sphere grids, and master advanced layout optimization techniques (using dropdown selects and dialog modals) to declutter heavy smartphone interface designs.
+- **Exercise**: Implement a secondary toggle inside the advanced settings modal to change the polar lines thickness from `3f` to a sliding range value (1f..8f), and verify that drawing updates reactive values instantaneously.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
