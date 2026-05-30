@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -697,12 +696,34 @@ fun Globe3DInteractiveBox(
                 onClick = { onAutoRotateToggle(!autoRotate) },
                 modifier = Modifier.size(36.dp)
             ) {
-                Icon(
-                    imageVector = if (autoRotate) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (autoRotate) "Pause Rotation" else "Resume Rotation",
-                    tint = Color(0xFF64FFDA),
-                    modifier = Modifier.size(20.dp)
-                )
+                if (autoRotate) {
+                    // Custom Pause Icon: two vertical bars
+                    Row(
+                        modifier = Modifier.size(20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(12.dp)
+                                .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(12.dp)
+                                .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
+                        )
+                    }
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Resume Rotation",
+                        tint = Color(0xFF64FFDA),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
             
             // Reset Camera Orbit Button
