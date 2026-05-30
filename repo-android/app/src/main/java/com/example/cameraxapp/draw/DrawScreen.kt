@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -471,7 +472,7 @@ fun DrawScreen(
                                             var showBlendPopup by remember { mutableStateOf(false) }
                                             Box {
                                                 Text(
-                                                    text = layer.blendMode.name,
+                                                    text = getBlendModeName(layer.blendMode),
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.primary,
@@ -494,7 +495,7 @@ fun DrawScreen(
                                                     )
                                                     blendModes.forEach { mode ->
                                                         DropdownMenuItem(
-                                                            text = { Text(mode.name, fontSize = 12.sp) },
+                                                            text = { Text(getBlendModeName(mode), fontSize = 12.sp) },
                                                             onClick = {
                                                                 viewModel.updateLayerBlendMode(layer.id, mode)
                                                                 showBlendPopup = false
@@ -514,13 +515,13 @@ fun DrawScreen(
                                                 onClick = { viewModel.moveLayerUp(layer.id) },
                                                 modifier = Modifier.size(24.dp)
                                             ) {
-                                                Icon(Icons.Default.ArrowUpward, contentDescription = "Move Layer Up", modifier = Modifier.size(16.dp))
+                                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Layer Up", modifier = Modifier.size(16.dp))
                                             }
                                             IconButton(
                                                 onClick = { viewModel.moveLayerDown(layer.id) },
                                                 modifier = Modifier.size(24.dp)
                                             ) {
-                                                Icon(Icons.Default.ArrowDownward, contentDescription = "Move Layer Down", modifier = Modifier.size(16.dp))
+                                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Layer Down", modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }
@@ -664,5 +665,17 @@ fun DrawScreen(
                 }
             }
         }
+    }
+}
+
+private fun getBlendModeName(mode: androidx.compose.ui.graphics.BlendMode): String {
+    return when (mode) {
+        androidx.compose.ui.graphics.BlendMode.SrcOver -> "Normal (SrcOver)"
+        androidx.compose.ui.graphics.BlendMode.Multiply -> "Multiply"
+        androidx.compose.ui.graphics.BlendMode.Screen -> "Screen"
+        androidx.compose.ui.graphics.BlendMode.Plus -> "Plus"
+        androidx.compose.ui.graphics.BlendMode.SrcAtop -> "SrcAtop"
+        androidx.compose.ui.graphics.BlendMode.DstOver -> "DstOver"
+        else -> "SrcOver"
     }
 }
