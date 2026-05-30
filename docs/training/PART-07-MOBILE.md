@@ -498,5 +498,23 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom URL testing field with real-time network reachability validation, and implement a fallback system that loads the default high-contrast "Cyber Grid" procedural custom texture if a remote texture download suffers an SSL handshake failure or a 404 response.
 - **Complexity**: Part 4
 
+### 80. Studio Draw Applet: GIMP-Style Multi-Layer Graphics Compositing & Blend Modes in Jetpack Compose (20h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/draw/DrawModels.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/draw/DrawScreen.kt`
+- **Goal**: Understand how layer-based graphic canvases model vector and raster inputs sequentially. Master creating GIMP-style layering stacks (visibility toggles, dynamic opacity alpha mappings, coordinate lockdowns, and blending algorithms) and rendering them cleanly via modern Compose Canvas' saveLayer graphics contexts.
+- **Exercise**: Create an exercise where students add a new blending mode "Xor" or "ColorBurn/Darken" to the BlendMode dropdown selection menu, and verify their visual behaviors on contrasting background and drawing colors.
+- **Complexity**: Part 4
+
+### 81. Studio Draw Applet: Remote URL Sourcing & Center-Crop Aspect Ratio Adaption (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/draw/DrawViewModel.kt`
+- **Goal**: Master remote HTTP download stream conversions safely using Coroutines & Dispatchers.IO, and implement professional-grade dynamic center-crop scaling math that scales loaded external bitmaps cleanly to completely cover custom project dimensions without skewing aspect ratios.
+- **Exercise**: Introduce a toggle that allows loaded images to either center-crop (cover) or aspect-fit (contain, leaving solid colored boundaries) onto the workspace canvas.
+- **Complexity**: Part 4
+
+### 82. Studio Draw Applet: High-Resolution Composite Masterpiece Compiler Exports (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/draw/DrawViewModel.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/draw/DrawScreen.kt`
+- **Goal**: Deep dive into offline graphics compositing calculations on hardware-accelerated bitmaps. Master exporting canvas layers into lossless PNG, space-efficient JPEG, or contemporary lossless/lossy WEBP formats, while offering dimension upscaling multipliers (e.g., 1.0x, 2.0x, 4.0x) that cleanly scale path vector stroke rendering coordinates and raster resolutions during the compiler draw phase.
+- **Exercise**: Add a custom numeric height/width text input boundary fields selector with aspect-ratio locked toggles inside the export compiler dialogue card and verify that the compiled bitmap renders cleanly.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
