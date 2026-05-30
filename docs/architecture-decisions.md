@@ -300,4 +300,68 @@ Upgrading turn-based RPG grids (Roguelike) and casino card tables (Blackjack) to
    - **Choice**: Built 3D chip stacks by programmatically deconstructing dollar amounts into the fewest red ($5), green ($25), and black ($100) cylinders, drawing dynamic top faces and shaded side bands that adapt to camera light sources.
    - **Reason**: Conveys bet value physically. Taller physical stacks correspond to higher bets, giving gamblers immediate, rewarding visual and psychological feedback when playing high stakes.
 
+---
+
+## 14. Moria Roguelike 3D Scene Redesign: Procedural Masonry Details, Flagstones, and Animated Class-Specific Trigonometric Orbitals
+
+### Context
+Improving the design and visual immersion of the Moria applet's 3D Dungeon view without using heavy external texture assets, which can bloat the mobile binary, degrade mobile performance, and lead to CORS/loading issues in sandboxed environments like AI Studio. We also wanted to make the hero and monsters feel responsive, kinetic, and alive.
+
+### Decisions & Justification
+
+1. **Procedural Masonry & Flagstone Detailing instead of Binary Assets**
+   - **Choice**: Instead of using flat untextured colors or loading external image files, we designed staggered horizontal and vertical masonry line structures on walls, and weathered paver joint grids on ground cells.
+   - **Reason**: Guarantees zero binary bloat and perfect offline availability, while avoiding CORS load limits or relative-path bugs inside sandboxed iframe preview clients. Offset calculations (+0.15f) prevent Z-fighting completely.
+
+2. **Continuous Real-Time Continuous Ticker for Animations**
+   - **Choice**: Integrated a Compose-native infinite transition loop producing a floating radians `timeAngle` state from $0.0$ to $2\pi$ looping every 4 seconds.
+   - **Reason**: Lets the 3D pipeline calculate dynamic coordinate offsets that recompute and recompose automatically. This adds constant, fluid motion to the scene with zero CPU cost.
+
+3. **Rotating 3D Class-Based and Type-Based Halo Orbitals**
+   - **Choice**: Developed class-specific and monster-specific rotating 3D vector rings (Gold rotating shield loops for Warrior, tilted blue spinning magic circles for Mage, double-speed orchid loops for Rogue, and custom breathing/pulsating vector shells for Dragon, Goblin, and Necromancer).
+   - **Reason**: Adds high-fidelity visual and gameplay indicators directly inside the 3D scene. This satisfies design principles (mood, craftsmanship, and desktop-first responsiveness) and provides clear player identification without adding clumsy text panels or unrequested buttons.
+
+---
+
+## 15. Moria Interpolated Visual Movements & Trigonometric Idle Breathing Bobbing
+
+### Context
+When the player or monsters moved steps inside the turn-based 3D scene, they instantly snapped from cell to cell. This instant snapping degraded visual immersion and made character actions feel jerky and computerized rather than fluid, kinetic, and cohesive.
+
+### Decisions & Justification
+
+1. **Jetpack Compose State-Driven Floating Coordinate Interpolation**
+   - **Choice**: We wrapped player coordinates and individual active monster structures in real-time animated float state properties (`animateFloatAsState` and key-synchronized `Animatable` instances). The 3D scene cameras, light positions, text labels, and geometric structures bind directly to these animated coordinates.
+   - **Reason**: Translates jerky grid cells movements into smooth sliding paths. When a step triggers, characters glide seamlessly between cells over a 280-millisecond window.
+
+2. **Non-Synchronized Trigonometric Idle Breathing Waves**
+   - **Choice**: Formulated distinct height offset equations using continuous sine and cosine waves ($y(t) = y_0 + A \sin(\omega t + \phi_{\text{id}})$) for both the hero and active monsters.
+   - **Reason**: Infuses the 3D grid with natural organic movement during idle combat periods. Applying ID-based phases ($\phi_{\text{id}} = id \cdot 0.5\text{f}$) ensures that entities do not hover simultaneously in lockstep, making the dungeon scene feel highly dynamic and alive.
+
+---
+
+## 16. Procedural 3D Volumetric Scene Asset Construction
+
+### Context
+Using 2D text emojis floating or plastered flatly onto 3D grid spaces broke visual continuity and undermined the stylistic promise of a pure low-poly 3D world engine representation.
+
+### Decisions & Justification
+- **Choice**: Constructed customized multi-dimensional vector structures directly inside the Canvas drawing loop. 
+  - **3D Chest**: Built a lower rectangular wooden cabinet model layered with gold bevels, cold-iron corner straps, and dual-profile lock cylinders, applying light source distance and face-normal dot attenuation.
+  - **3D Stairs**: Modeled a descending staircase block dividing the tile into 4 step levels, with top horizontal slabs and front vertical step joins.
+- **Reason**: Translates classic rogue symbols into rich, immersive physical objects seamlessly utilizing modern rasterized projections. This builds a robust, crafted dungeon style with zero external texture overhead.
+
+---
+
+## 17. Multi-Attribute Coroutine-Driven Camera Preset sweeping
+
+### Context
+While finger drag and pinch zoom allow manual coordinate inspection, users often want to snap rapidly between clean preset view angles (Isometric, Top-Down, or Frontal combat focus) without tedious manual dragging.
+
+### Decisions & Justification
+- **Choice**: Implemented a coroutine-based standard interpolation model inside Compose. When clicking a presets option, separate parallel launch jobs run Compose `animate(initialValue, targetValue)` from their current drag coordinates to the exact configuration points over a 650-millisecond duration with easing curves.
+- **Reason**: This decouples camera position changes from user gestures. It supports both high-performance raw drag overrides and cinematic camera sweeping transitions without conflicting states.
+
+
+
 

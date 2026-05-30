@@ -534,5 +534,23 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create an exercise where students add an interactive status banner that changes color or size based on whether they have a consumable potion available in their current inventory, and toggle its visibility in the 3x3 grid dynamically.
 - **Complexity**: Part 3
 
+### 86. Moria Roguelike: Procedural 3D Detail Mapping & Real-Time Math Orbitals (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Master procedural detailed decals and dynamic mathematical orbitals inside high-performance 3D vector graphics scopes using standard Compose Canvas libraries. Understand face offset calculations to eliminate Z-depth fighting (z-fighting) and how to map continuous infinite rotations onto 3D projection pipelines.
+- **Exercise**: Create an exercise where students add a dynamic, pulsating particle effect or a secondary interlocking orbits layer to the selected Hero/player, utilizing the continuous animated ticker.
+- **Complexity**: Part 4
+
+### 87. Moria Roguelike: Interpolated Movement Matrices & Idle Wave Bobbing (12h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Master real-time visual coordinate interpolation using key-based `Animatable` structures mapped dynamically from transient state matrices. Understand how to design complementary non-synchronized trigonometry-based breathing/bobbing animations for entities in high-performance custom 3D drawing pipelines.
+- **Exercise**: Create an exercise where students add an animation duration modifier slider (from static instant snapping at `0ms` to slow elastic gliding at `1000ms`) inside display option filters, and test visual state transitions.
+- **Complexity**: Part 4
+
+### 88. Moria Roguelike: Procedural Volumetric Assets & Smooth Camera Sweeping (16h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Master the implementation of complex volumetric 3D meshes (such as wood-and-iron treasure chests with hinges, and descending brick stairs) from scratch using custom coordinate vectors and light attenuation formulas. Understand how to program smooth multi-attribute camera preset sweeping transitions using Compose coroutine scopes while simultaneously supporting instant raw drag/zoom gesture inputs.
+- **Exercise**: Create an exercise where students add an interactive toggle to let the gold lock on the chest glow or pulsate under real-time light waves, utilizing coordinate translations.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
