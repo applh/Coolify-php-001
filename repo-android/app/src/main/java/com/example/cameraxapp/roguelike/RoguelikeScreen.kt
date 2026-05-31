@@ -172,6 +172,7 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
+                                        onUseTeleportGem = { viewModel.useTeleportGem() },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
@@ -219,6 +220,7 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
+                                        onUseTeleportGem = { viewModel.useTeleportGem() },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
@@ -344,6 +346,7 @@ fun HudPanel(
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
+    onUseTeleportGem: () -> Unit,
     onToggleTargetLock: () -> Unit = {},
     onWalkTowardsTarget: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -375,6 +378,7 @@ fun HudPanel(
             onEnable = onEnable,
             onDrinkHealthPotion = onDrinkHealthPotion,
             onDrinkManaPotion = onDrinkManaPotion,
+            onUseTeleportGem = onUseTeleportGem,
             onToggleTargetLock = onToggleTargetLock,
             onWalkTowardsTarget = onWalkTowardsTarget
         )
@@ -520,6 +524,7 @@ fun ControlPanel(
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
+    onUseTeleportGem: () -> Unit,
     onToggleTargetLock: () -> Unit = {},
     onWalkTowardsTarget: () -> Unit = {}
 ) {
@@ -569,7 +574,8 @@ fun ControlPanel(
                 onCastSpell = onCastSpell,
                 onNormalAttack = onNormalAttack,
                 onDrinkHealthPotion = onDrinkHealthPotion,
-                onDrinkManaPotion = onDrinkManaPotion
+                onDrinkManaPotion = onDrinkManaPotion,
+                onUseTeleportGem = onUseTeleportGem
             )
 
             GamepadGoPanel(
@@ -1224,7 +1230,8 @@ fun GamepadActionGrid3x3(
     onCastSpell: () -> Unit,
     onNormalAttack: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
-    onDrinkManaPotion: () -> Unit
+    onDrinkManaPotion: () -> Unit,
+    onUseTeleportGem: () -> Unit
 ) {
     var isExpandedBeacon by remember { mutableStateOf(false) }
 
@@ -1233,6 +1240,9 @@ fun GamepadActionGrid3x3(
 
     val mpCount = inventory.count { it.name.contains("Mana Potion") && it.type == "CONSUMABLE" }
     val mpAvailable = mpCount > 0
+
+    val gemCount = inventory.count { it.name.contains("Teleport Gem") && it.type == "CONSUMABLE" }
+    val gemAvailable = gemCount > 0
 
     val spellLabel = when (char.heroClass) {
         "Warrior" -> "Cleave"
@@ -1335,6 +1345,8 @@ fun GamepadActionGrid3x3(
                     )
                 }
             }
+
+            // MP Potion
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -1354,6 +1366,29 @@ fun GamepadActionGrid3x3(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text("💙", fontSize = 11.sp)
                     Text("MP ($mpCount)", color = if (mpAvailable) Color.White else Color.Gray, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Teleport Gem
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (gemAvailable) Color(0xFF2C1C3D).copy(alpha = 0.85f)
+                        else Color(0xFF141414).copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        2.dp,
+                        if (gemAvailable) Color(0xFFBA68C8) else Color(0xFF3C2C4D),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable(enabled = gemAvailable) { onUseTeleportGem() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text("✨", fontSize = 11.sp)
+                    Text("GEM ($gemCount)", color = if (gemAvailable) Color.White else Color.Gray, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -284,6 +284,17 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         }
     }
 
+    fun useTeleportGem() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+        val teleportGem = _inventory.value.find { it.name.contains("Teleport Gem") && it.type == "CONSUMABLE" }
+        if (teleportGem != null) {
+            useItem(teleportGem)
+        } else {
+            addCombatLog("No Teleport Gems available!")
+        }
+    }
+
     fun useItem(item: InventoryItem) {
         val char = _characterState.value ?: return
         if (item.type != "CONSUMABLE") return

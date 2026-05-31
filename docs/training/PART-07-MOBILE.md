@@ -588,5 +588,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a visual path highlight indicator on the map that dynamically colors nodes along the path from the player's current position to the selected target node, utilizing the `_targetNodeId` state to draw visual coordinates.
 - **Complexity**: Part 4
 
+### 95. Moria Roguelike: Handheld Teleport Gem Quick Shortcut Button (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`
+- **Goal**: Master the design and positioning of high-accessibility combat and tactical item shortcut buttons in modern Jetpack Compose. Learn how to map dynamic inventory-backed status flags (gem quantities and availability) to elegant, custom-styled action boxes next to active mana containers, and wire up corresponding consuming handlers in a Redux-like ViewModel state machine.
+- **Exercise**: Create an exercise where students modify the Teleport Gem shortcut button to exhibit a glowing pulsing outline effect when the player has more than 3 Teleport Gems remaining in their inventory.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
