@@ -1248,6 +1248,8 @@ fun GamepadActionGrid3x3(
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit
 ) {
+    var isExpandedBeacon by remember { mutableStateOf(false) }
+
     val hpCount = inventory.count { it.name.contains("Health Potion") && it.type == "CONSUMABLE" }
     val hpAvailable = hpCount > 0
 
@@ -1307,15 +1309,54 @@ fun GamepadActionGrid3x3(
                 }
             }
 
-            // Placeholder Center
+            // Interactive Potion Status Beacon / Banner (Lab 85)
+            val anyPotion = hpAvailable || mpAvailable
+            val beaconColor = when {
+                hpAvailable && mpAvailable -> Color(0xFF81C784) // green
+                hpAvailable -> Color(0xFFE57373) // soft red
+                mpAvailable -> Color(0xFF64B5F6) // soft blue
+                else -> Color(0xFF333333) // dimmed gray
+            }
+            val beaconLabel = when {
+                hpAvailable && mpAvailable -> "ALL"
+                hpAvailable -> "HP"
+                mpAvailable -> "MP"
+                else -> "NONE"
+            }
+            val beaconSize = if (isExpandedBeacon) 46.dp else 40.dp
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
-                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
-            )
-
-            // MP Potion
+                    .size(beaconSize)
+                    .background(
+                        if (anyPotion) beaconColor.copy(alpha = 0.15f) else Color(0xFF0F0F0F),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        if (isExpandedBeacon) 2.dp else 1.dp,
+                        if (anyPotion) beaconColor else Color(0xFF1E1E1E),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable { isExpandedBeacon = !isExpandedBeacon }
+                    .padding(2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = if (anyPotion) "🧪" else "🚫",
+                        fontSize = if (isExpandedBeacon) 12.sp else 10.sp
+                    )
+                    Text(
+                        text = beaconLabel,
+                        color = if (anyPotion) beaconColor else Color.Gray,
+                        fontSize = if (isExpandedBeacon) 8.sp else 7.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
             Box(
                 modifier = Modifier
                     .size(44.dp)
