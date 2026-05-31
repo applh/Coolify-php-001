@@ -570,5 +570,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an interactive toggle or multiplier option in the settings menu that doubles the current zoom scale multiplier and measures the performance difference using the graphical FPS signal bars.
 - **Complexity**: Part 4
 
+### 92. Moria Roguelike: Spherical Dungeon Geometry and Portal Warp Engine Core (20h) 🍓 NEW
+- **Reference**: `repo-android/docs/moria-sphere-dungeon-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Master three-dimensional coordinates projection on curved manifolds, mapping flat plane grid spaces to uniform spherical shells using standard polar coordinate calculations and spherified cube mapping. Learn how to construct rotating procedural 3D elements representing portal warp gates, and configure custom radial shader lighting vectors.
+- **Exercise**: Implement a custom shader function inside the projection math that shifts the color of the inner portal ring iteratively using a sliding time value, creating an atmospheric celestial spiral, and write a verification routing test wrapping boundary coordinates ($x, y$) off grid edges.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
