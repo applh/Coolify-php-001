@@ -136,22 +136,27 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             )
         }
 
-        val startItems = when (heroClass) {
+        val baseItems = when (heroClass) {
             "Warrior" -> listOf(
-                InventoryItem(name = "Iron Sword", type = "WEAPON", statMod = 6, isEquipped = true),
-                InventoryItem(name = "Wooden Shield", type = "ARMOR", statMod = 3, isEquipped = true),
-                InventoryItem(name = "Health Potion", type = "CONSUMABLE", statMod = 40, isEquipped = false)
+                InventoryItem(id = 1001, name = "Iron Sword", type = "WEAPON", statMod = 6, isEquipped = true),
+                InventoryItem(id = 1002, name = "Wooden Shield", type = "ARMOR", statMod = 3, isEquipped = true),
+                InventoryItem(id = 1003, name = "Health Potion", type = "CONSUMABLE", statMod = 40, isEquipped = false)
             )
             "Mage" -> listOf(
-                InventoryItem(name = "Apprentice Staff", type = "WEAPON", statMod = 4, isEquipped = true),
-                InventoryItem(name = "Cloth Robes", type = "ARMOR", statMod = 1, isEquipped = true),
-                InventoryItem(name = "Mana Potion", type = "CONSUMABLE", statMod = 50, isEquipped = false)
+                InventoryItem(id = 1001, name = "Apprentice Staff", type = "WEAPON", statMod = 4, isEquipped = true),
+                InventoryItem(id = 1002, name = "Cloth Robes", type = "ARMOR", statMod = 1, isEquipped = true),
+                InventoryItem(id = 1003, name = "Mana Potion", type = "CONSUMABLE", statMod = 50, isEquipped = false)
             )
             else -> listOf(
-                InventoryItem(name = "Poison Dagger", type = "WEAPON", statMod = 5, isEquipped = true),
-                InventoryItem(name = "Leather Armor", type = "ARMOR", statMod = 2, isEquipped = true),
-                InventoryItem(name = "Health Potion", type = "CONSUMABLE", statMod = 40, isEquipped = false)
+                InventoryItem(id = 1001, name = "Poison Dagger", type = "WEAPON", statMod = 5, isEquipped = true),
+                InventoryItem(id = 1002, name = "Leather Armor", type = "ARMOR", statMod = 2, isEquipped = true),
+                InventoryItem(id = 1003, name = "Health Potion", type = "CONSUMABLE", statMod = 40, isEquipped = false)
             )
+        }
+
+        val startItems = baseItems.toMutableList()
+        for (i in 1..6) {
+            startItems.add(InventoryItem(id = 2000 + i, name = "Teleport Gem", type = "CONSUMABLE", statMod = 0, isEquipped = false))
         }
 
         _characterState.value = charState
@@ -286,10 +291,27 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             val delta = healedMana - char.currentMana
             _characterState.value = char.copy(currentMana = healedMana)
             addCombatLog("Consumed local Mana Potion. Recovered $delta Mana! 🧪")
+        } else if (item.name.contains("Teleport Gem")) {
+            val currentTile = _playerX.value
+            val freeFloorTiles = _tiles.value.filter { it.tileType != "WALL" && it.x != currentTile && _monsters.value.none { m -> m.x == it.x } }
+            if (freeFloorTiles.isNotEmpty()) {
+                val nextCell = freeFloorTiles.random()
+                _playerX.value = nextCell.x
+                recalculateFogOfWar(nextCell.x)
+                addCombatLog("Used Teleport Gem! You warped across the dungeon! ✨")
+            } else {
+                addCombatLog("Used Teleport Gem, but nowhere to go!")
+            }
         }
 
         // Consume item
-        _inventory.value = _inventory.value.filter { it.id != item.id }
+        _inventory.value = _inventory.value.toMutableList().apply { remove(item) }
+        
+        if (item.name.contains("Teleport Gem")) {
+            triggerMonsterTurns()
+            _characterState.value = _characterState.value?.copy(turns = _characterState.value!!.turns + 1)
+        }
+        
         saveCurrentTurnState()
     }
 
@@ -308,6 +330,33 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         addCombatLog("Equipped ${item.name}! [Stat modifier: +${item.statMod}]")
         audioEngine.playItem()
         saveCurrentTurnState()
+    }
+
+    // Normal attack nearest enemy
+    fun normalAttackNearest() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+        
+        val targetMonster = if (_lockedMonsterId.value != null) {
+            _monsters.value.find { it.id == _lockedMonsterId.value }
+        } else {
+            findNearestRevealedMonster()
+        }
+
+        if (targetMonster != null) {
+            val dist = (planetNodes[targetMonster.x]!!.position - planetNodes[_playerX.value]!!.position).length()
+            if (dist < 1.25f) { // Within reasonable melee distance on sphere
+                performAttack(char, targetMonster)
+                triggerMonsterTurns()
+                _characterState.value = _characterState.value?.copy(turns = _characterState.value!!.turns + 1)
+                saveCurrentTurnState()
+                return
+            } else {
+                addCombatLog("Target ${targetMonster.type} is too far for melee attack!")
+            }
+        } else {
+            addCombatLog("You swing your weapon into thin air.")
+        }
     }
 
     // Cast unique class magic spell

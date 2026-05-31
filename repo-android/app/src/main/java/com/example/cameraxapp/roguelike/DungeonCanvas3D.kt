@@ -98,6 +98,8 @@ fun DungeonCanvas3D(
     // Track smooth state transitions for individual monsters to prevent instant snapping when they move
     val monsterAnims = remember { mutableStateMapOf<Int, Triple<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>>>() }
 
+    var debugHitNode by remember { mutableStateOf<Int?>(null) }
+
     // Synchronize animation targets and clean up obsolete IDs
     val currentIds = remember(monsters) { monsters.map { it.id }.toSet() }
     val obsoleteIds = monsterAnims.keys.filter { it !in currentIds }
@@ -184,11 +186,16 @@ fun DungeonCanvas3D(
             detectTapGestures { offset ->
                 var minId = -1
                 var minDist = Float.MAX_VALUE
+
+                val currentPx = playerAnimX.value
+                val currentPy = playerAnimY.value
+                val currentPz = playerAnimZ.value
+                val pVec = Vector3(currentPx, currentPy, currentPz).normalize()
                 
-                val upVec = if (abs(playerVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
-                val xAxis = upVec.cross(playerVec).normalize()
-                val yAxis = playerVec.cross(xAxis).normalize()
-                val zAxis = Vector3(-playerVec.x, -playerVec.y, -playerVec.z)
+                val upVec = if (abs(pVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                val xAxis = upVec.cross(pVec).normalize()
+                val yAxis = pVec.cross(xAxis).normalize()
+                val zAxis = Vector3(-pVec.x, -pVec.y, -pVec.z)
 
                 for (node in planetNodes.values) {
                     val pos = node.position
@@ -203,7 +210,7 @@ fun DungeonCanvas3D(
                     val rz = vy * sin(pitchAngle) + ryHalf * cos(pitchAngle)
 
                     val denom = rz * 155f + 155f + 320f
-                    if (denom > 0) {
+                    if (denom > 0 && rz < 0.3f) {
                         val sx = (size.width/2f) + (rx * 155f * 280f * zoomScale) / denom
                         val sy = (size.height/2f) + (ry * 155f * 280f * zoomScale) / denom
                         val dx = sx - offset.x
@@ -216,6 +223,7 @@ fun DungeonCanvas3D(
                     }
                 }
                 if (minId != -1 && minDist < 9000f) {
+                    debugHitNode = minId
                     onNodeTapped(minId)
                 }
             }
@@ -723,80 +731,28 @@ fun DungeonCanvas3D(
                     }
                     else -> {}
                 }
-            }
-
+                // -------------------------------------------------------------
+            // Debug tap hit check
             // -------------------------------------------------------------
-            // 3D HUD Compass (UI overlay drawn on top of the 3D scene)
-            // -------------------------------------------------------------
-            val compassRadius = 24.dp.toPx()
-            val hudCX = 45.dp.toPx()
-            val hudCY = 85.dp.toPx()
-            val hudCenter = Offset(hudCX, hudCY)
-
-            // Draw circular backings
-            drawCircle(
-                color = Color.Black.copy(alpha = 0.65f),
-                radius = compassRadius,
-                center = hudCenter
-            )
-            drawCircle(
-                color = Color(0xFFFFD700).copy(alpha = 0.3f),
-                radius = compassRadius,
-                center = hudCenter,
-                style = Stroke(width = 1.dp.toPx())
-            )
-
-            // Axes definitions
-            val lineLen = compassRadius * 0.62f
-            val labelLen = compassRadius * 0.98f
-
-            fun rotateForHud(v: Vector3): Vector3 {
-                val vx = v.x * xAxis.x + v.y * xAxis.y + v.z * xAxis.z
-                val vy = v.x * yAxis.x + v.y * yAxis.y + v.z * yAxis.z
-                val vz = v.x * zAxis.x + v.y * zAxis.y + v.z * zAxis.z
-
-                val rx = vx * cosYaw + vz * sinYaw
-                val ryHalf = -vx * sinYaw + vz * cosYaw
-                val ry = vy * cosPitch - ryHalf * sinPitch
-                val rz = vy * sinPitch + ryHalf * cosPitch
-                return Vector3(rx, ry, rz)
-            }
-
-            // Direction Vectors (W/E Swapped to fix visual inversion relative to pad)
-            val rotN = rotateForHud(Vector3(0f, 0f, -1f))
-            val rotS = rotateForHud(Vector3(0f, 0f, 1f))
-            val rotW = rotateForHud(Vector3(1f, 0f, 0f))
-            val rotE = rotateForHud(Vector3(-1f, 0f, 0f))
-
-            // Helper to draw compass leg & text
-            fun drawCompassLeg(rotDir: Vector3, label: String, color: Color) {
-                val endPos = hudCenter + Offset(rotDir.x * lineLen, rotDir.y * lineLen)
-                drawLine(
-                    color = color,
-                    start = hudCenter,
-                    end = endPos,
-                    strokeWidth = 2.dp.toPx()
-                )
-                
-                // Slightly adjust baseline for centered letters
-                val labelPos = hudCenter + Offset(rotDir.x * labelLen, rotDir.y * labelLen)
-                drawIntoCanvas { canvas ->
-                    textPainter.color = color.toArgb()
-                    textPainter.textSize = 8.dp.toPx()
-                    canvas.nativeCanvas.drawText(
-                        label,
-                        labelPos.x,
-                        labelPos.y + 3.dp.toPx(),
-                        textPainter
-                    )
+            debugHitNode?.let { dbgId ->
+                val nodePos = planetNodes[dbgId]?.position
+                if (nodePos != null) {
+                    val pLabel = projectPoint(nodePos * R)
+                    val rzDeep = getRotatedZDeep(nodePos * R)
+                    if (rzDeep < R * 0.7f) {
+                        drawCircle(
+                            color = Color(0xFFFF0055),
+                            center = pLabel,
+                            radius = 16.dp.toPx()
+                        )
+                        drawIntoCanvas { canvas ->
+                            textPainter.color = android.graphics.Color.WHITE
+                            textPainter.textSize = 10.dp.toPx()
+                            canvas.nativeCanvas.drawText("📍", pLabel.x, pLabel.y, textPainter)
+                        }
+                    }
                 }
             }
-
-            // Draw all 4 legs
-            drawCompassLeg(rotN, "N", ColorNorth)
-            drawCompassLeg(rotS, "S", ColorSouth)
-            drawCompassLeg(rotW, "W", ColorWest)
-            drawCompassLeg(rotE, "E", ColorEast)
         }
 
         var showSettings by remember { mutableStateOf(false) }

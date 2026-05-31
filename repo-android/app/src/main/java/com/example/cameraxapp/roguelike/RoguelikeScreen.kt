@@ -165,6 +165,7 @@ fun RoguelikeScreen(
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
+                                        onNormalAttack = { viewModel.normalAttackNearest() },
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
@@ -208,6 +209,7 @@ fun RoguelikeScreen(
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
+                                        onNormalAttack = { viewModel.normalAttackNearest() },
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
@@ -332,6 +334,7 @@ fun HudPanel(
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
+    onNormalAttack: () -> Unit,
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
@@ -362,6 +365,7 @@ fun HudPanel(
             onMove = onMove,
             onOpenInventory = onOpenInventory,
             onCastSpell = onCastSpell,
+            onNormalAttack = onNormalAttack,
             onEnable = onEnable,
             onDrinkHealthPotion = onDrinkHealthPotion,
             onDrinkManaPotion = onDrinkManaPotion,
@@ -506,6 +510,7 @@ fun ControlPanel(
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
+    onNormalAttack: () -> Unit,
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
@@ -577,6 +582,7 @@ fun ControlPanel(
                 inventory = inventory,
                 onOpenInventory = onOpenInventory,
                 onCastSpell = onCastSpell,
+                onNormalAttack = onNormalAttack,
                 onDrinkHealthPotion = onDrinkHealthPotion,
                 onDrinkManaPotion = onDrinkManaPotion
             )
@@ -1393,19 +1399,13 @@ fun GamepadCirclePad(
                 .background(Color(0xFF331111).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
                 .border(1.5.dp, Color(0xFFFF3366).copy(alpha = 0.6f), RoundedCornerShape(22.dp))
                 .clickable { onToggleTargetLock() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text("🎯", color = Color.White, fontSize = 20.sp)
-        }
-    }
-}
-
-@Composable
+ @Composable
 fun GamepadActionGrid3x3(
     char: CharacterState,
     inventory: List<InventoryItem>,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
+    onNormalAttack: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit
 ) {
@@ -1591,13 +1591,20 @@ fun GamepadActionGrid3x3(
                 }
             }
 
-            // Placeholder Right
+            // Normal Attack
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .background(Color(0xFF0F0F0F), RoundedCornerShape(10.dp))
-                    .border(0.5.dp, Color(0xFF1E1E1E), RoundedCornerShape(10.dp))
-            )
+                    .background(Color(0xFF421E1E).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
+                    .border(2.dp, Color(0xFFE57373), RoundedCornerShape(10.dp))
+                    .clickable { onNormalAttack() },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Text(text = "🗡️", fontSize = 11.sp)
+                    Text(text = "Attack", fontSize = 7.5.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
