@@ -46,7 +46,7 @@ fun DungeonCanvas3D(
     var yawAngle by remember { mutableStateOf(-0.65f) }
     var pitchAngle by remember { mutableStateOf(0.75f) }
     var zoomScale by remember { mutableStateOf(4.8f) }
-    var lightingStrength by remember { mutableStateOf(1.5f) }
+    var lightingStrength by remember { mutableStateOf(2.2f) }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(yawAngle) {
@@ -622,30 +622,7 @@ fun DungeonCanvas3D(
                 }
             }
 
-            // Directional compass indicators aligned on local tangent vectors
-            val ColorNorth = Color(0xFF3A86C8) // Sky Blue
-            val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
-            val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
-            val ColorEast = Color(0xFF2EC4B6)  // Teal Green
-
-            val axisLength = W_s * 1.2f
-            val labelOffset = W_s * 1.6f
-
-            // North (+pTangentV)
-            drawPipeline.add(RenderItem3D.Line(pPos, pPos + pTangentV * axisLength, ColorNorth, 3f, 0f))
-            drawPipeline.add(RenderItem3D.TextLabel(pPos + pTangentV * labelOffset + pNormal * 1.5f, "N", ColorNorth, sizeMultiplier = 0.8f, depth = 0f))
-
-            // South (-pTangentV)
-            drawPipeline.add(RenderItem3D.Line(pPos, pPos - pTangentV * axisLength, ColorSouth, 3f, 0f))
-            drawPipeline.add(RenderItem3D.TextLabel(pPos - pTangentV * labelOffset + pNormal * 1.5f, "S", ColorSouth, sizeMultiplier = 0.8f, depth = 0f))
-
-            // West (+pTangentU)
-            drawPipeline.add(RenderItem3D.Line(pPos, pPos + pTangentU * axisLength, ColorWest, 3f, 0f))
-            drawPipeline.add(RenderItem3D.TextLabel(pPos + pTangentU * labelOffset + pNormal * 1.5f, "W", ColorWest, sizeMultiplier = 0.8f, depth = 0f))
-
-            // East (-pTangentU)
-            drawPipeline.add(RenderItem3D.Line(pPos, pPos - pTangentU * axisLength, ColorEast, 3f, 0f))
-            drawPipeline.add(RenderItem3D.TextLabel(pPos - pTangentU * labelOffset + pNormal * 1.5f, "E", ColorEast, sizeMultiplier = 0.8f, depth = 0f))
+            // Directional compass indicators removed per player request
 
             // 4. Sort Items using Painter's depth model (Z further is drawn first)
             val sortedList = drawPipeline.sortedByDescending { item ->
@@ -743,12 +720,12 @@ fun DungeonCanvas3D(
                         drawCircle(
                             color = Color(0xFFFF0055),
                             center = pLabel,
-                            radius = 16.dp.toPx()
+                            radius = 8.dp.toPx()
                         )
                         drawIntoCanvas { canvas ->
                             textPainter.color = android.graphics.Color.WHITE
-                            textPainter.textSize = 10.dp.toPx()
-                            canvas.nativeCanvas.drawText("📍", pLabel.x, pLabel.y, textPainter)
+                            textPainter.textSize = 5.dp.toPx()
+                            canvas.nativeCanvas.drawText("📍", pLabel.x, pLabel.y - 1.dp.toPx(), textPainter)
                         }
                     }
                 }

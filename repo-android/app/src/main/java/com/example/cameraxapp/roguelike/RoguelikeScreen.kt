@@ -67,39 +67,43 @@ fun RoguelikeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("🗡️ Moria", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .background(Color(0xFF121212))
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(20.dp))
                     }
-                },
-                actions = {
-                    if (status == GameStatus.EXPLORING || status == GameStatus.INVENTORY_MODAL) {
-                        IconButton(onClick = { is3DMode = !is3DMode }) {
-                            Text(
-                                text = if (is3DMode) "2D Retro" else "3D Cube",
-                                color = Color(0xFFFFD700),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = "🗡️ Moria",
+                        color = Color(0xFFFFD700),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     if (status != GameStatus.CHARACTER_SELECT && status != GameStatus.SCORES_SCREEN) {
-                        IconButton(onClick = { viewModel.restartGame() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Forfeit", tint = Color.Red)
+                        IconButton(onClick = { viewModel.restartGame() }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Forfeit", tint = Color.Red, modifier = Modifier.size(18.dp))
                         }
                     }
-                    IconButton(onClick = { viewModel.toggleScores() }) {
-                        Icon(Icons.Default.Info, contentDescription = "Leaderboard", tint = Color.White)
+                    IconButton(onClick = { viewModel.toggleScores() }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Info, contentDescription = "Leaderboard", tint = Color.White, modifier = Modifier.size(18.dp))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF121212),
-                    titleContentColor = Color.White
-                )
-            )
+                }
+            }
         },
         containerColor = Color(0xFF0A0A0A)
     ) { innerPadding ->
@@ -163,8 +167,6 @@ fun RoguelikeScreen(
                                         char = char,
                                         logs = logs,
                                         inventory = inventory,
-                                        is3DMode = is3DMode,
-                                        onToggle3DMode = { is3DMode = !is3DMode },
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
@@ -211,8 +213,6 @@ fun RoguelikeScreen(
                                         char = char,
                                         logs = logs,
                                         inventory = inventory,
-                                        is3DMode = is3DMode,
-                                        onToggle3DMode = { is3DMode = !is3DMode },
                                         onMove = { dx, dy -> viewModel.movePlayer(dx, dy) },
                                         onOpenInventory = { viewModel.openInventory() },
                                         onCastSpell = { viewModel.castClassSpell() },
@@ -337,8 +337,6 @@ fun HudPanel(
     char: CharacterState,
     logs: List<String>,
     inventory: List<InventoryItem>,
-    is3DMode: Boolean,
-    onToggle3DMode: () -> Unit,
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
@@ -351,46 +349,91 @@ fun HudPanel(
     onWalkTowardsTarget: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(4.dp),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        // Combat Logs at the top, expanding to fill available space
-        HudLogsCard(logs = logs, modifier = Modifier.weight(1f).padding(bottom = 4.dp))
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
+        if (isLandscape) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Top part: Logs and Stats side-by-side to solve empty screen spaces in landscape
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HudLogsCard(
+                        logs = logs,
+                        modifier = Modifier.weight(1.2f)
+                    )
+                    HudStatsCard(
+                        char = char,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-        // Stats section positioned directly under the logs card (and above controls)
-        HudStatsCard(char = char)
+                // Bottom part: Clean and balanced Control panel
+                ControlPanel(
+                    char = char,
+                    inventory = inventory,
+                    onMove = onMove,
+                    onOpenInventory = onOpenInventory,
+                    onCastSpell = onCastSpell,
+                    onNormalAttack = onNormalAttack,
+                    onEnable = onEnable,
+                    onDrinkHealthPotion = onDrinkHealthPotion,
+                    onDrinkManaPotion = onDrinkManaPotion,
+                    onUseTeleportGem = onUseTeleportGem,
+                    onToggleTargetLock = onToggleTargetLock,
+                    onWalkTowardsTarget = onWalkTowardsTarget,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Combat Logs at the top, expanding to fill available space
+                HudLogsCard(logs = logs, modifier = Modifier.weight(1f).padding(bottom = 4.dp))
 
-        Spacer(modifier = Modifier.height(4.dp))
+                // Stats section positioned directly under the logs card (and above controls)
+                HudStatsCard(char = char)
 
-        // Controller row at the bottom
-        ControlPanel(
-            char = char,
-            inventory = inventory,
-            is3DMode = is3DMode,
-            onToggle3DMode = onToggle3DMode,
-            onMove = onMove,
-            onOpenInventory = onOpenInventory,
-            onCastSpell = onCastSpell,
-            onNormalAttack = onNormalAttack,
-            onEnable = onEnable,
-            onDrinkHealthPotion = onDrinkHealthPotion,
-            onDrinkManaPotion = onDrinkManaPotion,
-            onUseTeleportGem = onUseTeleportGem,
-            onToggleTargetLock = onToggleTargetLock,
-            onWalkTowardsTarget = onWalkTowardsTarget
-        )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Controller row at the bottom
+                ControlPanel(
+                    char = char,
+                    inventory = inventory,
+                    onMove = onMove,
+                    onOpenInventory = onOpenInventory,
+                    onCastSpell = onCastSpell,
+                    onNormalAttack = onNormalAttack,
+                    onEnable = onEnable,
+                    onDrinkHealthPotion = onDrinkHealthPotion,
+                    onDrinkManaPotion = onDrinkManaPotion,
+                    onUseTeleportGem = onUseTeleportGem,
+                    onToggleTargetLock = onToggleTargetLock,
+                    onWalkTowardsTarget = onWalkTowardsTarget,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun HudStatsCard(char: CharacterState) {
+fun HudStatsCard(char: CharacterState, modifier: Modifier = Modifier) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F0F)),
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .border(0.6.dp, Color(0xFF332A20), RoundedCornerShape(6.dp))
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
@@ -515,8 +558,6 @@ fun HudLogsCard(logs: List<String>, modifier: Modifier = Modifier) {
 fun ControlPanel(
     char: CharacterState,
     inventory: List<InventoryItem>,
-    is3DMode: Boolean,
-    onToggle3DMode: () -> Unit,
     onMove: (Int, Int) -> Unit,
     onOpenInventory: () -> Unit,
     onCastSpell: () -> Unit,
@@ -526,42 +567,15 @@ fun ControlPanel(
     onDrinkManaPotion: () -> Unit,
     onUseTeleportGem: () -> Unit,
     onToggleTargetLock: () -> Unit = {},
-    onWalkTowardsTarget: () -> Unit = {}
+    onWalkTowardsTarget: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(top = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Left Column: Other Buttons (Toggle mode)
-        Column(
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier.padding(bottom = 2.dp)
-        ) {
-            Button(
-                onClick = onToggle3DMode,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF212529)),
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .width(76.dp)
-                    .height(36.dp)
-                    .border(0.6.dp, Color(0xFFFFD700).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            ) {
-                Text(
-                    text = if (is3DMode) "2D Retro" else "3D Cube",
-                    fontSize = 10.sp,
-                    color = Color(0xFFFFD700),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        // Right Column: Action Grid & GamepadGoPanel next to each other
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
@@ -1233,8 +1247,6 @@ fun GamepadActionGrid3x3(
     onDrinkManaPotion: () -> Unit,
     onUseTeleportGem: () -> Unit
 ) {
-    var isExpandedBeacon by remember { mutableStateOf(false) }
-
     val hpCount = inventory.count { it.name.contains("Health Potion") && it.type == "CONSUMABLE" }
     val hpAvailable = hpCount > 0
 
@@ -1294,55 +1306,6 @@ fun GamepadActionGrid3x3(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                     Text("❤️", fontSize = 11.sp)
                     Text("HP ($hpCount)", color = if (hpAvailable) Color.White else Color.Gray, fontSize = 7.5.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            // Interactive Potion Status Beacon / Banner (Lab 85)
-            val anyPotion = hpAvailable || mpAvailable
-            val beaconColor = when {
-                hpAvailable && mpAvailable -> Color(0xFF81C784) // green
-                hpAvailable -> Color(0xFFE57373) // soft red
-                mpAvailable -> Color(0xFF64B5F6) // soft blue
-                else -> Color(0xFF333333) // dimmed gray
-            }
-            val beaconLabel = when {
-                hpAvailable && mpAvailable -> "ALL"
-                hpAvailable -> "HP"
-                mpAvailable -> "MP"
-                else -> "NONE"
-            }
-            val beaconSize = if (isExpandedBeacon) 46.dp else 40.dp
-            Box(
-                modifier = Modifier
-                    .size(beaconSize)
-                    .background(
-                        if (anyPotion) beaconColor.copy(alpha = 0.15f) else Color(0xFF0F0F0F),
-                        RoundedCornerShape(10.dp)
-                    )
-                    .border(
-                        if (isExpandedBeacon) 2.dp else 1.dp,
-                        if (anyPotion) beaconColor else Color(0xFF1E1E1E),
-                        RoundedCornerShape(10.dp)
-                    )
-                    .clickable { isExpandedBeacon = !isExpandedBeacon }
-                    .padding(2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = if (anyPotion) "🧪" else "🚫",
-                        fontSize = if (isExpandedBeacon) 12.sp else 10.sp
-                    )
-                    Text(
-                        text = beaconLabel,
-                        color = if (anyPotion) beaconColor else Color.Gray,
-                        fontSize = if (isExpandedBeacon) 8.sp else 7.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
 

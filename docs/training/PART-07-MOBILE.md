@@ -594,5 +594,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create an exercise where students modify the Teleport Gem shortcut button to exhibit a glowing pulsing outline effect when the player has more than 3 Teleport Gems remaining in their inventory.
 - **Complexity**: Part 3
 
+### 96. Moria Roguelike: Ergonomic Layout Customization & Lantern Shading Presets (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master ergonomic mobile layout optimizations for landscape viewing and learn to adjust procedural ambient lighting default presets. Understand the principles of reducing interface clutter by removing unuseful 2D/3D dual-state toggles, eliminating redundant control pad status indicators, resizing hit debug widgets, and organizing screen blocks inside side-by-side structures to maximize high-density display real estate.
+- **Exercise**: Implement a secondary lighting preset slider in the display options modal that changes the default lantern shading coefficient from `2.2f` to a user-defined range of `1f` to `5f` dynamically.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
