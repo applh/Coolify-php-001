@@ -552,5 +552,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create an exercise where students add an interactive toggle to let the gold lock on the chest glow or pulsate under real-time light waves, utilizing coordinate translations.
 - **Complexity**: Part 4
 
+### 89. Moria Roguelike: Upgraded 3D Low-Poly Entities and Class-Specific Helmets (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Master procedural low-poly 3D modeling using multi-faceted custom vector geometry, class-specific headgears (steel plate helmets, conical wizard brimmed hats, rogue cowl hoods), and distinctive monster meshes (dragons with horns, necromancers with floating staff orbs, and long-eared goblins) rendered directly on Jetpack Compose Canvas with light shader attenuation calculations.
+- **Exercise**: Implement a secondary custom helmet or crest for the Rogue class (e.g., adding a feathered cap or a metal half-mask by defining corresponding vertices, lines, and polygons) and ensure its shade values adapt to live ambient lighting.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

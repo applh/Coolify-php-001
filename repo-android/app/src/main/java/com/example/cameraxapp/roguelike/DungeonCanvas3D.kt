@@ -263,11 +263,12 @@ fun DungeonCanvas3D(
                         else -> "💀"
                     }
 
-                    // Build 3D Octahedron entity representation
-                    buildVolumetricOctahedron(
+                    // Build upgraded 3D low poly entity representation
+                    buildProceduralMonsterLowPoly(
                         cx = mX, cy = mY, cz = mZ,
                         radX = W_s * 0.32f, radY = W_s * 0.45f, radZ = W_s * 0.32f,
-                        color = monsterCol,
+                        monsterType = monster.type,
+                        baseColor = monsterCol,
                         outList = drawPipeline,
                         lightSource = lightSource,
                         lightingStrength = lightingStrength
@@ -329,11 +330,11 @@ fun DungeonCanvas3D(
                 else -> "🗡️"
             }
 
-            // Core 3D model
-            buildVolumetricOctahedron(
+            // Core 3D player model
+            buildProceduralPlayerLowPoly(
                 cx = pWorldX, cy = pWorldY, cz = pWorldZ,
                 radX = W_s * 0.30f, radY = W_s * 0.45f, radZ = W_s * 0.30f,
-                color = playerCol,
+                heroClass = heroClass,
                 outList = drawPipeline,
                 lightSource = lightSource,
                 lightingStrength = lightingStrength
@@ -1192,4 +1193,322 @@ private fun build3DChest(
         alpha = 1f
     )
     outList.add(RenderItem3D.Polygon(listOf(lockP1, lockP2, lockP3, lockP4), shadedGoldCol, depth = 0f))
+}
+
+private fun buildProceduralPlayerLowPoly(
+    cx: Float, cy: Float, cz: Float,
+    radX: Float, radY: Float, radZ: Float,
+    heroClass: String,
+    outList: MutableList<RenderItem3D>,
+    lightSource: Vector3,
+    lightingStrength: Float
+) {
+    val steelCol = Color(0xFF607D8B)
+    val leatherCol = Color(0xFF5D4037)
+    val clothCol = Color(0xFF0288D1)
+
+    fun shadeColor(originalCol: Color, faceCenter: Vector3): Color {
+        val dist = (faceCenter - lightSource).length()
+        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
+        return Color(
+            red = (originalCol.red * lightFactor).coerceIn(0f, 1f),
+            green = (originalCol.green * lightFactor).coerceIn(0f, 1f),
+            blue = (originalCol.blue * lightFactor).coerceIn(0f, 1f),
+            alpha = 1f
+        )
+    }
+
+    // 1. Torso: Faceted rectangular pyramid standing upright
+    val botY = cy + radY * 0.4f
+    val midY = cy - radY * 0.15f
+    val topY = cy - radY * 0.45f
+
+    val b1 = Vector3(cx - radX * 0.5f, botY, cz - radZ * 0.5f)
+    val b2 = Vector3(cx + radX * 0.5f, botY, cz - radZ * 0.5f)
+    val b3 = Vector3(cx + radX * 0.5f, botY, cz + radZ * 0.5f)
+    val b4 = Vector3(cx - radX * 0.5f, botY, cz + radZ * 0.5f)
+
+    val m1 = Vector3(cx - radX * 0.75f, midY, cz - radZ * 0.75f)
+    val m2 = Vector3(cx + radX * 0.75f, midY, cz - radZ * 0.75f)
+    val m3 = Vector3(cx + radX * 0.75f, midY, cz + radZ * 0.75f)
+    val m4 = Vector3(cx - radX * 0.75f, midY, cz + radZ * 0.75f)
+
+    val torsoCol = when (heroClass) {
+        "Warrior" -> steelCol
+        "Mage" -> clothCol
+        else -> leatherCol
+    }
+
+    // Lower Torso
+    val lowerTorsoFaces = listOf(
+        listOf(b1, b2, m2, m1),
+        listOf(b2, b3, m3, m2),
+        listOf(b3, b4, m4, m3),
+        listOf(b4, b1, m1, m4)
+    )
+    lowerTorsoFaces.forEach { pts ->
+        val midPt = Vector3(
+            pts.sumOf { it.x.toDouble() }.toFloat() / 4f,
+            pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
+            pts.sumOf { it.z.toDouble() }.toFloat() / 4f
+        )
+        outList.add(RenderItem3D.Polygon(pts, shadeColor(torsoCol, midPt), depth = 0f))
+    }
+
+    // Upper Torso shoulders
+    val sCenter = Vector3(cx, topY, cz)
+    val upperTorsoFaces = listOf(
+        listOf(m1, m2, sCenter),
+        listOf(m2, m3, sCenter),
+        listOf(m3, m4, sCenter),
+        listOf(m4, m1, sCenter)
+    )
+    upperTorsoFaces.forEach { pts ->
+        val midPt = Vector3(
+            pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+            pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+            pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+        )
+        outList.add(RenderItem3D.Polygon(pts, shadeColor(torsoCol, midPt), depth = 0f))
+    }
+
+    // 2. Class-specific Helmets/hats/hoods
+    when (heroClass) {
+        "Warrior" -> {
+            val h1 = Vector3(cx - radX * 0.4f, topY, cz - radZ * 0.4f)
+            val h2 = Vector3(cx + radX * 0.4f, topY, cz - radZ * 0.4f)
+            val h3 = Vector3(cx + radX * 0.4f, topY, cz + radZ * 0.4f)
+            val h4 = Vector3(cx - radX * 0.4f, topY, cz + radZ * 0.4f)
+
+            val ht1 = Vector3(cx - radX * 0.4f, cy - radY * 0.85f, cz - radZ * 0.4f)
+            val ht2 = Vector3(cx + radX * 0.4f, cy - radY * 0.85f, cz - radZ * 0.4f)
+            val ht3 = Vector3(cx + radX * 0.4f, cy - radY * 0.85f, cz + radZ * 0.4f)
+            val ht4 = Vector3(cx - radX * 0.4f, cy - radY * 0.85f, cz + radZ * 0.4f)
+
+            val helmetFaces = listOf(
+                listOf(h1, h2, ht2, ht1),
+                listOf(h3, h4, ht4, ht3),
+                listOf(h1, ht1, ht4, h4),
+                listOf(h2, h3, ht3, ht2),
+                listOf(ht1, ht2, ht3, ht4)
+            )
+            helmetFaces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 4f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 4f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(steelCol, midPt), depth = 0f))
+            }
+
+            val vL = cz + radZ * 0.41f
+            val vp1 = Vector3(cx - radX * 0.3f, cy - radY * 0.5f, vL)
+            val vp2 = Vector3(cx + radX * 0.3f, cy - radY * 0.5f, vL)
+            val vp3 = Vector3(cx + radX * 0.3f, cy - radY * 0.65f, vL)
+            val vp4 = Vector3(cx - radX * 0.3f, cy - radY * 0.65f, vL)
+            outList.add(RenderItem3D.Polygon(listOf(vp1, vp2, vp3, vp4), shadeColor(Color(0xFFFFB300), Vector3(cx, cy - radY * 0.58f, vL)), depth = 0f))
+        }
+        "Mage" -> {
+            val brimR = radX * 0.9f
+            val brimVertices = (0..7).map { i ->
+                val ang = (i * 2f * PI.toFloat() / 8f)
+                Vector3(cx + brimR * cos(ang), topY, cz + brimR * sin(ang))
+            }
+            outList.add(RenderItem3D.Polygon(brimVertices, shadeColor(Color(0xFF311B92), Vector3(cx, topY, cz)), depth = 0f))
+
+            val coneTip = Vector3(cx, cy - radY * 1.0f, cz)
+            (0..7).forEach { i ->
+                val pts = listOf(brimVertices[i], brimVertices[(i + 1) % 8], coneTip)
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(Color(0xFF1A237E), midPt), depth = 0f))
+            }
+        }
+        else -> {
+            val h1 = Vector3(cx - radX * 0.38f, topY, cz - radZ * 0.38f)
+            val h2 = Vector3(cx + radX * 0.38f, topY, cz - radZ * 0.38f)
+            val h3 = Vector3(cx + radX * 0.38f, topY, cz + radZ * 0.38f)
+            val h4 = Vector3(cx - radX * 0.38f, topY, cz + radZ * 0.38f)
+            val hoodApex = Vector3(cx, cy - radY * 0.85f, cz)
+
+            val hoodFaces = listOf(
+                listOf(h1, h2, hoodApex),
+                listOf(h2, h3, hoodApex),
+                listOf(h3, h4, hoodApex),
+                listOf(h4, h1, hoodApex)
+            )
+            hoodFaces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(Color(0xFF1B5E20), midPt), depth = 0f))
+            }
+
+            val vL = cz + radZ * 0.35f
+            val faceW = radX * 0.22f
+            val eye1 = Vector3(cx - faceW * 0.5f, cy - radY * 0.55f, vL)
+            val eye2 = Vector3(cx + faceW * 0.5f, cy - radY * 0.55f, vL)
+            outList.add(RenderItem3D.Line(eye1, eye1 + Vector3(faceW * 0.4f, 0f, 0.05f), Color.Red, 3.5f, 0f))
+            outList.add(RenderItem3D.Line(eye2, eye2 - Vector3(faceW * 0.4f, 0f, -0.05f), Color.Red, 3.5f, 0f))
+        }
+    }
+}
+
+private fun buildProceduralMonsterLowPoly(
+    cx: Float, cy: Float, cz: Float,
+    radX: Float, radY: Float, radZ: Float,
+    monsterType: String,
+    baseColor: Color,
+    outList: MutableList<RenderItem3D>,
+    lightSource: Vector3,
+    lightingStrength: Float
+) {
+    fun shadeColor(originalCol: Color, faceCenter: Vector3): Color {
+        val dist = (faceCenter - lightSource).length()
+        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
+        return Color(
+            red = (originalCol.red * lightFactor).coerceIn(0f, 1f),
+            green = (originalCol.green * lightFactor).coerceIn(0f, 1f),
+            blue = (originalCol.blue * lightFactor).coerceIn(0f, 1f),
+            alpha = 1f
+        )
+    }
+
+    when (monsterType) {
+        "DRAGON" -> {
+            val top = Vector3(cx, cy - radY * 0.6f, cz)
+            val bottom = Vector3(cx, cy + radY * 0.6f, cz)
+            val v1 = Vector3(cx - radX * 1.1f, cy, cz - radZ * 1.1f)
+            val v2 = Vector3(cx + radX * 1.1f, cy, cz - radZ * 1.1f)
+            val v3 = Vector3(cx + radX * 1.1f, cy, cz + radZ * 1.1f)
+            val v4 = Vector3(cx - radX * 1.1f, cy, cz + radZ * 1.1f)
+
+            val baseFaces = listOf(
+                listOf(top, v2, v1), listOf(top, v3, v2), listOf(top, v4, v3), listOf(top, v1, v4),
+                listOf(bottom, v1, v2), listOf(bottom, v2, v3), listOf(bottom, v3, v4), listOf(bottom, v4, v1)
+            )
+            baseFaces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(baseColor, midPt), depth = 0f))
+            }
+
+            val h1Base = top
+            val h1Outer = Vector3(cx - radX * 1.2f, cy - radY * 1.1f, cz - radZ * 0.4f)
+            outList.add(RenderItem3D.Line(h1Base, h1Outer, Color(0xFFFFD700), 3.5f, 0f))
+
+            val h2Outer = Vector3(cx + radX * 1.2f, cy - radY * 1.1f, cz - radZ * 0.4f)
+            outList.add(RenderItem3D.Line(h1Base, h2Outer, Color(0xFFFFD700), 3.5f, 0f))
+        }
+        "NECROMANCER" -> {
+            val topY = cy - radY * 0.6f
+            val baseBottomY = cy + radY * 0.6f
+
+            val topCenter = Vector3(cx, topY, cz)
+            val nb1 = Vector3(cx - radX * 0.5f, baseBottomY, cz - radZ * 0.5f)
+            val nb2 = Vector3(cx + radX * 0.5f, baseBottomY, cz - radZ * 0.5f)
+            val nb3 = Vector3(cx + radX * 0.5f, baseBottomY, cz + radZ * 0.5f)
+            val nb4 = Vector3(cx - radX * 0.5f, baseBottomY, cz + radZ * 0.5f)
+
+            val staffFaces = listOf(
+                listOf(topCenter, nb2, nb1),
+                listOf(topCenter, nb3, nb2),
+                listOf(topCenter, nb4, nb3),
+                listOf(topCenter, nb1, nb4)
+            )
+            staffFaces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(Color(0xFF212121), midPt), depth = 0f))
+            }
+
+            val crystalCore = Vector3(cx, cy - radY * 0.1f, cz)
+            outList.add(RenderItem3D.Sphere(
+                center = crystalCore,
+                radius = radX * 0.55f,
+                color = Color(0xFFE040FB),
+                depth = 0f
+            ))
+
+            val orb1 = Vector3(cx - radX * 0.8f, cy - radY * 0.1f, cz)
+            val orb2 = Vector3(cx + radX * 0.8f, cy - radY * 0.1f, cz)
+            outList.add(RenderItem3D.Sphere(center = orb1, radius = radX * 0.18f, color = Color(0xFF6A1B9A), depth = 0f))
+            outList.add(RenderItem3D.Sphere(center = orb2, radius = radX * 0.18f, color = Color(0xFF6A1B9A), depth = 0f))
+        }
+        "GOBLIN" -> {
+            val top = Vector3(cx, cy - radY * 0.6f, cz)
+            val bottom = Vector3(cx, cy + radY * 0.6f, cz)
+            val v1 = Vector3(cx - radX * 0.8f, cy, cz - radZ * 0.8f)
+            val v2 = Vector3(cx + radX * 0.8f, cy, cz - radZ * 0.8f)
+            val v3 = Vector3(cx + radX * 0.8f, cy, cz + radZ * 0.8f)
+            val v4 = Vector3(cx - radX * 0.8f, cy, cz + radZ * 0.8f)
+
+            val baseFaces = listOf(
+                listOf(top, v2, v1), listOf(top, v3, v2), listOf(top, v4, v3), listOf(top, v1, v4),
+                listOf(bottom, v1, v2), listOf(bottom, v2, v3), listOf(bottom, v3, v4), listOf(bottom, v4, v1)
+            )
+            baseFaces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(baseColor, midPt), depth = 0f))
+            }
+
+            val eLeftTip = Vector3(cx - radX * 1.5f, cy - radY * 0.1f, cz)
+            val darkerGoblin = Color(
+                red = (baseColor.red * 0.85f).coerceIn(0f, 1f),
+                green = (baseColor.green * 0.85f).coerceIn(0f, 1f),
+                blue = (baseColor.blue * 0.85f).coerceIn(0f, 1f),
+                alpha = baseColor.alpha
+            )
+            outList.add(RenderItem3D.Polygon(
+                listOf(top, v1, eLeftTip),
+                shadeColor(darkerGoblin, Vector3(cx - radX * 0.8f, cy, cz)),
+                depth = 0f
+            ))
+
+            val eRightTip = Vector3(cx + radX * 1.5f, cy - radY * 0.1f, cz)
+            outList.add(RenderItem3D.Polygon(
+                listOf(top, v2, eRightTip),
+                shadeColor(darkerGoblin, Vector3(cx + radX * 0.8f, cy, cz)),
+                depth = 0f
+            ))
+        }
+        else -> {
+            val top = Vector3(cx, cy - radY, cz)
+            val bottom = Vector3(cx, cy + radY, cz)
+            val v1 = Vector3(cx - radX, cy, cz - radZ)
+            val v2 = Vector3(cx + radX, cy, cz - radZ)
+            val v3 = Vector3(cx + radX, cy, cz + radZ)
+            val v4 = Vector3(cx - radX, cy, cz + radZ)
+
+            val faces = listOf(
+                listOf(top, v2, v1), listOf(top, v3, v2), listOf(top, v4, v3), listOf(top, v1, v4),
+                listOf(bottom, v1, v2), listOf(bottom, v2, v3), listOf(bottom, v3, v4), listOf(bottom, v4, v1)
+            )
+            faces.forEach { pts ->
+                val midPt = Vector3(
+                    pts.sumOf { it.x.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
+                    pts.sumOf { it.z.toDouble() }.toFloat() / 3f
+                )
+                outList.add(RenderItem3D.Polygon(pts, shadeColor(baseColor, midPt), depth = 0f))
+            }
+        }
+    }
 }
