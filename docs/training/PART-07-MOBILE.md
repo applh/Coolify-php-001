@@ -618,5 +618,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Conduct a profiling trace of the frame timeline before and after corner-caching. Implement an additional cache in `DungeonCanvas3D.kt` for pre-computed tile face ambient diffuse illumination coefficients, avoiding lighting dot product evaluations on redundant static frames.
 - **Complexity**: Part 4
 
+### 100. Moria Roguelike: Google Filament 3D GPU Physically-Based Rendering Engine Migration (24h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/FilamentCanvas3D.kt`
+- **Goal**: Understand the architectural design of modern Physically-Based Rendering (PBR) pipelines on Android and design a seamless Jetpack Compose wrapper for Google's native Filament GPU engine. Learn how to map procedurally generated subdivided geodesic networks to active hardware vertex state and index arrays on background threads. Learn how to configure real-time spotlight and point illumination coordinates responsive to character movement ticks, and implement native allocation/destruction lifecycles to guarantee leak-free operation.
+- **Exercise**: Implement a dynamic camera orbiting projection inside Filament's update pipeline that automatically targets and tracks active monsters when a "Lock On" event is triggered, matching the smooth math of the Compose camera.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
