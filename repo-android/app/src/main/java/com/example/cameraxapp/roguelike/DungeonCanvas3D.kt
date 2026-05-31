@@ -142,19 +142,36 @@ fun DungeonCanvas3D(
             val pWorldZ = (animPY - 9f) * W_s
             val targetCenter = Vector3(pWorldX, 0f, pWorldZ)
 
-            // Projections math mapping
+            val cosYaw = cos(yawAngle)
+            val sinYaw = sin(yawAngle)
+            val cosPitch = cos(pitchAngle)
+            val sinPitch = sin(pitchAngle)
+
+            class PrecalculatedPoint(val rotZ: Float, val proj: Offset)
+            val vertexCache = mutableMapOf<Vector3, PrecalculatedPoint>()
+
+            fun getOrComputePoint(v: Vector3): PrecalculatedPoint {
+                return vertexCache.getOrPut(v) {
+                    val rel = v - targetCenter
+                    val rx = rel.x * cosYaw + rel.z * sinYaw
+                    val ryHalf = -rel.x * sinYaw + rel.z * cosYaw
+                    val ry = rel.y * cosPitch - ryHalf * sinPitch
+                    val rz = rel.y * sinPitch + ryHalf * cosPitch
+
+                    val denom = rz + cameraZ
+                    val sx = cX + (rx * dFactor * zoomScale) / if (denom != 0f) denom else 1f
+                    val sy = cY + (ry * dFactor * zoomScale) / if (denom != 0f) denom else 1f
+                    PrecalculatedPoint(rz, Offset(sx, sy))
+                }
+            }
+
+            // Projections math mapping using vertex caching
             fun projectPoint(v: Vector3): Offset {
-                val rel = v - targetCenter
-                val rot = rel.rotateY(yawAngle).rotateX(pitchAngle)
-                val denom = rot.z + cameraZ
-                val sx = cX + (rot.x * dFactor * zoomScale) / if (denom != 0f) denom else 1f
-                val sy = cY + (rot.y * dFactor * zoomScale) / if (denom != 0f) denom else 1f
-                return Offset(sx, sy)
+                return getOrComputePoint(v).proj
             }
 
             fun getRotatedZDeep(v: Vector3): Float {
-                val rel = v - targetCenter
-                return rel.rotateY(yawAngle).rotateX(pitchAngle).z
+                return getOrComputePoint(v).rotZ
             }
 
             // Define light source centered at Player position (Y is light height overhead)
@@ -595,7 +612,11 @@ fun DungeonCanvas3D(
             val labelLen = compassRadius * 0.98f
 
             fun rotateForHud(v: Vector3): Vector3 {
-                return v.rotateY(yawAngle).rotateX(pitchAngle)
+                val rx = v.x * cosYaw + v.z * sinYaw
+                val ryHalf = -v.x * sinYaw + v.z * cosYaw
+                val ry = v.y * cosPitch - ryHalf * sinPitch
+                val rz = v.y * sinPitch + ryHalf * cosPitch
+                return Vector3(rx, ry, rz)
             }
 
             // Direction Vectors (W/E Swapped to fix visual inversion relative to pad)
