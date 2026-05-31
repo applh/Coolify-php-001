@@ -985,18 +985,15 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         highwaySet.addAll(branch1)
         highwaySet.addAll(branch2)
 
-        // Carve highways with buffer corridors to ensure easy traversing
+        // Carve highways to ensure easy traversing
         for (nodeId in highwaySet) {
             nextTiles[nodeId] = GameTile(nodeId, 0, "FLOOR", false)
-            planetNodes[nodeId]?.neighbors?.forEach { neighborId ->
-                nextTiles[neighborId] = GameTile(neighborId, 0, "FLOOR", false)
-            }
         }
 
         // Spherical Cellular Automata: initial noisy seed for remaining wall nodes
         for (id in planetNodes.keys) {
             if (nextTiles[id]?.tileType == "WALL") {
-                if (rnd.nextFloat() < 0.54f) {
+                if (rnd.nextFloat() < 0.38f) {
                     nextTiles[id] = GameTile(id, 0, "FLOOR", false)
                 }
             }
@@ -1016,16 +1013,16 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                         nextTiles[id] = GameTile(id, 0, "FLOOR", false)
                     }
                 } else {
-                    if (floorCount < 2) {
+                    if (floorCount < 3) {
                         nextTiles[id] = GameTile(id, 0, "WALL", false)
                     }
                 }
             }
         }
 
-        // Guarantee at least 325 floor tiles out of 642 (>50.6% surface coverage)
+        // Guarantee a balanced floor tiles count out of 642 (~40.5% surface coverage)
         var currentFloorCount = nextTiles.values.count { it.tileType != "WALL" }
-        val targetMinFloors = 325
+        val targetMinFloors = 260
         while (currentFloorCount < targetMinFloors) {
             val candidates = nextTiles.filter { it.value.tileType == "WALL" }.keys.filter { wallId ->
                 planetNodes[wallId]?.neighbors?.any { nextTiles[it]?.tileType != "WALL" } == true
@@ -1062,12 +1059,22 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         var globalMonsterIndex = 1
         val numMonsters = 8 + floorIndex * 2
 
-        val availableMonsterSpots = possibleFloors.filter { 
+        // Avoid placing enemies close to player (at least 1.25f Euclidean distance, which is the agro limit)
+        var minAgroSpawnThreshold = 1.25f
+        var availableMonsterSpots = possibleFloors.filter { 
             it != px && it != sx && !availableChestSpots.contains(it) && 
-            (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > 0.5f
-        }.shuffled().take(numMonsters)
+            (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > minAgroSpawnThreshold
+        }
+        if (availableMonsterSpots.size < numMonsters) {
+            minAgroSpawnThreshold = 0.9f
+            availableMonsterSpots = possibleFloors.filter { 
+                it != px && it != sx && !availableChestSpots.contains(it) && 
+                (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > minAgroSpawnThreshold
+            }
+        }
+        val finalMonsterSpots = availableMonsterSpots.shuffled().take(numMonsters)
 
-        for (idx in availableMonsterSpots.indices) {
+        for (idx in finalMonsterSpots.indices) {
             val hType = when {
                 floorIndex >= 9 && idx == 0 -> "DRAGON"
                 floorIndex >= 7 && rnd.nextBoolean() -> "NECROMANCER"
@@ -1081,7 +1088,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                 "GOBLIN" -> 35 + floorIndex * 5
                 else -> 24 + floorIndex * 4
             }
-            floorMonsters.add(MonsterState(globalMonsterIndex++, hType, hp, hp, availableMonsterSpots[idx], 0))
+            floorMonsters.add(MonsterState(globalMonsterIndex++, hType, hp, hp, finalMonsterSpots[idx], 0))
         }
 
         _playerX.value = px

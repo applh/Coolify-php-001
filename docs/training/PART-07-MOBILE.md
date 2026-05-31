@@ -606,5 +606,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Create a custom Kotlin unit test verifying that generated floor levels always cover at least 50% of the total nodes (322 nodes minimum) and that a path between a randomized start node and the portal is always fully interconnected inside the graph.
 - **Complexity**: Part 5
 
+### 98. Moria Roguelike: Advanced Spherical Path-Tolerant Level Design & Distant Spawn Buffering (18h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`
+- **Goal**: Master the calibration of spherical cellular automata (CA) density rules and enemy spatial distribution boundaries. Learn how corridor-only geodesic highway carving, reduced initial noisy seeding (~38%), and refined honeycomb CA neighbor counts can eliminate wide-plain flatlands to produce immersive winding labyrinths. Understand how to design multi-tier distance-checked spawning safety guards preventing immediate close-proximity agent swarming at floor entry.
+- **Exercise**: Implement a secondary check in the generator that increases the minimum enemy spawning distance dynamically as the player advances to deeper floor levels, ensuring high-tier enemies like Necromancers spawn on the absolute opposite side of the icosphere.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
