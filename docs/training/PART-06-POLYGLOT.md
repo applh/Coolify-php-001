@@ -38,7 +38,14 @@ Learn to build high-performance services using Node.js, Go, Rust, and Python.
 - **Exercise**: Conduct a load-testing benchmark using a tool like Apache Benchmark or `wrk` against the same endpoint (e.g., `/admin/api/sites`) hosted on Go, Rust, Python, and PHP. Document how the theoretical comparison in `stack-comparison.md` lines up with real-world latency, memory usage, and concurrency results.
 - **Complexity**: Part 4 (Advanced).
 
+### 5. Multi-Stack GLB 3D Integration & Binary Parsing API (35h) 🍓 NEW
+**Reference**: `/docs/glb-multi-stack-integration-plan.md`
+- **Goal**: Understand model loading, format validation, asset compression, and skeletal animation parameters within multiple backend and client runtimes (Kotlin, Dart, Go, PHP, Python, React, Vue, Rust).
+- **Exercise**: Write a standalone, testable validation script in Go (under `repo-go/`) or Python (under `repo-python/`) that reads an uploaded or local binary file, verifies the presence of the GLB standard `0x46546C67` ("glTF") byte array magic headers, and parses the 12-byte container header limits safely without loading the full file structure into active heap memory.
+- **Complexity**: Part 5 (Highly Advanced).
+
 ## Recommended Reading
 - `docs/backend/node-cms-features.md`
 - `docs/backend/multi-stack-equivalence-plan.md`
+- `docs/glb-multi-stack-integration-plan.md`
 
