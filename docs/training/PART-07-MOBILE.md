@@ -582,5 +582,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Modify the `walkTowardsTarget()` route pathfinder search algorithm to avoid stepping on or triggering trap tiles, and display an alert log if a potential trap is located directly on the path step.
 - **Complexity**: Part 4
 
+### 94. Moria Roguelike: Tap-Targeting Grid Navigation & Unified "GO" Controller (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`
+- **Goal**: Understand how to implement persistent, user-selected navigation targets coupled with a unified, high-utility controller panel in Jetpack Compose. Learn the principles of replacing redundant button arrays and legacy directional crosses with a single, clear "GO" action button driven by stateful path routing.
+- **Exercise**: Implement a visual path highlight indicator on the map that dynamically colors nodes along the path from the player's current position to the selected target node, utilizing the `_targetNodeId` state to draw visual coordinates.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

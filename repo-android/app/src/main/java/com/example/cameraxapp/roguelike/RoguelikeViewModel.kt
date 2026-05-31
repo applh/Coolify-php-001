@@ -38,6 +38,13 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
     private val _lockedMonsterId = mutableStateOf<Int?>(null)
     val lockedMonsterId: State<Int?> get() = _lockedMonsterId
 
+    private val _targetNodeId = mutableStateOf<Int?>(null)
+    val targetNodeId: State<Int?> get() = _targetNodeId
+
+    fun setTargetNode(nodeId: Int) {
+        _targetNodeId.value = nodeId
+    }
+
     private var joyX = 0f
     private var joyY = 0f
     private var currentCameraYaw = -0.65f
@@ -162,6 +169,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         _characterState.value = charState
         _inventory.value = startItems
         _gameLogs.value = listOf("Welcome, level 1 $heroClass!", "Explore the procedurally generated corridors. Defeat the Dragon on Floor 10.")
+        _targetNodeId.value = null
         
         generateFloor(1)
 
@@ -364,6 +372,29 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         val char = _characterState.value ?: return
         if (_status.value != GameStatus.EXPLORING) return
 
+        val currentNodeId = _playerX.value
+        val tgtNodeId = _targetNodeId.value
+
+        if (tgtNodeId != null) {
+            if (currentNodeId == tgtNodeId) {
+                _targetNodeId.value = null
+                addCombatLog("Already at target position.")
+                return
+            }
+            val step = findNextStep(currentNodeId, tgtNodeId)
+            if (step != null) {
+                movePlayerToNode(tgtNodeId)
+                if (_playerX.value == tgtNodeId) {
+                    addCombatLog("Arrived at target position! 📍")
+                    _targetNodeId.value = null
+                }
+            } else {
+                addCombatLog("No valid path found to the target position.")
+                _targetNodeId.value = null
+            }
+            return
+        }
+
         var targetId = _lockedMonsterId.value
         if (targetId == null) {
             val nearest = findNearestRevealedMonster()
@@ -384,10 +415,9 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             return
         }
 
-        val currentNodeId = _playerX.value
         val step = findNextStep(currentNodeId, targetMonster.x)
         if (step != null) {
-            movePlayerToNode(step)
+            movePlayerToNode(targetMonster.x)
         } else {
             addCombatLog("No valid path found to the target ${targetMonster.type}.")
         }
@@ -465,6 +495,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
     fun restartGame() {
         _characterState.value = null
+        _targetNodeId.value = null
         dbHelper.clearAllActiveRun()
         _status.value = GameStatus.CHARACTER_SELECT
     }
@@ -737,6 +768,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         addCombatLog("Descended narrow stairs down towards Floor $nextFloor... 🐉")
         audioEngine.playLevelUp()
 
+        _targetNodeId.value = null
         _characterState.value = char.copy(floor = nextFloor)
         generateFloor(nextFloor)
         
@@ -835,6 +867,9 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             playerX = targetId,
             turns = char.turns + 1
         )
+        if (_playerX.value == _targetNodeId.value) {
+            _targetNodeId.value = null
+        }
         saveCurrentTurnState()
     }
 

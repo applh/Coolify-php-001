@@ -150,7 +150,10 @@ fun RoguelikeScreen(
                                             heroClass = char.heroClass,
                                             lockedMonsterId = lockedMonsterId,
                                             onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
-                                            onNodeTapped = { id -> viewModel.movePlayerToNode(id) },
+                                            onNodeTapped = { id -> 
+                                                viewModel.setTargetNode(id)
+                                                viewModel.movePlayerToNode(id)
+                                            },
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -169,7 +172,6 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
-                                        onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
@@ -195,7 +197,10 @@ fun RoguelikeScreen(
                                             heroClass = char.heroClass,
                                             lockedMonsterId = lockedMonsterId,
                                             onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
-                                            onNodeTapped = { id -> viewModel.movePlayerToNode(id) },
+                                            onNodeTapped = { id -> 
+                                                viewModel.setTargetNode(id)
+                                                viewModel.movePlayerToNode(id)
+                                            },
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -214,7 +219,6 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
-                                        onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
@@ -340,7 +344,6 @@ fun HudPanel(
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
-    onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
     onToggleTargetLock: () -> Unit = {},
     onWalkTowardsTarget: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -372,7 +375,6 @@ fun HudPanel(
             onEnable = onEnable,
             onDrinkHealthPotion = onDrinkHealthPotion,
             onDrinkManaPotion = onDrinkManaPotion,
-            onUpdateJoystick = onUpdateJoystick,
             onToggleTargetLock = onToggleTargetLock,
             onWalkTowardsTarget = onWalkTowardsTarget
         )
@@ -518,7 +520,6 @@ fun ControlPanel(
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
-    onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
     onToggleTargetLock: () -> Unit = {},
     onWalkTowardsTarget: () -> Unit = {}
 ) {
@@ -529,7 +530,7 @@ fun ControlPanel(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Left Column: Other Buttons (Enable, Toggle mode)
+        // Left Column: Other Buttons (Toggle mode)
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.Start,
@@ -553,49 +554,9 @@ fun ControlPanel(
                     textAlign = TextAlign.Center
                 )
             }
-
-            Button(
-                onClick = onWalkTowardsTarget,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2F3F)),
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .width(76.dp)
-                    .height(36.dp)
-                    .border(0.6.dp, Color(0xFF3F8FDF).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            ) {
-                Text(
-                    text = "🚶 Walk",
-                    fontSize = 11.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            if (!is3DMode) {
-                Button(
-                    onClick = onEnable,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A1E)),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .width(76.dp)
-                        .height(36.dp)
-                        .border(0.6.dp, Color(0xFF81C784).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                ) {
-                    Text(
-                        text = "⚡ Enable",
-                        fontSize = 10.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
         }
 
-        // Right Column: Action Grid & DPad next to each other
+        // Right Column: Action Grid & GamepadGoPanel next to each other
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
@@ -611,15 +572,11 @@ fun ControlPanel(
                 onDrinkManaPotion = onDrinkManaPotion
             )
 
-            if (is3DMode) {
-                GamepadCirclePad(
-                    onUpdateJoystick = onUpdateJoystick,
-                    onToggleTargetLock = onToggleTargetLock,
-                    onEnable = onEnable
-                )
-            } else {
-                GamepadDPad(onMove = onMove, onEnable = onEnable)
-            }
+            GamepadGoPanel(
+                onWalkTowardsTarget = onWalkTowardsTarget,
+                onToggleTargetLock = onToggleTargetLock,
+                onEnable = onEnable
+            )
         }
     }
 }
@@ -1200,121 +1157,18 @@ fun ScoresView(
 }
 
 @Composable
-fun GamepadDPad(onMove: (Int, Int) -> Unit, onEnable: () -> Unit) {
-    val ColorNorth = Color(0xFF3A86C8) // Sky Blue
-    val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
-    val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
-    val ColorEast = Color(0xFF2EC4B6)  // Teal Green
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
-            .border(1.dp, Color(0xFFFFD700).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
-            .padding(8.dp)
-    ) {
-        // UP Button (North)
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
-                .border(2.dp, ColorNorth, RoundedCornerShape(10.dp))
-                .clickable { onMove(0, -1) },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("▲", color = ColorNorth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text("N", color = ColorNorth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
-            }
-        }
-
-        Row(
-            modifier = Modifier.padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // LEFT Button (West)
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
-                    .border(2.dp, ColorWest, RoundedCornerShape(10.dp))
-                    .clickable { onMove(1, 0) },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("◀", color = ColorWest, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(1.dp))
-                    Text("W", color = ColorWest, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                }
-            }
-
-            // ENABLE interaction option (Center resting)
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(Color(0xFF1E3A1E).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
-                    .border(1.dp, Color(0xFF81C784).copy(alpha = 0.4f), RoundedCornerShape(22.dp))
-                    .clickable { onEnable() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("⚡", color = Color.White, fontSize = 16.sp)
-            }
-
-            // RIGHT Button (East)
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
-                    .border(2.dp, ColorEast, RoundedCornerShape(10.dp))
-                    .clickable { onMove(-1, 0) },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("E", color = ColorEast, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-                    Spacer(modifier = Modifier.width(1.dp))
-                    Text("▶", color = ColorEast, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // DOWN Button (South)
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(Color(0xFF141414).copy(alpha = 0.85f), RoundedCornerShape(10.dp))
-                .border(2.dp, ColorSouth, RoundedCornerShape(10.dp))
-                .clickable { onMove(0, 1) },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("S", color = ColorSouth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
-                Text("▼", color = ColorSouth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun GamepadCirclePad(
-    onUpdateJoystick: (Float, Float) -> Unit,
+fun GamepadGoPanel(
+    onWalkTowardsTarget: () -> Unit,
     onToggleTargetLock: () -> Unit,
     onEnable: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var dragOffset by remember { mutableStateOf(Offset.Zero) }
-    val density = LocalDensity.current
-    val outerSizeDp = 100.dp
-    val knobSizeDp = 40.dp
-    
-    val outerRadiusPx = with(density) { (outerSizeDp / 2).toPx() }
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(24.dp))
-            .border(1.5.dp, Color(0xFF00FFCC).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+            .border(1.5.dp, Color(0xFFFFD700).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
             .padding(12.dp)
     ) {
         // 1. Sleek Action Button: Enable/Interact
@@ -1329,91 +1183,23 @@ fun GamepadCirclePad(
             Text("⚡", color = Color.White, fontSize = 18.sp)
         }
 
-        // 2. The Analog Drag Circle Pad
-        Box(
+        // 2. The prominent movement "GO" Button (replaces joystick and directional cross)
+        Button(
+            onClick = onWalkTowardsTarget,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F3A52)),
+            contentPadding = PaddingValues(0.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier
-                .size(outerSizeDp)
-                .background(Color(0xFF121212).copy(alpha = 0.85f), RoundedCornerShape(outerSizeDp / 2))
-                .border(2.dp, Color(0xFF00FFCC).copy(alpha = 0.4f), RoundedCornerShape(outerSizeDp / 2))
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragEnd = {
-                            dragOffset = Offset.Zero
-                            onUpdateJoystick(0f, 0f)
-                        },
-                        onDragCancel = {
-                            dragOffset = Offset.Zero
-                            onUpdateJoystick(0f, 0f)
-                        },
-                        onDrag = { change, dragAmount ->
-                            change.consume()
-                            val rawOffset = dragOffset + dragAmount
-                            val dist = sqrt(rawOffset.x * rawOffset.x + rawOffset.y * rawOffset.y)
-                            dragOffset = if (dist <= outerRadiusPx) {
-                                rawOffset
-                            } else {
-                                Offset(
-                                    x = (rawOffset.x / dist) * outerRadiusPx,
-                                    y = (rawOffset.y / dist) * outerRadiusPx
-                                )
-                            }
-                            val normX = dragOffset.x / outerRadiusPx
-                            val normY = dragOffset.y / outerRadiusPx
-                            onUpdateJoystick(normX, normY)
-                        }
-                    )
-                },
-            contentAlignment = Alignment.Center
+                .size(76.dp, 44.dp)
+                .border(2.dp, Color(0xFFFFD700), RoundedCornerShape(12.dp))
         ) {
-            // Coordinate lines behind thumb knob
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val cx = size.width / 2f
-                val cy = size.height / 2f
-                drawCircle(
-                    color = Color(0xFF00FFCC).copy(alpha = 0.12f),
-                    radius = size.width * 0.35f,
-                    style = Stroke(width = 1f)
-                )
-                drawLine(
-                    color = Color(0xFF00FFCC).copy(alpha = 0.15f),
-                    start = Offset(0f, cy),
-                    end = Offset(size.width, cy),
-                    strokeWidth = 1f
-                )
-                drawLine(
-                    color = Color(0xFF00FFCC).copy(alpha = 0.15f),
-                    start = Offset(cx, 0f),
-                    end = Offset(cx, size.height),
-                    strokeWidth = 1f
-                )
-            }
-
-            // Knob (The slide handle)
-            Box(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            x = dragOffset.x.roundToInt(),
-                            y = dragOffset.y.roundToInt()
-                        )
-                    }
-                    .size(knobSizeDp)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFF00FFCC), Color(0xFF008B8B))
-                        ),
-                        shape = RoundedCornerShape(knobSizeDp / 2)
-                    )
-                    .border(1.5.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(knobSizeDp / 2))
-                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(knobSizeDp / 2)),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(Color.White, RoundedCornerShape(4.dp))
-                )
-            }
+            Text(
+                text = "GO",
+                fontSize = 16.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
         }
 
         // 3. Target Lock-On Button ("🎯")
