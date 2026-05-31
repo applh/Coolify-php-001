@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -141,6 +142,20 @@ fun DungeonCanvas3D(
         }
     }
 
+    val distantStars = remember {
+        List(150) {
+            val u = kotlin.random.Random.nextFloat()
+            val v = kotlin.random.Random.nextFloat()
+            val theta = 2f * Math.PI.toFloat() * u
+            val phi = acos(2f * v - 1f)
+            val stX = sin(phi) * cos(theta)
+            val stY = sin(phi) * sin(theta)
+            val stZ = cos(phi)
+            val size = kotlin.random.Random.nextFloat() * 3f + 1f
+            Triple(Vector3(stX, stY, stZ).normalize() * 1000f, Color.White.copy(alpha = kotlin.random.Random.nextFloat() * 0.7f + 0.3f), size)
+        }
+    }
+
     Box(
         modifier = modifier
             .pointerInput(Unit) {
@@ -152,7 +167,7 @@ fun DungeonCanvas3D(
             }
     ) {
         Canvas(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-            androidx.compose.foundation.gestures.detectTapGestures { offset ->
+            detectTapGestures { offset ->
                 var minId = -1
                 var minDist = Float.MAX_VALUE
                 for (node in planetNodes.values) {
