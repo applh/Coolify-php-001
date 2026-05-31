@@ -600,5 +600,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary lighting preset slider in the display options modal that changes the default lantern shading coefficient from `2.2f` to a user-defined range of `1f` to `5f` dynamically.
 - **Complexity**: Part 4
 
+### 97. Moria Roguelike: High-Density Spherical Cellular Automata & Geodesic Highway Routing (20h) 🍓 NEW
+- **Reference**: `repo-android/docs/moria-spherical-level-generation-plan.md`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`
+- **Goal**: Comprehend the design of procedural level generators on closed 3D manifolds (subdivided Icospheres). Learn how to combine multi-seed antipodal coordinates, carve robust great-circle geodesic highways, and utilize graph-based Cellular Automata rules to achieve uniform coverage greater than 50% of the surface. Master graph connectivity BFS verification to heal island caverns using shortest chord vector A* tunneling.
+- **Exercise**: Create a custom Kotlin unit test verifying that generated floor levels always cover at least 50% of the total nodes (322 nodes minimum) and that a path between a randomized start node and the portal is always fully interconnected inside the graph.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

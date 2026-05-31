@@ -884,6 +884,82 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         saveCurrentTurnState()
     }
 
+    private fun findUnweightedShortestPath(from: Int, to: Int): List<Int> {
+        val queue = ArrayDeque<Int>()
+        val cameFrom = mutableMapOf<Int, Int>()
+        queue.add(from)
+        cameFrom[from] = from
+        
+        while (queue.isNotEmpty()) {
+            val curr = queue.removeFirst()
+            if (curr == to) break
+            planetNodes[curr]?.neighbors?.forEach { next ->
+                if (!cameFrom.containsKey(next)) {
+                    cameFrom[next] = curr
+                    queue.add(next)
+                }
+            }
+        }
+        
+        if (!cameFrom.containsKey(to)) return emptyList()
+        val path = mutableListOf<Int>()
+        var curr = to
+        while (curr != from) {
+            path.add(curr)
+            curr = cameFrom[curr]!!
+        }
+        path.add(from)
+        return path.reversed()
+    }
+
+    private fun ensureSphericalConnectivity(nextTiles: MutableMap<Int, GameTile>, startNode: Int) {
+        while (true) {
+            val reachable = mutableSetOf<Int>()
+            val queue = ArrayDeque<Int>()
+            queue.add(startNode)
+            reachable.add(startNode)
+            
+            while (queue.isNotEmpty()) {
+                val curr = queue.removeFirst()
+                planetNodes[curr]?.neighbors?.forEach { next ->
+                    if (nextTiles[next]?.tileType != "WALL" && !reachable.contains(next)) {
+                        reachable.add(next)
+                        queue.add(next)
+                    }
+                }
+            }
+            
+            val allFloors = nextTiles.filter { it.value.tileType != "WALL" }.keys
+            val unreachable = allFloors.filter { !reachable.contains(it) }
+            
+            if (unreachable.isEmpty()) {
+                break
+            }
+            
+            var closestReachable = startNode
+            var closestUnreachable = unreachable.first()
+            var minDist = Float.MAX_VALUE
+            
+            for (r in reachable) {
+                val rPos = planetNodes[r]?.position ?: continue
+                for (u in unreachable) {
+                    val uPos = planetNodes[u]?.position ?: continue
+                    val dist = (rPos - uPos).length()
+                    if (dist < minDist) {
+                        minDist = dist
+                        closestReachable = r
+                        closestUnreachable = u
+                    }
+                }
+            }
+            
+            val bridgePath = findUnweightedShortestPath(closestReachable, closestUnreachable)
+            for (nodeId in bridgePath) {
+                nextTiles[nodeId] = GameTile(nodeId, 0, "FLOOR", false)
+            }
+        }
+    }
+
     private fun generateFloor(floorIndex: Int) {
         val nextTiles = mutableMapOf<Int, GameTile>()
         for (id in planetNodes.keys) {
@@ -892,53 +968,103 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
         val rnd = java.util.Random()
         
-        // Use Drunkard's Walk / Flood Fill to carve a cavern network on the sphere
+        // Define primary, secondary, and helper seeds to exploit full sphere
         val startNode = planetNodes.keys.random()
-        var current = startNode
-        var floorCount = 0
-        val targetFloors = 200 // about 30% of the planet is floor
+        val exitNode = planetNodes.keys.maxByOrNull { (planetNodes[startNode]!!.position - planetNodes[it]!!.position).length() } ?: startNode
         
-        while (floorCount < targetFloors) {
-            if (nextTiles[current]?.tileType == "WALL") {
-                nextTiles[current] = GameTile(current, 0, "FLOOR", false)
-                floorCount++
-            }
-            if (rnd.nextFloat() < 0.1f) {
-                current = startNode // Reset to avoid long singular snake paths
-            } else {
-                current = planetNodes[current]?.neighbors?.random() ?: startNode
+        val middleSeed1 = planetNodes.keys.filter { it != startNode && it != exitNode }.random()
+        val middleSeed2 = planetNodes.keys.filter { it != startNode && it != exitNode && it != middleSeed1 }.random()
+
+        // Build Geodesic highways connecting the seeds
+        val highwaySet = mutableSetOf<Int>()
+        val mainHighway = findUnweightedShortestPath(startNode, exitNode)
+        val branch1 = findUnweightedShortestPath(startNode, middleSeed1) + findUnweightedShortestPath(middleSeed1, exitNode)
+        val branch2 = findUnweightedShortestPath(startNode, middleSeed2) + findUnweightedShortestPath(middleSeed2, exitNode)
+        
+        highwaySet.addAll(mainHighway)
+        highwaySet.addAll(branch1)
+        highwaySet.addAll(branch2)
+
+        // Carve highways with buffer corridors to ensure easy traversing
+        for (nodeId in highwaySet) {
+            nextTiles[nodeId] = GameTile(nodeId, 0, "FLOOR", false)
+            planetNodes[nodeId]?.neighbors?.forEach { neighborId ->
+                nextTiles[neighborId] = GameTile(neighborId, 0, "FLOOR", false)
             }
         }
 
-        // Guarantee start node is floor
+        // Spherical Cellular Automata: initial noisy seed for remaining wall nodes
+        for (id in planetNodes.keys) {
+            if (nextTiles[id]?.tileType == "WALL") {
+                if (rnd.nextFloat() < 0.54f) {
+                    nextTiles[id] = GameTile(id, 0, "FLOOR", false)
+                }
+            }
+        }
+
+        // Cellular Automata smoothing passes
+        for (pass in 0 until 3) {
+            val currentTypes = nextTiles.mapValues { it.value.tileType }
+            for (id in planetNodes.keys) {
+                if (id == startNode || id == exitNode || highwaySet.contains(id)) {
+                    continue
+                }
+                val neighbors = planetNodes[id]?.neighbors ?: emptyList()
+                val floorCount = neighbors.count { currentTypes[it] == "FLOOR" }
+                if (currentTypes[id] == "WALL") {
+                    if (floorCount >= 3) {
+                        nextTiles[id] = GameTile(id, 0, "FLOOR", false)
+                    }
+                } else {
+                    if (floorCount < 2) {
+                        nextTiles[id] = GameTile(id, 0, "WALL", false)
+                    }
+                }
+            }
+        }
+
+        // Guarantee at least 325 floor tiles out of 642 (>50.6% surface coverage)
+        var currentFloorCount = nextTiles.values.count { it.tileType != "WALL" }
+        val targetMinFloors = 325
+        while (currentFloorCount < targetMinFloors) {
+            val candidates = nextTiles.filter { it.value.tileType == "WALL" }.keys.filter { wallId ->
+                planetNodes[wallId]?.neighbors?.any { nextTiles[it]?.tileType != "WALL" } == true
+            }
+            if (candidates.isEmpty()) {
+                val anyWall = nextTiles.filter { it.value.tileType == "WALL" }.keys.randomOrNull() ?: break
+                nextTiles[anyWall] = GameTile(anyWall, 0, "FLOOR", false)
+            } else {
+                val chosenWall = candidates.random()
+                nextTiles[chosenWall] = GameTile(chosenWall, 0, "FLOOR", false)
+            }
+            currentFloorCount++
+        }
+
+        // Force complete connectedness using shortest geodesic path mergers
+        ensureSphericalConnectivity(nextTiles, startNode)
+
+        // Pin the player start and stairs down portal
         val px = startNode
+        val sx = exitNode
         nextTiles[px] = GameTile(px, 0, "FLOOR", false)
+        nextTiles[sx] = GameTile(sx, 0, "STAIRS_DOWN", false)
 
         val possibleFloors = nextTiles.values.filter { it.tileType == "FLOOR" }.map { it.x }
 
-        // Exit staircase placement as far from px as possible
-        val sx = possibleFloors.maxByOrNull { fId ->
-            val v1 = planetNodes[px]!!.position
-            val v2 = planetNodes[fId]!!.position
-            (v1 - v2).length()
-        } ?: possibleFloors.last()
-        
-        nextTiles[sx] = GameTile(sx, 0, "STAIRS_DOWN", false)
-
-        // Randomly place 3 treasure chests
+        // Place 3 chests
         val availableChestSpots = possibleFloors.filter { it != px && it != sx }.shuffled().take(3)
         for (cx in availableChestSpots) {
             nextTiles[cx] = GameTile(cx, 0, "CHEST", false)
         }
 
-        // Place hostiles in random locations
+        // Place hostiles
         val floorMonsters = mutableListOf<MonsterState>()
         var globalMonsterIndex = 1
         val numMonsters = 8 + floorIndex * 2
 
         val availableMonsterSpots = possibleFloors.filter { 
             it != px && it != sx && !availableChestSpots.contains(it) && 
-            (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > 0.5f // Ensure distance from origin
+            (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > 0.5f
         }.shuffled().take(numMonsters)
 
         for (idx in availableMonsterSpots.indices) {
