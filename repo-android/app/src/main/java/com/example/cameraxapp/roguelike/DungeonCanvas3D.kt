@@ -124,13 +124,27 @@ fun DungeonCanvas3D(
         val lockedM = monsters.find { it.id == lockedMonsterId }
         val lockedNodePos = planetNodes[lockedM?.x]?.position
         if (lockedNodePos != null) {
-            val dx = lockedNodePos.x - playerVec.x
-            val dz = lockedNodePos.z - playerVec.z // Use projection to 2D for rotation roughly
-            val targetYaw = atan2(dz, dx) - PI.toFloat() / 2f
-            var diff = targetYaw - yawAngle
-            while (diff < -PI) diff += (2f * PI).toFloat()
-            while (diff > PI) diff -= (2f * PI).toFloat()
-            yawAngle += diff * 0.12f // smoothly lerp camera yaw rotation
+            val upVec = if (abs(playerVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+            val xAxis = upVec.cross(playerVec).normalize()
+            val yAxis = playerVec.cross(xAxis).normalize()
+            val zAxis = Vector3(-playerVec.x, -playerVec.y, -playerVec.z)
+
+            val vx = lockedNodePos.x * xAxis.x + lockedNodePos.y * xAxis.y + lockedNodePos.z * xAxis.z
+            val vy = lockedNodePos.x * yAxis.x + lockedNodePos.y * yAxis.y + lockedNodePos.z * yAxis.z
+            val vz = lockedNodePos.x * zAxis.x + lockedNodePos.y * zAxis.y + lockedNodePos.z * zAxis.z
+
+            val targetYaw = atan2(vx, -vz)
+            val targetPitch = -atan2(vy, -vz)
+            
+            var diffY = targetYaw - yawAngle
+            while (diffY < -PI) diffY += (2f * PI).toFloat()
+            while (diffY > PI) diffY -= (2f * PI).toFloat()
+            yawAngle += diffY * 0.05f 
+
+            var diffP = targetPitch - pitchAngle
+            while (diffP < -PI) diffP += (2f * PI).toFloat()
+            while (diffP > PI) diffP -= (2f * PI).toFloat()
+            pitchAngle += diffP * 0.05f
         }
     }
 
@@ -161,7 +175,7 @@ fun DungeonCanvas3D(
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
                     yawAngle = (yawAngle + pan.x * 0.007f)
-                    pitchAngle = (pitchAngle + pan.y * 0.007f).coerceIn(0.15f, 1.48f)
+                    pitchAngle = (pitchAngle + pan.y * 0.007f)
                     zoomScale = (zoomScale * zoom).coerceIn(0.15f, 10.0f)
                 }
             }
@@ -170,19 +184,28 @@ fun DungeonCanvas3D(
             detectTapGestures { offset ->
                 var minId = -1
                 var minDist = Float.MAX_VALUE
-                for (node in planetNodes.values) {
-                    val pos = node.position * 155f // R
-                    val targetCenter = playerVec * 155f
-                    val rel = pos - targetCenter
-                    val rx = rel.x * cos(yawAngle) + rel.z * sin(yawAngle)
-                    val ryHalf = -rel.x * sin(yawAngle) + rel.z * cos(yawAngle)
-                    val ry = rel.y * cos(pitchAngle) - ryHalf * sin(pitchAngle)
-                    val rz = rel.y * sin(pitchAngle) + ryHalf * cos(pitchAngle)
+                
+                val upVec = if (abs(playerVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                val xAxis = upVec.cross(playerVec).normalize()
+                val yAxis = playerVec.cross(xAxis).normalize()
+                val zAxis = Vector3(-playerVec.x, -playerVec.y, -playerVec.z)
 
-                    val denom = rz + 320f
+                for (node in planetNodes.values) {
+                    val pos = node.position
+
+                    val vx = pos.x * xAxis.x + pos.y * xAxis.y + pos.z * xAxis.z
+                    val vy = pos.x * yAxis.x + pos.y * yAxis.y + pos.z * yAxis.z
+                    val vz = pos.x * zAxis.x + pos.y * zAxis.y + pos.z * zAxis.z
+
+                    val rx = vx * cos(yawAngle) + vz * sin(yawAngle)
+                    val ryHalf = -vx * sin(yawAngle) + vz * cos(yawAngle)
+                    val ry = vy * cos(pitchAngle) - ryHalf * sin(pitchAngle)
+                    val rz = vy * sin(pitchAngle) + ryHalf * cos(pitchAngle)
+
+                    val denom = rz * 155f + 155f + 320f
                     if (denom > 0) {
-                        val sx = (size.width/2f) + (rx * 280f * zoomScale) / denom
-                        val sy = (size.height/2f) + (ry * 280f * zoomScale) / denom
+                        val sx = (size.width/2f) + (rx * 155f * 280f * zoomScale) / denom
+                        val sy = (size.height/2f) + (ry * 155f * 280f * zoomScale) / denom
                         val dx = sx - offset.x
                         val dy = sy - offset.y
                         val dist = dx*dx + dy*dy
@@ -233,26 +256,31 @@ fun DungeonCanvas3D(
                 return vertices
             }
 
-            // Orbit follow camera centered on player's position on the sphere surface
-            val targetCenter = playerVec * R
-
             val cosYaw = cos(yawAngle)
             val sinYaw = sin(yawAngle)
             val cosPitch = cos(pitchAngle)
             val sinPitch = sin(pitchAngle)
+
+            val upVec = if (abs(playerVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+            val xAxis = upVec.cross(playerVec).normalize()
+            val yAxis = playerVec.cross(xAxis).normalize()
+            val zAxis = Vector3(-playerVec.x, -playerVec.y, -playerVec.z)
 
             class PrecalculatedPoint(val rotZ: Float, val proj: Offset)
             val vertexCache = mutableMapOf<Vector3, PrecalculatedPoint>()
 
             fun getOrComputePoint(v: Vector3): PrecalculatedPoint {
                 return vertexCache.getOrPut(v) {
-                    val rel = v - targetCenter
-                    val rx = rel.x * cosYaw + rel.z * sinYaw
-                    val ryHalf = -rel.x * sinYaw + rel.z * cosYaw
-                    val ry = rel.y * cosPitch - ryHalf * sinPitch
-                    val rz = rel.y * sinPitch + ryHalf * cosPitch
+                    val vx = v.x * xAxis.x + v.y * xAxis.y + v.z * xAxis.z
+                    val vy = v.x * yAxis.x + v.y * yAxis.y + v.z * yAxis.z
+                    val vz = v.x * zAxis.x + v.y * zAxis.y + v.z * zAxis.z
 
-                    val denom = rz + cameraZ
+                    val rx = vx * cosYaw + vz * sinYaw
+                    val ryHalf = -vx * sinYaw + vz * cosYaw
+                    val ry = vy * cosPitch - ryHalf * sinPitch
+                    val rz = vy * sinPitch + ryHalf * cosPitch
+
+                    val denom = rz + R + cameraZ
                     val sx = cX + (rx * dFactor * zoomScale) / if (denom != 0f) denom else 1f
                     val sy = cY + (ry * dFactor * zoomScale) / if (denom != 0f) denom else 1f
                     PrecalculatedPoint(rz, Offset(sx, sy))
@@ -277,18 +305,13 @@ fun DungeonCanvas3D(
 
             // A. CELESTIAL STARRY PARALLAX BACKGROUND
             distantStars.forEach { (starPos, color, size) ->
-                val rx = starPos.x * cosYaw + starPos.z * sinYaw
-                val ryHalf = -starPos.x * sinYaw + starPos.z * cosYaw
-                val ry = starPos.y * cosPitch - ryHalf * sinPitch
-                val rz = starPos.y * sinPitch + ryHalf * cosPitch
-                
-                val denom = rz + cameraZ
+                val rz = getRotatedZDeep(starPos)
+                val denom = rz + R + cameraZ
                 if (denom > 50f) {
-                    val sx = cX + (rx * dFactor * zoomScale) / denom
-                    val sy = cY + (ry * dFactor * zoomScale) / denom
-                    if (sx in 0f..width && sy in 0f..height) {
+                    val p = projectPoint(starPos)
+                    if (p.x in 0f..width && p.y in 0f..height) {
                         drawPipeline.add(RenderItem3D.Sphere(
-                            center = starPos + targetCenter, // starPos offsets cancel center translation
+                            center = starPos,
                             radius = size * zoomScale * 0.25f,
                             color = color,
                             depth = rz + 100000f // absolute backlayer
@@ -668,7 +691,7 @@ fun DungeonCanvas3D(
                     is RenderItem3D.Sphere -> {
                         val pCenter = projectPoint(item.center)
                         val rotZ = getRotatedZDeep(item.center)
-                        val denom = rotZ + cameraZ
+                        val denom = rotZ + R + cameraZ
                         val radiusRatio = if (denom > 0f) dFactor / denom else 1f
                         val screenRadius = item.radius * zoomScale * radiusRatio
                         if (screenRadius > 0.5f) {
@@ -728,10 +751,14 @@ fun DungeonCanvas3D(
             val labelLen = compassRadius * 0.98f
 
             fun rotateForHud(v: Vector3): Vector3 {
-                val rx = v.x * cosYaw + v.z * sinYaw
-                val ryHalf = -v.x * sinYaw + v.z * cosYaw
-                val ry = v.y * cosPitch - ryHalf * sinPitch
-                val rz = v.y * sinPitch + ryHalf * cosPitch
+                val vx = v.x * xAxis.x + v.y * xAxis.y + v.z * xAxis.z
+                val vy = v.x * yAxis.x + v.y * yAxis.y + v.z * yAxis.z
+                val vz = v.x * zAxis.x + v.y * zAxis.y + v.z * zAxis.z
+
+                val rx = vx * cosYaw + vz * sinYaw
+                val ryHalf = -vx * sinYaw + vz * cosYaw
+                val ry = vy * cosPitch - ryHalf * sinPitch
+                val rz = vy * sinPitch + ryHalf * cosPitch
                 return Vector3(rx, ry, rz)
             }
 

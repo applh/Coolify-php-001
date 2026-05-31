@@ -667,17 +667,57 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
     val planetNodes = IcosphereGenerator.generate(3) // 642 nodes
 
+    private fun findNextStep(start: Int, end: Int): Int? {
+        val queue = ArrayDeque<Int>()
+        val cameFrom = mutableMapOf<Int, Int>()
+        queue.add(start)
+        cameFrom[start] = start
+
+        while (queue.isNotEmpty()) {
+            val curr = queue.removeFirst()
+            if (curr == end) break
+            
+            planetNodes[curr]?.neighbors?.forEach { next ->
+                if (!cameFrom.containsKey(next)) {
+                    val tile = _tiles.value.find { it.x == next }
+                    // Allow targeting monsters or chests, but don't walk through walls
+                    if (tile?.tileType != "WALL") {
+                        cameFrom[next] = curr
+                        queue.add(next)
+                    }
+                }
+            }
+        }
+        
+        if (!cameFrom.containsKey(end)) return null
+        
+        var step = end
+        while (cameFrom[step] != start) {
+            val prev = cameFrom[step] ?: return null
+            if (prev == start) return step
+            step = prev
+        }
+        return step
+    }
+
     fun movePlayerToNode(nodeId: Int) {
         val char = _characterState.value ?: return
         if (_status.value != GameStatus.EXPLORING) return
 
         val currentNodeId = _playerX.value
         
-        // Tap allows moving to neighbors OR same location (wait)
-        val isNeighbor = planetNodes[currentNodeId]?.neighbors?.contains(nodeId) == true
-        if (currentNodeId != nodeId && !isNeighbor) return
+        var targetId = nodeId
+        val isNeighbor = planetNodes[currentNodeId]?.neighbors?.contains(targetId) == true
+        if (currentNodeId != targetId && !isNeighbor) {
+            val step = findNextStep(currentNodeId, targetId)
+            if (step != null) {
+                targetId = step
+            } else {
+                return
+            }
+        }
 
-        if (currentNodeId == nodeId) {
+        if (currentNodeId == targetId) {
             // Wait turn
             addCombatLog("You wait for an opening...")
             triggerMonsterTurns()
@@ -686,14 +726,14 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             return
         }
 
-        val targetTile = _tiles.value.find { it.x == nodeId }
+        val targetTile = _tiles.value.find { it.x == targetId }
         if (targetTile?.tileType == "WALL") {
             addCombatLog("Ouch! You bumped into a solid dungeon wall.")
             audioEngine.playMove()
             return
         }
 
-        val monster = _monsters.value.find { it.x == nodeId }
+        val monster = _monsters.value.find { it.x == targetId }
         if (monster != null) {
             performAttack(char, monster)
             triggerMonsterTurns()
@@ -702,14 +742,14 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             return
         }
 
-        _playerX.value = nodeId
+        _playerX.value = targetId
         audioEngine.playMove()
 
-        recalculateFogOfWar(nodeId)
+        recalculateFogOfWar(targetId)
         triggerMonsterTurns()
 
         _characterState.value = char.copy(
-            playerX = nodeId,
+            playerX = targetId,
             turns = char.turns + 1
         )
         saveCurrentTurnState()
