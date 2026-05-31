@@ -103,23 +103,6 @@ fun DungeonCanvas3D(
         }
     }
 
-    // Smooth auto-orbit camera towards targeted monster when Locked On
-    if (lockedMonsterId != null) {
-        val lockedM = monsters.find { it.id == lockedMonsterId }
-        if (lockedM != null) {
-            val mAnimX = monsterAnims[lockedM.id]?.first?.value ?: lockedM.x.toFloat()
-            val mAnimY = monsterAnims[lockedM.id]?.second?.value ?: lockedM.y.toFloat()
-            // Convert plane grid difference to angular yaw target (adding offset so camera looks from behind/toward-target)
-            val dx = mAnimX - pX
-            val dy = mAnimY - pY
-            val targetYaw = atan2(dy, dx) - PI.toFloat() / 2f
-            var diff = targetYaw - yawAngle
-            while (diff < -PI) diff += (2f * PI).toFloat()
-            while (diff > PI) diff -= (2f * PI).toFloat()
-            yawAngle += diff * 0.12f // smoothly lerp camera yaw rotation
-        }
-    }
-
     // Track smooth state transitions for individual monsters to prevent instant snapping when they move
     val monsterAnims = remember { mutableStateMapOf<Int, Pair<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>>>() }
 
@@ -140,6 +123,23 @@ fun DungeonCanvas3D(
         }
         LaunchedEffect(monster.id, monster.y) {
             entry.second.animateTo(monster.y.toFloat(), animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing))
+        }
+    }
+
+    // Smooth auto-orbit camera towards targeted monster when Locked On
+    if (lockedMonsterId != null) {
+        val lockedM = monsters.find { it.id == lockedMonsterId }
+        if (lockedM != null) {
+            val mAnimX = monsterAnims[lockedM.id]?.first?.value ?: lockedM.x.toFloat()
+            val mAnimY = monsterAnims[lockedM.id]?.second?.value ?: lockedM.y.toFloat()
+            // Convert plane grid difference to angular yaw target (adding offset so camera looks from behind/toward-target)
+            val dx = mAnimX - pX
+            val dy = mAnimY - pY
+            val targetYaw = atan2(dy, dx) - PI.toFloat() / 2f
+            var diff = targetYaw - yawAngle
+            while (diff < -PI) diff += (2f * PI).toFloat()
+            while (diff > PI) diff -= (2f * PI).toFloat()
+            yawAngle += diff * 0.12f // smoothly lerp camera yaw rotation
         }
     }
 
