@@ -990,10 +990,10 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             nextTiles[nodeId] = GameTile(nodeId, 0, "FLOOR", false)
         }
 
-        // Spherical Cellular Automata: initial noisy seed for remaining wall nodes
+        // Spherical Cellular Automata: initial noisy seed for remaining wall nodes per layout plan
         for (id in planetNodes.keys) {
             if (nextTiles[id]?.tileType == "WALL") {
-                if (rnd.nextFloat() < 0.38f) {
+                if (rnd.nextFloat() < 0.55f) { // Plan: 55% initial fill
                     nextTiles[id] = GameTile(id, 0, "FLOOR", false)
                 }
             }
@@ -1013,16 +1013,16 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                         nextTiles[id] = GameTile(id, 0, "FLOOR", false)
                     }
                 } else {
-                    if (floorCount < 3) {
+                    if (floorCount < 2) { // Plan: Switch from <3 to <2 to prevent thin, single-node noise but allow wider chambers
                         nextTiles[id] = GameTile(id, 0, "WALL", false)
                     }
                 }
             }
         }
 
-        // Guarantee a balanced floor tiles count out of 642 (~40.5% surface coverage)
+        // Guarantee a balanced floor tiles count out of 642 (>50% surface coverage per layout plan)
         var currentFloorCount = nextTiles.values.count { it.tileType != "WALL" }
-        val targetMinFloors = 260
+        val targetMinFloors = 330 // Over 50% surface coverage (322 nodes threshold)
         while (currentFloorCount < targetMinFloors) {
             val candidates = nextTiles.filter { it.value.tileType == "WALL" }.keys.filter { wallId ->
                 planetNodes[wallId]?.neighbors?.any { nextTiles[it]?.tileType != "WALL" } == true
