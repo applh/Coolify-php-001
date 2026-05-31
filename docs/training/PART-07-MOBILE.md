@@ -624,5 +624,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a dynamic camera orbiting projection inside Filament's update pipeline that automatically targets and tracks active monsters when a "Lock On" event is triggered, matching the smooth math of the Compose camera.
 - **Complexity**: Part 5
 
+### 101. Animated Skinned Meshes and GLB File Texture Mapping (24h) 🍓 NEW
+- **Reference**: `repo-android/docs/three-d-workspace-and-proposals.md`
+- **Goal**: Master the binary decoding of the GLB container stream, separating the JSON metadata schema from the aligned BIN payload block. Understand the mechanics of extracting embedded texture assets into local Android shaders, traversing bones to calculate world-space transformation hierarchies, and using linear blend skinning (LBS) algorithms to bend mesh vertices smoothly.
+- **Exercise**: Write a custom unit test or execution mock verification in Kotlin verifying the mathematical equivalence of a dual-joint skin weight rotation ($\mathbf{P}' = w_1\mathbf{M}_1\mathbf{P} + w_2\mathbf{M}_2\mathbf{P}$) and check that the resulting coordinate is perfectly transformed without exceeding unit dimensions.
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

@@ -321,3 +321,292 @@ fun DrawScope.drawTexturedTriangle(
 2. **Double Draw Buffering:** All simulation cogs generate their respective polygons dynamically, pipeline-sorting and calculating shading coefficients on every tick of the animation loop.
 3. **Lighting Sliders Control:** Users can customize light source direction vectors, ambient light intensity, and specular highlight factors directly from the slider controls to observe shifts in metallic/matte rendering dynamically.
 4. **Responsive Side Layout:** Users can switch modes dynamically via the elegant sidebar, scale the drawing size, toggle Y-axis auto-rotation, and tune parameters from sliders without any lagging performance.
+
+---
+
+## 7. GLB (glTF Binary) File Format & Skeletal Animation Architecture
+
+To support third-party animated models dynamically within our Android 3D applet suite without relying on oversized SDKs, we construct a custom, high-durability parsing and render-loop integration roadmap for the **GLB (glTF 2.0 Binary)** container format. This architecture enables the application to load complete 3D polygon structures, map embedded image textures, reconstruct bone-joint skeleton rig hierarchies, and play smooth keyframe animations using custom shaders or standard `Canvas` rendering.
+
+### A. The GLB Binary File layout
+
+A `.glb` file is a single consolidated binary stream containing the glTF asset details, texture image resources, and physical vertex/animation binary arrays. It is subdivided into three physical blocks:
+
+1. **The 12-Byte Header**:
+   - `Magic` (4 bytes): Must be exactly `0x46546C67` (ASCII string `"glTF"`).
+   - `Version` (4 bytes): Uint32, typically structure version `2` (representing glTF 2.0).
+   - `Total Length` (4 bytes): Uint32, total length of the physical file in bytes including headers.
+
+2. **Chunk 0: The JSON Payload (glTF Schema)**:
+   - `Length` (4 bytes): Length of the JSON payload.
+   - `Type` (4 bytes): Must be exactly `0x4E4F534A` (ASCII string `"JSON"`).
+   - `Data`: A UTF-8 string representing the glTF structure (nodes, materials, meshes, cameras, skins, animations, buffers, and accessor mappings).
+
+3. **Chunk 1: The Binary Buffer (BIN)**:
+   - `Length` (4 bytes): Length of the binary payload.
+   - `Type` (4 bytes): Must be exactly `0x004E4942` (ASCII string `"BIN\0"`).
+   - `Data`: Raw byte buffer containing vertex positions, index lists, UV matrices, texture bitmaps, skin weight mappings, and rotational keyframe vectors.
+
+```
+┌───────────────────────────────── GLB FILE CONTAINER ────────────────────────────────┐
+│  HEADER (12 Bytes)                                                                  │
+│  ├─ Magic: "glTF" (0x46546C67)                                                      │
+│  ├─ Version: 2                                                                      │
+│  └─ Length: Total Bytes                                                            │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  CHUNK 0: JSON SCHEMA (Type: 0x4E4F534A)                                            │
+│  └─ Nodes, Mesh Accessors, Materials, Bones/Skins, Animations, Buffers Metadata     │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  CHUNK 1: BINARY CHUNK (Type: 0x004E4942)                                           │
+│  └─ Position/Normal/UV arrays [x,y,z], [u,v], Skin weights, Animations, PNG/JPGs    │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### B. High-Performance Binary Stream Parser
+
+In Kotlin, we bypass manual, memory-heavy stream copying by wrapping the asset input directly as an optimized, zero-copy `ByteBuffer` mapped in native memory.
+
+```kotlin
+// In GLBParser.kt
+class GLBParser(private val context: Context) {
+    
+    data class ParsedGLB(
+        val vertices: FloatArray,
+        val indices: IntArray,
+        val uvs: FloatArray?,
+        val texture: Bitmap?,
+        val jointIndices: IntArray?,
+        val jointWeights: FloatArray?,
+        val skinHierarchy: SkinNode?,
+        val animations: List<GLBAnimation>
+    )
+
+    fun parseAsset(filePath: String): ParsedGLB {
+        val assetFD = context.assets.openFd(filePath)
+        val channel = FileInputStream(assetFD.fileDescriptor).channel
+        val byteBuffer = channel.map(
+            FileChannel.MapMode.READ_ONLY,
+            assetFD.startOffset,
+            assetFD.declaredLength
+        ).apply { order(ByteOrder.LITTLE_ENDIAN) }
+
+        // 1. Verify Header
+        val magic = byteBuffer.int
+        if (magic != 0x46546C67) throw IllegalArgumentException("Not a valid GLB asset")
+        val version = byteBuffer.int
+        val totalLength = byteBuffer.int
+
+        // 2. Parse JSON Chunk
+        val jsonLength = byteBuffer.int
+        val jsonType = byteBuffer.int
+        if (jsonType != 0x4E4F534A) throw IllegalArgumentException("Expected JSON chunk")
+        val jsonBytes = ByteArray(jsonLength)
+        byteBuffer.get(jsonBytes)
+        val jsonString = String(jsonBytes, Charsets.UTF_8)
+        val gltfJson = JSONObject(jsonString)
+
+        // 3. Keep reference to BIN chunk offset
+        val binLength = byteBuffer.int
+        val binType = byteBuffer.int
+        if (binType != 0x004E4942) throw IllegalArgumentException("Expected BIN chunk")
+        
+        // Wrap BIN buffer view bounds inside a custom sub-buffer
+        val binOffset = byteBuffer.position()
+        byteBuffer.position(binOffset)
+        val binBuffer = byteBuffer.slice().order(ByteOrder.LITTLE_ENDIAN)
+
+        return extractEntities(gltfJson, binBuffer)
+    }
+}
+```
+
+---
+
+### C. Texture and Material Extractors
+
+Within the JSON chunk, standard images represent indices in the main database linked to `bufferViews`. We can extract these embedded textures efficiently by reading the mapped buffer limits and decoding the raw memory into Android `Bitmap` matrices.
+
+```kotlin
+// In GLBParser.kt (extractEntities scope)
+fun extractTexture(gltf: JSONObject, bin: ByteBuffer): Bitmap? {
+    if (!gltf.has("images")) return null
+    val images = gltf.getJSONArray("images")
+    if (images.length() == 0) return null
+    
+    val targetImage = images.getJSONObject(0)
+    val bufferViewIndex = targetImage.getInt("bufferView")
+    val bufferViews = gltf.getJSONArray("bufferViews")
+    val view = bufferViews.getJSONObject(bufferViewIndex)
+    
+    val offset = view.getInt("byteOffset")
+    val length = view.getInt("byteLength")
+    
+    // Read directly into memory segment without duplicates
+    val rawImageBytes = ByteArray(length)
+    bin.position(offset)
+    bin.get(rawImageBytes)
+    
+    // Decode highly-compressed formats (WebP, PNG, JPEG) instantly via native APIs
+    val options = BitmapFactory.Options().apply { inMutable = true }
+    return BitmapFactory.decodeByteArray(rawImageBytes, 0, length, options)
+}
+```
+
+---
+
+### D. Skeletal Rigging & Joint Hierarchies (Skins)
+
+Skeletal animations map characters to a skeletal tree. A **Skin** in glTF links individual joint IDs to corresponding internal node matrices.
+To construct the dynamic spatial transform $\mathbf{T}_{joint}$, we traverse the skeleton tree from root down to child nodes recursively. Let $\mathbf{L}_{joint}$ be the local TRS (Translation, Rotation, Scale) transformation matrix of a joint, and $\mathbf{P}_{parent}$ be the parent joint transformation matrix relative to the model origin space:
+
+$$\mathbf{G}_{joint} = \mathbf{P}_{parent} \times \mathbf{L}_{joint}$$
+
+To project a bone vertex accurately back into standard joint local coordinates, we apply the **Inverse Bind Matrix** ($\mathbf{B}_{inv}$) defined in the GLB JSON:
+
+$$\mathbf{M}_{joint} = \mathbf{G}_{joint} \times \mathbf{B}_{inv}$$
+
+```kotlin
+// In SkinNode.kt
+data class SkinNode(
+    val id: Int,
+    val name: String,
+    val parentId: Int?,
+    val inverseBindMatrix: Matrix4,
+    var localRotation: Quaternion = Quaternion.Identity,
+    var localTranslation: Vector3 = Vector3.Zero,
+    var localScale: Vector3 = Vector3.One,
+    val children: MutableList<SkinNode> = mutableListOf()
+) {
+    // Traverse parent dependencies and resolve world transforms
+    fun resolveWorldMatrix(parentWorld: Matrix4, outputJointMatrices: Array<Matrix4>) {
+        val localTRS = Matrix4.fromTRS(localTranslation, localRotation, localScale)
+        val worldMatrix = parentWorld * localTRS
+        
+        // Final joint palette multiplier
+        outputJointMatrices[id] = worldMatrix * inverseBindMatrix
+        
+        for (child in children) {
+            child.resolveWorldMatrix(worldMatrix, outputJointMatrices)
+        }
+    }
+}
+```
+
+---
+
+### E. Linear Blend Skinning (LBS) Shader Mathematics
+
+To smooth polygon skin bends (e.g., knee joints or shoulder swings), vertices are influenced by up to 4 joints simultaneously. Let:
+- $\mathbf{P}_{base}$ be the coordinate position of the vertex in binding pose space.
+- $J_0, J_1, J_2, J_3$ be the joint indices assigned to the vertex.
+- $w_0, w_1, w_2, w_3$ be the corresponding blend weights satisfying $\sum_{i=0}^3 w_i = 1.0$.
+
+The transformed animated vertex position $\mathbf{P}'$ is defined using **Linear Blend Skinning (LBS)**:
+
+$$\mathbf{P}' = \sum_{i=0}^3 w_i \cdot \left( \mathbf{M}_{J_i} \times \mathbf{P}_{base} \right)$$
+
+This calculation is highly demanding. We outline two execution approaches:
+1. **CPU Skinning (Sovereign Canvas Canvas)**: Vertex positions are transformed sequentially inside background threads on the CPU prior to Painter's sorting. Great for lightweight models ($<2000$ vertices) mapping directly to custom Compose drawings.
+2. **GPU Vertex Shader (Filament Engine)**: Joint transformation matrices are pushed as shader Uniform values, and the LBS calculation runs inside native hardware shader blocks on every frame tick:
+   ```glsl
+   #version 300 es
+   in vec3 position;
+   in vec4 joints;
+   in vec4 weights;
+   uniform mat4 jointMatrices[64];
+   
+   void main() {
+       mat4 skinMatrix = 
+           weights.x * jointMatrices[int(joints.x)] +
+           weights.y * jointMatrices[int(joints.y)] +
+           weights.z * jointMatrices[int(joints.z)] +
+           weights.w * jointMatrices[int(joints.w)];
+       gl_Position = projectionView * skinMatrix * vec4(position, 1.0);
+   }
+   ```
+
+---
+
+### F. Animation Keyframe Tracks & Quaternions Interpolation
+
+Animations in GLB are defined as channels mapping targeted node properties (translation, rotation, or scale) to accessor arrays containing physical timetables.
+
+For any current timestamp $t \in [t_{key, k}, t_{key, k+1}]$:
+1. **Ratio factor**: $\tau = \frac{t - t_{key, k}}{t_{key, k+1} - t_{key, k}} \in [0, 1]$
+2. **Translation/Scale Interpolation (Linear)**: 
+   $$\mathbf{V}_{\text{interp}} = (1 - \tau)\mathbf{V}_k + \tau\mathbf{V}_{k+1}$$
+3. **Rotation Interpolation (Spherical Linear - Slerp)**: Rotations are interpolated using **Slerp** inside unit quaternion spheres to eliminate angular speed changes and tumbling errors:
+   $$\mathbf{Slerp}(\mathbf{q}_k, \mathbf{q}_{k+1}, \tau) = \frac{\sin((1-\tau)\omega)}{\sin\omega}\mathbf{q}_k + \frac{\sin(\tau\omega)}{\sin\omega}\mathbf{q}_{k+1}$$
+   *Where $\cos\omega = \mathbf{q}_k \cdot \mathbf{q}_{k+1}$ represents the dot product of the quaternions.*
+
+```kotlin
+// In GLBAnimationChannel.kt
+class GLBAnimationChannel(
+    val targetNodeId: Int,
+    val targetProperty: AnimProperty, // TRANSLATION, ROTATION, SCALE
+    val timestamps: FloatArray,
+    val keyframes: FloatArray // Flat float arrays [x,y,z] or quaternions [x,y,z,w]
+) {
+    enum class AnimProperty { TRANSLATION, ROTATION, SCALE }
+
+    fun evaluate(time: Float): StepValue {
+        val clampedTime = time.coerceIn(timestamps.first(), timestamps.last())
+        var idx = timestamps.binarySearch(clampedTime)
+        if (idx < 0) {
+            idx = -idx - 2
+        }
+        idx = idx.coerceIn(0, timestamps.size - 2)
+        
+        val t0 = timestamps[idx]
+        val t1 = timestamps[idx + 1]
+        val progress = (clampedTime - t0) / (t1 - t0)
+
+        return when (targetProperty) {
+            AnimProperty.TRANSLATION, AnimProperty.SCALE -> {
+                val offset0 = idx * 3
+                val offset1 = (idx + 1) * 3
+                val val0 = Vector3(keyframes[offset0], keyframes[offset0+1], keyframes[offset0+2])
+                val val1 = Vector3(keyframes[offset1], keyframes[offset1+1], keyframes[offset1+2])
+                StepValue.VecValue(Vector3.lerp(val0, val1, progress))
+            }
+            AnimProperty.ROTATION -> {
+                val offset0 = idx * 4
+                val offset1 = (idx + 1) * 4
+                val q0 = Quaternion(keyframes[offset0], keyframes[offset0+1], keyframes[offset0+2], keyframes[offset0+3])
+                val q1 = Quaternion(keyframes[offset1], keyframes[offset1+1], keyframes[offset1+2], keyframes[offset1+3])
+                StepValue.QuatValue(Quaternion.slerp(q0, q1, progress))
+            }
+        }
+    }
+}
+```
+
+---
+
+### G. Comprehensive Integration Milestones
+
+```
+  Milestone 1: Buffer Mapper
+    └─ Read GLB Asset binary streams using memory-mapped buffers to prevent native crashes.
+  Milestone 2: Schema Parser
+    └─ Decode JSON schema details, locating nodes, image bufferViews, and keyframe indexes.
+  Milestone 3: Texture Loader
+    └─ Extract embedded PNG/WebP images as local Bitmaps and assign to dynamic Canvas paint.
+  Milestone 4: Joint Rigging
+    └─ Traverse bone hierarchies and multiply inverse bind matrices to resolve joint positions.
+  Milestone 5: Animation Channels
+    └─ Intercalate scale vectors and interpolate rotations using Spherical Linear (Slerp) math.
+  Milestone 6: LBS Blend Core
+    └─ Bind bone calculations to custom draw pipelines or push matrix arrays to hardware GPU shaders.
+```
+
+---
+
+## 8. Development Roadmap & Next Steps
+
+1. **Local Asset Integration**: Pre-bundle lightweight animated GLB figures (such as low-poly knight heroes and chest traps) in the compile asset directories (`repo-android/app/src/main/assets/models/`).
+2. **Caching Texture Shaders**: Cache the constructed `BitmapShader` values and computed inverse bind matrices during level generation to sustain 60 FPS performance.
+3. **PBR Shader Attenuation Control**: Extend the custom light sliders on the dynamic UI to let users scale physical roughness offsets, metallic thresholds, and ambient occlusion parameters in real time.
+
