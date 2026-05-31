@@ -4,7 +4,12 @@ import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import java.util.Random
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.*
 
 enum class GameStatus {
     CHARACTER_SELECT,
@@ -33,6 +38,23 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
     private val _playerY = mutableStateOf(2)
     val playerY: State<Int> get() = _playerY
 
+    private val _playerX_f = mutableStateOf(2.5f)
+    val playerX_f: State<Float> get() = _playerX_f
+
+    private val _playerY_f = mutableStateOf(2.5f)
+    val playerY_f: State<Float> get() = _playerY_f
+
+    private val _lockedMonsterId = mutableStateOf<Int?>(null)
+    val lockedMonsterId: State<Int?> get() = _lockedMonsterId
+
+    private var joyX = 0f
+    private var joyY = 0f
+    private var currentCameraYaw = -0.65f
+    private val _cameraYaw = mutableStateOf(-0.65f)
+    val cameraYaw: State<Float> get() = _cameraYaw
+    private var gameLoopJob: Job? = null
+    private var lastAttackTime: Long = 0
+
     private val _tiles = mutableStateOf<List<GameTile>>(emptyList())
     val tiles: State<List<GameTile>> get() = _tiles
 
@@ -55,6 +77,8 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             _characterState.value = activeChar
             _playerX.value = activeChar.playerX
             _playerY.value = activeChar.playerY
+            _playerX_f.value = activeChar.playerX.toFloat() + 0.5f
+            _playerY_f.value = activeChar.playerY.toFloat() + 0.5f
             _tiles.value = dbHelper.loadMap()
             _monsters.value = dbHelper.loadMonsters()
             _inventory.value = dbHelper.loadInventory()
@@ -223,6 +247,168 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
             turns = char.turns + 1
         )
         saveCurrentTurnState()
+    }
+
+    fun updateCameraYaw(yaw: Float) {
+        currentCameraYaw = yaw
+        _cameraYaw.value = yaw
+    }
+
+    fun updateJoystickInput(jx: Float, jy: Float, cameraYaw: Float) {
+        joyX = jx
+        joyY = jy
+        currentCameraYaw = cameraYaw
+
+        if (jx != 0f || jy != 0f) {
+            startMovementLoop()
+        } else {
+            stopMovementLoop()
+        }
+    }
+
+    private fun startMovementLoop() {
+        if (gameLoopJob == null) {
+            gameLoopJob = viewModelScope.launch {
+                while (true) {
+                    if (joyX != 0f || joyY != 0f) {
+                        processMovementTick(joyX, joyY)
+                    }
+                    delay(25) // Smooth 40Hz tick rate balances CPU & performance
+                }
+            }
+        }
+    }
+
+    private fun stopMovementLoop() {
+        gameLoopJob?.cancel()
+        gameLoopJob = null
+    }
+
+    private fun isWallAt(gx: Float, gy: Float): Boolean {
+        val intX = gx.toInt().coerceIn(0, 17)
+        val intY = gy.toInt().coerceIn(0, 17)
+        return _tiles.value.find { it.x == intX && it.y == intY }?.tileType == "WALL"
+    }
+
+    private fun processMovementTick(jx: Float, jy: Float) {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+
+        // Speed of movement
+        val speed = 0.08f
+        
+        // Calculate camera-relative movement
+        // forward direction vector: pointing in the line of camera orientation
+        val forwardX = -sin(currentCameraYaw)
+        val forwardY = cos(currentCameraYaw)
+        
+        // rightward direction vector: perpendicular to forward
+        val rightX = cos(currentCameraYaw)
+        val rightY = sin(currentCameraYaw)
+
+        // Net translation direction
+        val tx = jx * rightX + jy * forwardX
+        val ty = jx * rightY + jy * forwardY
+
+        val stepX = tx * speed
+        val stepY = ty * speed
+
+        val startX = _playerX_f.value
+        val startY = _playerY_f.value
+
+        var nextX = startX + stepX
+        var nextY = startY + stepY
+
+        // continuous longitude wrapping for Eastern/Western boundaries
+        if (nextX < 0f) nextX += 18f
+        if (nextX >= 18f) nextX -= 18f
+        
+        // clamp polar coordinates slightly below the physical North and South pole centers
+        nextY = nextY.coerceIn(0.18f, 17.82f)
+
+        var finalX = startX
+        var finalY = startY
+
+        // SLIDING PHYSICS COLLISION DETECTOR
+        if (!isWallAt(nextX, nextY)) {
+            finalX = nextX
+            finalY = nextY
+        } else {
+            // Attempt slide on X axis-only
+            if (!isWallAt(nextX, startY)) {
+                finalX = nextX
+            }
+            // Attempt slide on Y axis-only
+            if (!isWallAt(startX, nextY)) {
+                finalY = nextY
+            }
+        }
+
+        // Bounding cylinder check for continuous collision strike triggers
+        var contactMonster: MonsterState? = null
+        val collRadius = 0.55f // contact strike cylinder
+        for (monster in _monsters.value) {
+            val dx = monster.x.toFloat() + 0.5f - finalX
+            val dy = monster.y.toFloat() + 0.5f - finalY
+            val dist = sqrt(dx * dx + dy * dy)
+            if (dist < collRadius) {
+                contactMonster = monster
+                break
+            }
+        }
+
+        if (contactMonster != null) {
+            val now = System.currentTimeMillis()
+            if (now - lastAttackTime > 650) {
+                lastAttackTime = now
+                performAttack(char, contactMonster)
+                triggerMonsterTurns()
+                _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
+                saveCurrentTurnState()
+            }
+            // Block passing through target during contact
+            return
+        }
+
+        val oldIntX = startX.toInt()
+        val oldIntY = startY.toInt()
+
+        _playerX_f.value = finalX
+        _playerY_f.value = finalY
+
+        val newIntX = finalX.toInt().coerceIn(0, 17)
+        val newIntY = finalY.toInt().coerceIn(0, 17)
+
+        _playerX.value = newIntX
+        _playerY.value = newIntY
+
+        if (newIntX != oldIntX || newIntY != oldIntY) {
+            // Crossed tile boundaries!
+            audioEngine.playMove()
+            recalculateFogOfWar(newIntX, newIntY)
+            triggerMonsterTurns()
+            _characterState.value = _characterState.value?.copy(
+                playerX = newIntX,
+                playerY = newIntY,
+                turns = char.turns + 1
+            )
+            saveCurrentTurnState()
+        }
+    }
+
+    fun toggleTargetLock() {
+        if (_lockedMonsterId.value != null) {
+            _lockedMonsterId.value = null
+            addCombatLog("Target lock-on deactivated.")
+        } else {
+            val nearest = findNearestRevealedMonster()
+            if (nearest != null) {
+                _lockedMonsterId.value = nearest.id
+                addCombatLog("Locked-on to ${nearest.type}! 🎯")
+            } else {
+                addCombatLog("No visible monsters nearby to lock-on.")
+            }
+        }
     }
 
     fun enableAction() {
@@ -791,6 +977,8 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
         _playerX.value = px
         _playerY.value = py
+        _playerX_f.value = px.toFloat() + 0.5f
+        _playerY_f.value = py.toFloat() + 0.5f
         _tiles.value = nextTiles.values.toList()
         _monsters.value = floorMonsters
 

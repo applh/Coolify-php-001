@@ -1,319 +1,212 @@
-# 🪐 Moria Roguelike: Spherical Dungeon & Portal Teleportation Architecture Plan
+# 🪐 Moria Roguelike: Continuous 3D Spherical World & Analogue Navigation Architecture Plan
 
-This document presents the formal technical analysis, architectural design, mathematical models, and implementation blueprint to upgrade the 3D Moria applet into a **Spherical Dungeon Roguelike**. 
+This document presents the comprehensive architectural evolution, mathematical formalisms, and interface designs to transition **Moria** from a 2D discrete grid-constrained environment into a **continuous 3D Spherical World**.
 
-Instead of generating a flat level map on a 2D plane, Moria will project the floor grids, walls, players, and monsters onto the three-dimensional surface of a sphere. Stairwells will be replaced by high-fidelity 3D portals that trigger seamless warp transitions to separate spheres representing deeper, distinct dungeon domains.
-
----
-
-## 1. Architectural Strategy & Core Concepts
-
-To stay aligned with our architectural core of a lightweight, highly responsive, zero-dependency APK that runs seamlessly in the AI Studio preview window, we continue to utilize the CPU-bound **Sovereign 3D Projection Engine** on top of Jetpack Compose Canvas.
-
-### Flat coordinates vs. Spherical Geometry
-In standard 2D flat dungeons, tiles are rendered linearly:
-$$\mathbf{P}_{\text{flat}} = \left( (x - c_x) \cdot W_s, \ 0, \ (y - c_y) \cdot W_s \right)$$
-
-On a spherical ground of radius $R$:
-1. **The Ground Surface**: Ground tiles are constructed as 3D curved polygons resting precisely on a spherical shell of radius $R$.
-2. **The Wall Heights**: Wall elements are extruded radially outwards from radius $R$ to $R + H_{\text{wall}}$.
-3. **Finite But Unbounded Navigation**:东/西 (East/West) and 南/北 (South/North) movement wrap seamlessly, turning the dungeon into a finite, closed spherical planetoid.
-4. **Interactive Portals**: Multicolored rotating, glowing 3D rings that act as gravity wells. Colliding with a portal teleports the player's coordinate frame onto a brand-new sphere (the next floor) with distinct geometry, enemy rosters, and lighting variables.
+Instead of navigating distinct grid blocks, the player roams freely in any arbitrary direction on a smooth planetary manifold. Staircases are replaced by **3D Teleportation Portals** that warp the player between celestial spheres.
 
 ---
 
-## 2. Mathematical Coordinate Mapping Engine
+## 1. System Paradigm Shift: Grid-Based vs. Continuous Spherical
 
-We define two robust mathematical models for wrapping a discrete grid onto a spherical surface. The **Cube-Mapped Sphere (Spherified Cube)** is chosen as the standard for high-performance grid mechanics to avoid polar pinching.
+To build a true continuous 3D sphere where the player is not locked to grid steps, we fundamentally redesign the underlying coordinate engine and camera behavior:
 
-### Option A: Standard Spherical Projection (Polar Coordinates)
-For a grid of width $W$ and height $H$, we normalize local coordinates $(x, y)$ into angles $\theta$ (polar latitude) and $\phi$ (azimuthal longitude):
+| Modality | Old Architecture (Grid-Based) | New Architecture (Continuous Spherical) |
+| :--- | :--- | :--- |
+| **Position State** | Discrete integer coordinates `(pX: Int, pY: Int)` | Continuous 3D vector $\mathbf{P} = (x, y, z)$ on unit sphere scaled by radius $R$. |
+| **Directional Inputs** | Standard 4-button D-Pad (discrete jumps) | Virtual analog circle pad (continuous 360-degree vectors). |
+| **Physics / Collision** | Integer grid index lookups (`Map[y][x] == WALL`) | Continuous radial distance spheres & great-circle barrier collision checks. |
+| **Orientations / Yaw** | Camera snaps to $90^\circ$ quadrant intervals | Continuous orbital sliding around the player's local horizon. |
+| **Floor Transitions** | Standard stairway meshes triggering static loads | Volumetric grav-well portals sucking players inside via dynamic orbital warps. |
 
-$$\phi = \frac{x}{W} \cdot 2\pi - \pi \quad \in [-\pi, \ \pi]$$
-$$\theta = \frac{y}{H} \cdot \pi - \frac{\pi}{2} \quad \in [-\frac{\pi}{2}, \ \frac{\pi}{2}]$$
+---
 
-The 3D point $\mathbf{V}$ at ground level (radius $R$) is:
-$$\mathbf{V}(x, y) = \begin{pmatrix}
-R \cdot \cos(\theta) \cdot \sin(\phi) \\
-R \cdot \sin(\theta) \\
-R \cdot \cos(\theta) \cdot \cos(\phi)
-\end{pmatrix}$$
+## 2. Mathematical Engine: Continuous Navigation & Physics on a Sphere
 
-* **Pros**: Simple trigonometric transformation.
-* **Cons**: Severe polar distortion ("pinching") at the top ($y = 0$) and bottom ($y = H$) where meridians converge. Ground tile polygons shrink to thin triangles.
-
-### Option B: Cube-Mapped Sphere (Spherified Cube) — PREFERRED
-To maintain uniform square-grid tiles across the entire sphere with zero structural pinching, we treat the dungeon as a **Cube of 6 Faces** (Front, Back, Left, Right, Top, Bottom). Each face contains a standard $18 \times 18$ local grid coordinate buffer. 
-
-To spherify the cube, we project any point $(x, y, z)$ on the unit cube outwards to the unit sphere, then scale by radius $R$:
-
-$$\mathbf{V}_{\text{sphere}} = R \cdot \frac{\mathbf{V}_{\text{cube}}}{\|\mathbf{V}_{\text{cube}}\|}$$
+To ensure complete mathematical stability across the entire sphere—especially avoiding division-by-zero or coordinate spinning anomalies at the North and South poles (known as *Gimbal Lock* and *Polar Singularities*)—we model all positions, orientations, and movements strictly using **3D Vector Algebra** rather than basic latitude/longitude integrals.
 
 ```
-                +--------------+
-                |    TOP (5)   |
-                +--------------+
-+--------------++--------------++--------------++--------------+
-|   LEFT (2)   ||  FRONT (1)   ||  RIGHT (3)   ||   BACK (4)   |
-+--------------++--------------++--------------++--------------+
-                +--------------+
-                |  BOTTOM (6)  |
-                +--------------+
+                   +-- [North Pole] (0, R, 0)
+                 .  *  .
+              .   \     .
+            .      \      .
+           .   p_t  \      .
+          *----->   \       *
+          |  \       \      |
+          |   \       o-----+---- [Sphere Center] (0, 0, 0)
+          |    \            |
+           .    `----->    .
+            .       v_mov .
+              .         .
+                 .   .
+                   +-- [South Pole] (0, -R, 0)
 ```
 
-When a player moves off the boundary of local grid $X = 17$ on the **FRONT** face, they transition seamlessly to $X = 0$ on the **RIGHT** face, with their heading vector conserved. 
+### A. Position State Mechanics
+Let the sphere be centered at the origin $\mathbf{O} = (0, 0, 0)$ with a physical radius $R$.
+The player's coordinate is represented as a normalized unit direction vector $\hat{\mathbf{P}} = (x_p, y_p, z_p)$ where $\|\hat{\mathbf{P}}\| = 1.0$.
+Their continuous position in world coordinates is:
+$$\mathbf{P} = R \cdot \hat{\mathbf{P}}$$
+
+### B. Mappings Dynamic Tangent Plane (Continuous Directions)
+When the player stands on the planetoid at unit direction $\hat{\mathbf{P}}$, their local tangent plane defines the ground they walk on. The local cardinal directions are defined as:
+1. **Local North Direction** ($\mathbf{T}_N$): The tangent pointing toward the physical North Pole $\mathbf{N} = (0, 1, 0)$:
+   - Project the vector $(0, 1, 0)$ onto the plane perpendicular to $\hat{\mathbf{P}}$:
+     $$\mathbf{T}_{N,\text{unnorm}} = (0, 1, 0) - (\hat{\mathbf{P}} \cdot (0, 1, 0)) \hat{\mathbf{P}}$$
+   - Normalize the result:
+     $$\mathbf{T}_N = \frac{\mathbf{T}_{N,\text{unnorm}}}{\|\mathbf{T}_{N,\text{unnorm}}\|}$$
+2. **Local East Direction** ($\mathbf{T}_E$): The tangent perpendicular to both the position vector and local North:
+     $$\mathbf{T}_E = \mathbf{T}_N \times \hat{\mathbf{P}}$$
+
+*Note*: If the player stands exactly at the North Pole $(0, 1, 0)$ or South Pole $(0, -1, 0)$, $\mathbf{T}_{N,\text{unnorm}}$ collapses to zero. In this singular scenario, we use the fallback vector $(0, 0, 1)$ or reference the player's current velocity heading history to maintain directional continuity.
+
+### C. Integrating Continuous Joystick Speeds
+The virtual joystick outputs a normalized 2D movement offset vector $\mathbf{J} = (dx, dy)$ in the range $[-1.0, 1.0]$.
+We translate this coordinate into 3D tangent velocities relative to the player's orientation:
+$$\mathbf{V}_{\text{tangent}} = \left( dy \cdot \cos(\alpha) - dx \cdot \sin(\alpha) \right) \mathbf{T}_N + \left( dy \cdot \sin(\alpha) + dx \cdot \cos(\alpha) \right) \mathbf{T}_E$$
+where $\alpha$ is the camera's current yaw perspective relative to the local North.
+
+The player's new position $\hat{\mathbf{P}}_{t+1}$ on the sphere is integrated continuously using:
+$$\hat{\mathbf{P}}_{t+1} = \text{Normalize}\left( \hat{\mathbf{P}}_t + \mathbf{V}_{\text{tangent}} \cdot \text{SpeedMultiplier} \cdot dt \right)$$
+Multiplying by $R$ returns the new visual coordinate, keeping the player perfectly flush with the spherical terrain without any geometric drift.
 
 ---
 
-## 3. Extruding 3D Meshes Radially
+## 3. UI Component: Virtual Analog Circle Pad
 
-To render volumetric objects on the spherical surface, we calculate offset vectors pointing **radially outwards** from the sphere center $\mathbf{O} = (0, 0, 0)$.
-
-### A. Spherical Floor Tiles
-For a tile $(x, y)$ spanning boundaries $x_1 \to x_2$ and $y_1 \to y_2$:
-1. We compute the 4 corner coordinates on the flat plane face.
-2. Spherify each corner point by dividing by its magnitude and multiplying by the target sphere radius $R$.
-3. Pass the resulting 3D corner vectors to `RenderItem3D.Polygon` to build the curved floor.
-
-### B. Radial Wall Extrusion
-Instead of pushing vertical coordinate steps in the flat $Y$-axis, walls are extruded outwards along their normal vector $\hat{\mathbf{n}}$:
-
-$$\hat{\mathbf{n}} = \frac{\mathbf{V}_{\text{ground}}}{\|\mathbf{V}_{\text{ground}}\|}$$
-$$\mathbf{V}_{\text{wall\_top}} = \mathbf{V}_{\text{ground}} + H_{\text{wall}} \cdot \hat{\mathbf{n}}$$
-
-This ensures walls tilt outwards perfectly like towers on a small planetoid, creating a beautiful spatial curvature as the player rotates the camera!
+Traditional discrete step button layouts are refactored into a high-responsiveness **Floating Circle Pad** which acts as a 2D vector coordinate feeder.
 
 ```
-               Wall Top (Radius R + H)
-               +---------+
-              /         /
-             /   Wall  /
-            /         /
-           +---------+  Ground Level (Radius R)
-           \         \
-            \ Sphere  \
-             \ Center  \
-              +---------+ (0,0,0)
+       +-------------------------------+
+       |       Circular Joy Pad        |
+       |             .-"-.             |
+       |           .'     '.           |
+       |          /    .---. \         |
+       |         |    (     ) | <---- [Thumb Indicator (dx, dy)]
+       |         |     '---'  |        |
+       |          \          /         |
+       |           '.       .'         |
+       |             '-...-'           |
+       |         [Base Outer Ring]     |
+       +-------------------------------+
 ```
+
+### A. Touch Jetpack Compose Vector Coordinates Tracking
+The Joystick is rendered inside standard Compose Canvas using a `pointerInput` block with `detectDragGestures`:
+1. On initial click, the touch start coordinate is normalized.
+2. During drag action:
+   - Calculate coordinate distance relative to the base center $\mathbf{C} = (c_x, c_y)$.
+   - Radius of bounding circle $L_{\text{max}} = 65\text{dp}$.
+   - Let drag distance be $L = \sqrt{dx^2 + dy^2}$.
+   - If $L > L_{\text{max}}$, normalize the thumb stick coordinate:
+     $$dx_{\text{bounded}} = \frac{dx}{L} \cdot L_{\text{max}}, \quad dy_{\text{bounded}} = \frac{dy}{L} \cdot L_{\text{max}}$$
+   - Feeds values $dx_{\text{norm}} = \frac{dx_{\text{bounded}}}{L_{\text{max}}}$ and $dy_{\text{norm}} = -\frac{dy_{\text{bounded}}}{L_{\text{max}}}$ into the loop.
 
 ---
 
-## 4. Portals: The 3D Warp Gates
+## 4. Navigation Assistance: Polar Beacons & Geomagnetic Grids
 
-Portals replace the traditional flat descent staircase. We implement portals as **Procedural Low-Poly Gyroscopes** consisting of two concentric, counter-rotating rings.
-
-### Portal Mesh Mathematics
-For a portal centered at coordinate position $\mathbf{C}_{\text{portal}}$ on the sphere surface:
-1. We define the local tangent plane vectors $\mathbf{U}$ and $\mathbf{W}$ which sit perpendicular to the sphere surface normal $\hat{\mathbf{n}}$:
-   $$\mathbf{U} \cdot \hat{\mathbf{n}} = 0, \quad \mathbf{W} \cdot \hat{\mathbf{n}} = 0, \quad \mathbf{U} \perp \mathbf{W}$$
-2. We generate circular rings using the current dynamic looping angle $\alpha(t)$:
-   $$\mathbf{P}_{\text{ring1}, i} = \mathbf{C}_{\text{portal}} + r_{\text{outer}} \cdot \left( \cos(\phi_i + \alpha) \cdot \mathbf{U} + \sin(\phi_i + \alpha) \cdot \mathbf{W} \right)$$
-   $$\mathbf{P}_{\text{ring2}, i} = \mathbf{C}_{\text{portal}} + r_{\text{inner}} \cdot \left( \cos(\phi_i - 1.5\alpha) \cdot \mathbf{U} + \sin(\phi_i - 1.5\alpha) \cdot \mathbf{W} \right)$$
-3. **Lighting & Glow Indicator**: Vertices of the portal are assigned a self-illuminated glowing lilac or cosmic cyan color (`Color(0xFF00E5FF)`), completely bypassing ambient light attenuation calculations to shine brightly even in pitch-black corridors.
-
----
-
-## 5. Sphere-to-Sphere Level Transitions
-
-When a player enters a Portal tile and triggers "Interaction" (Warp):
-1. **Dynamic Rotation Lock**: The UI freezes touch rotations and executes a 750ms automatic circular warp sweep animation.
-2. **State Re-Initialization**:
-   * The current sphere resources are cached/saved in SQL.
-   * A completely new sphere map is procedural-carved with unique themes:
-     * **Sphere 1 (Floor 1)**: Emerald Moss Planetoid (Ambient Green Light).
-     * **Sphere 5 (Floor 5)**: Obsidian Lava Core (Radial Crimson Volcanic Shuts).
-     * **Sphere 10 (Floor 10 - Boss)**: Shadow Void Sphere (Pitch-black background with a central radiant star lighting the platform).
-3. **Warp Particles**: The rendering thread injects 50 floating geometric diamond shards drifting outwards along radial pathways to create an intensive voxel teleportation sequence.
-
----
-
-## 6. Kotlin Implementation Reference Boilerplate
-
-The following Kotlin code slices demonstrate the spatial projection math and rendering integration to support this model on top of `DungeonCanvas3D`:
-
-```kotlin
-package com.example.cameraxapp.roguelike
-
-import androidx.compose.ui.graphics.Color
-import com.example.cameraxapp.core.math3d.RenderItem3D
-import com.example.cameraxapp.core.math3d.Vector3
-import kotlin.math.*
-
-/**
- * Spatial Engine responsible for projecting 2D coordinate cells onto 3D Spherical Coordinate Space.
- */
-class SphereDungeonProjection(
-    val radius: Float = 100f,
-    val wallHeight: Float = 15f
-) {
-    /**
-     * Projects a grid coordinate (local flat plane) to a perfect spherical coordinates vector.
-     * Grid bounds map: x in [0, 18], y in [0, 18] representing one face of the planetoid.
-     */
-    fun projectGridToSphere(gridX: Float, gridY: Float, heightOffset: Float = 0f): Vector3 {
-        // Normalize coordinates relative to centered 18x18 limits
-        val cx = 9f
-        val cy = 9f
-        val dx = (gridX - cx) / 18f // range [-0.5, 0.5]
-        val dy = (gridY - cy) / 18f // range [-0.5, 0.5]
-
-        // Map using standard azimuthal projection scales
-        val longitude = dx * 2f * PI.toFloat() // span radians
-        val latitude = dy * PI.toFloat()       // span radians
-
-        // Compute base spherical vector components
-        val rSum = radius + heightOffset
-        val rx = rSum * cos(latitude) * sin(longitude)
-        val ry = rSum * sin(latitude)
-        val rz = rSum * cos(latitude) * cos(longitude)
-
-        return Vector3(rx, ry, rz)
-    }
-
-    /**
-     * Recursively projects flat ground tile polygons onto the spherical shell boundaries.
-     */
-    fun buildSphericalFloorTile(
-        tile: GameTile, 
-        tileSize: Float,
-        shadingColor: Color
-    ): RenderItem3D.Polygon {
-        val half = tileSize / 2f
-        val x = tile.x.toFloat()
-        val y = tile.y.toFloat()
-
-        // Extract 4 corners flat
-        val c1 = projectGridToSphere(x - half, y - half)
-        val c2 = projectGridToSphere(x + half, y - half)
-        val c3 = projectGridToSphere(x + half, y + half)
-        val c4 = projectGridToSphere(x - half, y + half)
-
-        return RenderItem3D.Polygon(listOf(c1, c2, c3, c4), shadingColor, depth = 0f)
-    }
-
-    /**
-     * Builds an outward-facing extruded wall block on the sphere.
-     */
-    fun buildSphericalWall(
-        tile: GameTile,
-        tileSize: Float,
-        wallColor: Color,
-        outPipeline: MutableList<RenderItem3D>
-    ) {
-        val half = tileSize / 2f
-        val x = tile.x.toFloat()
-        val y = tile.y.toFloat()
-
-        // 4 ground coordinate vertices
-        val g1 = projectGridToSphere(x - half, y - half)
-        val g2 = projectGridToSphere(x + half, y - half)
-        val g3 = projectGridToSphere(x + half, y + half)
-        val g4 = projectGridToSphere(x - half, y + half)
-
-        // 4 corresponding top extruded vertices (projected outwards along ground normals)
-        val t1 = projectGridToSphere(x - half, y - half, wallHeight)
-        val t2 = projectGridToSphere(x + half, y - half, wallHeight)
-        val t3 = projectGridToSphere(x + half, y + half, wallHeight)
-        val t4 = projectGridToSphere(x - half, y + half, wallHeight)
-
-        // Generate 6 bounding faces
-        outPipeline.add(RenderItem3D.Polygon(listOf(g1, g2, g3, g4), wallColor, depth = 0f)) // Bottom cap
-        outPipeline.add(RenderItem3D.Polygon(listOf(t1, t2, t3, t4), wallColor, depth = 0f)) // Top cap
-        outPipeline.add(RenderItem3D.Polygon(listOf(g1, g2, t2, t1), wallColor, depth = 0f)) // Side 1
-        outPipeline.add(RenderItem3D.Polygon(listOf(g2, g3, t3, t2), wallColor, depth = 0f)) // Side 2
-        outPipeline.add(RenderItem3D.Polygon(listOf(g3, g4, t4, t3), wallColor, depth = 0f)) // Side 3
-        outPipeline.add(RenderItem3D.Polygon(listOf(g4, g1, t1, t4), wallColor, depth = 0f)) // Side 4
-    }
-
-    /**
-     * Renders a glowing, procedural 3-dimensional portal warp gate on the sphere's surface.
-     */
-    fun buildPortalMesh(
-        portalX: Float,
-        portalY: Float,
-        timeAngle: Float,
-        outPipeline: MutableList<RenderItem3D>
-    ) {
-        val center = projectGridToSphere(portalX, portalY, 1f)
-        val norm = center.normalized() // Normal pointing radially out
-
-        // Construct 2 coordinate axes orthogonally perpendicular to the sphere surface normal
-        val tempU = if (abs(norm.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
-        val uAxis = (tempU - norm * (tempU.dot(norm))).normalized()
-        val wAxis = norm.cross(uAxis).normalized()
-
-        // Build outer rotating ring
-        val numSegments = 12
-        val radiusOuter = 12f
-        val portalColor = Color(0xFF00E5FF) // Electric Neon Cyan
-
-        val outerPts = (0..numSegments).map { i ->
-            val angle = (i * 2f * PI.toFloat() / numSegments) + timeAngle
-            center + uAxis * (cos(angle) * radiusOuter) + wAxis * (sin(angle) * radiusOuter)
-        }
-
-        for (i in 0 until numSegments) {
-            outPipeline.add(RenderItem3D.Line(outerPts[i], outerPts[i + 1], portalColor, 4.5f, 0f))
-        }
-
-        // Build inner inverse rotating ring
-        val radiusInner = 7f
-        val innerPts = (0..numSegments).map { i ->
-            val angle = (i * 2f * PI.toFloat() / numSegments) - timeAngle * 1.5f
-            center + uAxis * (cos(angle) * radiusInner) + wAxis * (sin(angle) * radiusInner)
-        }
-
-        for (i in 0 until numSegments) {
-            outPipeline.add(RenderItem3D.Line(innerPts[i], innerPts[i + 1], Color(0xFFD500F9), 3f, 0f)) // Deep Magenta
-        }
-    }
-}
-```
-
----
-
-## 7. Development Milestones & Implementation Rollout
-
-To upgrade Moria cleanly without breaking existing MVVM state handling or SQL registries in SQLite, we structure the rollout into 4 strict developmental phases:
+Navigating an open, featureless sphere without grid tiles is highly prone to orientation confusion ("disorientation"). To resolve this, we implement two primary visual landmarks:
 
 ```
-+------------------------------------------------------------+
-| Phase 1: Mathematics & Spheroid Grid Mapping Architecture  |
-| - Build SphereDungeonProjection helper class.              |
-| - Verify radial polygon vertex transformations coordinate. |
-+------------------------------------------------------------+
-                             |
-                             v
-+------------------------------------------------------------+
-| Phase 2: Render Pipeline Integration & Camera Follow Hook   |
-| - Update DungeonCanvas3D.kt ground and wall block draws.   |
-| - Anchor light source relative to radial player position.  |
-+------------------------------------------------------------+
-                             |
-                             v
-+------------------------------------------------------------+
-| Phase 3: Portal Mechanics & Gravity Well Teleports         |
-| - Replace Stairway textures with procedural warp mesh.    |
-| - Hook Action buttons to trigger warp sweeps in viewmodel. |
-+------------------------------------------------------------+
-                             |
-                             v
-+------------------------------------------------------------+
-| Phase 4: Dynamic Theme Scaling & Visual Shard Particles    |
-| - Inject colorful planetoid configurations dynamically.    |
-| - Write 3D particle controllers for coordinate teleports.  |
-+------------------------------------------------------------+
+                  Polar Beacon column (Vertical projection)
+                     |||
+                     |||
+               .     |||     .
+            .  * * * *|* * * *  . <---- Parallels (Latitude Ring)
+          .   *       |       *   .
+         .   *        |        *   .
+        *    *        |        *    *
+        |====*========o========*====| <---- Meridians (Longitude Lines)
+        *    *        |        *    *
+         .   *        |        *   .
+          .   *       |       *   .
+            .  * * * *|* * * *   .
+               .     |||      .
+                     |||
+                     |||
 ```
+
+### A. Volumetric Polar Energy Columns (Auroral Beacons)
+Concentric 3D wireframe cylinder columns extend radially outward at the poles:
+* **North Pole**: Emerald Green cosmic beam centered at $(0, R, 0)$ reaching to height $2.5R$.
+* **South Pole**: Royal Orchid Purple cosmic beam centered at $(0, -R, 0)$ reaching to height $2.5R$.
+* **Math Model**: Composed of layered concentric outer rings stacked vertically, fading gradually in brightness in proportion to height. These pillars are rendered in pure emissive light directly into the rendering queue, visible from any horizon.
+
+### B. Geomagnetic Parallels & Meridian Ribbons
+A beautiful low-poly planetary mesh coordinates structure is projected on the ground to act as structural reference lines:
+* **The Parallels (Latitude Lines)**: Concentric rings drawn every $15^\circ$ elevation angle, wrapping parallel to the equator.
+* **The Meridians (Longitude Lines)**: Spherical path ribbons connecting the North and South poles, drawn every $30^\circ$ interval.
+* **Math Model**: Represented as thin continuous line chains mapped through $\mathbf{V}(x, y, z)$ coordinates and depth-shaded dynamically to fade in the dark, giving the sensation of a planetary grid.
 
 ---
 
-## 8. Questions & Suggestions for Code optimization
+## 5. Portal Warp Engine: Celestial Sphere-to-Sphere Warp
 
-### Q1: Coordinate Wrap-Around Boundaries
-* **Suggestion**: When walking off the grid edges on the sphere surface, instead of standard wall blocks stopping progress, coordinates should wrap. East wrapping into West is direct ($\phi \to \phi + 2\pi$), but North/South wrapping crosses the poles.
-* **Architecture recommendation**: Implement **Cube-Mapped Surface Traversal** (Option B) for perfect $90^\circ$ coordinate transfers across 6 square map segments, or enforce **Polar Containment Borders** if utilizing single-segment Spherical coordinates (Option A).
+Traditional staircase dungeons are refactored into **Atmospheric Gyro-Portals** that pull the player across independent planetoids.
 
-### Q2: 3D Shading Optimization
-* **Suggestion**: Shading curved tiles demands dynamic facing equations. Calculate the geometric normal $\hat{\mathbf{n}}_{\text{polygon}}$ for every flat polygon of a curved tile and shade via:
-  $$\text{ShadeFactor} = \hat{\mathbf{n}}_{\text{polygon}} \cdot \hat{\mathbf{L}}_{\text{light\_vector}}$$
-  This produces smooth, gorgeous, planet-like shadows as the player orbits the camera around their character!
+```
+                   Spherical Warp Transition
+            
+          Player ->   o .                  (Warp Transition)
+                       \ ` .  
+                        \    ` .  
+                         \       v
+                    [Current Core] -----> [Next Celestial Sphere]
+```
+
+### A. Geodesic Proximity Detection
+Every portal on the sphere is stored with a 3D unit coordinate: $\hat{\mathbf{P}}_{\text{portal}}$.
+The absolute spatial distance between player and portal is calculated using the spherical chords model:
+$$D_{\text{spatial}} = \|\mathbf{P}_{\text{player}} - \mathbf{P}_{\text{portal}}\| = R \cdot \sqrt{(x_{\text{p}} - x_{\text{port}})^2 + (y_{\text{p}} - y_{\text{port}})^2 + (z_{\text{p}} - z_{\text{port}})^2}$$
+
+If $D_{\text{spatial}} < R_{\text{portal\_field}}$ (e.g. $12\text{dp}$), a strong graviton vacuum pull vector is added to the joystick speed input, sucking the player toward the exact gate coordinate.
+
+### B. Warp Sequence Animation State Machine
+When player coordinate merges inside the portal core ($1.5\text{dp}$ threshold), a 900ms teleportation frame is triggered:
+1. **Camera Spin Sweep**: Camera begins to orbit rapidly around the portal's radial norm vector while decreasing zoom parameters, displaying the planetoid retreating into the background void.
+2. **Radial Shard Disintegration**: The player cylindrical mesh model decomposes into 64 floating diamond particle vertices expanding radially out:
+   $$\mathbf{P}_{\text{shard}, i} = \mathbf{P}_{\text{player}} + \text{Velocity}_i \cdot dt \cdot \hat{\mathbf{n}}_{\text{sphere}}$$
+3. **World Swapping**: Re-init database cache, generate the next sphere structure (different planet colors, different radius sizes, new boss positioning), and fade the camera back in from the new sphere's polar arrival pad.
+
+---
+
+## 6. Upgraded Implementation Roadmap
+
+To upgrade Moria seamlessly without losing character level states, combat parameters, and high-scores structures stored in standard SQLite and state flows, we structure the continuous upgrade into 4 sequential phases:
+
+### Phase 1: Coordinate Systems & Continuous Geodesic Physics (5h)
+* Create `SphereVectorDungeon` helper class to map free placement coordinates.
+* Implement 3D tangent vectors projection mapping for local North/East relative movement.
+* Refactor player movement functions to support continuous floats instead of discrete map bounds indexing.
+
+### Phase 2: Virtual Circle Joy-Pad Controls Overlay (4h)
+* Replace discrete directional button grids in `HudPanel` with a fully custom gesture-tracking analogue canvas view.
+* Formulate dragging boundary bindings to return smooth, proportional velocity coefficients inside the dynamic FPS rendering thread.
+
+### Phase 3: Low-Poly Geomagnetic Grid Lines & Polar Beacon Auroras (5h)
+* Implement mathematical parallels/meridian ribbon builders.
+* Coordinate polar beacon coordinates drawing at $(0, R, 0)$ and $(0, -R, 0)$.
+* Hook camera depth drawing to render wireframe landmarks in emissive glow colors.
+
+### Phase 4: Portals Collision & Gravity Warp Mechanics (6h)
+* Setup spatial distance proximity loops mapping inside `RoguelikeViewModel`.
+* Build counter-rotating procedurally generated gyro rings.
+* Integrate multi-stage warp animation phases (Disintegration, planet retraction, new planet injection fade-in) in `DungeonCanvas3D`.
+
+---
+
+## 7. Strategic Questions & Suggestions for User Feedback
+
+### Q1: Continuous Spherical Obstacle & Enemy Collision Checks
+* **The Constraint**: Since grids are gone, we cannot check `map[y][x]` to deter running into walls.
+* **Architectural Suggestion**: We can represent world obstacles (like procedural lava vents, ancient obsidian crates, static dungeon ruins) as simple **Spherical Coordinate Bounding Spheres**:
+  $$D_{\text{collision}} = \|\hat{\mathbf{P}}_{\text{player}} - \hat{\mathbf{P}}_{\text{obstacle}}\| < \theta_{\text{check}}$$
+  If a collision is detected, we slide the player's movement vector along the tangent plane boundary to keep running smooth and fluid. Do you prefer this sliding cylinder physics model, or should we use hard stop vectors?
+
+### Q2: Dynamic Spherical Combat mechanics
+* **Architectural Suggestion**: In a continuous 3D world, enemies (e.g., Goblins, Arch-Mages) wander continuously along random geodesic paths towards the player coordinate.
+* **Suggestion**: To make targeting feels highly polished, should we implement a **Magnetic Target Lock-On**? Pressing a locking button snaps the 3D camera to track the closest target's coordinate, assisting linear spellcasting or continuous forward slashing.
+* **Alternative**: Do you prefer traditional directional slashing, where spells/attacks simply cast directly forward along the current movement heading?
+
+### Q3: Dynamic Background Space Skybox
+* **Suggestion**: To heighten the spatial depth as the camera rotates around the spheres, we can build a **Celestial Starry Nebula Background**. By rendering 120 randomized, distant star vector points that rotate at $0.15\times$ coordinate camera speed, we create a beautiful parallax depth effect that makes the player truly feel they are running on a celestial sphere floating in space!

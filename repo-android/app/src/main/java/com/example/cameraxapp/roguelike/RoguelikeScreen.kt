@@ -34,6 +34,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +61,11 @@ fun RoguelikeScreen(
 
     val playerX by viewModel.playerX
     val playerY by viewModel.playerY
+
+    val playerX_f by viewModel.playerX_f
+    val playerY_f by viewModel.playerY_f
+    val lockedMonsterId by viewModel.lockedMonsterId
+    val cameraYaw by viewModel.cameraYaw
 
     var is3DMode by remember { mutableStateOf(true) }
 
@@ -135,9 +150,11 @@ fun RoguelikeScreen(
                                             DungeonCanvas3D(
                                                 tiles = tiles,
                                                 monsters = monsters,
-                                                pX = playerX,
-                                                pY = playerY,
+                                                pX = playerX_f,
+                                                pY = playerY_f,
                                                 heroClass = char.heroClass,
+                                                lockedMonsterId = lockedMonsterId,
+                                                onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
                                                 modifier = Modifier.fillMaxSize()
                                             )
                                         } else {
@@ -165,6 +182,8 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
+                                        onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
+                                        onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -184,9 +203,11 @@ fun RoguelikeScreen(
                                             DungeonCanvas3D(
                                                 tiles = tiles,
                                                 monsters = monsters,
-                                                pX = playerX,
-                                                pY = playerY,
+                                                pX = playerX_f,
+                                                pY = playerY_f,
                                                 heroClass = char.heroClass,
+                                                lockedMonsterId = lockedMonsterId,
+                                                onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
                                                 modifier = Modifier.fillMaxSize()
                                             )
                                         } else {
@@ -214,6 +235,8 @@ fun RoguelikeScreen(
                                         onEnable = { viewModel.enableAction() },
                                         onDrinkHealthPotion = { viewModel.drinkHealthPotion() },
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
+                                        onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
+                                        onToggleTargetLock = { viewModel.toggleTargetLock() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -336,6 +359,8 @@ fun HudPanel(
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
+    onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
+    onToggleTargetLock: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -363,7 +388,9 @@ fun HudPanel(
             onCastSpell = onCastSpell,
             onEnable = onEnable,
             onDrinkHealthPotion = onDrinkHealthPotion,
-            onDrinkManaPotion = onDrinkManaPotion
+            onDrinkManaPotion = onDrinkManaPotion,
+            onUpdateJoystick = onUpdateJoystick,
+            onToggleTargetLock = onToggleTargetLock
         )
     }
 }
@@ -505,7 +532,9 @@ fun ControlPanel(
     onCastSpell: () -> Unit,
     onEnable: () -> Unit,
     onDrinkHealthPotion: () -> Unit,
-    onDrinkManaPotion: () -> Unit
+    onDrinkManaPotion: () -> Unit,
+    onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
+    onToggleTargetLock: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -539,23 +568,25 @@ fun ControlPanel(
                 )
             }
 
-            Button(
-                onClick = onEnable,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A1E)),
-                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .width(76.dp)
-                    .height(36.dp)
-                    .border(0.6.dp, Color(0xFF81C784).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            ) {
-                Text(
-                    text = "⚡ Enable",
-                    fontSize = 10.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
+            if (!is3DMode) {
+                Button(
+                    onClick = onEnable,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A1E)),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .width(76.dp)
+                        .height(36.dp)
+                        .border(0.6.dp, Color(0xFF81C784).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                ) {
+                    Text(
+                        text = "⚡ Enable",
+                        fontSize = 10.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
 
@@ -574,7 +605,15 @@ fun ControlPanel(
                 onDrinkManaPotion = onDrinkManaPotion
             )
 
-            GamepadDPad(onMove = onMove, onEnable = onEnable)
+            if (is3DMode) {
+                GamepadCirclePad(
+                    onUpdateJoystick = onUpdateJoystick,
+                    onToggleTargetLock = onToggleTargetLock,
+                    onEnable = onEnable
+                )
+            } else {
+                GamepadDPad(onMove = onMove, onEnable = onEnable)
+            }
         }
     }
 }
@@ -1246,6 +1285,141 @@ fun GamepadDPad(onMove: (Int, Int) -> Unit, onEnable: () -> Unit) {
                 Text("S", color = ColorSouth, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
                 Text("▼", color = ColorSouth, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+@Composable
+fun GamepadCirclePad(
+    onUpdateJoystick: (Float, Float) -> Unit,
+    onToggleTargetLock: () -> Unit,
+    onEnable: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    val density = LocalDensity.current
+    val outerSizeDp = 100.dp
+    val knobSizeDp = 40.dp
+    
+    val outerRadiusPx = with(density) { (outerSizeDp / 2).toPx() }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(24.dp))
+            .border(1.5.dp, Color(0xFF00FFCC).copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+            .padding(12.dp)
+    ) {
+        // 1. Sleek Action Button: Enable/Interact
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(Color(0xFF1E3A1E).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
+                .border(1.5.dp, Color(0xFF81C784).copy(alpha = 0.6f), RoundedCornerShape(22.dp))
+                .clickable { onEnable() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("⚡", color = Color.White, fontSize = 18.sp)
+        }
+
+        // 2. The Analog Drag Circle Pad
+        Box(
+            modifier = Modifier
+                .size(outerSizeDp)
+                .background(Color(0xFF121212).copy(alpha = 0.85f), RoundedCornerShape(outerSizeDp / 2))
+                .border(2.dp, Color(0xFF00FFCC).copy(alpha = 0.4f), RoundedCornerShape(outerSizeDp / 2))
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            dragOffset = Offset.Zero
+                            onUpdateJoystick(0f, 0f)
+                        },
+                        onDragCancel = {
+                            dragOffset = Offset.Zero
+                            onUpdateJoystick(0f, 0f)
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            val rawOffset = dragOffset + dragAmount
+                            val dist = sqrt(rawOffset.x * rawOffset.x + rawOffset.y * rawOffset.y)
+                            dragOffset = if (dist <= outerRadiusPx) {
+                                rawOffset
+                            } else {
+                                Offset(
+                                    x = (rawOffset.x / dist) * outerRadiusPx,
+                                    y = (rawOffset.y / dist) * outerRadiusPx
+                                )
+                            }
+                            val normX = dragOffset.x / outerRadiusPx
+                            val normY = dragOffset.y / outerRadiusPx
+                            onUpdateJoystick(normX, normY)
+                        }
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            // Coordinate lines behind thumb knob
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                drawCircle(
+                    color = Color(0xFF00FFCC).copy(alpha = 0.12f),
+                    radius = size.width * 0.35f,
+                    style = Stroke(width = 1f)
+                )
+                drawLine(
+                    color = Color(0xFF00FFCC).copy(alpha = 0.15f),
+                    start = Offset(0f, cy),
+                    end = Offset(size.width, cy),
+                    strokeWidth = 1f
+                )
+                drawLine(
+                    color = Color(0xFF00FFCC).copy(alpha = 0.15f),
+                    start = Offset(cx, 0f),
+                    end = Offset(cx, size.height),
+                    strokeWidth = 1f
+                )
+            }
+
+            // Knob (The slide handle)
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = dragOffset.x.roundToInt(),
+                            y = dragOffset.y.roundToInt()
+                        )
+                    }
+                    .size(knobSizeDp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFF00FFCC), Color(0xFF008B8B))
+                        ),
+                        shape = RoundedCornerShape(knobSizeDp / 2)
+                    )
+                    .border(1.5.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(knobSizeDp / 2))
+                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(knobSizeDp / 2)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(Color.White, RoundedCornerShape(4.dp))
+                )
+            }
+        }
+
+        // 3. Target Lock-On Button ("🎯")
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(Color(0xFF331111).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
+                .border(1.5.dp, Color(0xFFFF3366).copy(alpha = 0.6f), RoundedCornerShape(22.dp))
+                .clickable { onToggleTargetLock() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("🎯", color = Color.White, fontSize = 20.sp)
         }
     }
 }

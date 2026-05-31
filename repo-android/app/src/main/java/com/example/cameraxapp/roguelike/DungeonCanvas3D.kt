@@ -34,9 +34,11 @@ import kotlinx.coroutines.launch
 fun DungeonCanvas3D(
     tiles: List<GameTile>,
     monsters: List<MonsterState>,
-    pX: Int,
-    pY: Int,
+    pX: Float,
+    pY: Float,
     heroClass: String,
+    lockedMonsterId: Int? = null,
+    onCameraYawChanged: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var yawAngle by remember { mutableStateOf(-0.65f) }
@@ -44,6 +46,10 @@ fun DungeonCanvas3D(
     var zoomScale by remember { mutableStateOf(4.8f) }
     var lightingStrength by remember { mutableStateOf(1.5f) }
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(yawAngle) {
+        onCameraYawChanged(yawAngle)
+    }
 
     var fps by remember { mutableStateOf(60) }
     LaunchedEffect(Unit) {
@@ -74,16 +80,45 @@ fun DungeonCanvas3D(
         label = "OrbitTime"
     )
 
-    val animPX by animateFloatAsState(
-        targetValue = pX.toFloat(),
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
-        label = "PlayerX"
-    )
-    val animPY by animateFloatAsState(
-        targetValue = pY.toFloat(),
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
-        label = "PlayerY"
-    )
+    val animPX = pX
+    val animPY = pY
+
+    val distantStars = remember {
+        val rand = java.util.Random(12345)
+        List(120) {
+            val theta = rand.nextFloat() * PI.toFloat()
+            val phi = rand.nextFloat() * 2f * PI.toFloat()
+            val r = 1200f
+            val sx = r * sin(theta) * cos(phi)
+            val sy = r * cos(theta)
+            val sz = r * sin(theta) * sin(phi)
+            val color = when (rand.nextInt(4)) {
+                0 -> Color(0xFF90CAF9)  // Space blue
+                1 -> Color(0xFFE040FB)  // Nebular purple
+                2 -> Color(0xFFFFF59D)  // Golden nebula spark
+                else -> Color.White
+            }
+            val size = 0.5f + rand.nextFloat() * 1.5f
+            Triple(Vector3(sx, sy, sz), color, size)
+        }
+    }
+
+    // Smooth auto-orbit camera towards targeted monster when Locked On
+    if (lockedMonsterId != null) {
+        val lockedM = monsters.find { it.id == lockedMonsterId }
+        if (lockedM != null) {
+            val mAnimX = monsterAnims[lockedM.id]?.first?.value ?: lockedM.x.toFloat()
+            val mAnimY = monsterAnims[lockedM.id]?.second?.value ?: lockedM.y.toFloat()
+            // Convert plane grid difference to angular yaw target (adding offset so camera looks from behind/toward-target)
+            val dx = mAnimX - pX
+            val dy = mAnimY - pY
+            val targetYaw = atan2(dy, dx) - PI.toFloat() / 2f
+            var diff = targetYaw - yawAngle
+            while (diff < -PI) diff += (2f * PI).toFloat()
+            while (diff > PI) diff -= (2f * PI).toFloat()
+            yawAngle += diff * 0.12f // smoothly lerp camera yaw rotation
+        }
+    }
 
     // Track smooth state transitions for individual monsters to prevent instant snapping when they move
     val monsterAnims = remember { mutableStateMapOf<Int, Pair<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>>>() }
@@ -137,10 +172,23 @@ fun DungeonCanvas3D(
             val dFactor = 280f
             val W_s = 22f
 
-            // Orbit follow camera: offset and rotate all vectors relative to the player's character position
-            val pWorldX = (animPX - 9f) * W_s
-            val pWorldZ = (animPY - 9f) * W_s
-            val targetCenter = Vector3(pWorldX, 0f, pWorldZ)
+            val R = 155f // Radius of the sphere
+
+            fun projectGridToSphere(gx: Float, gy: Float, hOffset: Float = 0f): Vector3 {
+                // Horizontal coordinate gx (0 to 18) maps to longitude phi [-PI, PI]
+                val phi = ((gx - 9f) / 9f) * PI.toFloat()
+                // Vertical coordinate gy (0 to 18) maps to latitude theta [-PI/2, PI/2]
+                val theta = ((gy - 9f) / 9f) * (PI.toFloat() / 2f)
+                val rCurrent = R + hOffset
+                // Standard spherical coordinates projection (North up)
+                val x = rCurrent * cos(theta) * sin(phi)
+                val y = -rCurrent * sin(theta)
+                val z = rCurrent * cos(theta) * cos(phi)
+                return Vector3(x, y, z)
+            }
+
+            // Orbit follow camera centered on player's position on the sphere surface
+            val targetCenter = projectGridToSphere(animPX, animPY, 0f)
 
             val cosYaw = cos(yawAngle)
             val sinYaw = sin(yawAngle)
@@ -174,51 +222,150 @@ fun DungeonCanvas3D(
                 return getOrComputePoint(v).rotZ
             }
 
-            // Define light source centered at Player position (Y is light height overhead)
-            val pLightX = (animPX - 9f) * W_s
-            val pLightZ = (animPY - 9f) * W_s
-            val lightSource = Vector3(pLightX, -W_s * 1.5f, pLightZ)
+            // Define light source centered slightly above the Player position on the sphere normal
+            val lightSource = projectGridToSphere(animPX, animPY, W_s * 1.5f)
 
             val drawPipeline = mutableListOf<RenderItem3D>()
 
-            // 1. Traverse and construct floor grids and Wall high-cubes
+            // A. CELESTIAL STARRY PARALLAX BACKGROUND
+            distantStars.forEach { (starPos, color, size) ->
+                val rx = starPos.x * cosYaw + starPos.z * sinYaw
+                val ryHalf = -starPos.x * sinYaw + starPos.z * cosYaw
+                val ry = starPos.y * cosPitch - ryHalf * sinPitch
+                val rz = starPos.y * sinPitch + ryHalf * cosPitch
+                
+                val denom = rz + cameraZ
+                if (denom > 50f) {
+                    val sx = cX + (rx * dFactor * zoomScale) / denom
+                    val sy = cY + (ry * dFactor * zoomScale) / denom
+                    if (sx in 0f..width && sy in 0f..height) {
+                        drawPipeline.add(RenderItem3D.Sphere(
+                            center = starPos + targetCenter, // starPos offsets cancel center translation
+                            radius = size * zoomScale * 0.25f,
+                            color = color,
+                            depth = rz + 100000f // absolute backlayer
+                        ))
+                    }
+                }
+            }
+
+            // B. COORDINATE NET LINES (GEOMAGNETIC COMPASS NET)
+            // Latitude parallels
+            for (yVal in listOf(2f, 5f, 8f, 11f, 14f, 16f)) {
+                val segs = 24
+                for (i in 0 until segs) {
+                    val x1 = i * 18f / segs
+                    val x2 = (i + 1) * 18f / segs
+                    val p1 = projectGridToSphere(x1, yVal, 0.4f)
+                    val p2 = projectGridToSphere(x2, yVal, 0.4f)
+                    drawPipeline.add(RenderItem3D.Line(p1, p2, Color(0xFF1B2B35).copy(alpha = 0.45f), 1f, 0f))
+                }
+            }
+            // Longitude meridians
+            for (xVal in listOf(0f, 3f, 6f, 9f, 12f, 15f)) {
+                val segs = 18
+                for (i in 0 until segs) {
+                    val y1 = i * 18f / segs
+                    val y2 = (i + 1) * 18f / segs
+                    val p1 = projectGridToSphere(xVal, y1, 0.4f)
+                    val p2 = projectGridToSphere(xVal, y2, 0.4f)
+                    drawPipeline.add(RenderItem3D.Line(p1, p2, Color(0xFF1B2B35).copy(alpha = 0.45f), 1f, 0f))
+                }
+            }
+
+            // C. VOLUMETRIC POLAR BEACONS (NORTH AND SOUTH COMPASS VERTICES)
+            // North Pole (y = 0)
+            val npBase = projectGridToSphere(9f, 0f, 0f)
+            val npTip = projectGridToSphere(9f, 0f, 95f)
+            drawPipeline.add(RenderItem3D.Line(npBase, npTip, Color(0xFF3A86C8), 3.5f, 0f))
+            for (h in listOf(20f, 45f, 70f)) {
+                val npCenter = projectGridToSphere(9f, 0f, h)
+                val rad = 10f * (1f - h / 120f)
+                val ringPts = (0..12).map { i ->
+                    val a = i * 2f * PI / 12f
+                    npCenter + Vector3((rad * cos(a)).toFloat(), 0f, (rad * sin(a)).toFloat())
+                }
+                for (i in 0 until 12) {
+                    drawPipeline.add(RenderItem3D.Line(ringPts[i], ringPts[i+1], Color(0xFF3A86C8).copy(alpha = 0.6f), 1.8f, 0f))
+                }
+            }
+
+            // South Pole (y = 18)
+            val spBase = projectGridToSphere(9f, 18f, 0f)
+            val spTip = projectGridToSphere(9f, 18f, 95f)
+            drawPipeline.add(RenderItem3D.Line(spBase, spTip, Color(0xFFE76F51), 3.5f, 0f))
+            for (h in listOf(20f, 45f, 70f)) {
+                val spCenter = projectGridToSphere(9f, 18f, h)
+                val rad = 10f * (1f - h / 120f)
+                val ringPts = (0..12).map { i ->
+                    val a = i * 2f * PI / 12f
+                    spCenter + Vector3((rad * cos(a)).toFloat(), 0f, (rad * sin(a)).toFloat())
+                }
+                for (i in 0 until 12) {
+                    drawPipeline.add(RenderItem3D.Line(ringPts[i], ringPts[i+1], Color(0xFFE76F51).copy(alpha = 0.6f), 1.8f, 0f))
+                }
+            }
+
+            // D. SPHERICAL DUNGEON TILE RENDERER
             tiles.forEach { tile ->
                 if (tile.revealed) {
-                    val tileX = (tile.x - 9f) * W_s
-                    val tileZ = (tile.y - 9f) * W_s
-                    val floorY = W_s * 0.5f
-
                     if (tile.tileType == "WALL") {
-                        // Elevated brick block
-                        buildWallCube(
-                            cx = tileX, cy = floorY - W_s / 2f, cz = tileZ,
-                            sizeX = W_s * 0.96f, sizeY = W_s, sizeZ = W_s * 0.96f,
-                            color = Color(0xFF3E352C),
-                            outList = drawPipeline,
-                            lightSource = lightSource,
-                            lightingStrength = lightingStrength
-                        )
-                    } else {
-                        // Drawing flat Ground tile
-                        val half = W_s / 2f
-                        val corners = listOf(
-                            Vector3(tileX - half, floorY, tileZ - half),
-                            Vector3(tileX + half, floorY, tileZ - half),
-                            Vector3(tileX + half, floorY, tileZ + half),
-                            Vector3(tileX - half, floorY, tileZ + half)
+                        // Extrude WALL blocks radially outward of the Sphere origin!
+                        val v1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), 0f)
+                        val v2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), 0f)
+                        val v3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, 0f)
+                        val v4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, 0f)
+
+                        val t1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), W_s)
+                        val t2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), W_s)
+                        val t3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, W_s)
+                        val t4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, W_s)
+
+                        val wallColor = Color(0xFF3E352C)
+                        val faces = listOf(
+                            listOf(v1, v2, t2, t1), // side faces
+                            listOf(v2, v3, t3, t2),
+                            listOf(v3, v4, t4, t3),
+                            listOf(v4, v1, t1, t4),
+                            listOf(t1, t2, t3, t4)  // top cap face
                         )
 
-                        // Light calculation
-                        val dist = (Vector3(tileX, floorY, tileZ) - lightSource).length()
+                        faces.forEachIndexed { fIdx, pts ->
+                            val fCenter = Vector3(
+                                pts.sumOf { it.x.toDouble() }.toFloat() / 4f,
+                                pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
+                                pts.sumOf { it.z.toDouble() }.toFloat() / 4f
+                            )
+                            val dist = (fCenter - lightSource).length()
+                            val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+                            val lightFactor = (0.20f * lightingStrength + 0.80f * attenuation).coerceIn(0.12f, 1f)
+                            
+                            val shaderBonus = if (fIdx == 4) 1.2f else 0.85f
+                            val factor = (lightFactor * shaderBonus).coerceIn(0f, 1f)
+
+                            val col = Color(
+                                red = (wallColor.red * factor).coerceIn(0f, 1f),
+                                green = (wallColor.green * factor).coerceIn(0f, 1f),
+                                blue = (wallColor.blue * factor).coerceIn(0f, 1f),
+                                alpha = 1f
+                            )
+                            drawPipeline.add(RenderItem3D.Polygon(pts, col, depth = 0f))
+                        }
+                    } else {
+                        // Standard ground floors map
+                        val v1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), 0.2f)
+                        val v2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), 0.2f)
+                        val v3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, 0.2f)
+                        val v4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, 0.2f)
+
+                        val dist = (projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, 0.2f) - lightSource).length()
                         val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
-                        val lightFactor = (0.10f * lightingStrength + 0.90f * attenuation).coerceIn(0f, 1f)
+                        val lightFactor = (0.15f * lightingStrength + 0.85f * attenuation).coerceIn(0.10f, 1f)
 
                         val tileColor = when (tile.tileType) {
-                            "STAIRS_DOWN" -> Color(0xFF2E1C3F)
                             "CHEST" -> Color(0xFF4A341E)
                             else -> Color(0xFF141312)
                         }
-
                         val shadedCol = Color(
                             red = (tileColor.red * lightFactor).coerceIn(0f, 1f),
                             green = (tileColor.green * lightFactor).coerceIn(0f, 1f),
@@ -227,42 +374,46 @@ fun DungeonCanvas3D(
                         )
 
                         if (tile.tileType != "STAIRS_DOWN") {
-                            drawPipeline.add(RenderItem3D.Polygon(corners, shadedCol, depth = 0f))
-                        }
-
-                        // Procedural weathered flagstone lines on ground tiles
-                        if (tile.tileType != "STAIRS_DOWN" && tile.tileType != "CHEST") {
-                            val flagLineCol = Color(0xFF2B2825).copy(alpha = 0.6f)
-                            val floorYOffset = floorY - 0.2f
-                            
-                            // Outer borders
-                            drawPipeline.add(RenderItem3D.Line(Vector3(tileX - half, floorYOffset, tileZ - half), Vector3(tileX + half, floorYOffset, tileZ - half), flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(Vector3(tileX + half, floorYOffset, tileZ - half), Vector3(tileX + half, floorYOffset, tileZ + half), flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(Vector3(tileX + half, floorYOffset, tileZ + half), Vector3(tileX - half, floorYOffset, tileZ + half), flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(Vector3(tileX - half, floorYOffset, tileZ + half), Vector3(tileX - half, floorYOffset, tileZ - half), flagLineCol, 1.2f, 0f))
-
-                            // Staggered paving joints
-                            if ((tile.x + tile.y) % 2 == 1) {
-                                drawPipeline.add(RenderItem3D.Line(Vector3(tileX, floorYOffset, tileZ - half), Vector3(tileX, floorYOffset, tileZ + half), flagLineCol, 0.8f, 0f))
-                            } else {
-                                drawPipeline.add(RenderItem3D.Line(Vector3(tileX - half, floorYOffset, tileZ), Vector3(tileX + half, floorYOffset, tileZ), flagLineCol, 0.8f, 0f))
-                            }
+                            drawPipeline.add(RenderItem3D.Polygon(listOf(v1, v2, v3, v4), shadedCol, depth = 0f))
+                            // Staggered paving joint visual lines
+                            val flagLineCol = Color(0xFF2B2825).copy(alpha = 0.55f)
+                            drawPipeline.add(RenderItem3D.Line(v1, v2, flagLineCol, 1.2f, 0f))
+                            drawPipeline.add(RenderItem3D.Line(v2, v3, flagLineCol, 1.2f, 0f))
+                            drawPipeline.add(RenderItem3D.Line(v3, v4, flagLineCol, 1.2f, 0f))
+                            drawPipeline.add(RenderItem3D.Line(v4, v1, flagLineCol, 1.2f, 0f))
                         }
 
                         if (tile.tileType == "STAIRS_DOWN") {
-                            // Render 3D stairs stepping downward
-                            build3DStairs(
-                                cx = tileX, cy = floorY, cz = tileZ,
-                                sizeX = W_s, sizeY = W_s * 1.1f, sizeZ = W_s,
-                                outList = drawPipeline,
-                                lightSource = lightSource,
-                                lightingStrength = lightingStrength
-                            )
+                            // TELEPORT PORTAL: Rotating outer rings and counter-rotating magic runes
+                            val centerVal = projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, 0.4f)
+                            val normal = centerVal.normalize()
+                            val temp = if (abs(normal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                            val tangentU = (temp - normal * (temp.dot(normal))).normalize()
+                            val tangentV = normal.cross(tangentU).normalize()
+                            
+                            val outerRad = W_s * 0.45f
+                            val innerRad = W_s * 0.28f
+                            val outerSegs = 16
+                            
+                            val r1Pts = (0..outerSegs).map { idx ->
+                                val a = idx * 2f * PI / outerSegs + timeAngle
+                                centerVal + tangentU * (outerRad * cos(a)).toFloat() + tangentV * (outerRad * sin(a)).toFloat()
+                            }
+                            val r2Pts = (0..outerSegs).map { idx ->
+                                val a = idx * 2f * PI / outerSegs - timeAngle * 1.5f
+                                centerVal + tangentU * (innerRad * cos(a)).toFloat() + tangentV * (innerRad * sin(a)).toFloat()
+                            }
+                            for (i in 0 until outerSegs) {
+                                drawPipeline.add(RenderItem3D.Line(r1Pts[i], r1Pts[i+1], Color(0xFF00E5FF), 2.5f, 0f))
+                                drawPipeline.add(RenderItem3D.Line(r2Pts[i], r2Pts[i+1], Color(0xFFFF00E5), 2f, 0f))
+                            }
+                            drawPipeline.add(RenderItem3D.TextLabel(centerVal + normal * 2f, "🌀", Color.White, sizeMultiplier = 1f, depth = 0f))
                         } else if (tile.tileType == "CHEST") {
-                            // Render 3D chest with wood paneling, iron straps and dual brass locks
+                            // Build standard 3D chest standing on the sphere
+                            val chestCenter = projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, W_s * 0.25f)
                             build3DChest(
-                                cx = tileX, cy = floorY - 2.5f, cz = tileZ,
-                                sizeX = W_s * 0.52f, sizeY = W_s * 0.45f, sizeZ = W_s * 0.42f,
+                                cx = chestCenter.x, cy = chestCenter.y, cz = chestCenter.z,
+                                sizeX = W_s * 0.48f, sizeY = W_s * 0.42f, sizeZ = W_s * 0.42f,
                                 outList = drawPipeline,
                                 lightSource = lightSource,
                                 lightingStrength = lightingStrength
@@ -278,11 +429,9 @@ fun DungeonCanvas3D(
                 if (monsterTileRevealed) {
                     val mAnimX = monsterAnims[monster.id]?.first?.value ?: monster.x.toFloat()
                     val mAnimY = monsterAnims[monster.id]?.second?.value ?: monster.y.toFloat()
-                    val mX = (mAnimX - 9f) * W_s
-                    val mZ = (mAnimY - 9f) * W_s
                     
                     val monsterBobbing = sin(timeAngle * 2.2f + (monster.id * 0.5f)) * (W_s * 0.05f)
-                    val mY = W_s * 0.15f + monsterBobbing
+                    val mPos = projectGridToSphere(mAnimX, mAnimY, W_s * 0.25f + monsterBobbing)
 
                     val monsterCol = when (monster.type) {
                         "DRAGON" -> Color(0xFFC62828)
@@ -300,7 +449,7 @@ fun DungeonCanvas3D(
 
                     // Build upgraded 3D low poly entity representation
                     buildProceduralMonsterLowPoly(
-                        cx = mX, cy = mY, cz = mZ,
+                        cx = mPos.x, cy = mPos.y, cz = mPos.z,
                         radX = W_s * 0.32f, radY = W_s * 0.45f, radZ = W_s * 0.32f,
                         monsterType = monster.type,
                         baseColor = monsterCol,
@@ -309,54 +458,94 @@ fun DungeonCanvas3D(
                         lightingStrength = lightingStrength
                     )
 
-                    // Type-specific animated indicators
+                    // Orient status rings perpendicular to sphere normal
+                    val normal = mPos.normalize()
+                    val temp = if (abs(normal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                    val tangentU = (temp - normal * (temp.dot(normal))).normalize()
+                    val tangentV = normal.cross(tangentU).normalize()
+
+                    // Type-specific animated indicator rings
                     when (monster.type) {
                         "DRAGON" -> {
                             val numSegs = 10
                             val pulseRadius = W_s * (0.65f + 0.15f * sin(timeAngle * 3f))
+                            val rPts = (0..numSegs).map { idx ->
+                                val a = timeAngle + (idx * 2f * PI / numSegs)
+                                mPos + tangentU * (pulseRadius * cos(a)).toFloat() + tangentV * (pulseRadius * sin(a)).toFloat()
+                            }
                             for (i in 0 until numSegs) {
-                                val a1 = timeAngle + (i * 2f * PI.toFloat() / numSegs)
-                                val a2 = timeAngle + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                                val startPt = Vector3(mX + pulseRadius * cos(a1), mY, mZ + pulseRadius * sin(a1))
-                                val endPt = Vector3(mX + pulseRadius * cos(a2), mY, mZ + pulseRadius * sin(a2))
-                                drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFFEF5350), 3f, 0f))
+                                drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFFEF5350), 3f, 0f))
                             }
                         }
                         "NECROMANCER" -> {
                             val numSegs = 6
                             val ringRadius = W_s * 0.45f
+                            val rPts = (0..numSegs).map { idx ->
+                                val a = -timeAngle * 1.2f + (idx * 2f * PI / numSegs)
+                                mPos + tangentU * (ringRadius * cos(a)).toFloat() + tangentV * (ringRadius * sin(a)).toFloat()
+                            }
                             for (i in 0 until numSegs) {
-                                val a1 = -timeAngle * 1.2f + (i * 2f * PI.toFloat() / numSegs)
-                                val a2 = -timeAngle * 1.2f + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                                val startPt = Vector3(mX + ringRadius * cos(a1), mY - W_s * 0.15f, mZ + ringRadius * sin(a1))
-                                val endPt = Vector3(mX + ringRadius * cos(a2), mY - W_s * 0.15f, mZ + ringRadius * sin(a2))
-                                drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFFBA68C8), 2.2f, 0f))
+                                drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFFBA68C8), 2.2f, 0f))
                             }
                         }
                         "GOBLIN" -> {
                             val numSegs = 6
                             val ringRadius = W_s * 0.42f
+                            val rPts = (0..numSegs).map { idx ->
+                                val a = timeAngle * 1.8f + (idx * 2f * PI / numSegs)
+                                mPos + tangentU * (ringRadius * cos(a)).toFloat() + tangentV * (ringRadius * sin(a)).toFloat()
+                            }
                             for (i in 0 until numSegs) {
-                                val a1 = timeAngle * 1.8f + (i * 2f * PI.toFloat() / numSegs)
-                                val a2 = timeAngle * 1.8f + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                                val startPt = Vector3(mX + ringRadius * cos(a1), mY + W_s * 0.1f, mZ + ringRadius * sin(a1))
-                                val endPt = Vector3(mX + ringRadius * cos(a2), mY + W_s * 0.1f, mZ + ringRadius * sin(a2))
-                                drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFF81C784), 1.8f, 0f))
+                                drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFF81C784), 1.8f, 0f))
                             }
                         }
                     }
 
-                    // Add floating tag emoji above the entity heading
-                    drawPipeline.add(RenderItem3D.TextLabel(Vector3(mX, mY - W_s * 0.70f, mZ), glyph, Color.White, sizeMultiplier = 1.0f, depth = 0f))
+                    // Add floating tag emoji high above the entity along normal
+                    val textNormal = normal * (W_s * 0.70f)
+                    drawPipeline.add(RenderItem3D.TextLabel(mPos + textNormal, glyph, Color.White, sizeMultiplier = 1.0f, depth = 0f))
                     
                     val hpPercent = (monster.currentHp * 100 / monster.maxHp).toString() + "%"
-                    drawPipeline.add(RenderItem3D.TextLabel(Vector3(mX, mY - W_s * 1.05f, mZ), hpPercent, Color(0xFF81C784), sizeMultiplier = 0.65f, depth = 0f))
+                    drawPipeline.add(RenderItem3D.TextLabel(mPos + normal * (W_s * 1.05f), hpPercent, Color(0xFF81C784), sizeMultiplier = 0.65f, depth = 0f))
+
+                    // Target Locked Marker overlay ring
+                    if (monster.id == lockedMonsterId) {
+                        val reticleRadius = W_s * 0.55f
+                        val reticleHeight = W_s * 0.9f
+                        val rCenter = mPos + normal * reticleHeight
+                        val rTangentU = tangentU * reticleRadius
+                        val rTangentV = tangentV * reticleRadius
+                        
+                        // Rotating locking neon circle
+                        val rSegs = 12
+                        val rPts = (0..rSegs).map { idx ->
+                            val a = idx * 2f * PI / rSegs + timeAngle * 2.5f
+                            rCenter + rTangentU * cos(a).toFloat() + rTangentV * sin(a).toFloat()
+                        }
+                        for (i in 0 until rSegs) {
+                            drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFF00FFCC), 3f, 0f))
+                        }
+                        // Corner tickers
+                        for (aIdx in 0..3) {
+                            val a = aIdx * PI / 2f + timeAngle * -1.8f
+                            val outer = rCenter + rTangentU * (cos(a) * 1.5f).toFloat() + rTangentV * (sin(a) * 1.5f).toFloat()
+                            val inner = rCenter + rTangentU * (cos(a) * 0.95f).toFloat() + rTangentV * (sin(a) * 0.95f).toFloat()
+                            drawPipeline.add(RenderItem3D.Line(outer, inner, Color(0xFFFF3366), 4f, 0f))
+                        }
+                        // Locked Status overhead
+                        drawPipeline.add(RenderItem3D.TextLabel(rCenter + normal * (W_s * 0.45f), "🎯 LOCKED", Color(0xFFFF3366), sizeMultiplier = 0.85f, depth = 0f))
+                    }
                 }
             }
 
             // 3. Build player hero entity shape with subtle breathing float animation
             val playerBobbing = sin(timeAngle * 2.5f) * (W_s * 0.05f)
-            val pWorldY = W_s * 0.2f + playerBobbing
+            val pPos = projectGridToSphere(animPX, animPY, W_s * 0.30f + playerBobbing)
+
+            val pNormal = pPos.normalize()
+            val pTemp = if (abs(pNormal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+            val pTangentU = (pTemp - pNormal * (pTemp.dot(pNormal))).normalize()
+            val pTangentV = pNormal.cross(pTangentU).normalize()
 
             val playerCol = Color(0xFFFF9100)
             val pGlyph = when (heroClass) {
@@ -365,9 +554,9 @@ fun DungeonCanvas3D(
                 else -> "🗡️"
             }
 
-            // Core 3D player model
+            // Core 3D player model at spherical position
             buildProceduralPlayerLowPoly(
-                cx = pWorldX, cy = pWorldY, cz = pWorldZ,
+                cx = pPos.x, cy = pPos.y, cz = pPos.z,
                 radX = W_s * 0.30f, radY = W_s * 0.45f, radZ = W_s * 0.30f,
                 heroClass = heroClass,
                 outList = drawPipeline,
@@ -376,129 +565,71 @@ fun DungeonCanvas3D(
             )
 
             // Dynamic float action labels with breathing float sequence
-            drawPipeline.add(RenderItem3D.TextLabel(Vector3(pWorldX, pWorldY - W_s * 0.85f, pWorldZ), pGlyph, Color.White, sizeMultiplier = 1.1f, depth = 0f))
-            drawPipeline.add(RenderItem3D.TextLabel(Vector3(pWorldX, pWorldY - W_s * 1.25f, pWorldZ), "HERO", Color(0xFFFFD700), sizeMultiplier = 0.65f, depth = 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos + pNormal * (W_s * 0.85f), pGlyph, Color.White, sizeMultiplier = 1.1f, depth = 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos + pNormal * (W_s * 1.25f), "HERO", Color(0xFFFFD700), sizeMultiplier = 0.65f, depth = 0f))
 
-            // Class-specific animated graphic rings (Waist Orbitals)
+            // Class-specific animated graphic rings (Waist Orbitals) aligned with sphere normal
             when (heroClass) {
                 "Warrior" -> {
                     val numSegs = 8
                     val ringRadius = W_s * 0.5f
+                    val rPts = (0..numSegs).map { idx ->
+                        val a = timeAngle + (idx * 2f * PI / numSegs)
+                        pPos + pTangentU * (ringRadius * cos(a)).toFloat() + pTangentV * (ringRadius * sin(a)).toFloat()
+                    }
                     for (i in 0 until numSegs) {
-                        val a1 = timeAngle + (i * 2f * PI.toFloat() / numSegs)
-                        val a2 = timeAngle + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                        val startPt = Vector3(pWorldX + ringRadius * cos(a1), pWorldY, pWorldZ + ringRadius * sin(a1))
-                        val endPt = Vector3(pWorldX + ringRadius * cos(a2), pWorldY, pWorldZ + ringRadius * sin(a2))
-                        drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFFFFD700), 2.5f, 0f))
+                        drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFFFFD700), 2.5f, 0f))
                     }
                 }
                 "Mage" -> {
                     val numSegs = 8
                     val ringRadius = W_s * 0.48f
+                    val rPts = (0..numSegs).map { idx ->
+                        val a = -timeAngle * 1.5f + (idx * 2f * PI / numSegs)
+                        val wobble = (2f * sin(a)).toFloat()
+                        pPos + pNormal * wobble + pTangentU * (ringRadius * cos(a)).toFloat() + pTangentV * (ringRadius * sin(a)).toFloat()
+                    }
                     for (i in 0 until numSegs) {
-                        val a1 = -timeAngle * 1.5f + (i * 2f * PI.toFloat() / numSegs)
-                        val a2 = -timeAngle * 1.5f + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                        val startPt = Vector3(
-                            pWorldX + ringRadius * cos(a1),
-                            pWorldY - W_s * 0.2f + 2f * sin(a1),
-                            pWorldZ + ringRadius * sin(a1)
-                        )
-                        val endPt = Vector3(
-                            pWorldX + ringRadius * cos(a2),
-                            pWorldY - W_s * 0.2f + 2f * sin(a2),
-                            pWorldZ + ringRadius * sin(a2)
-                        )
-                        drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFF64B5F6), 2.0f, 0f))
+                        drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFF64B5F6), 2.0f, 0f))
                     }
                 }
                 else -> { // Rogue
                     val numSegs = 8
                     val ringRadius = W_s * 0.52f
+                    val rPts = (0..numSegs).map { idx ->
+                        val a = timeAngle * 2.0f + (idx * 2f * PI / numSegs)
+                        pPos + pTangentU * (ringRadius * cos(a)).toFloat() + pTangentV * (ringRadius * sin(a)).toFloat()
+                    }
                     for (i in 0 until numSegs) {
-                        val a1 = timeAngle * 2.0f + (i * 2f * PI.toFloat() / numSegs)
-                        val a2 = timeAngle * 2.0f + ((i + 1) * 2f * PI.toFloat() / numSegs)
-                        val startPt = Vector3(pWorldX + ringRadius * cos(a1), pWorldY + W_s * 0.1f, pWorldZ + ringRadius * sin(a1))
-                        val endPt = Vector3(pWorldX + ringRadius * cos(a2), pWorldY + W_s * 0.1f, pWorldZ + ringRadius * sin(a2))
-                        drawPipeline.add(RenderItem3D.Line(startPt, endPt, Color(0xFFCE93D8), 1.8f, 0f))
+                        drawPipeline.add(RenderItem3D.Line(rPts[i], rPts[i+1], Color(0xFFCE93D8), 1.8f, 0f))
                     }
                 }
             }
 
-            // matched direction orientation helper colors
+            // Directional compass indicators aligned on local tangent vectors
             val ColorNorth = Color(0xFF3A86C8) // Sky Blue
             val ColorSouth = Color(0xFFE76F51) // Warm Coral / Orange
             val ColorWest = Color(0xFF9B5DE5)  // Orchid Purple
             val ColorEast = Color(0xFF2EC4B6)  // Teal Green
 
-            // 3D Axis Helpers to show player orientation in world space at feet height
-            val floorY = W_s * 0.5f
-            val floorAxisY = floorY - 2f
             val axisLength = W_s * 1.2f
             val labelOffset = W_s * 1.6f
 
-            // North (-Z)
-            drawPipeline.add(RenderItem3D.Line(
-                start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX, floorAxisY, pWorldZ - axisLength),
-                color = ColorNorth,
-                strokeWidth = 3f,
-                depth = 0f
-            ))
-            drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX, floorAxisY, pWorldZ - labelOffset),
-                text = "N",
-                color = ColorNorth,
-                sizeMultiplier = 0.8f,
-                depth = 0f
-            ))
+            // North (+pTangentV)
+            drawPipeline.add(RenderItem3D.Line(pPos, pPos + pTangentV * axisLength, ColorNorth, 3f, 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos + pTangentV * labelOffset + pNormal * 1.5f, "N", ColorNorth, sizeMultiplier = 0.8f, depth = 0f))
 
-            // South (+Z)
-            drawPipeline.add(RenderItem3D.Line(
-                start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX, floorAxisY, pWorldZ + axisLength),
-                color = ColorSouth,
-                strokeWidth = 3f,
-                depth = 0f
-            ))
-            drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX, floorAxisY, pWorldZ + labelOffset),
-                text = "S",
-                color = ColorSouth,
-                sizeMultiplier = 0.8f,
-                depth = 0f
-            ))
+            // South (-pTangentV)
+            drawPipeline.add(RenderItem3D.Line(pPos, pPos - pTangentV * axisLength, ColorSouth, 3f, 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos - pTangentV * labelOffset + pNormal * 1.5f, "S", ColorSouth, sizeMultiplier = 0.8f, depth = 0f))
 
-            // West (+X) - Swapped to fix visual inversion relative to pad
-            drawPipeline.add(RenderItem3D.Line(
-                start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX + axisLength, floorAxisY, pWorldZ),
-                color = ColorWest,
-                strokeWidth = 3f,
-                depth = 0f
-            ))
-            drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX + labelOffset, floorAxisY, pWorldZ),
-                text = "W",
-                color = ColorWest,
-                sizeMultiplier = 0.8f,
-                depth = 0f
-            ))
+            // West (+pTangentU)
+            drawPipeline.add(RenderItem3D.Line(pPos, pPos + pTangentU * axisLength, ColorWest, 3f, 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos + pTangentU * labelOffset + pNormal * 1.5f, "W", ColorWest, sizeMultiplier = 0.8f, depth = 0f))
 
-            // East (-X) - Swapped to fix visual inversion relative to pad
-            drawPipeline.add(RenderItem3D.Line(
-                start = Vector3(pWorldX, floorAxisY, pWorldZ),
-                end = Vector3(pWorldX - axisLength, floorAxisY, pWorldZ),
-                color = ColorEast,
-                strokeWidth = 3f,
-                depth = 0f
-            ))
-            drawPipeline.add(RenderItem3D.TextLabel(
-                position = Vector3(pWorldX - labelOffset, floorAxisY, pWorldZ),
-                text = "E",
-                color = ColorEast,
-                sizeMultiplier = 0.8f,
-                depth = 0f
-            ))
+            // East (-pTangentU)
+            drawPipeline.add(RenderItem3D.Line(pPos, pPos - pTangentU * axisLength, ColorEast, 3f, 0f))
+            drawPipeline.add(RenderItem3D.TextLabel(pPos - pTangentU * labelOffset + pNormal * 1.5f, "E", ColorEast, sizeMultiplier = 0.8f, depth = 0f))
 
             // 4. Sort Items using Painter's depth model (Z further is drawn first)
             val sortedList = drawPipeline.sortedByDescending { item ->
