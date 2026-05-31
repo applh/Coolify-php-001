@@ -67,6 +67,8 @@ class WorldViewModel(context: Context) : ViewModel() {
     val lightIntensity = MutableStateFlow(0.85f)
     val specularShininess = MutableStateFlow(0.35f)
     val wireframeMode = MutableStateFlow(false)
+    val useSceneview = MutableStateFlow(true)
+    val glbModelUrl = MutableStateFlow("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
 
     // Network and Custom loading states
     val urlInputValue = MutableStateFlow("")
@@ -329,6 +331,8 @@ fun WorldScreen(
     val lightFactor by viewModel.lightIntensity.collectAsState()
     val specularValue by viewModel.specularShininess.collectAsState()
     val isWireframeOnly by viewModel.wireframeMode.collectAsState()
+    val useSceneviewEnabled by viewModel.useSceneview.collectAsState()
+    val glbModelUrlValue by viewModel.glbModelUrl.collectAsState()
 
     val currentActiveType by viewModel.activeTextureType.collectAsState()
     val currentBitmap by viewModel.activeBitmap.collectAsState()
@@ -411,6 +415,8 @@ fun WorldScreen(
                         wireframe = isWireframeOnly,
                         bitmap = currentBitmap,
                         autoRotate = autoRotateEnabled,
+                        useSceneview = useSceneviewEnabled,
+                        glbModelUrl = glbModelUrlValue,
                         onYawChange = { viewModel.yaw.value = it },
                         onPitchChange = { viewModel.pitch.value = it },
                         onScaleChange = { viewModel.scale.value = it },
@@ -440,6 +446,8 @@ fun WorldScreen(
                         hasUploaded = uploadedPhoto != null,
                         urlInputValue = urlInputValue,
                         downloadStatus = downloadStatus,
+                        useSceneview = useSceneviewEnabled,
+                        glbModelUrl = glbModelUrlValue,
                         onDensityChange = { viewModel.density.value = it },
                         onAutoRotateToggle = { viewModel.autoRotate.value = it },
                         onLightChange = { viewModel.lightIntensity.value = it },
@@ -449,6 +457,8 @@ fun WorldScreen(
                         onLaunchPicker = { photoPickerLauncher.launch("image/*") },
                         onUrlValueChange = { viewModel.urlInputValue.value = it },
                         onDownloadClick = { viewModel.downloadTextureFromUrl(it) },
+                        onUseSceneviewToggle = { viewModel.useSceneview.value = it },
+                        onGlbModelUrlChange = { viewModel.glbModelUrl.value = it },
                         modifier = Modifier.verticalScroll(rememberScrollState())
                     )
                 }
@@ -479,6 +489,8 @@ fun WorldScreen(
                         wireframe = isWireframeOnly,
                         bitmap = currentBitmap,
                         autoRotate = autoRotateEnabled,
+                        useSceneview = useSceneviewEnabled,
+                        glbModelUrl = glbModelUrlValue,
                         onYawChange = { viewModel.yaw.value = it },
                         onPitchChange = { viewModel.pitch.value = it },
                         onScaleChange = { viewModel.scale.value = it },
@@ -502,6 +514,8 @@ fun WorldScreen(
                         hasUploaded = uploadedPhoto != null,
                         urlInputValue = urlInputValue,
                         downloadStatus = downloadStatus,
+                        useSceneview = useSceneviewEnabled,
+                        glbModelUrl = glbModelUrlValue,
                         onDensityChange = { viewModel.density.value = it },
                         onAutoRotateToggle = { viewModel.autoRotate.value = it },
                         onLightChange = { viewModel.lightIntensity.value = it },
@@ -510,7 +524,9 @@ fun WorldScreen(
                         onSelectTexture = { viewModel.selectTexture(it) },
                         onLaunchPicker = { photoPickerLauncher.launch("image/*") },
                         onUrlValueChange = { viewModel.urlInputValue.value = it },
-                        onDownloadClick = { viewModel.downloadTextureFromUrl(it) }
+                        onDownloadClick = { viewModel.downloadTextureFromUrl(it) },
+                        onUseSceneviewToggle = { viewModel.useSceneview.value = it },
+                        onGlbModelUrlChange = { viewModel.glbModelUrl.value = it }
                     )
                 }
             }
@@ -533,253 +549,318 @@ fun Globe3DInteractiveBox(
     wireframe: Boolean,
     bitmap: Bitmap?,
     autoRotate: Boolean,
+    useSceneview: Boolean,
+    glbModelUrl: String,
     onYawChange: (Float) -> Unit,
     onPitchChange: (Float) -> Unit,
     onScaleChange: (Float) -> Unit,
     onAutoRotateToggle: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     val outlineBorderColor = MaterialTheme.colorScheme.outlineVariant
     val gridLineColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    // Track active drag inputs elegantly inside pointer scopes
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF03050C))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Map Drag values directly to standard rotation orbits
-                    val newYaw = (yaw - dragAmount.x * 0.007f) % (2f * PI.toFloat())
-                    val newPitch = (pitch - dragAmount.y * 0.007f).coerceIn(-1.4f, 1.4f)
-                    onYawChange(newYaw)
-                    onPitchChange(newPitch)
-                }
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        if (bitmap == null) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        } else {
-            // Generate the sphere triangulated coordinate model faces list
-            val radius = 180f
-            val faces = remember(density) {
-                WorldGlobeGenerator.generateSphereMesh(density, radius)
-            }
-
-            // Direction of light source vector
-            val lightVector = WorldVector3(-0.4f, -0.8f, -0.6f).normalize()
-            val ambientFactor = 0.25f
-
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                val cX = size.width / 2f
-                val cY = size.height / 2f
-
-                val cameraZ = 350f
-                val dFactor = 280f // coordinate compression factor to fit perfectly in drawing coordinates
-
-                // Project 3D vector vertex into 2D Offset points on the Compose DrawScope screen
-                // Inverting rot.y corrects the Cartesian to Screen Y-coordinate projection mapping bug
-                fun projectToScreen(v: WorldVector3): Offset {
-                    val rot = v.rotateY(yaw).rotateX(pitch)
-                    val denom = rot.z + cameraZ
-                    val screenX = cX + (rot.x * dFactor * scale) / if (denom != 0f) denom else 1f
-                    val screenY = cY - (rot.y * dFactor * scale) / if (denom != 0f) denom else 1f
-                    return Offset(screenX, screenY)
-                }
-
-                // Gather average depth to apply painter depth-sorting algorithm back to front
-                val facesWithDepth = faces.map { face ->
-                    val rotV0 = face.v0.rotateY(yaw).rotateX(pitch)
-                    val rotV1 = face.v1.rotateY(yaw).rotateX(pitch)
-                    val rotV2 = face.v2.rotateY(yaw).rotateX(pitch)
-                    val avgZ = (rotV0.z + rotV1.z + rotV2.z) / 3f
-                    Triple(face, avgZ, listOf(rotV0, rotV1, rotV2))
-                }
-
-                // Painter's logic sorting (draw deeper faces first)
-                val sortedFaces = facesWithDepth.sortedByDescending { it.second }
-
-                // Iterate over sorted triangulated polygons and make drawing pipelines calls
-                for (entry in sortedFaces) {
-                    val avgDepth = entry.second
-                    // Backface culling: filter outward pointing triangles that hide on the back hemisphere (Z > 0)
-                    if (avgDepth > 4f) continue
-
-                    val item = entry.first
-                    val rotPts = entry.third
-
-                    val p0 = projectToScreen(item.v0)
-                    val p1 = projectToScreen(item.v1)
-                    val p2 = projectToScreen(item.v2)
-
-                    // Compute flat diffuse and specular shading coefficient for this specific face normal
-                    val edge1 = item.v1 - item.v0
-                    val edge2 = item.v2 - item.v0
-                    val normal = edge1.cross(edge2).normalize()
-                    val rotNormal = normal.rotateY(yaw).rotateX(pitch)
-
-                    val dotFactor = rotNormal.dot(lightVector)
-                    val localLight = (ambientFactor + (1f - ambientFactor) * max(0f, dotFactor)) * light
-
-                    // Render standard textured triangles
-                    drawTexturedTriangle(
-                        p0 = p0, p1 = p1, p2 = p2,
-                        uv0 = item.uv0, uv1 = item.uv1, uv2 = item.uv2,
-                        bitmap = bitmap,
-                        lightMultiplier = localLight,
-                        specular = specular,
-                        wireframeOnly = wireframe,
-                        gridLineColor = gridLineColor
-                    )
-                }
-
-                // Draw Polar Lines Segment-by-segment on front hemisphere
-                val arcticLatitude = 66.56f * PI.toFloat() / 180f
-                val antarcticLatitude = -66.56f * PI.toFloat() / 180f
-
-                fun drawPolarLine(latitudeRad: Float, strokeColor: Color) {
-                    val steps = 180
-                    val points = (0..steps).map { step ->
-                        val phi = (step.toFloat() / steps) * 2f * PI.toFloat()
-                        val rCircle = radius * cos(latitudeRad)
-                        val x = rCircle * cos(phi)
-                        val y = radius * sin(latitudeRad)
-                        val z = rCircle * sin(phi)
-                        WorldVector3(x, y, z)
+    if (useSceneview) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF03050C))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            io.github.sceneview.SceneView(
+                modifier = Modifier.fillMaxSize(),
+                childNodes = remember(glbModelUrl) {
+                    try {
+                        val modelNode = io.github.sceneview.node.ModelNode(
+                            context = context,
+                            glbFileLocation = glbModelUrl,
+                            autoAnimate = true,
+                            scaleToUnits = 1.0f,
+                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
+                        ).apply {
+                            position = io.github.sceneview.math.Position(y = 0.0f, z = -2.0f)
+                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        }
+                        listOf(modelNode)
+                    } catch (e: Exception) {
+                        emptyList()
                     }
-
-                    for (i in 0 until steps) {
-                        val pA = points[i]
-                        val pB = points[i + 1]
-
-                        val rotA = pA.rotateY(yaw).rotateX(pitch)
-                        val rotB = pB.rotateY(yaw).rotateX(pitch)
-
-                        val avgZ = (rotA.z + rotB.z) / 2f
-                        if (avgZ <= 0f) { // Visible on front-side hemisphere
-                            val screenA = projectToScreen(pA)
-                            val screenB = projectToScreen(pB)
-                            drawLine(
-                                color = strokeColor,
-                                start = screenA,
-                                end = screenB,
-                                strokeWidth = 3f
-                            )
+                },
+                onFrame = { _ ->
+                    if (autoRotate) {
+                        childNodes.forEach { node ->
+                            if (node is io.github.sceneview.node.ModelNode) {
+                                node.rotation = io.github.sceneview.math.Rotation(
+                                    x = node.rotation.x,
+                                    y = node.rotation.y + 0.8f,
+                                    z = node.rotation.z
+                                )
+                            }
                         }
                     }
                 }
-
-                drawPolarLine(arcticLatitude, Color(0xFF2979FF)) // blue for North polar line
-                drawPolarLine(antarcticLatitude, Color(0xFFFF1744)) // red for South polar line
-            }
-        }
-
-        // Action controllers box at bottom-right (unified horizontal Row to clean up bottom-right controls)
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(12.dp)
-                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Auto-rotate Pause/Play Button
-            IconButton(
-                onClick = { onAutoRotateToggle(!autoRotate) },
-                modifier = Modifier.size(36.dp)
-            ) {
-                if (autoRotate) {
-                    // Custom Pause Icon: two vertical bars
-                    Row(
-                        modifier = Modifier.size(20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .height(12.dp)
-                                .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .height(12.dp)
-                                .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
-                        )
-                    }
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Resume Rotation",
-                        tint = Color(0xFF64FFDA),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            
-            // Reset Camera Orbit Button
-            IconButton(
-                onClick = {
-                    onPitchChange(-0.2f)
-                    onYawChange(0.0f)
-                    onScaleChange(1.0f)
-                },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Reset Camera",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            // Separator line
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(20.dp)
-                    .background(Color.White.copy(alpha = 0.2f))
             )
 
-            // Zoom Out Button
-            IconButton(
-                onClick = { onScaleChange((scale - 0.15f).coerceIn(0.4f, 2.5f)) },
-                modifier = Modifier.size(36.dp)
+            // Render HUD overlay indication that Sceneview Active
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp)
+                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+                    .padding(6.dp)
             ) {
-                Text("-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
-
-            // Zoom In Button
-            IconButton(
-                onClick = { onScaleChange((scale + 0.15f).coerceIn(0.4f, 2.5f)) },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    text = "⚡ SCENEVIEW ACTIVE (PBR MODEL)",
+                    color = Color(0xFF64FFDA),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
             }
         }
-
-        // Info marker badge overlays
-        Column(
+    } else {
+        // Track active drag inputs elegantly inside pointer scopes
+        Box(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                .padding(8.dp)
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF03050C))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        // Map Drag values directly to standard rotation orbits
+                        val newYaw = (yaw - dragAmount.x * 0.007f) % (2f * PI.toFloat())
+                        val newPitch = (pitch - dragAmount.y * 0.007f).coerceIn(-1.4f, 1.4f)
+                        onYawChange(newYaw)
+                        onPitchChange(newPitch)
+                    }
+                },
+            contentAlignment = Alignment.Center
         ) {
-            Text("Altitude Range: 1x", color = Color(0xFF64FFDA), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-            Text("Yaw: %d°".format(((yaw * 180f / PI).toInt() % 360).let { if (it < 0) it + 360 else it }), color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-            Text("Pitch: %d°".format((pitch * 180f / PI).toInt()), color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+            if (bitmap == null) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            } else {
+                // Generate the sphere triangulated coordinate model faces list
+                val radius = 180f
+                val faces = remember(density) {
+                    WorldGlobeGenerator.generateSphereMesh(density, radius)
+                }
+
+                // Direction of light source vector
+                val lightVector = WorldVector3(-0.4f, -0.8f, -0.6f).normalize()
+                val ambientFactor = 0.25f
+
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    val cX = size.width / 2f
+                    val cY = size.height / 2f
+
+                    val cameraZ = 350f
+                    val dFactor = 280f // coordinate compression factor to fit perfectly in drawing coordinates
+
+                    // Project 3D vector vertex into 2D Offset points on the Compose DrawScope screen
+                    // Inverting rot.y corrects the Cartesian to Screen Y-coordinate projection mapping bug
+                    fun projectToScreen(v: WorldVector3): Offset {
+                        val rot = v.rotateY(yaw).rotateX(pitch)
+                        val denom = rot.z + cameraZ
+                        val screenX = cX + (rot.x * dFactor * scale) / if (denom != 0f) denom else 1f
+                        val screenY = cY - (rot.y * dFactor * scale) / if (denom != 0f) denom else 1f
+                        return Offset(screenX, screenY)
+                    }
+
+                    // Gather average depth to apply painter depth-sorting algorithm back to front
+                    val facesWithDepth = faces.map { face ->
+                        val rotV0 = face.v0.rotateY(yaw).rotateX(pitch)
+                        val rotV1 = face.v1.rotateY(yaw).rotateX(pitch)
+                        val rotV2 = face.v2.rotateY(yaw).rotateX(pitch)
+                        val avgZ = (rotV0.z + rotV1.z + rotV2.z) / 3f
+                        Triple(face, avgZ, listOf(rotV0, rotV1, rotV2))
+                    }
+
+                    // Painter's logic sorting (draw deeper faces first)
+                    val sortedFaces = facesWithDepth.sortedByDescending { it.second }
+
+                    // Iterate over sorted triangulated polygons and make drawing pipelines calls
+                    for (entry in sortedFaces) {
+                        val avgDepth = entry.second
+                        // Backface culling: filter outward pointing triangles that hide on the back hemisphere (Z > 0)
+                        if (avgDepth > 4f) continue
+
+                        val item = entry.first
+                        val rotPts = entry.third
+
+                        val p0 = projectToScreen(item.v0)
+                        val p1 = projectToScreen(item.v1)
+                        val p2 = projectToScreen(item.v2)
+
+                        // Compute flat diffuse and specular shading coefficient for this specific face normal
+                        val edge1 = item.v1 - item.v0
+                        val edge2 = item.v2 - item.v0
+                        val normal = edge1.cross(edge2).normalize()
+                        val rotNormal = normal.rotateY(yaw).rotateX(pitch)
+
+                        val dotFactor = rotNormal.dot(lightVector)
+                        val localLight = (ambientFactor + (1f - ambientFactor) * max(0f, dotFactor)) * light
+
+                        // Render standard textured triangles
+                        drawTexturedTriangle(
+                            p0 = p0, p1 = p1, p2 = p2,
+                            uv0 = item.uv0, uv1 = item.uv1, uv2 = item.uv2,
+                            bitmap = bitmap,
+                            lightMultiplier = localLight,
+                            specular = specular,
+                            wireframeOnly = wireframe,
+                            gridLineColor = gridLineColor
+                        )
+                    }
+
+                    // Draw Polar Lines Segment-by-segment on front hemisphere
+                    val arcticLatitude = 66.56f * PI.toFloat() / 180f
+                    val antarcticLatitude = -66.56f * PI.toFloat() / 180f
+
+                    fun drawPolarLine(latitudeRad: Float, strokeColor: Color) {
+                        val steps = 180
+                        val points = (0..steps).map { step ->
+                            val phi = (step.toFloat() / steps) * 2f * PI.toFloat()
+                            val rCircle = radius * cos(latitudeRad)
+                            val x = rCircle * cos(phi)
+                            val y = radius * sin(latitudeRad)
+                            val z = rCircle * sin(phi)
+                            WorldVector3(x, y, z)
+                        }
+
+                        for (i in 0 until steps) {
+                            val pA = points[i]
+                            val pB = points[i + 1]
+
+                            val rotA = pA.rotateY(yaw).rotateX(pitch)
+                            val rotB = pB.rotateY(yaw).rotateX(pitch)
+
+                            val avgZ = (rotA.z + rotB.z) / 2f
+                            if (avgZ <= 0f) { // Visible on front-side hemisphere
+                                val screenA = projectToScreen(pA)
+                                val screenB = projectToScreen(pB)
+                                drawLine(
+                                    color = strokeColor,
+                                    start = screenA,
+                                    end = screenB,
+                                    strokeWidth = 3f
+                                )
+                            }
+                        }
+                    }
+
+                    drawPolarLine(arcticLatitude, Color(0xFF2979FF)) // blue for North polar line
+                    drawPolarLine(antarcticLatitude, Color(0xFFFF1744)) // red for South polar line
+                }
+            }
+
+            // Action controllers box at bottom-right (unified horizontal Row to clean up bottom-right controls)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp)
+                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Auto-rotate Pause/Play Button
+                IconButton(
+                    onClick = { onAutoRotateToggle(!autoRotate) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (autoRotate) {
+                        // Custom Pause Icon: two vertical bars
+                        Row(
+                            modifier = Modifier.size(20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(12.dp)
+                                    .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(12.dp)
+                                    .background(Color(0xFF64FFDA), RoundedCornerShape(1.dp))
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Resume Rotation",
+                            tint = Color(0xFF64FFDA),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                
+                // Reset Camera Orbit Button
+                IconButton(
+                    onClick = {
+                        onPitchChange(-0.2f)
+                        onYawChange(0.0f)
+                        onScaleChange(1.0f)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Reset Camera",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                // Separator line
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(20.dp)
+                        .background(Color.White.copy(alpha = 0.2f))
+                )
+
+                // Zoom Out Button
+                IconButton(
+                    onClick = { onScaleChange((scale - 0.15f).coerceIn(0.4f, 2.5f)) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Text("-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                // Zoom In Button
+                IconButton(
+                    onClick = { onScaleChange((scale + 0.15f).coerceIn(0.4f, 2.5f)) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+            // Info marker badge overlays
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .padding(8.dp)
+            ) {
+                Text("Altitude Range: 1x", color = Color(0xFF64FFDA), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Text("Yaw: %d°".format(((yaw * 180f / PI).toInt() % 360).let { if (it < 0) it + 360 else it }), color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Text("Pitch: %d°".format((pitch * 180f / PI).toInt()), color = Color.White, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+            }
         }
     }
 }
@@ -799,6 +880,8 @@ fun WorldControlPanel(
     hasUploaded: Boolean,
     urlInputValue: String,
     downloadStatus: String,
+    useSceneview: Boolean,
+    glbModelUrl: String,
     onDensityChange: (Int) -> Unit,
     onAutoRotateToggle: (Boolean) -> Unit,
     onLightChange: (Float) -> Unit,
@@ -808,6 +891,8 @@ fun WorldControlPanel(
     onLaunchPicker: () -> Unit,
     onUrlValueChange: (String) -> Unit,
     onDownloadClick: (String) -> Unit,
+    onUseSceneviewToggle: (Boolean) -> Unit,
+    onGlbModelUrlChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showAdvancedDialog by remember { mutableStateOf(false) }
@@ -831,6 +916,117 @@ fun WorldControlPanel(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
+
+        // Sceneview Engine Selector Card
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (useSceneview) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                                  else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth().border(
+                width = 1.5.dp,
+                color = if (useSceneview) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                        else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sceneview 3D Engine",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (useSceneview) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (useSceneview) "Hardware accelerated PBR GLB" else "Pure CPU rendering canvas",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = useSceneview,
+                        onCheckedChange = onUseSceneviewToggle
+                    )
+                }
+
+                if (useSceneview) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "3D Asset Source URL:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = glbModelUrl,
+                        onValueChange = onGlbModelUrlChange,
+                        singleLine = true,
+                        placeholder = { Text("Enter GLB path or https URL...", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+
+                    // Dynamic Preset Selector buttons
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Quick 3D Presets",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Button(
+                            onClick = { onGlbModelUrlChange("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb") },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp).weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (glbModelUrl.contains("Earth")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (glbModelUrl.contains("Earth")) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        ) {
+                            Text("Earth", fontSize = 9.sp)
+                        }
+                        Button(
+                            onClick = { onGlbModelUrlChange("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb") },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp).weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (glbModelUrl.contains("Helmet")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (glbModelUrl.contains("Helmet")) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        ) {
+                            Text("Helmet", fontSize = 9.sp)
+                        }
+                        Button(
+                            onClick = { onGlbModelUrlChange("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/WaterBottle/glTF-Binary/WaterBottle.glb") },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp).weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (glbModelUrl.contains("Bottle")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (glbModelUrl.contains("Bottle")) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        ) {
+                            Text("Bottle", fontSize = 9.sp)
+                        }
+                    }
+                }
+            }
+        }
 
         // Dropdown selection for Active Texture Style
         Column {
