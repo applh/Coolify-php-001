@@ -630,5 +630,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Write a custom unit test or execution mock verification in Kotlin verifying the mathematical equivalence of a dual-joint skin weight rotation ($\mathbf{P}' = w_1\mathbf{M}_1\mathbf{P} + w_2\mathbf{M}_2\mathbf{P}$) and check that the resulting coordinate is perfectly transformed without exceeding unit dimensions.
 - **Complexity**: Part 5
 
+### 102. Declarative Sceneview Jetpack Compose Integration & 3D GLB Animations (24h) 🍓 NEW
+- **Reference**: `repo-android/docs/sceneview-integration-plan.md`
+- **Goal**: Learn how to write declarative 3D viewport canvas nodes in Kotlin using Sceneview wrappers for Jetpack Compose. Understand how to load optimized `.glb` assets from standard app assets, initiate dynamic keyframe skeletal animations, configure automatic node yaw/pitch rotations, and optimize memory channels.
+- **Exercise**: Implement a local test composable that dynamically alternates between three distinct `.glb` files (acting as an environment, character, and accessory) on button interaction, verifying that existing node models are cleaned up correctly from active memory channels to sustain zero leakage.
+- **Complexity**: Part 5
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
