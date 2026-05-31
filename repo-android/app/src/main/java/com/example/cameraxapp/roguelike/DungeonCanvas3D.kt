@@ -34,11 +34,12 @@ import kotlinx.coroutines.launch
 fun DungeonCanvas3D(
     tiles: List<GameTile>,
     monsters: List<MonsterState>,
-    pX: Float,
-    pY: Float,
+    pId: Int,
+    planetNodes: Map<Int, SphereNode>,
     heroClass: String,
     lockedMonsterId: Int? = null,
     onCameraYawChanged: (Float) -> Unit = {},
+    onNodeTapped: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var yawAngle by remember { mutableStateOf(-0.65f) }
@@ -80,31 +81,21 @@ fun DungeonCanvas3D(
         label = "OrbitTime"
     )
 
-    val animPX = pX
-    val animPY = pY
+    val playerAnimX = remember { Animatable(planetNodes[pId]?.position?.x ?: 0f) }
+    val playerAnimY = remember { Animatable(planetNodes[pId]?.position?.y ?: 0f) }
+    val playerAnimZ = remember { Animatable(planetNodes[pId]?.position?.z ?: 0f) }
 
-    val distantStars = remember {
-        val rand = java.util.Random(12345)
-        List(120) {
-            val theta = rand.nextFloat() * PI.toFloat()
-            val phi = rand.nextFloat() * 2f * PI.toFloat()
-            val r = 1200f
-            val sx = r * sin(theta) * cos(phi)
-            val sy = r * cos(theta)
-            val sz = r * sin(theta) * sin(phi)
-            val color = when (rand.nextInt(4)) {
-                0 -> Color(0xFF90CAF9)  // Space blue
-                1 -> Color(0xFFE040FB)  // Nebular purple
-                2 -> Color(0xFFFFF59D)  // Golden nebula spark
-                else -> Color.White
-            }
-            val size = 0.5f + rand.nextFloat() * 1.5f
-            Triple(Vector3(sx, sy, sz), color, size)
-        }
+    LaunchedEffect(pId) {
+        val targetPos = planetNodes[pId]?.position ?: Vector3(0f,0f,0f)
+        launch { playerAnimX.animateTo(targetPos.x, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
+        launch { playerAnimY.animateTo(targetPos.y, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
+        launch { playerAnimZ.animateTo(targetPos.z, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
     }
 
+    val playerVec = Vector3(playerAnimX.value, playerAnimY.value, playerAnimZ.value).normalize()
+
     // Track smooth state transitions for individual monsters to prevent instant snapping when they move
-    val monsterAnims = remember { mutableStateMapOf<Int, Pair<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>>>() }
+    val monsterAnims = remember { mutableStateMapOf<Int, Triple<Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>, Animatable<Float, AnimationVector1D>>>() }
 
     // Synchronize animation targets and clean up obsolete IDs
     val currentIds = remember(monsters) { monsters.map { it.id }.toSet() }
@@ -112,30 +103,29 @@ fun DungeonCanvas3D(
     obsoleteIds.forEach { monsterAnims.remove(it) }
 
     monsters.forEach { monster ->
+        val nodePos = planetNodes[monster.x]?.position ?: Vector3(0f, 0f, 0f)
         val entry = monsterAnims.getOrPut(monster.id) {
-            Pair(
-                Animatable(monster.x.toFloat()),
-                Animatable(monster.y.toFloat())
+            Triple(
+                Animatable(nodePos.x),
+                Animatable(nodePos.y),
+                Animatable(nodePos.z)
             )
         }
         LaunchedEffect(monster.id, monster.x) {
-            entry.first.animateTo(monster.x.toFloat(), animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing))
-        }
-        LaunchedEffect(monster.id, monster.y) {
-            entry.second.animateTo(monster.y.toFloat(), animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing))
+            launch { entry.first.animateTo(nodePos.x, animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)) }
+            launch { entry.second.animateTo(nodePos.y, animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)) }
+            launch { entry.third.animateTo(nodePos.z, animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)) }
         }
     }
 
     // Smooth auto-orbit camera towards targeted monster when Locked On
     if (lockedMonsterId != null) {
         val lockedM = monsters.find { it.id == lockedMonsterId }
-        if (lockedM != null) {
-            val mAnimX = monsterAnims[lockedM.id]?.first?.value ?: lockedM.x.toFloat()
-            val mAnimY = monsterAnims[lockedM.id]?.second?.value ?: lockedM.y.toFloat()
-            // Convert plane grid difference to angular yaw target (adding offset so camera looks from behind/toward-target)
-            val dx = mAnimX - pX
-            val dy = mAnimY - pY
-            val targetYaw = atan2(dy, dx) - PI.toFloat() / 2f
+        val lockedNodePos = planetNodes[lockedM?.x]?.position
+        if (lockedNodePos != null) {
+            val dx = lockedNodePos.x - playerVec.x
+            val dz = lockedNodePos.z - playerVec.z // Use projection to 2D for rotation roughly
+            val targetYaw = atan2(dz, dx) - PI.toFloat() / 2f
             var diff = targetYaw - yawAngle
             while (diff < -PI) diff += (2f * PI).toFloat()
             while (diff > PI) diff -= (2f * PI).toFloat()
@@ -161,7 +151,37 @@ fun DungeonCanvas3D(
                 }
             }
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+            androidx.compose.foundation.gestures.detectTapGestures { offset ->
+                var minId = -1
+                var minDist = Float.MAX_VALUE
+                for (node in planetNodes.values) {
+                    val pos = node.position * 155f // R
+                    val targetCenter = playerVec * 155f
+                    val rel = pos - targetCenter
+                    val rx = rel.x * cos(yawAngle) + rel.z * sin(yawAngle)
+                    val ryHalf = -rel.x * sin(yawAngle) + rel.z * cos(yawAngle)
+                    val ry = rel.y * cos(pitchAngle) - ryHalf * sin(pitchAngle)
+                    val rz = rel.y * sin(pitchAngle) + ryHalf * cos(pitchAngle)
+
+                    val denom = rz + 320f
+                    if (denom > 0) {
+                        val sx = (size.width/2f) + (rx * 280f * zoomScale) / denom
+                        val sy = (size.height/2f) + (ry * 280f * zoomScale) / denom
+                        val dx = sx - offset.x
+                        val dy = sy - offset.y
+                        val dist = dx*dx + dy*dy
+                        if (dist < minDist) {
+                            minDist = dist
+                            minId = node.id
+                        }
+                    }
+                }
+                if (minId != -1 && minDist < 9000f) {
+                    onNodeTapped(minId)
+                }
+            }
+        }) {
             val width = size.width
             val height = size.height
             val cX = width / 2f
@@ -174,21 +194,32 @@ fun DungeonCanvas3D(
 
             val R = 155f // Radius of the sphere
 
-            fun projectGridToSphere(gx: Float, gy: Float, hOffset: Float = 0f): Vector3 {
-                // Horizontal coordinate gx (0 to 18) maps to longitude phi [-PI, PI]
-                val phi = ((gx - 9f) / 9f) * PI.toFloat()
-                // Vertical coordinate gy (0 to 18) maps to latitude theta [-PI/2, PI/2]
-                val theta = ((gy - 9f) / 9f) * (PI.toFloat() / 2f)
-                val rCurrent = R + hOffset
-                // Standard spherical coordinates projection (North up)
-                val x = rCurrent * cos(theta) * sin(phi)
-                val y = -rCurrent * sin(theta)
-                val z = rCurrent * cos(theta) * cos(phi)
-                return Vector3(x, y, z)
+            fun getPolygonForNode(nodeId: Int, hOffset: Float = 0f): List<Vector3> {
+                val node = planetNodes[nodeId] ?: return emptyList()
+                val normal = node.position
+                val neighbors = node.neighbors.mapNotNull { planetNodes[it] }
+                if (neighbors.size < 3) return emptyList()
+                
+                val sortedNeighbors = neighbors.sortedBy { n ->
+                    val v = n.position - normal
+                    val cross = normal.cross(Vector3(0f, 1f, 0f))
+                    val right = cross.takeIf { it.length() > 0.001f } ?: normal.cross(Vector3(1f, 0f, 0f))
+                    val up = right.cross(normal)
+                    atan2(v.dot(up), v.dot(right))
+                }
+                
+                val vertices = mutableListOf<Vector3>()
+                for (i in sortedNeighbors.indices) {
+                    val n1 = sortedNeighbors[i]
+                    val n2 = sortedNeighbors[(i + 1) % sortedNeighbors.size]
+                    val corner = (normal + n1.position + n2.position).normalize()
+                    vertices.add(corner * (R + hOffset))
+                }
+                return vertices
             }
 
             // Orbit follow camera centered on player's position on the sphere surface
-            val targetCenter = projectGridToSphere(animPX, animPY, 0f)
+            val targetCenter = playerVec * R
 
             val cosYaw = cos(yawAngle)
             val sinYaw = sin(yawAngle)
@@ -223,7 +254,9 @@ fun DungeonCanvas3D(
             }
 
             // Define light source centered slightly above the Player position on the sphere normal
-            val lightSource = projectGridToSphere(animPX, animPY, W_s * 1.5f)
+            // Switch to sun that orbits slowly
+            val sunDirection = Vector3(cos(timeAngle * 0.1f), 0.2f, sin(timeAngle * 0.1f)).normalize()
+            val lightSource = sunDirection * (R * 5f)
 
             val drawPipeline = mutableListOf<RenderItem3D>()
 
@@ -249,175 +282,111 @@ fun DungeonCanvas3D(
                 }
             }
 
-            // B. COORDINATE NET LINES (GEOMAGNETIC COMPASS NET)
-            // Latitude parallels
-            for (yVal in listOf(2f, 5f, 8f, 11f, 14f, 16f)) {
-                val segs = 24
-                for (i in 0 until segs) {
-                    val x1 = i * 18f / segs
-                    val x2 = (i + 1) * 18f / segs
-                    val p1 = projectGridToSphere(x1, yVal, 0.4f)
-                    val p2 = projectGridToSphere(x2, yVal, 0.4f)
-                    drawPipeline.add(RenderItem3D.Line(p1, p2, Color(0xFF1B2B35).copy(alpha = 0.45f), 1f, 0f))
-                }
-            }
-            // Longitude meridians
-            for (xVal in listOf(0f, 3f, 6f, 9f, 12f, 15f)) {
-                val segs = 18
-                for (i in 0 until segs) {
-                    val y1 = i * 18f / segs
-                    val y2 = (i + 1) * 18f / segs
-                    val p1 = projectGridToSphere(xVal, y1, 0.4f)
-                    val p2 = projectGridToSphere(xVal, y2, 0.4f)
-                    drawPipeline.add(RenderItem3D.Line(p1, p2, Color(0xFF1B2B35).copy(alpha = 0.45f), 1f, 0f))
-                }
-            }
-
-            // C. VOLUMETRIC POLAR BEACONS (NORTH AND SOUTH COMPASS VERTICES)
-            // North Pole (y = 0)
-            val npBase = projectGridToSphere(9f, 0f, 0f)
-            val npTip = projectGridToSphere(9f, 0f, 95f)
-            drawPipeline.add(RenderItem3D.Line(npBase, npTip, Color(0xFF3A86C8), 3.5f, 0f))
-            for (h in listOf(20f, 45f, 70f)) {
-                val npCenter = projectGridToSphere(9f, 0f, h)
-                val rad = 10f * (1f - h / 120f)
-                val ringPts = (0..12).map { i ->
-                    val a = i * 2f * PI / 12f
-                    npCenter + Vector3((rad * cos(a)).toFloat(), 0f, (rad * sin(a)).toFloat())
-                }
-                for (i in 0 until 12) {
-                    drawPipeline.add(RenderItem3D.Line(ringPts[i], ringPts[i+1], Color(0xFF3A86C8).copy(alpha = 0.6f), 1.8f, 0f))
-                }
-            }
-
-            // South Pole (y = 18)
-            val spBase = projectGridToSphere(9f, 18f, 0f)
-            val spTip = projectGridToSphere(9f, 18f, 95f)
-            drawPipeline.add(RenderItem3D.Line(spBase, spTip, Color(0xFFE76F51), 3.5f, 0f))
-            for (h in listOf(20f, 45f, 70f)) {
-                val spCenter = projectGridToSphere(9f, 18f, h)
-                val rad = 10f * (1f - h / 120f)
-                val ringPts = (0..12).map { i ->
-                    val a = i * 2f * PI / 12f
-                    spCenter + Vector3((rad * cos(a)).toFloat(), 0f, (rad * sin(a)).toFloat())
-                }
-                for (i in 0 until 12) {
-                    drawPipeline.add(RenderItem3D.Line(ringPts[i], ringPts[i+1], Color(0xFFE76F51).copy(alpha = 0.6f), 1.8f, 0f))
-                }
-            }
-
             // D. SPHERICAL DUNGEON TILE RENDERER
             tiles.forEach { tile ->
                 if (tile.revealed) {
                     if (tile.tileType == "WALL") {
-                        // Extrude WALL blocks radially outward of the Sphere origin!
-                        val v1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), 0f)
-                        val v2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), 0f)
-                        val v3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, 0f)
-                        val v4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, 0f)
-
-                        val t1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), W_s)
-                        val t2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), W_s)
-                        val t3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, W_s)
-                        val t4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, W_s)
-
-                        val wallColor = Color(0xFF3E352C)
-                        val faces = listOf(
-                            listOf(v1, v2, t2, t1), // side faces
-                            listOf(v2, v3, t3, t2),
-                            listOf(v3, v4, t4, t3),
-                            listOf(v4, v1, t1, t4),
-                            listOf(t1, t2, t3, t4)  // top cap face
-                        )
-
-                        faces.forEachIndexed { fIdx, pts ->
-                            val fCenter = Vector3(
-                                pts.sumOf { it.x.toDouble() }.toFloat() / 4f,
-                                pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
-                                pts.sumOf { it.z.toDouble() }.toFloat() / 4f
-                            )
-                            val dist = (fCenter - lightSource).length()
-                            val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
-                            val lightFactor = (0.20f * lightingStrength + 0.80f * attenuation).coerceIn(0.12f, 1f)
+                        val basePoly = getPolygonForNode(tile.x, 0f)
+                        val topPoly = getPolygonForNode(tile.x, W_s)
+                        
+                        if (basePoly.isNotEmpty() && topPoly.isNotEmpty() && basePoly.size == topPoly.size) {
+                            val wallColor = Color(0xFF3E352C)
+                            val faces = mutableListOf<List<Vector3>>()
                             
-                            val shaderBonus = if (fIdx == 4) 1.2f else 0.85f
-                            val factor = (lightFactor * shaderBonus).coerceIn(0f, 1f)
+                            // Side faces
+                            for (i in basePoly.indices) {
+                                val nextI = (i + 1) % basePoly.size
+                                faces.add(listOf(basePoly[i], basePoly[nextI], topPoly[nextI], topPoly[i]))
+                            }
+                            faces.add(topPoly) // top cap face
 
-                            val col = Color(
-                                red = (wallColor.red * factor).coerceIn(0f, 1f),
-                                green = (wallColor.green * factor).coerceIn(0f, 1f),
-                                blue = (wallColor.blue * factor).coerceIn(0f, 1f),
-                                alpha = 1f
-                            )
-                            drawPipeline.add(RenderItem3D.Polygon(pts, col, depth = 0f))
+                            faces.forEachIndexed { fIdx, pts ->
+                                val fCenter = Vector3(
+                                    pts.sumOf { it.x.toDouble() }.toFloat() / pts.size,
+                                    pts.sumOf { it.y.toDouble() }.toFloat() / pts.size,
+                                    pts.sumOf { it.z.toDouble() }.toFloat() / pts.size
+                                )
+                                val sunNorm = lightSource.normalize()
+                                val fNormal = fCenter.normalize()
+                                val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
+                                val lightFactor = (0.20f * lightingStrength + 0.80f * attenuation).coerceIn(0.12f, 1f)
+                                
+                                val shaderBonus = if (fIdx == faces.size - 1) 1.2f else 0.85f // brighter top
+                                val factor = (lightFactor * shaderBonus).coerceIn(0f, 1f)
+
+                                val col = Color(
+                                    red = (wallColor.red * factor).coerceIn(0f, 1f),
+                                    green = (wallColor.green * factor).coerceIn(0f, 1f),
+                                    blue = (wallColor.blue * factor).coerceIn(0f, 1f),
+                                    alpha = 1f
+                                )
+                                drawPipeline.add(RenderItem3D.Polygon(pts, col, depth = 0f))
+                            }
                         }
                     } else {
                         // Standard ground floors map
-                        val v1 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat(), 0.2f)
-                        val v2 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat(), 0.2f)
-                        val v3 = projectGridToSphere(tile.x.toFloat() + 1f, tile.y.toFloat() + 1f, 0.2f)
-                        val v4 = projectGridToSphere(tile.x.toFloat(), tile.y.toFloat() + 1f, 0.2f)
+                        val polyPts = getPolygonForNode(tile.x, 0.2f)
+                        if (polyPts.isNotEmpty()) {
+                            val centerVal = (planetNodes[tile.x]?.position ?: Vector3(0f,0f,0f)) * (R + 0.2f)
+                            val sunNorm = lightSource.normalize()
+                            val fNormal = centerVal.normalize()
+                            val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
+                            val lightFactor = (0.15f * lightingStrength + 0.85f * attenuation).coerceIn(0.10f, 1f)
 
-                        val dist = (projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, 0.2f) - lightSource).length()
-                        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
-                        val lightFactor = (0.15f * lightingStrength + 0.85f * attenuation).coerceIn(0.10f, 1f)
-
-                        val tileColor = when (tile.tileType) {
-                            "CHEST" -> Color(0xFF4A341E)
-                            else -> Color(0xFF141312)
-                        }
-                        val shadedCol = Color(
-                            red = (tileColor.red * lightFactor).coerceIn(0f, 1f),
-                            green = (tileColor.green * lightFactor).coerceIn(0f, 1f),
-                            blue = (tileColor.blue * lightFactor).coerceIn(0f, 1f),
-                            alpha = 1f
-                        )
-
-                        if (tile.tileType != "STAIRS_DOWN") {
-                            drawPipeline.add(RenderItem3D.Polygon(listOf(v1, v2, v3, v4), shadedCol, depth = 0f))
-                            // Staggered paving joint visual lines
-                            val flagLineCol = Color(0xFF2B2825).copy(alpha = 0.55f)
-                            drawPipeline.add(RenderItem3D.Line(v1, v2, flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(v2, v3, flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(v3, v4, flagLineCol, 1.2f, 0f))
-                            drawPipeline.add(RenderItem3D.Line(v4, v1, flagLineCol, 1.2f, 0f))
-                        }
-
-                        if (tile.tileType == "STAIRS_DOWN") {
-                            // TELEPORT PORTAL: Rotating outer rings and counter-rotating magic runes
-                            val centerVal = projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, 0.4f)
-                            val normal = centerVal.normalize()
-                            val temp = if (abs(normal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
-                            val tangentU = (temp - normal * (temp.dot(normal))).normalize()
-                            val tangentV = normal.cross(tangentU).normalize()
-                            
-                            val outerRad = W_s * 0.45f
-                            val innerRad = W_s * 0.28f
-                            val outerSegs = 16
-                            
-                            val r1Pts = (0..outerSegs).map { idx ->
-                                val a = idx * 2f * PI / outerSegs + timeAngle
-                                centerVal + tangentU * (outerRad * cos(a)).toFloat() + tangentV * (outerRad * sin(a)).toFloat()
+                            val tileColor = when (tile.tileType) {
+                                "CHEST" -> Color(0xFF4A341E)
+                                else -> Color(0xFF141312)
                             }
-                            val r2Pts = (0..outerSegs).map { idx ->
-                                val a = idx * 2f * PI / outerSegs - timeAngle * 1.5f
-                                centerVal + tangentU * (innerRad * cos(a)).toFloat() + tangentV * (innerRad * sin(a)).toFloat()
-                            }
-                            for (i in 0 until outerSegs) {
-                                drawPipeline.add(RenderItem3D.Line(r1Pts[i], r1Pts[i+1], Color(0xFF00E5FF), 2.5f, 0f))
-                                drawPipeline.add(RenderItem3D.Line(r2Pts[i], r2Pts[i+1], Color(0xFFFF00E5), 2f, 0f))
-                            }
-                            drawPipeline.add(RenderItem3D.TextLabel(centerVal + normal * 2f, "🌀", Color.White, sizeMultiplier = 1f, depth = 0f))
-                        } else if (tile.tileType == "CHEST") {
-                            // Build standard 3D chest standing on the sphere
-                            val chestCenter = projectGridToSphere(tile.x.toFloat() + 0.5f, tile.y.toFloat() + 0.5f, W_s * 0.25f)
-                            build3DChest(
-                                cx = chestCenter.x, cy = chestCenter.y, cz = chestCenter.z,
-                                sizeX = W_s * 0.48f, sizeY = W_s * 0.42f, sizeZ = W_s * 0.42f,
-                                outList = drawPipeline,
-                                lightSource = lightSource,
-                                lightingStrength = lightingStrength
+                            val shadedCol = Color(
+                                red = (tileColor.red * lightFactor).coerceIn(0f, 1f),
+                                green = (tileColor.green * lightFactor).coerceIn(0f, 1f),
+                                blue = (tileColor.blue * lightFactor).coerceIn(0f, 1f),
+                                alpha = 1f
                             )
+
+                            if (tile.tileType != "STAIRS_DOWN") {
+                                drawPipeline.add(RenderItem3D.Polygon(polyPts, shadedCol, depth = 0f))
+                                // Staggered paving joint visual lines
+                                val flagLineCol = Color(0xFF2B2825).copy(alpha = 0.55f)
+                                for (i in polyPts.indices) {
+                                    val nextI = (i + 1) % polyPts.size
+                                    drawPipeline.add(RenderItem3D.Line(polyPts[i], polyPts[nextI], flagLineCol, 1.2f, 0f))
+                                }
+                            }
+
+                            if (tile.tileType == "STAIRS_DOWN") {
+                                val normal = centerVal.normalize()
+                                val temp = if (abs(normal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                                val tangentU = (temp - normal * (temp.dot(normal))).normalize()
+                                val tangentV = normal.cross(tangentU).normalize()
+                                
+                                val outerRad = W_s * 0.45f
+                                val innerRad = W_s * 0.28f
+                                val outerSegs = 16
+                                
+                                val r1Pts = (0..outerSegs).map { idx ->
+                                    val a = idx * 2f * PI / outerSegs + timeAngle
+                                    centerVal + tangentU * (outerRad * cos(a)).toFloat() + tangentV * (outerRad * sin(a)).toFloat()
+                                }
+                                val r2Pts = (0..outerSegs).map { idx ->
+                                    val a = idx * 2f * PI / outerSegs - timeAngle * 1.5f
+                                    centerVal + tangentU * (innerRad * cos(a)).toFloat() + tangentV * (innerRad * sin(a)).toFloat()
+                                }
+                                for (i in 0 until outerSegs) {
+                                    drawPipeline.add(RenderItem3D.Line(r1Pts[i], r1Pts[i+1], Color(0xFF00E5FF), 2.5f, 0f))
+                                    drawPipeline.add(RenderItem3D.Line(r2Pts[i], r2Pts[i+1], Color(0xFFFF00E5), 2f, 0f))
+                                }
+                                drawPipeline.add(RenderItem3D.TextLabel(centerVal + normal * 2f, "🌀", Color.White, sizeMultiplier = 1f, depth = 0f))
+                            } else if (tile.tileType == "CHEST") {
+                                val chestCenter = (planetNodes[tile.x]?.position ?: Vector3(0f,0f,0f)) * (R + W_s * 0.25f)
+                                build3DChest(
+                                    cx = chestCenter.x, cy = chestCenter.y, cz = chestCenter.z,
+                                    sizeX = W_s * 0.48f, sizeY = W_s * 0.42f, sizeZ = W_s * 0.42f,
+                                    outList = drawPipeline,
+                                    lightSource = lightSource,
+                                    lightingStrength = lightingStrength
+                                )
+                            }
                         }
                     }
                 }
@@ -425,13 +394,14 @@ fun DungeonCanvas3D(
 
             // 2. Build monsters volumetric shapes with status overlays, sliding transitions, and breathing bobbing curves
             monsters.forEach { monster ->
-                val monsterTileRevealed = tiles.find { it.x == monster.x && it.y == monster.y }?.revealed ?: false
+                val monsterTileRevealed = tiles.find { it.x == monster.x }?.revealed ?: false
                 if (monsterTileRevealed) {
-                    val mAnimX = monsterAnims[monster.id]?.first?.value ?: monster.x.toFloat()
-                    val mAnimY = monsterAnims[monster.id]?.second?.value ?: monster.y.toFloat()
+                    val mAnimX = monsterAnims[monster.id]?.first?.value ?: 0f
+                    val mAnimY = monsterAnims[monster.id]?.second?.value ?: 0f
+                    val mAnimZ = monsterAnims[monster.id]?.third?.value ?: 1f
                     
                     val monsterBobbing = sin(timeAngle * 2.2f + (monster.id * 0.5f)) * (W_s * 0.05f)
-                    val mPos = projectGridToSphere(mAnimX, mAnimY, W_s * 0.25f + monsterBobbing)
+                    val mPos = Vector3(mAnimX, mAnimY, mAnimZ).normalize() * (R + W_s * 0.25f + monsterBobbing)
 
                     val monsterCol = when (monster.type) {
                         "DRAGON" -> Color(0xFFC62828)
@@ -540,7 +510,7 @@ fun DungeonCanvas3D(
 
             // 3. Build player hero entity shape with subtle breathing float animation
             val playerBobbing = sin(timeAngle * 2.5f) * (W_s * 0.05f)
-            val pPos = projectGridToSphere(animPX, animPY, W_s * 0.30f + playerBobbing)
+            val pPos = playerVec * (R + W_s * 0.30f + playerBobbing)
 
             val pNormal = pPos.normalize()
             val pTemp = if (abs(pNormal.x) < 0.9f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
@@ -1092,8 +1062,9 @@ private fun buildWallCube(
             pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
             pts.sumOf { it.z.toDouble() }.toFloat() / 4f
         )
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.16f * lightingStrength + 0.84f * attenuation).coerceIn(0f, 1f)
 
         val topBonus = if (index == 2) 1.2f else 0.88f
@@ -1187,8 +1158,9 @@ private fun buildVolumetricOctahedron(
             pts.sumOf { it.y.toDouble() }.toFloat() / 3f,
             pts.sumOf { it.z.toDouble() }.toFloat() / 3f
         )
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.001f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.22f * lightingStrength + 0.78f * attenuation).coerceIn(0f, 1f)
 
         val shadedCol = Color(
@@ -1226,8 +1198,9 @@ private fun build3DStairs(
         val p4 = Vector3(cx - hx, stepTopY, zEnd)
 
         val faceCenter = Vector3(cx, stepTopY, (zStart + zEnd) / 2f)
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.15f * lightingStrength + 0.85f * attenuation).coerceIn(0.12f, 1f)
 
         val shadedStepCol = Color(
@@ -1301,8 +1274,9 @@ private fun build3DChest(
             pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
             pts.sumOf { it.z.toDouble() }.toFloat() / 4f
         )
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
 
         val sideShade = if (fIdx == 1) 1.15f else 0.88f
@@ -1348,8 +1322,9 @@ private fun build3DChest(
             capPts.sumOf { it.y.toDouble() }.toFloat() / 4f,
             capPts.sumOf { it.z.toDouble() }.toFloat() / 4f
         )
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
         val shade = if (capIdx == 1) 1.2f else 0.85f
         val finalFactor = (lightFactor * shade).coerceIn(0f, 1f)
@@ -1369,8 +1344,9 @@ private fun build3DChest(
             pts.sumOf { it.y.toDouble() }.toFloat() / 4f,
             pts.sumOf { it.z.toDouble() }.toFloat() / 4f
         )
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
 
         val slantShade = when (fIdx) {
@@ -1420,8 +1396,9 @@ private fun buildProceduralPlayerLowPoly(
     val clothCol = Color(0xFF0288D1)
 
     fun shadeColor(originalCol: Color, faceCenter: Vector3): Color {
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
         return Color(
             red = (originalCol.red * lightFactor).coerceIn(0f, 1f),
@@ -1582,8 +1559,9 @@ private fun buildProceduralMonsterLowPoly(
     lightingStrength: Float
 ) {
     fun shadeColor(originalCol: Color, faceCenter: Vector3): Color {
-        val dist = (faceCenter - lightSource).length()
-        val attenuation = 1f / (1.0f + (0.0016f / lightingStrength) * dist * dist)
+        val sunNorm = lightSource.normalize()
+        val fNormal = faceCenter.normalize()
+        val attenuation = fNormal.dot(sunNorm).coerceIn(0f, 1f)
         val lightFactor = (0.24f * lightingStrength + 0.76f * attenuation).coerceIn(0f, 1f)
         return Color(
             red = (originalCol.red * lightFactor).coerceIn(0f, 1f),

@@ -60,10 +60,6 @@ fun RoguelikeScreen(
     val highScores by viewModel.highScores
 
     val playerX by viewModel.playerX
-    val playerY by viewModel.playerY
-
-    val playerX_f by viewModel.playerX_f
-    val playerY_f by viewModel.playerY_f
     val lockedMonsterId by viewModel.lockedMonsterId
     val cameraYaw by viewModel.cameraYaw
 
@@ -146,27 +142,17 @@ fun RoguelikeScreen(
                                             .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
                                             .background(Color.Black)
                                     ) {
-                                        if (is3DMode) {
-                                            DungeonCanvas3D(
-                                                tiles = tiles,
-                                                monsters = monsters,
-                                                pX = playerX_f,
-                                                pY = playerY_f,
-                                                heroClass = char.heroClass,
-                                                lockedMonsterId = lockedMonsterId,
-                                                onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            DungeonCanvas(
-                                                tiles = tiles,
-                                                monsters = monsters,
-                                                pX = playerX,
-                                                pY = playerY,
-                                                heroClass = char.heroClass,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        }
+                                        DungeonCanvas3D(
+                                            tiles = tiles,
+                                            monsters = monsters,
+                                            pId = playerX,
+                                            planetNodes = viewModel.planetNodes,
+                                            heroClass = char.heroClass,
+                                            lockedMonsterId = lockedMonsterId,
+                                            onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
+                                            onNodeTapped = { id -> viewModel.movePlayerToNode(id) },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
                                     }
 
                                     // Remaining space: HUD Panel
@@ -199,27 +185,17 @@ fun RoguelikeScreen(
                                             .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
                                             .background(Color.Black)
                                     ) {
-                                        if (is3DMode) {
-                                            DungeonCanvas3D(
-                                                tiles = tiles,
-                                                monsters = monsters,
-                                                pX = playerX_f,
-                                                pY = playerY_f,
-                                                heroClass = char.heroClass,
-                                                lockedMonsterId = lockedMonsterId,
-                                                onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            DungeonCanvas(
-                                                tiles = tiles,
-                                                monsters = monsters,
-                                                pX = playerX,
-                                                pY = playerY,
-                                                heroClass = char.heroClass,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        }
+                                        DungeonCanvas3D(
+                                            tiles = tiles,
+                                            monsters = monsters,
+                                            pId = playerX,
+                                            planetNodes = viewModel.planetNodes,
+                                            heroClass = char.heroClass,
+                                            lockedMonsterId = lockedMonsterId,
+                                            onCameraYawChanged = { yaw -> viewModel.updateCameraYaw(yaw) },
+                                            onNodeTapped = { id -> viewModel.movePlayerToNode(id) },
+                                            modifier = Modifier.fillMaxSize()
+                                        )
                                     }
 
                                     // Remaining space: HUD Panel

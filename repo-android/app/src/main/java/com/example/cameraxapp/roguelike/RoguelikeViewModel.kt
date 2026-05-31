@@ -35,15 +35,6 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
     private val _playerX = mutableStateOf(2)
     val playerX: State<Int> get() = _playerX
 
-    private val _playerY = mutableStateOf(2)
-    val playerY: State<Int> get() = _playerY
-
-    private val _playerX_f = mutableStateOf(2.5f)
-    val playerX_f: State<Float> get() = _playerX_f
-
-    private val _playerY_f = mutableStateOf(2.5f)
-    val playerY_f: State<Float> get() = _playerY_f
-
     private val _lockedMonsterId = mutableStateOf<Int?>(null)
     val lockedMonsterId: State<Int?> get() = _lockedMonsterId
 
@@ -76,9 +67,6 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         if (activeChar != null) {
             _characterState.value = activeChar
             _playerX.value = activeChar.playerX
-            _playerY.value = activeChar.playerY
-            _playerX_f.value = activeChar.playerX.toFloat() + 0.5f
-            _playerY_f.value = activeChar.playerY.toFloat() + 0.5f
             _tiles.value = dbHelper.loadMap()
             _monsters.value = dbHelper.loadMonsters()
             _inventory.value = dbHelper.loadInventory()
@@ -172,7 +160,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         
         generateFloor(1)
 
-        val updatedChar = charState.copy(playerX = _playerX.value, playerY = _playerY.value)
+        val updatedChar = charState.copy(playerX = _playerX.value)
         _characterState.value = updatedChar
         saveCurrentTurnState()
 
@@ -206,47 +194,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
     }
 
     fun movePlayer(dx: Int, dy: Int) {
-        val char = _characterState.value ?: return
-        if (_status.value != GameStatus.EXPLORING) return
-
-        val nextX = _playerX.value + dx
-        val nextY = _playerY.value + dy
-
-        // Edge boundaries check
-        if (nextX < 0 || nextX >= 18 || nextY < 0 || nextY >= 18) return
-
-        // Wall collision check
-        val targetTile = _tiles.value.find { it.x == nextX && it.y == nextY }
-        if (targetTile?.tileType == "WALL") {
-            addCombatLog("Ouch! You bumped into a solid dungeon wall.")
-            audioEngine.playMove() // quick sound for feedback
-            return
-        }
-
-        // Hostile collision strike check
-        val monster = _monsters.value.find { it.x == nextX && it.y == nextY }
-        if (monster != null) {
-            performAttack(char, monster)
-            triggerMonsterTurns()
-            _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
-            saveCurrentTurnState()
-            return
-        }
-
-        // Standard walking movement
-        _playerX.value = nextX
-        _playerY.value = nextY
-        audioEngine.playMove()
-
-        recalculateFogOfWar(nextX, nextY)
-        triggerMonsterTurns()
-
-        _characterState.value = _characterState.value?.copy(
-            playerX = nextX,
-            playerY = nextY,
-            turns = char.turns + 1
-        )
-        saveCurrentTurnState()
+        // Obsolete flat map movement
     }
 
     fun updateCameraYaw(yaw: Float) {
@@ -255,145 +203,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
     }
 
     fun updateJoystickInput(jx: Float, jy: Float, cameraYaw: Float) {
-        joyX = jx
-        joyY = jy
-        currentCameraYaw = cameraYaw
-
-        if (jx != 0f || jy != 0f) {
-            startMovementLoop()
-        } else {
-            stopMovementLoop()
-        }
-    }
-
-    private fun startMovementLoop() {
-        if (gameLoopJob == null) {
-            gameLoopJob = viewModelScope.launch {
-                while (true) {
-                    if (joyX != 0f || joyY != 0f) {
-                        processMovementTick(joyX, joyY)
-                    }
-                    delay(25) // Smooth 40Hz tick rate balances CPU & performance
-                }
-            }
-        }
-    }
-
-    private fun stopMovementLoop() {
-        gameLoopJob?.cancel()
-        gameLoopJob = null
-    }
-
-    private fun isWallAt(gx: Float, gy: Float): Boolean {
-        val intX = gx.toInt().coerceIn(0, 17)
-        val intY = gy.toInt().coerceIn(0, 17)
-        return _tiles.value.find { it.x == intX && it.y == intY }?.tileType == "WALL"
-    }
-
-    private fun processMovementTick(jx: Float, jy: Float) {
-        val char = _characterState.value ?: return
-        if (_status.value != GameStatus.EXPLORING) return
-
-        // Speed of movement
-        val speed = 0.08f
-        
-        // Calculate camera-relative movement
-        // forward direction vector: pointing in the line of camera orientation
-        val forwardX = -sin(currentCameraYaw)
-        val forwardY = cos(currentCameraYaw)
-        
-        // rightward direction vector: perpendicular to forward
-        val rightX = cos(currentCameraYaw)
-        val rightY = sin(currentCameraYaw)
-
-        // Net translation direction
-        val tx = jx * rightX + jy * forwardX
-        val ty = jx * rightY + jy * forwardY
-
-        val stepX = tx * speed
-        val stepY = ty * speed
-
-        val startX = _playerX_f.value
-        val startY = _playerY_f.value
-
-        var nextX = startX + stepX
-        var nextY = startY + stepY
-
-        // continuous longitude wrapping for Eastern/Western boundaries
-        if (nextX < 0f) nextX += 18f
-        if (nextX >= 18f) nextX -= 18f
-        
-        // clamp polar coordinates slightly below the physical North and South pole centers
-        nextY = nextY.coerceIn(0.18f, 17.82f)
-
-        var finalX = startX
-        var finalY = startY
-
-        // SLIDING PHYSICS COLLISION DETECTOR
-        if (!isWallAt(nextX, nextY)) {
-            finalX = nextX
-            finalY = nextY
-        } else {
-            // Attempt slide on X axis-only
-            if (!isWallAt(nextX, startY)) {
-                finalX = nextX
-            }
-            // Attempt slide on Y axis-only
-            if (!isWallAt(startX, nextY)) {
-                finalY = nextY
-            }
-        }
-
-        // Bounding cylinder check for continuous collision strike triggers
-        var contactMonster: MonsterState? = null
-        val collRadius = 0.55f // contact strike cylinder
-        for (monster in _monsters.value) {
-            val dx = monster.x.toFloat() + 0.5f - finalX
-            val dy = monster.y.toFloat() + 0.5f - finalY
-            val dist = sqrt(dx * dx + dy * dy)
-            if (dist < collRadius) {
-                contactMonster = monster
-                break
-            }
-        }
-
-        if (contactMonster != null) {
-            val now = System.currentTimeMillis()
-            if (now - lastAttackTime > 650) {
-                lastAttackTime = now
-                performAttack(char, contactMonster)
-                triggerMonsterTurns()
-                _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
-                saveCurrentTurnState()
-            }
-            // Block passing through target during contact
-            return
-        }
-
-        val oldIntX = startX.toInt()
-        val oldIntY = startY.toInt()
-
-        _playerX_f.value = finalX
-        _playerY_f.value = finalY
-
-        val newIntX = finalX.toInt().coerceIn(0, 17)
-        val newIntY = finalY.toInt().coerceIn(0, 17)
-
-        _playerX.value = newIntX
-        _playerY.value = newIntY
-
-        if (newIntX != oldIntX || newIntY != oldIntY) {
-            // Crossed tile boundaries!
-            audioEngine.playMove()
-            recalculateFogOfWar(newIntX, newIntY)
-            triggerMonsterTurns()
-            _characterState.value = _characterState.value?.copy(
-                playerX = newIntX,
-                playerY = newIntY,
-                turns = char.turns + 1
-            )
-            saveCurrentTurnState()
-        }
+        // Obsolete
     }
 
     fun toggleTargetLock() {
@@ -415,7 +225,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         val char = _characterState.value ?: return
         if (_status.value != GameStatus.EXPLORING) return
 
-        val currentTile = _tiles.value.find { it.x == _playerX.value && it.y == _playerY.value }
+        val currentTile = _tiles.value.find { it.x == _playerX.value }
         if (currentTile != null) {
             when (currentTile.tileType) {
                 "STAIRS_DOWN" -> {
@@ -423,7 +233,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                     return
                 }
                 "CHEST" -> {
-                    openChest(_playerX.value, _playerY.value)
+                    openChest(_playerX.value)
                     triggerMonsterTurns()
                     _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
                     saveCurrentTurnState()
@@ -517,14 +327,10 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                 addCombatLog("You execute a massive CLEAVE strike! ⚔️")
                 
                 // Strike all adjacent horizontal / vertical grids
-                val adjPositions = listOf(
-                    Pair(_playerX.value - 1, _playerY.value),
-                    Pair(_playerX.value + 1, _playerY.value),
-                    Pair(_playerX.value, _playerY.value - 1),
-                    Pair(_playerX.value, _playerY.value + 1)
-                )
+                val curId = _playerX.value
+                val adjPositions = planetNodes[curId]?.neighbors ?: emptyList()
 
-                _monsters.value.filter { Pair(it.x, it.y) in adjPositions }.forEach { monster ->
+                _monsters.value.filter { it.x in adjPositions }.forEach { monster ->
                     dealSpellDamage(monster, (char.strength * 1.5).toInt())
                 }
             }
@@ -556,9 +362,10 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                 audioEngine.playCast()
 
                 // High damage strike to adjacent monster
-                val adjMonster = _monsters.value.find { m ->
-                    Math.abs(m.x - _playerX.value) <= 1 && Math.abs(m.y - _playerY.value) <= 1
-                }
+                val curId = _playerX.value
+                val adjPositions = planetNodes[curId]?.neighbors ?: emptyList()
+                val adjMonster = _monsters.value.find { m -> m.x in adjPositions }
+                
                 if (adjMonster != null) {
                     addCombatLog("You emerge from shadows executing a BACKSTAB strike! 🗡️")
                     dealSpellDamage(adjMonster, (char.dexterity * 3.0).toInt())
@@ -700,13 +507,17 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
     private fun triggerMonsterTurns() {
         val char = _characterState.value ?: return
-        val random = Random()
+        val random = java.util.Random()
         val armorMod = _inventory.value.find { it.type == "ARMOR" && it.isEquipped }?.statMod ?: 0
         var playerCurrentHp = char.currentHp
+        val pPos = planetNodes[_playerX.value]?.position ?: return
 
         val updatedMonsters = _monsters.value.map { monster ->
-            val dist = Math.sqrt(Math.pow((monster.x - _playerX.value).toDouble(), 2.0) + Math.pow((monster.y - _playerY.value).toDouble(), 2.0))
-            if (dist <= 1.2) {
+            val mPos = planetNodes[monster.x]?.position ?: return@map monster
+            val dist = (mPos - pPos).length()
+            val isAdjacent = planetNodes[monster.x]?.neighbors?.contains(_playerX.value) == true
+
+            if (isAdjacent) {
                 // Symmetrical attack
                 val baseMonsterDmg = when (monster.type) {
                     "DRAGON" -> 22 + char.floor
@@ -719,21 +530,25 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
                 addCombatLog("💀 The ${monster.type} strikes you for $finalMonsterDmg damage.")
                 
                 monster // no moves, stays and fights
-            } else if (dist <= 5.0) {
+            } else if (dist <= 1.25f) { // roughly 5 tiles away on a planet of radius 1
                 // Pathfinding step towards player
-                val dxToPlayer = (_playerX.value - monster.x).coerceIn(-1, 1)
-                val dyToPlayer = (_playerY.value - monster.y).coerceIn(-1, 1)
-                
-                val nextM_X = monster.x + dxToPlayer
-                val nextM_Y = monster.y + dyToPlayer
+                val neighbors = planetNodes[monster.x]?.neighbors ?: emptyList()
+                val nextMove = neighbors.minByOrNull { nId ->
+                    val nPos = planetNodes[nId]?.position ?: return@minByOrNull Float.MAX_VALUE
+                    (nPos - pPos).length()
+                }
 
-                // Grid validation for monsters
-                val canMove = _tiles.value.find { it.x == nextM_X && it.y == nextM_Y }?.tileType != "WALL" &&
-                        _monsters.value.none { it.x == nextM_X && it.y == nextM_Y } &&
-                        !(nextM_X == _playerX.value && nextM_Y == _playerY.value)
+                if (nextMove != null) {
+                    // Grid validation for monsters
+                    val canMove = _tiles.value.find { it.x == nextMove }?.tileType != "WALL" &&
+                            _monsters.value.none { it.x == nextMove } &&
+                            nextMove != _playerX.value
 
-                if (canMove) {
-                    monster.copy(x = nextM_X, y = nextM_Y)
+                    if (canMove) {
+                        monster.copy(x = nextMove)
+                    } else {
+                        monster
+                    }
                 } else {
                     monster
                 }
@@ -791,8 +606,8 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         loadHighScores()
     }
 
-    private fun openChest(x: Int, y: Int) {
-        val random = Random()
+    private fun openChest(nodeId: Int) {
+        val random = java.util.Random()
         val rolls = random.nextInt(100)
         audioEngine.playItem()
 
@@ -825,7 +640,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
         // Change tile type from CHEST to FLOOR
         _tiles.value = _tiles.value.map {
-            if (it.x == x && it.y == y) it.copy(tileType = "FLOOR") else it
+            if (it.x == nodeId) it.copy(tileType = "FLOOR") else it
         }
     }
 
@@ -844,152 +659,150 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         
         // Auto-save map and character after floor loading
         val finalState = _characterState.value!!.copy(
-            playerX = _playerX.value,
-            playerY = _playerY.value
+            playerX = _playerX.value
         )
         _characterState.value = finalState
         saveCurrentTurnState()
     }
 
+    val planetNodes = IcosphereGenerator.generate(3) // 642 nodes
+
+    fun movePlayerToNode(nodeId: Int) {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+
+        val currentNodeId = _playerX.value
+        
+        // Tap allows moving to neighbors OR same location (wait)
+        val isNeighbor = planetNodes[currentNodeId]?.neighbors?.contains(nodeId) == true
+        if (currentNodeId != nodeId && !isNeighbor) return
+
+        if (currentNodeId == nodeId) {
+            // Wait turn
+            addCombatLog("You wait for an opening...")
+            triggerMonsterTurns()
+            _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
+            saveCurrentTurnState()
+            return
+        }
+
+        val targetTile = _tiles.value.find { it.x == nodeId }
+        if (targetTile?.tileType == "WALL") {
+            addCombatLog("Ouch! You bumped into a solid dungeon wall.")
+            audioEngine.playMove()
+            return
+        }
+
+        val monster = _monsters.value.find { it.x == nodeId }
+        if (monster != null) {
+            performAttack(char, monster)
+            triggerMonsterTurns()
+            _characterState.value = _characterState.value?.copy(turns = char.turns + 1)
+            saveCurrentTurnState()
+            return
+        }
+
+        _playerX.value = nodeId
+        audioEngine.playMove()
+
+        recalculateFogOfWar(nodeId)
+        triggerMonsterTurns()
+
+        _characterState.value = char.copy(
+            playerX = nodeId,
+            turns = char.turns + 1
+        )
+        saveCurrentTurnState()
+    }
+
     private fun generateFloor(floorIndex: Int) {
-        val nextTiles = mutableMapOf<Pair<Int, Int>, GameTile>()
-        // Initialize 18x18 grid completely filled with solid wall
-        for (y in 0 until 18) {
-            for (x in 0 until 18) {
-                nextTiles[Pair(x, y)] = GameTile(x, y, "WALL", false)
+        val nextTiles = mutableMapOf<Int, GameTile>()
+        for (id in planetNodes.keys) {
+            nextTiles[id] = GameTile(id, 0, "WALL", false)
+        }
+
+        val rnd = java.util.Random()
+        
+        // Use Drunkard's Walk / Flood Fill to carve a cavern network on the sphere
+        val startNode = planetNodes.keys.random()
+        var current = startNode
+        var floorCount = 0
+        val targetFloors = 200 // about 30% of the planet is floor
+        
+        while (floorCount < targetFloors) {
+            if (nextTiles[current]?.tileType == "WALL") {
+                nextTiles[current] = GameTile(current, 0, "FLOOR", false)
+                floorCount++
+            }
+            if (rnd.nextFloat() < 0.1f) {
+                current = startNode // Reset to avoid long singular snake paths
+            } else {
+                current = planetNodes[current]?.neighbors?.random() ?: startNode
             }
         }
 
-        data class RoomSpec(val rx: Int, val ry: Int, val rw: Int, val rh: Int)
-        val rooms = mutableListOf<RoomSpec>()
-        val rnd = Random()
+        // Guarantee start node is floor
+        val px = startNode
+        nextTiles[px] = GameTile(px, 0, "FLOOR", false)
 
-        // Place 4 procedural squares
-        for (i in 0 until 4) {
-            val rw = 3 + rnd.nextInt(3)
-            val rh = 3 + rnd.nextInt(3)
-            val rx = 1 + rnd.nextInt(18 - rw - 2)
-            val ry = 1 + rnd.nextInt(18 - rh - 2)
-            rooms.add(RoomSpec(rx, ry, rw, rh))
-        }
+        val possibleFloors = nextTiles.values.filter { it.tileType == "FLOOR" }.map { it.x }
 
-        // Carve rooms
-        for (room in rooms) {
-            for (y in room.ry until room.ry + room.rh) {
-                for (x in room.rx until room.rx + room.rw) {
-                    nextTiles[Pair(x, y)] = GameTile(x, y, "FLOOR", false)
-                }
-            }
-        }
-
-        // Segment corridors horizontally and vertically
-        for (i in 0 until rooms.size - 1) {
-            val r1 = rooms[i]
-            val r2 = rooms[i + 1]
-            val cx1 = r1.rx + r1.rw / 2
-            val cy1 = r1.ry + r1.rh / 2
-            val cx2 = r2.rx + r2.rw / 2
-            val cy2 = r2.ry + r2.rh / 2
-
-            // Horizontal step Carver
-            val minX = minOf(cx1, cx2)
-            val maxX = maxOf(cx1, cx2)
-            for (x in minX..maxX) {
-                nextTiles[Pair(x, cy1)] = GameTile(x, cy1, "FLOOR", false)
-            }
-
-            // Vertical step Carver
-            val minY = minOf(cy1, cy2)
-            val maxY = maxOf(cy1, cy2)
-            for (y in minY..maxY) {
-                nextTiles[Pair(cx2, y)] = GameTile(cx2, y, "FLOOR", false)
-            }
-        }
-
-        // Hero initial landing spawn
-        val startingRoom = rooms[0]
-        val px = startingRoom.rx + startingRoom.rw / 2
-        val py = startingRoom.ry + startingRoom.rh / 2
-        nextTiles[Pair(px, py)] = GameTile(px, py, "FLOOR", false)
-
-        // Exit staircase placement in bottom-most room
-        val lastRoom = rooms.last()
-        var sx = lastRoom.rx + lastRoom.rw / 2
-        var sy = lastRoom.ry + lastRoom.rh / 2
-        if (sx == px && sy == py) {
-            sx = (sx + 2) % 17
-            sy = (sy + 2) % 17
-        }
-        nextTiles[Pair(sx, sy)] = GameTile(sx, sy, "STAIRS_DOWN", false)
+        // Exit staircase placement as far from px as possible
+        val sx = possibleFloors.maxByOrNull { fId ->
+            val v1 = planetNodes[px]!!.position
+            val v2 = planetNodes[fId]!!.position
+            (v1 - v2).length()
+        } ?: possibleFloors.last()
+        
+        nextTiles[sx] = GameTile(sx, 0, "STAIRS_DOWN", false)
 
         // Randomly place 3 treasure chests
-        var chestPlaced = 0
-        var mapTry = 0
-        while (chestPlaced < 3 && mapTry < 40) {
-            mapTry++
-            val randomRoom = rooms[rnd.nextInt(rooms.size)]
-            val cx = randomRoom.rx + rnd.nextInt(randomRoom.rw)
-            val cy = randomRoom.ry + rnd.nextInt(randomRoom.rh)
-            if ((cx != px || cy != py) && (cx != sx || cy != sy)) {
-                nextTiles[Pair(cx, cy)] = GameTile(cx, cy, "CHEST", false)
-                chestPlaced++
-            }
+        val availableChestSpots = possibleFloors.filter { it != px && it != sx }.shuffled().take(3)
+        for (cx in availableChestSpots) {
+            nextTiles[cx] = GameTile(cx, 0, "CHEST", false)
         }
 
-        // Place hostiles in rooms (scaling with depth)
+        // Place hostiles in random locations
         val floorMonsters = mutableListOf<MonsterState>()
         var globalMonsterIndex = 1
+        val numMonsters = 8 + floorIndex * 2
 
-        for (idx in 1 until rooms.size) {
-            val r = rooms[idx]
-            val maxMCount = if (floorIndex >= 7) 2 else 1
-            for (mc in 0 until maxMCount) {
-                val mx = r.rx + rnd.nextInt(r.rw)
-                val my = r.ry + rnd.nextInt(r.rh)
-                if ((mx != sx || my != sy) && !(mx == px && my == py)) {
-                    val hostileClass = when {
-                        floorIndex >= 9 && idx == rooms.size - 1 -> "DRAGON" // Place boss on last rooms
-                        floorIndex >= 7 && rnd.nextBoolean() -> "NECROMANCER"
-                        floorIndex >= 4 && rnd.nextBoolean() -> "GOBLIN"
-                        else -> "SKELETON"
-                    }
+        val availableMonsterSpots = possibleFloors.filter { 
+            it != px && it != sx && !availableChestSpots.contains(it) && 
+            (planetNodes[px]!!.position - planetNodes[it]!!.position).length() > 0.5f // Ensure distance from origin
+        }.shuffled().take(numMonsters)
 
-                    val fullMonsterHp = when (hostileClass) {
-                        "DRAGON" -> 160 + floorIndex * 15
-                        "NECROMANCER" -> 50 + floorIndex * 7
-                        "GOBLIN" -> 35 + floorIndex * 5
-                        else -> 24 + floorIndex * 4
-                    }
-
-                    floorMonsters.add(
-                        MonsterState(
-                            id = globalMonsterIndex++,
-                            type = hostileClass,
-                            currentHp = fullMonsterHp,
-                            maxHp = fullMonsterHp,
-                            x = mx,
-                            y = my
-                        )
-                    )
-                }
+        for (idx in availableMonsterSpots.indices) {
+            val hType = when {
+                floorIndex >= 9 && idx == 0 -> "DRAGON"
+                floorIndex >= 7 && rnd.nextBoolean() -> "NECROMANCER"
+                floorIndex >= 4 && rnd.nextBoolean() -> "GOBLIN"
+                else -> "SKELETON"
             }
+            
+            val hp = when (hType) {
+                "DRAGON" -> 160 + floorIndex * 15
+                "NECROMANCER" -> 50 + floorIndex * 7
+                "GOBLIN" -> 35 + floorIndex * 5
+                else -> 24 + floorIndex * 4
+            }
+            floorMonsters.add(MonsterState(globalMonsterIndex++, hType, hp, hp, availableMonsterSpots[idx], 0))
         }
 
         _playerX.value = px
-        _playerY.value = py
-        _playerX_f.value = px.toFloat() + 0.5f
-        _playerY_f.value = py.toFloat() + 0.5f
         _tiles.value = nextTiles.values.toList()
         _monsters.value = floorMonsters
 
-        recalculateFogOfWar(px, py)
+        recalculateFogOfWar(px)
     }
 
-    private fun recalculateFogOfWar(heroX: Int, heroY: Int) {
-        val lightBoundary = 3.5
+    private fun recalculateFogOfWar(heroId: Int) {
+        val heroPos = planetNodes[heroId]?.position ?: return
+        val revealDistance = 0.85f // Spherical distance threshold in 3D Euclidean space
+        
         _tiles.value = _tiles.value.map { tile ->
-            val pythDist = Math.sqrt(Math.pow((tile.x - heroX).toDouble(), 2.0) + Math.pow((tile.y - heroY).toDouble(), 2.0))
-            if (pythDist <= lightBoundary) {
+            val tilePos = planetNodes[tile.x]?.position
+            if (tilePos != null && (heroPos - tilePos).length() <= revealDistance) {
                 tile.copy(revealed = true)
             } else {
                 tile
@@ -999,13 +812,16 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
     private fun findNearestRevealedMonster(): MonsterState? {
         val revealedMonsters = _monsters.value.filter { m ->
-            _tiles.value.find { it.x == m.x && it.y == m.y }?.revealed == true
+            _tiles.value.find { it.x == m.x }?.revealed == true
         }
 
+        val pPos = planetNodes[_playerX.value]?.position ?: return null
         return revealedMonsters.minByOrNull { m ->
-            Math.sqrt(Math.pow((m.x - _playerX.value).toDouble(), 2.0) + Math.pow((m.y - _playerY.value).toDouble(), 2.0))
+            val mPos = planetNodes[m.x]?.position ?: return@minByOrNull Float.MAX_VALUE
+            (mPos - pPos).length()
         }
     }
+
 
     private fun addCombatLog(feed: String) {
         val fullFeeds = _gameLogs.value.toMutableList()
@@ -1018,7 +834,7 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
 
     private fun saveCurrentTurnState() {
         val char = _characterState.value ?: return
-        dbHelper.saveActiveCharacter(char.copy(playerX = _playerX.value, playerY = _playerY.value))
+        dbHelper.saveActiveCharacter(char.copy(playerX = _playerX.value))
         dbHelper.saveMap(_tiles.value)
         dbHelper.saveMonsters(_monsters.value)
         dbHelper.saveInventory(_inventory.value)
