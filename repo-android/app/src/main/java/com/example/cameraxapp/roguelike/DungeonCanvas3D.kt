@@ -754,8 +754,9 @@ fun DungeonCanvas3D(
                 }
             }
         }
+    }
 
-        var showSettings by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
         // Top Controls Panel (Instructions & Gear button)
         Row(
@@ -1021,7 +1022,6 @@ fun DungeonCanvas3D(
             }
         }
     }
-}
 }
 
 private fun buildWallCube(
