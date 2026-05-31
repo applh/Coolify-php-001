@@ -576,5 +576,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a custom shader function inside the polar beacon rendering code that animates the emerald and orchid emissions with a gentle pulsing wave, and write a coordinate simulation matching analog drag gestures directly to localized geodesic shifts.
 - **Complexity**: Part 5
 
+### 93. Moria Roguelike: Pathfinding-Based Tactical Target Walk Guidance (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeViewModel.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master the implementation of turn-based autonomous pathfinding algorithms (such as Breadth-First Search on modular Icosphere networks) to advance towards target objectives. Learn how to design high-utility tactical pathfinding widgets in Jetpack Compose, map pathfinder outputs to incremental player movement steps, and handle path blocking seamlessly.
+- **Exercise**: Modify the `walkTowardsTarget()` route pathfinder search algorithm to avoid stepping on or triggering trap tiles, and display an alert log if a potential trap is located directly on the path step.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

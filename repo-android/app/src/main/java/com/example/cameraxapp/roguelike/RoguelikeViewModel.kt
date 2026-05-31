@@ -359,6 +359,40 @@ class RoguelikeViewModel(context: Context) : ViewModel() {
         }
     }
 
+    // Walk to advance towards locked target or nearest identified target for the turn
+    fun walkTowardsTarget() {
+        val char = _characterState.value ?: return
+        if (_status.value != GameStatus.EXPLORING) return
+
+        var targetId = _lockedMonsterId.value
+        if (targetId == null) {
+            val nearest = findNearestRevealedMonster()
+            if (nearest != null) {
+                _lockedMonsterId.value = nearest.id
+                targetId = nearest.id
+                addCombatLog("Locked-on to nearest: ${nearest.type}! 🎯")
+            } else {
+                addCombatLog("No target locked-on to walk towards! 🎯")
+                return
+            }
+        }
+
+        val targetMonster = _monsters.value.find { it.id == targetId }
+        if (targetMonster == null) {
+            addCombatLog("Locked-on target is no longer active.")
+            _lockedMonsterId.value = null
+            return
+        }
+
+        val currentNodeId = _playerX.value
+        val step = findNextStep(currentNodeId, targetMonster.x)
+        if (step != null) {
+            movePlayerToNode(step)
+        } else {
+            addCombatLog("No valid path found to the target ${targetMonster.type}.")
+        }
+    }
+
     // Cast unique class magic spell
     fun castClassSpell() {
         val char = _characterState.value ?: return

@@ -171,6 +171,7 @@ fun RoguelikeScreen(
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
                                         onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
+                                        onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -215,6 +216,7 @@ fun RoguelikeScreen(
                                         onDrinkManaPotion = { viewModel.drinkManaPotion() },
                                         onUpdateJoystick = { jx, jy -> viewModel.updateJoystickInput(jx, jy, cameraYaw) },
                                         onToggleTargetLock = { viewModel.toggleTargetLock() },
+                                        onWalkTowardsTarget = { viewModel.walkTowardsTarget() },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -340,6 +342,7 @@ fun HudPanel(
     onDrinkManaPotion: () -> Unit,
     onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
     onToggleTargetLock: () -> Unit = {},
+    onWalkTowardsTarget: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -370,7 +373,8 @@ fun HudPanel(
             onDrinkHealthPotion = onDrinkHealthPotion,
             onDrinkManaPotion = onDrinkManaPotion,
             onUpdateJoystick = onUpdateJoystick,
-            onToggleTargetLock = onToggleTargetLock
+            onToggleTargetLock = onToggleTargetLock,
+            onWalkTowardsTarget = onWalkTowardsTarget
         )
     }
 }
@@ -515,7 +519,8 @@ fun ControlPanel(
     onDrinkHealthPotion: () -> Unit,
     onDrinkManaPotion: () -> Unit,
     onUpdateJoystick: (Float, Float) -> Unit = { _, _ -> },
-    onToggleTargetLock: () -> Unit = {}
+    onToggleTargetLock: () -> Unit = {},
+    onWalkTowardsTarget: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -544,6 +549,25 @@ fun ControlPanel(
                     text = if (is3DMode) "2D Retro" else "3D Cube",
                     fontSize = 10.sp,
                     color = Color(0xFFFFD700),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Button(
+                onClick = onWalkTowardsTarget,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2F3F)),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .width(76.dp)
+                    .height(36.dp)
+                    .border(0.6.dp, Color(0xFF3F8FDF).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            ) {
+                Text(
+                    text = "🚶 Walk",
+                    fontSize = 11.sp,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
