@@ -1399,7 +1399,14 @@ fun GamepadCirclePad(
                 .background(Color(0xFF331111).copy(alpha = 0.9f), RoundedCornerShape(22.dp))
                 .border(1.5.dp, Color(0xFFFF3366).copy(alpha = 0.6f), RoundedCornerShape(22.dp))
                 .clickable { onToggleTargetLock() },
- @Composable
+            contentAlignment = Alignment.Center
+        ) {
+            Text("🎯", fontSize = 16.sp)
+        }
+    }
+}
+
+@Composable
 fun GamepadActionGrid3x3(
     char: CharacterState,
     inventory: List<InventoryItem>,

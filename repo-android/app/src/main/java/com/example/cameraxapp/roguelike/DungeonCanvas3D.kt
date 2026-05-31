@@ -1022,6 +1022,7 @@ fun DungeonCanvas3D(
         }
     }
 }
+}
 
 private fun buildWallCube(
     cx: Float, cy: Float, cz: Float,
