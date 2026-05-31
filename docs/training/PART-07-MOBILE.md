@@ -612,5 +612,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary check in the generator that increases the minimum enemy spawning distance dynamically as the player advances to deeper floor levels, ensuring high-tier enemies like Necromancers spawn on the absolute opposite side of the icosphere.
 - **Complexity**: Part 4
 
+### 99. Moria Roguelike: High-Performance Spherical Cell Normal and Corner Caching (20h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Understand procedural 3D graphics bottlenecks inside CPU-bound mobile rendering components and design high-impact memorized caches to bypass geometric recalculation loops. Learn how caching sorted neighbor-to-corner vectors for icosphere cells completely eliminates expensive trigonometry (`atan2`), vector cross-products, list allocations, and normalizations inside of standard Jetpack Compose canvas draw loops to sustain rapid 60 FPS performance.
+- **Exercise**: Conduct a profiling trace of the frame timeline before and after corner-caching. Implement an additional cache in `DungeonCanvas3D.kt` for pre-computed tile face ambient diffuse illumination coefficients, avoiding lighting dot product evaluations on redundant static frames.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

@@ -49,6 +49,33 @@ fun DungeonCanvas3D(
     var lightingStrength by remember { mutableStateOf(2.2f) }
     val coroutineScope = rememberCoroutineScope()
 
+    val sortedCornersCache = remember(planetNodes) {
+        planetNodes.keys.associateWith { nodeId ->
+            val node = planetNodes[nodeId] ?: return@associateWith emptyList<Vector3>()
+            val normal = node.position
+            val neighbors = node.neighbors.mapNotNull { planetNodes[it] }
+            if (neighbors.size < 3) return@associateWith emptyList<Vector3>()
+            
+            val sortedNeighbors = neighbors.sortedBy { n ->
+                val v = n.position - normal
+                val cross = normal.cross(Vector3(0f, 1f, 0f))
+                val right = cross.takeIf { it.length() > 0.001f } ?: normal.cross(Vector3(1f, 0f, 0f))
+                val up = right.cross(normal)
+                atan2(v.dot(up), v.dot(right))
+            }
+            
+            val cornerDirections = mutableListOf<Vector3>()
+            for (i in sortedNeighbors.indices) {
+                val n1 = sortedNeighbors[i]
+                val n2 = sortedNeighbors[(i + 1) % sortedNeighbors.size]
+                val corner = (normal + n1.position + n2.position).normalize()
+                cornerDirections.add(corner)
+            }
+            cornerDirections
+        }
+    }
+
+
     LaunchedEffect(yawAngle) {
         onCameraYawChanged(yawAngle)
     }
@@ -241,27 +268,8 @@ fun DungeonCanvas3D(
             val R = 155f // Radius of the sphere
 
             fun getPolygonForNode(nodeId: Int, hOffset: Float = 0f): List<Vector3> {
-                val node = planetNodes[nodeId] ?: return emptyList()
-                val normal = node.position
-                val neighbors = node.neighbors.mapNotNull { planetNodes[it] }
-                if (neighbors.size < 3) return emptyList()
-                
-                val sortedNeighbors = neighbors.sortedBy { n ->
-                    val v = n.position - normal
-                    val cross = normal.cross(Vector3(0f, 1f, 0f))
-                    val right = cross.takeIf { it.length() > 0.001f } ?: normal.cross(Vector3(1f, 0f, 0f))
-                    val up = right.cross(normal)
-                    atan2(v.dot(up), v.dot(right))
-                }
-                
-                val vertices = mutableListOf<Vector3>()
-                for (i in sortedNeighbors.indices) {
-                    val n1 = sortedNeighbors[i]
-                    val n2 = sortedNeighbors[(i + 1) % sortedNeighbors.size]
-                    val corner = (normal + n1.position + n2.position).normalize()
-                    vertices.add(corner * (R + hOffset))
-                }
-                return vertices
+                val directions = sortedCornersCache[nodeId] ?: return emptyList()
+                return directions.map { it * (R + hOffset) }
             }
 
             val cosYaw = cos(yawAngle)
