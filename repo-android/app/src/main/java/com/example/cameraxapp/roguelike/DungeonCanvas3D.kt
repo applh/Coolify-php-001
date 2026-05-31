@@ -41,7 +41,7 @@ fun DungeonCanvas3D(
 ) {
     var yawAngle by remember { mutableStateOf(-0.65f) }
     var pitchAngle by remember { mutableStateOf(0.75f) }
-    var zoomScale by remember { mutableStateOf(1.6f) }
+    var zoomScale by remember { mutableStateOf(4.8f) }
     var lightingStrength by remember { mutableStateOf(1.5f) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -776,7 +776,7 @@ fun DungeonCanvas3D(
                                 .height(22.dp)
                                 .padding(horizontal = 5.dp)
                                 .background(Color(0xFF333333), RoundedCornerShape(4.dp))
-                                .clickable { zoomScale = 1.6f },
+                                .clickable { zoomScale = 4.8f },
                             contentAlignment = Alignment.Center
                         ) {
                             Text("RST", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
@@ -827,9 +827,9 @@ fun DungeonCanvas3D(
                                         }
                                     }
                                     val targetZoom = when (label) {
-                                        "TOP" -> 2.0f
-                                        "FRONT" -> 1.8f
-                                        else -> 1.6f
+                                        "TOP" -> 6.0f
+                                        "FRONT" -> 5.4f
+                                        else -> 4.8f
                                     }
                                     coroutineScope.launch {
                                         animate(
@@ -1057,7 +1057,7 @@ private fun build3DStairs(
     lightSource: Vector3,
     lightingStrength: Float
 ) {
-    val stoneCol = Color(0xFF2B2824)
+    val stoneCol = Color(0xFFFF9100)
     val hx = sizeX / 2f
     val hz = sizeZ / 2f
     val numSteps = 4
@@ -1101,7 +1101,7 @@ private fun build3DStairs(
         )
         outList.add(RenderItem3D.Polygon(listOf(vf1, vf2, vf3, vf4), frontFaceCol, depth = 0f))
 
-        val edgeCol = Color(0xFF4A443E).copy(alpha = 0.5f)
+        val edgeCol = Color(0xFFFFCC80).copy(alpha = 0.5f)
         outList.add(RenderItem3D.Line(vf1, vf2, edgeCol, 1.5f, 0f))
     }
 }

@@ -612,7 +612,7 @@ fun DungeonCanvas(
             val bgTileColor = when {
                 !tile.revealed -> Color.Black
                 tile.tileType == "WALL" -> Color(0xFF262423) // Slate brown rocks
-                tile.tileType == "STAIRS_DOWN" -> Color(0xFF2B163B) // Arcane deep violet staircase
+                tile.tileType == "STAIRS_DOWN" -> Color(0xFF5A2A00) // Deep burnt orange staircase
                 tile.tileType == "CHEST" -> Color(0xFF38230B) // Rusty chest frame
                 else -> Color(0xFF0F0E0D) // Pitch floor
             }

@@ -564,5 +564,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement an exercise where students modify the FPS signal bars from 4 vertical segments to a dynamic 5-segment indicator that lights up in bright cyan when performance is above 58 FPS, and verify its behaviors.
 - **Complexity**: Part 3
 
+### 91. Moria Roguelike: 3D Camera Zoom Multiplication, Orange Staircase Themes, and FPS Performance Diagnostic Planning (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master fine-grained camera magnification factor scaling over gestural 3D projection layers and learn how to customize procedural step assets to coordinate-synchronized aesthetic schemes. Understand key performance patterns for 3D Jetpack Compose Canvas implementations, identifying memory leaks, garbage collection overheads, and Painter's Algorithm sorting complexities.
+- **Exercise**: Implement an interactive toggle or multiplier option in the settings menu that doubles the current zoom scale multiplier and measures the performance difference using the graphical FPS signal bars.
+- **Complexity**: Part 4
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

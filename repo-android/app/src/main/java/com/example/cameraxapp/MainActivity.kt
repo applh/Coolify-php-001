@@ -552,7 +552,7 @@ fun HubScreen(
             AppletInfo("Browser", "browser", Icons.Default.Search, "Web tools with safe JS sandbox script injection"),
             AppletInfo("Debug Logs", "debug", Icons.Default.Build, "View system logs, WebView errors, exceptions and diagnostics"),
             AppletInfo("Blackjack", "blackjack", Icons.Default.Star, "Vegas-style cards game with strategy helper advisor"),
-            AppletInfo("RogueCompose", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
+            AppletInfo("Moria", "roguecompose", Icons.Default.Star, "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving"),
             AppletInfo("3D Workspace", "threed_sandbox", Icons.Default.Build, "Interactive 3D structural, molecular, topographic and mechanical engineering workbench"),
             AppletInfo("World Globe", "world_globe", Icons.Default.Star, "Interactive 3D Virtual globe with custom texture mapping support."),
             AppletInfo("Studio Draw", "draw_studio", Icons.Default.Create, "Professional GIMP-style layered drawing board")
