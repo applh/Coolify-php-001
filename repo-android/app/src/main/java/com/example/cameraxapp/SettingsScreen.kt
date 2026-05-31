@@ -144,7 +144,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             "browser" to "Sandbox Web Browser",
             "debug" to "Diagnostics & Debug Logs",
             "blackjack" to "Vegas Blackjack Table",
-            "roguecompose" to "MORIA Rogue-like RPG"
+            "roguecompose" to "Moria Rogue-like RPG"
         )
     }
 
@@ -161,7 +161,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
             "browser" to "Sandbox Web Browser",
             "debug" to "Diagnostics & Debug Logs",
             "blackjack" to "Vegas Blackjack Table",
-            "roguecompose" to "MORIA Rogue-like RPG"
+            "roguecompose" to "Moria Rogue-like RPG"
         )
     }
 
@@ -968,7 +968,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
                     "browser" to "Sandbox Web Browser",
                     "debug" to "Diagnostics & Debug Logs",
                     "blackjack" to "Vegas Blackjack Table",
-                    "roguecompose" to "MORIA Rogue-like RPG"
+                    "roguecompose" to "Moria Rogue-like RPG"
                 )
             }
             AlertDialog(

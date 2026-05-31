@@ -558,5 +558,11 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a secondary custom helmet or crest for the Rogue class (e.g., adding a feathered cap or a metal half-mask by defining corresponding vertices, lines, and polygons) and ensure its shade values adapt to live ambient lighting.
 - **Complexity**: Part 4
 
+### 90. Moria Roguelike: Handheld Inventory Radio-Button Equipping & Graphical FPS Signal LED Bars (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/DungeonCanvas3D.kt`
+- **Goal**: Learn how to design high-utility handheld backpack inventory interfaces using modern Android RadioButtons paired with context-specific action triggers. Master building performance-efficient custom graphical indicators (e.g. LED cellular signal-strength bar charts) to visualize system FPS and resource constraints without traditional text overhead.
+- **Exercise**: Implement an exercise where students modify the FPS signal bars from 4 vertical segments to a dynamic 5-segment indicator that lights up in bright cyan when performance is above 58 FPS, and verify its behaviors.
+- **Complexity**: Part 3
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

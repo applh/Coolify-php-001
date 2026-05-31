@@ -12,7 +12,7 @@ import com.example.cameraxapp.roguelike.RoguelikeViewModel
 
 class RoguelikeApplet : Applet {
     override val id: String = "roguecompose"
-    override val name: String = "MORIA"
+    override val name: String = "Moria"
     override val description: String = "Symmetrical turn-based procedural rogue-like RPG adventure with SQLite persistent saving."
     override val icon = Icons.Default.Star
 

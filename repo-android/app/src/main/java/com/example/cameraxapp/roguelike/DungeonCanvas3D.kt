@@ -45,6 +45,24 @@ fun DungeonCanvas3D(
     var lightingStrength by remember { mutableStateOf(1.5f) }
     val coroutineScope = rememberCoroutineScope()
 
+    var fps by remember { mutableStateOf(60) }
+    LaunchedEffect(Unit) {
+        var frameCount = 0
+        var lastTime = System.currentTimeMillis()
+        while (true) {
+            withFrameNanos {
+                frameCount++
+                val now = System.currentTimeMillis()
+                val elapsed = now - lastTime
+                if (elapsed >= 1000) {
+                    fps = (frameCount * 1000 / elapsed).toInt()
+                    frameCount = 0
+                    lastTime = now
+                }
+            }
+        }
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "DungeonOrbit")
     val timeAngle by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -191,7 +209,9 @@ fun DungeonCanvas3D(
                             alpha = 1f
                         )
 
-                        drawPipeline.add(RenderItem3D.Polygon(corners, shadedCol, depth = 0f))
+                        if (tile.tileType != "STAIRS_DOWN") {
+                            drawPipeline.add(RenderItem3D.Polygon(corners, shadedCol, depth = 0f))
+                        }
 
                         // Procedural weathered flagstone lines on ground tiles
                         if (tile.tileType != "STAIRS_DOWN" && tile.tileType != "CHEST") {
@@ -221,7 +241,6 @@ fun DungeonCanvas3D(
                                 lightSource = lightSource,
                                 lightingStrength = lightingStrength
                             )
-                            drawPipeline.add(RenderItem3D.TextLabel(Vector3(tileX, floorY - 3f, tileZ), "🪜", Color.White, sizeMultiplier = 0.75f, depth = 0f))
                         } else if (tile.tileType == "CHEST") {
                             // Render 3D chest with wood paneling, iron straps and dual brass locks
                             build3DChest(
@@ -231,7 +250,6 @@ fun DungeonCanvas3D(
                                 lightSource = lightSource,
                                 lightingStrength = lightingStrength
                             )
-                            drawPipeline.add(RenderItem3D.TextLabel(Vector3(tileX, floorY - 3.5f, tileZ), "📦", Color.White, sizeMultiplier = 0.72f, depth = 0f))
                         }
                     }
                 }
@@ -641,6 +659,48 @@ fun DungeonCanvas3D(
                     letterSpacing = 0.5.sp,
                     fontWeight = FontWeight.Bold
                 )
+            }
+
+            // Real-time FPS Dashboard Badge (Stylized Graphical representation)
+            Row(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, Color(0xFFFFD700).copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "⚡",
+                    fontSize = 8.sp,
+                    color = Color(0xFFFFD700)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(1.5.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.padding(bottom = 1.dp)
+                ) {
+                    val activeColor = when {
+                        fps >= 50 -> Color(0xFF4CAF50) // Emerald/Green
+                        fps >= 30 -> Color(0xFFFFC107) // Amber/Yellow
+                        else -> Color(0xFFF44336)      // Crimson/Red
+                    }
+                    val numLit = when {
+                        fps >= 55 -> 4
+                        fps >= 40 -> 3
+                        fps >= 22 -> 2
+                        else -> 1
+                    }
+                    for (barIdx in 1..4) {
+                        val barHeight = 4.dp + (barIdx * 2).dp
+                        val color = if (barIdx <= numLit) activeColor else Color.DarkGray.copy(alpha = 0.4f)
+                        Box(
+                            modifier = Modifier
+                                .size(2.dp, barHeight)
+                                .background(color, RoundedCornerShape(0.5.dp))
+                        )
+                    }
+                }
             }
 
             Box(

@@ -57,7 +57,7 @@ fun RoguelikeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🗡️ MORIA", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold) },
+                title = { Text("🗡️ Moria", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -952,21 +952,45 @@ fun InventoryItemRow(
                 color = if (item.isEquipped) Color(0xFF81C784) else Color.Transparent,
                 shape = RoundedCornerShape(4.dp)
             )
+            .clickable {
+                if (item.type != "CONSUMABLE") {
+                    if (!item.isEquipped) onEquip(item)
+                } else {
+                    onUse(item)
+                }
+            }
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            val title = if (item.isEquipped) "${item.name} [EQUIPPED]" else item.name
-            val titleColor = if (item.isEquipped) Color(0xFF81C784) else Color.White
-            Text(title, color = titleColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            
-            val subText = when (item.type) {
-                "WEAPON" -> "Weapon rating: +${item.statMod} Attack strength"
-                "ARMOR" -> "Armor rating: +${item.statMod} Shield defense"
-                else -> "Restore potion: Recovers +${item.statMod} points"
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (item.type != "CONSUMABLE") {
+                RadioButton(
+                    selected = item.isEquipped,
+                    onClick = { if (!item.isEquipped) onEquip(item) },
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = Color(0xFF81C784),
+                        unselectedColor = Color.LightGray
+                    ),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
-            Text(subText, color = Color.LightGray, fontSize = 11.sp)
+
+            Column(modifier = Modifier.weight(1f)) {
+                val title = if (item.isEquipped) "${item.name} [EQUIPPED]" else item.name
+                val titleColor = if (item.isEquipped) Color(0xFF81C784) else Color.White
+                Text(title, color = titleColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                
+                val subText = when (item.type) {
+                    "WEAPON" -> "Weapon rating: +${item.statMod} Attack strength"
+                    "ARMOR" -> "Armor rating: +${item.statMod} Shield defense"
+                    else -> "Restore potion: Recovers +${item.statMod} points"
+                }
+                Text(subText, color = Color.LightGray, fontSize = 11.sp)
+            }
         }
 
         if (item.type == "CONSUMABLE") {
@@ -977,19 +1001,6 @@ fun InventoryItemRow(
                 modifier = Modifier.height(30.dp)
             ) {
                 Text("Use", color = Color.White, fontSize = 12.sp)
-            }
-        } else {
-            Button(
-                onClick = { onEquip(item) },
-                enabled = !item.isEquipped,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF0D47A1),
-                    disabledContainerColor = Color.Transparent
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                modifier = Modifier.height(30.dp)
-            ) {
-                Text(if (item.isEquipped) "Armed" else "Equip", color = if (item.isEquipped) Color(0xFF81C784) else Color.White, fontSize = 12.sp)
             }
         }
     }
