@@ -615,16 +615,12 @@ fun Globe3DInteractiveBox(
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
                 
                 val model = loader.createModel(resolvedPath)
-                if (model == null) {
-                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createModel with path '$resolvedPath' returned null! Confirm resource exists in main assets folder.")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[World] Background Loader: createModel successfully compiled asset structure.")
-                }
+                AppLogger.d("SceneViewDebug", "[World] Background Loader: createModel successfully compiled asset structure.")
                 
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Starting ModelLoader.createInstance")
-                val modelInstance = model?.let { loader.createInstance(it) }
+                val modelInstance = loader.createInstance(model)
                 if (modelInstance == null) {
-                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createInstance failed or model was null.")
+                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createInstance failed.")
                 } else {
                     AppLogger.d("SceneViewDebug", "[World] Background Loader: createInstance successfully created 3D instance.")
                 }

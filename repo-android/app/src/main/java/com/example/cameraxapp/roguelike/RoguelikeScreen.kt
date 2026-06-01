@@ -1627,13 +1627,9 @@ fun MoriaBenchmarkViewport(
                 // 1. Load Globe Model
                 AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/Earth.glb")
                 val planetModel = loader.createModel("models/Earth.glb")
-                if (planetModel == null) {
-                    AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/Earth.glb') returned null!")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
-                }
+                AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
 
-                val planetInstance = planetModel?.let { loader.createInstance(it) }
+                val planetInstance = loader.createInstance(planetModel)
                 if (planetInstance == null) {
                     AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: planetInstance is null.")
                 } else {
@@ -1649,13 +1645,9 @@ fun MoriaBenchmarkViewport(
                     // 2. Load Player Model (CesiumMan)
                     AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/CesiumMan.glb")
                     val pModel = loader.createModel("models/CesiumMan.glb")
-                    if (pModel == null) {
-                        AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/CesiumMan.glb') returned null!")
-                    } else {
-                        AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
-                    }
+                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
 
-                    val pInstance = pModel?.let { loader.createInstance(it) }
+                    val pInstance = loader.createInstance(pModel)
                     if (pInstance == null) {
                         AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: player modelInstance is null.")
                     } else {

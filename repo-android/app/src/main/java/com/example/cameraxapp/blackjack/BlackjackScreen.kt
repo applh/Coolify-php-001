@@ -2830,16 +2830,12 @@ fun BlackjackBenchmarkViewport(
             try {
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Starting ModelLoader.createModel for models/Duck.glb")
                 val model = loader.createModel("models/Duck.glb")
-                if (model == null) {
-                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createModel ('models/Duck.glb') returned null. Verify filename/contents.")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createModel successfully compiled 'models/Duck.glb'.")
-                }
+                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createModel successfully compiled 'models/Duck.glb'.")
                 
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Calling createInstance")
-                val modelInstance = model?.let { loader.createInstance(it) }
+                val modelInstance = loader.createInstance(model)
                 if (modelInstance == null) {
-                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createInstance failed or model was null.")
+                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createInstance failed.")
                 } else {
                     AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createInstance successfully created 3D model instance.")
                 }
