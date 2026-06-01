@@ -660,6 +660,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Extend the asset loader in the Moria Roguelike viewport to cache downloaded GLB mesh packages into local device directories, enabling the interactive 3D sceneview layout to render fully offline-first.
 - **Complexity**: Part 4
 
+### 107. 3D Graphics Lifecycle Integration & Filament Engine Settle Sequences (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Master 3D scene engine lifecycles within declarative Jetpack Compose frameworks. Understand the critical race conditions between Compose UI layout composition phases and Filament's native window/surface OpenGL attachment sequences, and learn to safeguard lazy-loaded property retrievers from background threads to avoid NullPointerExceptions.
+- **Exercise**: Trace how wait loops monitoring `.isAttachedToWindow` are designed. Build a dynamic recovery strategy that delays the background asset-compilation coroutine until the UI thread announces native rendering engine initialization, and safely retrieve the raw `ModelLoader` instance on the UI thread to guarantee stable cross-thread visibility.
+- **Complexity**: Part 4
+
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

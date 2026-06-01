@@ -420,4 +420,32 @@ High-frequency code integration and deployment pipelines operating inside AI Stu
    - **Choice**: Configure target automation instructions inside root guidelines (`AGENTS.md` and `GEMINI.md`) directing LLM coders to automatically execute `npm run zip-repos` as a mandatory step when modifying any files inside directories starting with `repo-`.
    - **Reason**: Automating the compilation step removes human error. Since agents compile the binaries on-the-fly, the repository's ZIP state remains perfectly synchronous with raw code transformations.
 
+---
+
+## 21. Android 3D Filament Engine Lifecycle Settle Sequences & Thread-Safe ModelLoader Retrieval
+
+### Context
+When integrating Google's native 3D rendering library **SceneView** (backed by the Filament C++ graphics engine) in modern **Jetpack Compose** applications (such as Moria Dungeon, Blackjack Table, and World Model Viewer), a persistent `NullPointerException` crashed the application during initial model loading:
+`java.lang.NullPointerException at io.github.sceneview.loaders.ModelLoader.createModel(ModelLoader.kt:62)`
+
+Profiling and code inspection identified the root cause:
+1. **Window Attachment Race Condition**: Compose's `AndroidView { factory = { ... } }` instantiates the custom `SceneView` object on the UI thread immediately during composition. However, at that moment, the View is **not yet attached to the window** and **not yet laid out**, and Filament's native hardware engine pointer (`SceneView.engine` or internal properties) has not been initialized.
+2. **Immediate LaunchedEffect Trigger**: The `LaunchedEffect(sceneViewRef)` was triggered immediately upon `sceneViewRef` becoming non-null in the factory, long before window attachment.
+3. **Background Thread Property Access**: The subsequent coroutine launched on `Dispatchers.IO` immediately read `view.modelLoader`. This triggered the lazy property initialization of `modelLoader` on a background thread. Since the native Filament engine pointer inside `SceneView` was still uninitialized (null), any downstream C++ or Filament binding calls crashed with `NullPointerException` inside standard library `createModel` lines.
+
+### Decisions & Justification
+
+1. **Window Attachment Coordination (Settle Loop)**
+   - **Choice**: Implemented a non-blocking coroutine-based delay loop inside `LaunchedEffect(sceneViewRef)` that suspends the coroutine until `view.isAttachedToWindow` returns true, followed by a short 300ms delay to let the Filament engine and native surface render channels settle globally.
+   - **Reason**: Guarantees that no model loading or native rendering statements are issued until the Android OS has fully attached the SceneView to the hardware window, allowing the native Filament engine to be successfully spawned.
+
+2. **UI-Bound Thread-Safe ModelLoader Retrieval (The Main-Thread Anchor)**
+   - **Choice**: Safely retrieve the lazy `view.modelLoader` property on the UI (Main) Thread inside the `LaunchedEffect` scope, immediately after window attachment is satisfied. We store this valid model loader reference in a local immutable variable (`loader`) and pass it down as context into the heavy `Dispatchers.IO` background coroutine.
+   - **Reason**: Restricts lazy-initializer resolution of native graphics properties to the Main Thread, preventing race conditions or null property accesses across multiple threads while still allowing actual heavy file-system GLB parsing to run asynchronously on background worker threads.
+
+3. **Universal Application-Wide Hardening**
+   - **Choice**: Concurrently deployed this asynchronous wait and main-thread property caching architecture across all three 3D-integrated sub-applets (`RoguelikeScreen.kt`, `WorldScreen.kt`, and `BlackjackScreen.kt`).
+   - **Reason**: Establishes absolute architectural consistency across the multi-app hub, ensuring all 3D viewports exhibit rock-solid reliability during startup, multitasking, or rotation sequences under any device platform constraints.
+
+
 

@@ -2792,6 +2792,27 @@ fun BlackjackBenchmarkViewport(
             AppLogger.w("SceneViewDebug", "[Blackjack] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
             return@LaunchedEffect
         }
+        
+        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: Waiting for view.isAttachedToWindow...")
+        while (!view.isAttachedToWindow) {
+            delay(100)
+        }
+        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
+        delay(300)
+
+        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
+        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
+        try {
+            modelLoaderRefTemp = view.modelLoader
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[Blackjack] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
+        }
+
+        val loader = modelLoaderRefTemp ?: run {
+            AppLogger.e("SceneViewDebug", "[Blackjack] Critical: modelLoader is null, aborting.")
+            return@LaunchedEffect
+        }
+
         AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: Initiating 'models/Duck.glb' model node loading.")
         
         AppLogger.d("SceneViewDebug", "[Blackjack] Cleaning existing children nodes. Present count: ${view.childNodes.size}")
@@ -2808,7 +2829,7 @@ fun BlackjackBenchmarkViewport(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Starting ModelLoader.createModel for models/Duck.glb")
-                val model = view.modelLoader.createModel("models/Duck.glb")
+                val model = loader.createModel("models/Duck.glb")
                 if (model == null) {
                     AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createModel ('models/Duck.glb') returned null. Verify filename/contents.")
                 } else {
@@ -2816,7 +2837,7 @@ fun BlackjackBenchmarkViewport(
                 }
                 
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Calling createInstance")
-                val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                val modelInstance = model?.let { loader.createInstance(it) }
                 if (modelInstance == null) {
                     AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createInstance failed or model was null.")
                 } else {

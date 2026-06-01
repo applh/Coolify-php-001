@@ -570,6 +570,27 @@ fun Globe3DInteractiveBox(
             AppLogger.w("SceneViewDebug", "[World] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
             return@LaunchedEffect
         }
+        
+        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect: Waiting for view.isAttachedToWindow...")
+        while (!view.isAttachedToWindow) {
+            delay(100)
+        }
+        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
+        delay(300)
+
+        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
+        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
+        try {
+            modelLoaderRefTemp = view.modelLoader
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[World] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
+        }
+
+        val loader = modelLoaderRefTemp ?: run {
+            AppLogger.e("SceneViewDebug", "[World] Critical: modelLoader is null, aborting.")
+            return@LaunchedEffect
+        }
+
         AppLogger.d("SceneViewDebug", "[World] LaunchedEffect triggered: glbModelUrl = $glbModelUrl")
         
         AppLogger.d("SceneViewDebug", "[World] Initiating node cleaning routine. Child count = ${view.childNodes.size}")
@@ -593,7 +614,7 @@ fun Globe3DInteractiveBox(
                 }
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
                 
-                val model = view.modelLoader.createModel(resolvedPath)
+                val model = loader.createModel(resolvedPath)
                 if (model == null) {
                     AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createModel with path '$resolvedPath' returned null! Confirm resource exists in main assets folder.")
                 } else {
@@ -601,7 +622,7 @@ fun Globe3DInteractiveBox(
                 }
                 
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Starting ModelLoader.createInstance")
-                val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                val modelInstance = model?.let { loader.createInstance(it) }
                 if (modelInstance == null) {
                     AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createInstance failed or model was null.")
                 } else {

@@ -1586,6 +1586,28 @@ fun MoriaBenchmarkViewport(
             AppLogger.w("SceneViewDebug", "[Roguelike] LaunchedEffect: sceneViewRef is null. Still waiting on View.")
             return@LaunchedEffect
         }
+        
+        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: Waiting for view.isAttachedToWindow...")
+        while (!view.isAttachedToWindow) {
+            delay(100)
+        }
+        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
+        delay(300)
+
+        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
+        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
+        try {
+            modelLoaderRefTemp = view.modelLoader
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[Roguelike] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
+        }
+
+        val loader = modelLoaderRefTemp ?: run {
+            AppLogger.e("SceneViewDebug", "[Roguelike] Critical: modelLoader is null, aborting.")
+            isLoadingModels = false
+            return@LaunchedEffect
+        }
+
         AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: Initiating assets load task.")
         isLoadingModels = true
         
@@ -1603,14 +1625,14 @@ fun MoriaBenchmarkViewport(
             try {
                 // 1. Load Globe Model
                 AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/Earth.glb")
-                val planetModel = view.modelLoader.createModel("models/Earth.glb")
+                val planetModel = loader.createModel("models/Earth.glb")
                 if (planetModel == null) {
                     AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/Earth.glb') returned null!")
                 } else {
                     AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
                 }
 
-                val planetInstance = planetModel?.let { view.modelLoader.createInstance(it) }
+                val planetInstance = planetModel?.let { loader.createInstance(it) }
                 if (planetInstance == null) {
                     AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: planetInstance is null.")
                 } else {
@@ -1625,14 +1647,14 @@ fun MoriaBenchmarkViewport(
 
                     // 2. Load Player Model (CesiumMan)
                     AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/CesiumMan.glb")
-                    val pModel = view.modelLoader.createModel("models/CesiumMan.glb")
+                    val pModel = loader.createModel("models/CesiumMan.glb")
                     if (pModel == null) {
                         AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/CesiumMan.glb') returned null!")
                     } else {
                         AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
                     }
 
-                    val pInstance = pModel?.let { view.modelLoader.createInstance(it) }
+                    val pInstance = pModel?.let { loader.createInstance(it) }
                     if (pInstance == null) {
                         AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: player modelInstance is null.")
                     } else {
