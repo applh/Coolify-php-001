@@ -1,0 +1,11 @@
+# Base build and dependency ignores
+node_modules/
+dist/
+build/
+.gradle/
+.DS_Store
+*.log
+
+# Explicitly ensure all 3D model assets are tracked by Git and visible to git push
+!*.glb
+!repo-android/app/src/main/assets/models/*.glb
