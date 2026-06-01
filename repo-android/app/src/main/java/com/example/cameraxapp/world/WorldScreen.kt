@@ -576,9 +576,10 @@ fun Globe3DInteractiveBox(
                 factory = { ctx ->
                     io.github.sceneview.SceneView(ctx).apply {
                         try {
-                            val modelInstance = this.modelLoader.createInstance(glbModelUrl)
+                            val model = this.modelLoader.createModel(glbModelUrl)
+                            val modelInstance = model?.let { this.modelLoader.createInstance(it) }
                             if (modelInstance != null) {
-                                val modelNode = io.github.sceneview.node.ModelNode(engine = this.engine, modelInstance = modelInstance).apply {
+                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
                                     position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
                                     rotation = io.github.sceneview.math.Rotation(y = 180f)
                                 }
