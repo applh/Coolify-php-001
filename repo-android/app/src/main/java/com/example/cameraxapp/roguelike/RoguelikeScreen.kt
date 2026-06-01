@@ -46,6 +46,14 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.roundToInt
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectTapGestures
+import com.example.cameraxapp.core.math3d.Vector3
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.PI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1538,13 +1546,123 @@ fun MoriaBenchmarkViewport(
     modifier: Modifier = Modifier
 ) {
     var useSceneview by remember { mutableStateOf(true) } // Sceneview as default 3D engine!
-    var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
+    var yawAngle by remember { mutableStateOf(-0.65f) }
+    var pitchAngle by remember { mutableStateOf(0.75f) }
+    var zoomScale by remember { mutableStateOf(4.8f) }
+
+    // Smooth position animators for player position on sphere
+    val playerAnimX = remember { Animatable(planetNodes[pId]?.position?.x ?: 0f) }
+    val playerAnimY = remember { Animatable(planetNodes[pId]?.position?.y ?: 0f) }
+    val playerAnimZ = remember { Animatable(planetNodes[pId]?.position?.z ?: 0f) }
+
+    LaunchedEffect(pId) {
+        val targetPos = planetNodes[pId]?.position ?: Vector3(0f, 0f, 0f)
+        launch { playerAnimX.animateTo(targetPos.x, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
+        launch { playerAnimY.animateTo(targetPos.y, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
+        launch { playerAnimZ.animateTo(targetPos.z, animationSpec = tween(280, easing = FastOutSlowInEasing)) }
+    }
+
+    // Keep cached maps for model nodes to prevent recreations
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var planetNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
+    var playerNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
+    val monsterNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
+    val chestNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
+    val stairNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
+    
+    var isLoadingModels by remember { mutableStateOf(true) }
+
+    // Smooth auto-orbit camera towards targeted monster when Locked On
+    if (lockedMonsterId != null) {
+        val lockedM = monsters.find { it.id == lockedMonsterId }
+        val lockedNodePos = planetNodes[lockedM?.x]?.position
+        val pVec = Vector3(playerAnimX.value, playerAnimY.value, playerAnimZ.value).normalize()
+        if (lockedNodePos != null) {
+            val upVec = if (abs(pVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+            val xAxis = upVec.cross(pVec).normalize()
+            val yAxis = pVec.cross(xAxis).normalize()
+            val zAxis = Vector3(-pVec.x, -pVec.y, -pVec.z)
+
+            val vx = lockedNodePos.x * xAxis.x + lockedNodePos.y * xAxis.y + lockedNodePos.z * xAxis.z
+            val vy = lockedNodePos.x * yAxis.x + lockedNodePos.y * yAxis.y + lockedNodePos.z * yAxis.z
+            val vz = lockedNodePos.x * zAxis.x + lockedNodePos.y * zAxis.y + lockedNodePos.z * zAxis.z
+
+            val targetYaw = atan2(vx, -vz)
+            val targetPitch = -atan2(vy, -vz)
+            
+            var diffY = targetYaw - yawAngle
+            while (diffY < -PI) diffY += (2f * PI).toFloat()
+            while (diffY > PI) diffY -= (2f * PI).toFloat()
+            yawAngle += diffY * 0.05f 
+
+            var diffP = targetPitch - pitchAngle
+            while (diffP < -PI) diffP += (2f * PI).toFloat()
+            while (diffP > PI) diffP -= (2f * PI).toFloat()
+            pitchAngle += diffP * 0.05f
+        }
+    }
 
     Box(
         modifier = modifier
             .border(1.dp, Color(0xFF332211), RoundedCornerShape(8.dp))
             .background(Color.Black)
             .clip(RoundedCornerShape(8.dp))
+            .pointerInput(Unit) {
+                // Combine Drag Rotations
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    yawAngle = (yawAngle + dragAmount.x * 0.007f)
+                    pitchAngle = (pitchAngle + dragAmount.y * 0.007f)
+                }
+            }
+            .pointerInput(planetNodes) {
+                detectTapGestures { offset ->
+                    // Standard lightweight mathematical projection to detect which node of planetNodes was selected
+                    var minId = -1
+                    var minDist = Float.MAX_VALUE
+
+                    val pVec = Vector3(playerAnimX.value, playerAnimY.value, playerAnimZ.value).normalize()
+                    val upVec = if (abs(pVec.y) > 0.99f) Vector3(1f, 0f, 0f) else Vector3(0f, 1f, 0f)
+                    val xAxis = upVec.cross(pVec).normalize()
+                    val yAxis = pVec.cross(xAxis).normalize()
+                    val zAxis = Vector3(-pVec.x, -pVec.y, -pVec.z)
+
+                    for (node in planetNodes.values) {
+                        val pos = node.position
+
+                        val vx = pos.x * xAxis.x + pos.y * xAxis.y + pos.z * xAxis.z
+                        val vy = pos.x * yAxis.x + pos.y * yAxis.y + pos.z * yAxis.z
+                        val vz = pos.x * zAxis.x + pos.y * zAxis.y + pos.z * zAxis.z
+
+                        val rx = vx * cos(yawAngle) + vz * sin(yawAngle)
+                        val ryHalf = -vx * sin(yawAngle) + vz * cos(yawAngle)
+                        val ry = vy * cos(pitchAngle) - ryHalf * sin(pitchAngle)
+                        val rz = vy * sin(pitchAngle) + ryHalf * cos(pitchAngle)
+
+                        // 155f radius map scaling factor
+                        val denom = rz * 155f + 155f + 320f
+                        if (denom > 0 && rz < 0.3f) {
+                            val viewWidth = size.width
+                            val viewHeight = size.height
+                            val sx = (viewWidth / 2f) + (rx * 155f * 280f * zoomScale) / denom
+                            val sy = (viewHeight / 2f) + (ry * 155f * 280f * zoomScale) / denom
+                            
+                            val dx = sx - offset.x
+                            val dy = sy - offset.y
+                            val dist = dx * dx + dy * dy
+                            if (dist < minDist) {
+                                minDist = dist
+                                minId = node.id
+                            }
+                        }
+                    }
+
+                    if (minId != -1 && minDist < 2400f) { // Tap within bounds threshold of 48px radius squared
+                        viewModel.setTargetNode(minId)
+                        viewModel.movePlayerToNode(minId)
+                    }
+                }
+            }
     ) {
         if (useSceneview) {
             // Render Sceneview 3D Loader
@@ -1553,34 +1671,149 @@ fun MoriaBenchmarkViewport(
                 factory = { ctx ->
                     io.github.sceneview.SceneView(ctx).apply {
                         try {
-                            // Load a beautifully responsive fantasy asset model in real-time
-                            val model = this.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
-                            val modelInstance = model?.let { this.modelLoader.createInstance(it) }
-                            if (modelInstance != null) {
-                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                    position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
-                                    rotation = io.github.sceneview.math.Rotation(y = 180f)
-                                }
-                                addChildNode(modelNode)
-                                modelNodeRef = modelNode
+                            // 1. Load Globe Model
+                            val planetModel = modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
+                            val planetInstance = planetModel?.let { modelLoader.createInstance(it) }
+                            val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
+                                position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
+                                scale = io.github.sceneview.math.Scale(0.48f)
                             }
-                        } catch (e: Exception) {}
+                            addChildNode(planetNode)
+                            planetNodeRef = planetNode
+
+                            // 2. Load Player Model (CesiumMan - Skeletal animated runner!)
+                            val pModel = modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb")
+                            val pInstance = pModel?.let { modelLoader.createInstance(it) }
+                            val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
+                                scale = io.github.sceneview.math.Scale(0.09f)
+                                playAnimation(0) // Plays the skeletal running cycle!
+                            }
+                            planetNode.addChildNode(pNode)
+                            playerNodeRef = pNode
+                            
+                            isLoadingModels = false
+                        } catch (e: Exception) {
+                            isLoadingModels = false
+                            e.printStackTrace()
+                        }
                     }
                 },
                 update = { view ->
                     try {
-                        view.onFrame = { _ ->
-                            modelNodeRef?.let { node ->
-                                node.rotation = io.github.sceneview.math.Rotation(
-                                    x = node.rotation.x,
-                                    y = node.rotation.y + 0.6f,
-                                    z = node.rotation.z
+                        val planet = planetNodeRef
+                        val playerNode = playerNodeRef
+                        if (planet != null) {
+                            // Sync globe rotation with camera angle
+                            val rotX = pitchAngle * (180f / PI.toFloat())
+                            val rotY = yawAngle * (180f / PI.toFloat())
+                            planet.rotation = io.github.sceneview.math.Rotation(x = rotX, y = rotY, z = 0f)
+
+                            // 1. Sync Player Position (derived from smooth Animatable vectors)
+                            val playerVec = Vector3(playerAnimX.value, playerAnimY.value, playerAnimZ.value).normalize()
+                            playerNode?.position = io.github.sceneview.math.Position(
+                                x = playerVec.x * 0.47f,
+                                y = playerVec.y * 0.47f,
+                                z = playerVec.z * 0.47f
+                            )
+
+                            // 2. Sync Monsters Nodes
+                            // Clean up obsolete monsters
+                            val currentIds = monsters.filter { m -> tiles.find { it.x == m.x }?.revealed == true }.map { m -> m.id }.toSet()
+                            val toRemove = monsterNodes.keys.filter { it !in currentIds }
+                            toRemove.forEach { id ->
+                                monsterNodes[id]?.let { planet.removeChildNode(it) }
+                                monsterNodes.remove(id)
+                            }
+                            // Spawn or update active monsters
+                            monsters.forEach { m ->
+                                val isRevealed = tiles.find { it.x == m.x }?.revealed ?: false
+                                if (isRevealed) {
+                                    val mNode = monsterNodes.getOrPut(m.id) {
+                                        val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Fox/glTF-Binary/Fox.glb")
+                                        val instance = model?.let { view.modelLoader.createInstance(it) }
+                                        io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                            scale = io.github.sceneview.math.Scale(0.05f)
+                                            playAnimation(0) // Cute foxes bobbing!
+                                            planet.addChildNode(this)
+                                        }
+                                    }
+                                    val nodePos = planetNodes[m.x]?.position ?: Vector3(0f, 0f, 0f)
+                                    mNode.position = io.github.sceneview.math.Position(
+                                        x = nodePos.x * 0.47f,
+                                        y = nodePos.y * 0.47f,
+                                        z = nodePos.z * 0.47f
+                                    )
+                                }
+                            }
+
+                            // 3. Sync Chest Prop Nodes
+                            val revealedChests = tiles.filter { it.revealed && it.tileType == "CHEST" }
+                            val currentChestIds = revealedChests.map { it.x }.toSet()
+                            val toRemoveChests = chestNodes.keys.filter { it !in currentChestIds }
+                            toRemoveChests.forEach { id ->
+                                chestNodes[id]?.let { planet.removeChildNode(it) }
+                                chestNodes.remove(id)
+                            }
+                            revealedChests.forEach { t ->
+                                val cNode = chestNodes.getOrPut(t.x) {
+                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF-Binary/Lantern.glb")
+                                    val instance = model?.let { view.modelLoader.createInstance(it) }
+                                    io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                        scale = io.github.sceneview.math.Scale(0.035f)
+                                        planet.addChildNode(this)
+                                    }
+                                }
+                                val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
+                                cNode.position = io.github.sceneview.math.Position(
+                                    x = nodePos.x * 0.465f,
+                                    y = nodePos.y * 0.465f,
+                                    z = nodePos.z * 0.465f
                                 )
                             }
+
+                            // 4. Sync Stairs Down Indicator Nodes
+                            val revealedStairs = tiles.filter { it.revealed && it.tileType == "STAIRS_DOWN" }
+                            val currentStairIds = revealedStairs.map { it.x }.toSet()
+                            val toRemoveStairs = stairNodes.keys.filter { it !in currentStairIds }
+                            toRemoveStairs.forEach { id ->
+                                stairNodes[id]?.let { planet.removeChildNode(it) }
+                                stairNodes.remove(id)
+                            }
+                            revealedStairs.forEach { t ->
+                                val sNode = stairNodes.getOrPut(t.x) {
+                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
+                                    val instance = model?.let { view.modelLoader.createInstance(it) }
+                                    io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                        scale = io.github.sceneview.math.Scale(0.035f)
+                                        planet.addChildNode(this)
+                                    }
+                                }
+                                val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
+                                sNode.position = io.github.sceneview.math.Position(
+                                    x = nodePos.x * 0.465f,
+                                    y = nodePos.y * 0.465f,
+                                    z = nodePos.z * 0.465f
+                                )
+                                // Let stairs Down spinning node rotate in place!
+                                sNode.rotation = io.github.sceneview.math.Rotation(y = sNode.rotation.y + 1.2f)
+                            }
                         }
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             )
+
+            if (isLoadingModels) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF64FFDA), strokeWidth = 3.dp)
+                }
+            }
 
             // Dynamic HUD Performance indicator
             Box(
@@ -1592,14 +1825,14 @@ fun MoriaBenchmarkViewport(
             ) {
                 Column {
                     Text(
-                        text = "⚡ ENGINE: SCENEVIEW (DEFAULT)",
+                        text = "⚡ ENGINE: SCENEVIEW (UPGRADED)",
                         color = Color(0xFF64FFDA),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                     Text(
-                        text = "• API: Vulkan / Filament GLB Loader\n• GPU Skinning & PBR: Active\n• Render State: Hardware Accelerated",
+                        text = "• Entities: Player (CesiumMan), Monsters (Fox), Chest (Lantern)\n• Globe: Textured Earth PBR Mesh\n• Render State: Active Hardware Accelerated",
                         color = Color.LightGray,
                         fontSize = 8.sp,
                         fontFamily = FontFamily.Monospace

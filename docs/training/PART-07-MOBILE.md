@@ -648,6 +648,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a dynamic frame-time measurement callback to calculate standard FPS for the active engine. Extend the custom `MoriaBenchmarkViewport` or `BlackjackBenchmarkViewport` to output live CPU load percentages and model polygonal vertex count on the HUD card dynamically.
 - **Complexity**: Part 4
 
+### 105. Interactive 3D Sceneview Gameplay Integration & Spherical Entity Synchronization (24h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master the concepts of full interactive gameplay integration inside an AndroidView-wrapped Sceneview component. Learn how to bind real-time MVVM state models (player coordinates, revealed map tiles, wandering monster arrays, and loot items) to physical 3D scene nodes. Understand how to write customized gesture gesture mappings that detect user drag actions to orbit the planet, and translate physical screen touches back into coordinate selections on a 3D Icosphere via custom camera matrix mathematical projection rules.
+- **Exercise**: Implement a custom indicator particle/ring in the Sceneview component that highlights the physical target tile location when a path selection is actively running, fading away once the character reaches the target.
+- **Complexity**: Part 5
+
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
