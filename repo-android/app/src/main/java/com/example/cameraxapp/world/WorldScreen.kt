@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -559,6 +560,7 @@ fun Globe3DInteractiveBox(
     val context = LocalContext.current
     val outlineBorderColor = MaterialTheme.colorScheme.outlineVariant
     val gridLineColor = MaterialTheme.colorScheme.onSurfaceVariant
+    var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
 
     if (useSceneview) {
         Box(
@@ -569,37 +571,37 @@ fun Globe3DInteractiveBox(
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            io.github.sceneview.SceneView(
+            AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                childNodes = remember(glbModelUrl) {
-                    try {
-                        val modelNode = io.github.sceneview.node.ModelNode(
-                            context = context,
-                            glbFileLocation = glbModelUrl,
-                            autoAnimate = true,
-                            scaleToUnits = 1.0f,
-                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
-                        ).apply {
-                            position = io.github.sceneview.math.Position(y = 0.0f, z = -2.0f)
-                            rotation = io.github.sceneview.math.Rotation(y = 180f)
-                        }
-                        listOf(modelNode)
-                    } catch (e: Exception) {
-                        emptyList()
+                factory = { ctx ->
+                    io.github.sceneview.SceneView(ctx).apply {
+                        try {
+                            val modelInstance = this.modelLoader.createInstance(glbModelUrl)
+                            if (modelInstance != null) {
+                                val modelNode = io.github.sceneview.node.ModelNode(engine = this.engine, modelInstance = modelInstance).apply {
+                                    position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
+                                    rotation = io.github.sceneview.math.Rotation(y = 180f)
+                                }
+                                addChildNode(modelNode)
+                                modelNodeRef = modelNode
+                            }
+                        } catch (e: Exception) {}
                     }
                 },
-                onFrame = { _ ->
-                    if (autoRotate) {
-                        childNodes.forEach { node ->
-                            if (node is io.github.sceneview.node.ModelNode) {
-                                node.rotation = io.github.sceneview.math.Rotation(
-                                    x = node.rotation.x,
-                                    y = node.rotation.y + 0.8f,
-                                    z = node.rotation.z
-                                )
+                update = { view ->
+                    try {
+                        view.onFrame = { _ ->
+                            if (autoRotate) {
+                                modelNodeRef?.let { node ->
+                                    node.rotation = io.github.sceneview.math.Rotation(
+                                        x = node.rotation.x,
+                                        y = node.rotation.y + 0.8f,
+                                        z = node.rotation.z
+                                    )
+                                }
                             }
                         }
-                    }
+                    } catch (e: Exception) {}
                 }
             )
 

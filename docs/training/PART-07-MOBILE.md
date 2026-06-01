@@ -636,6 +636,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a local test composable that dynamically alternates between three distinct `.glb` files (acting as an environment, character, and accessory) on button interaction, verifying that existing node models are cleaned up correctly from active memory channels to sustain zero leakage.
 - **Complexity**: Part 5
 
+### 103. Robust AndroidView-Wrapped SceneView Integration & Compile-Safe State Capture (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`
+- **Goal**: Master the integration of native Android 3D SurfaceView-based engines (such as SceneView) inside Jetpack Compose using the `AndroidView` wrapper. Understand how to bypass declarative Compose parameter drifts by utilizing standard view class factory constructors, managing state capture (like automatic rotations or selected models) securely using state-captured view pointers, and caching reference objects in Compose state containers (`modelNodeRef`) to guarantee high-performance, error-free runtime rendering.
+- **Exercise**: Modify the `update` block in the `AndroidView` to support dynamic position panning coordinates or light source adjustment options dynamically updated from persistent Compose states on slide interaction.
+- **Complexity**: Part 4
+
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
