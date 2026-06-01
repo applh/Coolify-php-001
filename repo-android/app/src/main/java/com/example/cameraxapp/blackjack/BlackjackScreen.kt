@@ -40,6 +40,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // Visual felt colors mapping
 fun getFeltColor(styleId: Int): Color {
