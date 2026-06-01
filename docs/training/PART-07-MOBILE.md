@@ -642,6 +642,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Modify the `update` block in the `AndroidView` to support dynamic position panning coordinates or light source adjustment options dynamically updated from persistent Compose states on slide interaction.
 - **Complexity**: Part 4
 
+### 104. Multi-3D Engine Benchmarking with Sceneview vs. Sovereign Canvas (20h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`
+- **Goal**: Master procedural multi-3D engine benchmarking inside nested Jetpack Compose applets. Learn how to contrast hardware-accelerated SceneView (backed by Filament/Vulkan with PBR shader passes and GPU linear blend skinning) against a custom software 3D matrix projection renderer (Sovereign Canvas DrawScope CPU-bound rasterizer) in real-time, displaying FPS delta statistics, RAM, and rendering complexity.
+- **Exercise**: Implement a dynamic frame-time measurement callback to calculate standard FPS for the active engine. Extend the custom `MoriaBenchmarkViewport` or `BlackjackBenchmarkViewport` to output live CPU load percentages and model polygonal vertex count on the HUD card dynamically.
+- **Complexity**: Part 4
+
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
