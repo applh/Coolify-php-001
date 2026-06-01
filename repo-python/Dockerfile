@@ -11,11 +11,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Hook for restoring codebases via binary compactions
-RUN if [ -f archive.zip ]; then \
-      echo "📦 [Python] Found archive.zip! Extracting to restore precise file index..."; \
+RUN if [ -f archive.zip ] && unzip -tq archive.zip >/dev/null 2>&1; then \
+      echo "📦 [Python] Found valid archive.zip! Extracting to restore precise file index..."; \
       unzip -o archive.zip && rm archive.zip; \
     else \
-      echo "ℹ️ [Python] No archive.zip found. Proceeding with standard git synchronized files."; \
+      echo "ℹ️ [Python] No valid archive.zip found. Proceeding with standard git synchronized files."; \
+      rm -f archive.zip; \
     fi
 
 EXPOSE 3000

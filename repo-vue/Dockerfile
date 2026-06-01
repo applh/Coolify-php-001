@@ -11,11 +11,12 @@ RUN npm install
 COPY . .
 
 # Hook for restoring codebases via binary compactions
-RUN if [ -f archive.zip ]; then \
-      echo "📦 [Vue] Found archive.zip! Extracting to restore precise file index..."; \
+RUN if [ -f archive.zip ] && unzip -tq archive.zip >/dev/null 2>&1; then \
+      echo "📦 [Vue] Found valid archive.zip! Extracting to restore precise file index..."; \
       unzip -o archive.zip && rm archive.zip; \
     else \
-      echo "ℹ️ [Vue] No archive.zip found. Building with standard git synchronized files."; \
+      echo "ℹ️ [Vue] No valid archive.zip found. Building with standard git synchronized files."; \
+      rm -f archive.zip; \
     fi
 
 RUN npm run build

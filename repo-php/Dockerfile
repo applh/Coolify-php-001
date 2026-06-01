@@ -21,11 +21,12 @@ WORKDIR /var/www/html
 COPY . .
 
 # Hook for restoring codebases via binary compactions
-RUN if [ -f archive.zip ]; then \
-      echo "📦 [PHP CLI] Found archive.zip! Extracting to restore precise file index..."; \
+RUN if [ -f archive.zip ] && unzip -tq archive.zip >/dev/null 2>&1; then \
+      echo "📦 [PHP CLI] Found valid archive.zip! Extracting to restore precise file index..."; \
       unzip -o archive.zip && rm archive.zip; \
     else \
-      echo "ℹ️ [PHP CLI] No archive.zip found. Proceeding with standard git synchronized files."; \
+      echo "ℹ️ [PHP CLI] No valid archive.zip found. Proceeding with standard git synchronized files."; \
+      rm -f archive.zip; \
     fi
 
 # Add entrypoint script
