@@ -572,7 +572,13 @@ fun Globe3DInteractiveBox(
         
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                val model = view.modelLoader.createModel(glbModelUrl)
+                val resolvedPath = when {
+                    glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "models/Earth.glb"
+                    glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
+                    glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
+                    else -> glbModelUrl
+                }
+                val model = view.modelLoader.createModel(resolvedPath)
                 val modelInstance = model?.let { view.modelLoader.createInstance(it) }
                 if (modelInstance != null) {
                     launch(Dispatchers.Main) {

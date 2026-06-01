@@ -2789,7 +2789,7 @@ fun BlackjackBenchmarkViewport(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 // Load a beautifully responsive card / table asset model in real-time
-                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
+                val model = view.modelLoader.createModel("models/Duck.glb")
                 val modelInstance = model?.let { view.modelLoader.createInstance(it) }
                 if (modelInstance != null) {
                     launch(Dispatchers.Main) {

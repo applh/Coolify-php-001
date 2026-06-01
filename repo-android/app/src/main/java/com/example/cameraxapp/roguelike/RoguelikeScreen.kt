@@ -1585,7 +1585,7 @@ fun MoriaBenchmarkViewport(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 // 1. Load Globe Model
-                val planetModel = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
+                val planetModel = view.modelLoader.createModel("models/Earth.glb")
                 val planetInstance = planetModel?.let { view.modelLoader.createInstance(it) }
                 if (planetInstance != null) {
                     val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
@@ -1594,7 +1594,7 @@ fun MoriaBenchmarkViewport(
                     }
 
                     // 2. Load Player Model (CesiumMan)
-                    val pModel = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb")
+                    val pModel = view.modelLoader.createModel("models/CesiumMan.glb")
                     val pInstance = pModel?.let { view.modelLoader.createInstance(it) }
 
                     launch(Dispatchers.Main) {
@@ -1762,7 +1762,7 @@ fun MoriaBenchmarkViewport(
                                             monsterLoadingTracker.add(m.id)
                                             coroutineScope.launch(Dispatchers.IO) {
                                                 try {
-                                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Fox/glTF-Binary/Fox.glb")
+                                                    val model = view.modelLoader.createModel("models/Fox.glb")
                                                     val instance = model?.let { view.modelLoader.createInstance(it) }
                                                     if (instance != null) {
                                                         launch(Dispatchers.Main) {
@@ -1807,7 +1807,7 @@ fun MoriaBenchmarkViewport(
                                         chestLoadingTracker.add(t.x)
                                         coroutineScope.launch(Dispatchers.IO) {
                                             try {
-                                                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF-Binary/Lantern.glb")
+                                                val model = view.modelLoader.createModel("models/Lantern.glb")
                                                 val instance = model?.let { view.modelLoader.createInstance(it) }
                                                 if (instance != null) {
                                                     launch(Dispatchers.Main) {
@@ -1850,7 +1850,7 @@ fun MoriaBenchmarkViewport(
                                         stairLoadingTracker.add(t.x)
                                         coroutineScope.launch(Dispatchers.IO) {
                                             try {
-                                                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
+                                                val model = view.modelLoader.createModel("models/Duck.glb")
                                                 val instance = model?.let { view.modelLoader.createInstance(it) }
                                                 if (instance != null) {
                                                     launch(Dispatchers.Main) {
