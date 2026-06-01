@@ -1,5 +1,6 @@
 package com.example.cameraxapp.roguelike
 
+import com.example.cameraxapp.AppLogger
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1581,13 +1582,41 @@ fun MoriaBenchmarkViewport(
     var isLoadingModels by remember { mutableStateOf(true) }
 
     LaunchedEffect(sceneViewRef) {
-        val view = sceneViewRef ?: return@LaunchedEffect
+        val view = sceneViewRef ?: run {
+            AppLogger.w("SceneViewDebug", "[Roguelike] LaunchedEffect: sceneViewRef is null. Still waiting on View.")
+            return@LaunchedEffect
+        }
+        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: Initiating assets load task.")
         isLoadingModels = true
+        
+        AppLogger.d("SceneViewDebug", "[Roguelike] Cleaning existing child nodes from SceneView. childNodes count: ${view.childNodes.size}")
+        try {
+            view.childNodes.toMutableList().forEach { 
+                AppLogger.d("SceneViewDebug", "[Roguelike] Removing node: $it")
+                view.removeChildNode(it) 
+            }
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[Roguelike] Error during node cleaning: ${e.message}", e)
+        }
+
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 // 1. Load Globe Model
+                AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/Earth.glb")
                 val planetModel = view.modelLoader.createModel("models/Earth.glb")
+                if (planetModel == null) {
+                    AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/Earth.glb') returned null!")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
+                }
+
                 val planetInstance = planetModel?.let { view.modelLoader.createInstance(it) }
+                if (planetInstance == null) {
+                    AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: planetInstance is null.")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: planetInstance successfully created.")
+                }
+
                 if (planetInstance != null) {
                     val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
                         position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
@@ -1595,29 +1624,51 @@ fun MoriaBenchmarkViewport(
                     }
 
                     // 2. Load Player Model (CesiumMan)
+                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/CesiumMan.glb")
                     val pModel = view.modelLoader.createModel("models/CesiumMan.glb")
+                    if (pModel == null) {
+                        AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: createModel ('models/CesiumMan.glb') returned null!")
+                    } else {
+                        AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
+                    }
+
                     val pInstance = pModel?.let { view.modelLoader.createInstance(it) }
+                    if (pInstance == null) {
+                        AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: player modelInstance is null.")
+                    } else {
+                        AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: player modelInstance successfully created.")
+                    }
 
                     launch(Dispatchers.Main) {
-                        view.addChildNode(planetNode)
-                        planetNodeRef = planetNode
+                        try {
+                            AppLogger.d("SceneViewDebug", "[Roguelike] Main thread: Adding planetNode to scene.")
+                            view.addChildNode(planetNode)
+                            planetNodeRef = planetNode
 
-                        if (pInstance != null) {
-                            val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
-                                scale = io.github.sceneview.math.Scale(0.09f)
-                                playAnimation(0)
+                            if (pInstance != null) {
+                                AppLogger.d("SceneViewDebug", "[Roguelike] Main thread: Creating and adding pNode to planetNode.")
+                                val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
+                                    scale = io.github.sceneview.math.Scale(0.09f)
+                                    playAnimation(0)
+                                }
+                                planetNode.addChildNode(pNode)
+                                playerNodeRef = pNode
                             }
-                            planetNode.addChildNode(pNode)
-                            playerNodeRef = pNode
+                            isLoadingModels = false
+                            AppLogger.i("SceneViewDebug", "[Roguelike] Success! Planet and Player nodes integrated into SceneView hierarchy properly.")
+                        } catch (mainEx: Exception) {
+                            AppLogger.e("SceneViewDebug", "[Roguelike] Main thread crash on node attachment: ${mainEx.message}", mainEx)
+                            isLoadingModels = false
                         }
-                        isLoadingModels = false
                     }
                 } else {
+                    AppLogger.w("SceneViewDebug", "[Roguelike] planetInstance was null, skipping UI registration.")
                     launch(Dispatchers.Main) {
                         isLoadingModels = false
                     }
                 }
             } catch (e: Exception) {
+                AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader crashed: ${e.message}", e)
                 e.printStackTrace()
                 launch(Dispatchers.Main) {
                     isLoadingModels = false
@@ -1723,14 +1774,30 @@ fun MoriaBenchmarkViewport(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).also {
-                        sceneViewRef = it
+                    AppLogger.d("SceneViewDebug", "[Roguelike] AndroidView Factory: Creating new SceneView instance.")
+                    try {
+                        io.github.sceneview.SceneView(ctx).also {
+                            sceneViewRef = it
+                            AppLogger.i("SceneViewDebug", "[Roguelike] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.e("SceneViewDebug", "[Roguelike] Exception inside AndroidView factory instantiation: ${e.message}", e)
+                        throw e
                     }
                 },
                 update = { view ->
                     try {
                         val planet = planetNodeRef
                         val playerNode = playerNodeRef
+                        
+                        var frameCount = 0
+                        view.onFrame = { _ ->
+                            if (frameCount == 0 || frameCount % 120 == 0) {
+                                AppLogger.d("SceneViewDebug", "[Roguelike] onFrame ticker tick count = $frameCount. planetNodeRef active = ${planet != null}")
+                            }
+                            frameCount++
+                        }
+
                         if (planet != null) {
                             // Sync globe rotation with camera angle
                             val rotX = pitchAngle * (180f / PI.toFloat())

@@ -1,5 +1,6 @@
 package com.example.cameraxapp.blackjack
 
+import com.example.cameraxapp.AppLogger
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -2787,23 +2788,60 @@ fun BlackjackBenchmarkViewport(
     var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
 
     LaunchedEffect(sceneViewRef) {
-        val view = sceneViewRef ?: return@LaunchedEffect
+        val view = sceneViewRef ?: run {
+            AppLogger.w("SceneViewDebug", "[Blackjack] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
+            return@LaunchedEffect
+        }
+        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: Initiating 'models/Duck.glb' model node loading.")
+        
+        AppLogger.d("SceneViewDebug", "[Blackjack] Cleaning existing children nodes. Present count: ${view.childNodes.size}")
+        try {
+            view.childNodes.toMutableList().forEach { 
+                AppLogger.d("SceneViewDebug", "[Blackjack] Removing node: $it")
+                view.removeChildNode(it) 
+            }
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[Blackjack] Error during node cleaning: ${e.message}", e)
+        }
+        modelNodeRef = null
+
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                // Load a beautifully responsive card / table asset model in real-time
+                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Starting ModelLoader.createModel for models/Duck.glb")
                 val model = view.modelLoader.createModel("models/Duck.glb")
+                if (model == null) {
+                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createModel ('models/Duck.glb') returned null. Verify filename/contents.")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createModel successfully compiled 'models/Duck.glb'.")
+                }
+                
+                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Calling createInstance")
                 val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                if (modelInstance == null) {
+                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createInstance failed or model was null.")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createInstance successfully created 3D model instance.")
+                }
+                
                 if (modelInstance != null) {
                     launch(Dispatchers.Main) {
-                        val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
-                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        try {
+                            AppLogger.d("SceneViewDebug", "[Blackjack] Main thread: Creating ModelNode.")
+                            val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
+                                position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
+                                rotation = io.github.sceneview.math.Rotation(y = 180f)
+                            }
+                            AppLogger.d("SceneViewDebug", "[Blackjack] Main thread: Calling view.addChildNode.")
+                            view.addChildNode(modelNode)
+                            modelNodeRef = modelNode
+                            AppLogger.i("SceneViewDebug", "[Blackjack] Success! 'models/Duck.glb' attached to Blackjack SceneView hierarchy at position (0, -0.4, -1.5).")
+                        } catch (e2: Exception) {
+                            AppLogger.e("SceneViewDebug", "[Blackjack] Main thread error attaching ModelNode: ${e2.message}", e2)
                         }
-                        view.addChildNode(modelNode)
-                        modelNodeRef = modelNode
                     }
                 }
             } catch (e: Exception) {
+                AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader thread exception: ${e.message}", e)
                 e.printStackTrace()
             }
         }
@@ -2815,13 +2853,26 @@ fun BlackjackBenchmarkViewport(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).also {
-                        sceneViewRef = it
+                    AppLogger.d("SceneViewDebug", "[Blackjack] AndroidView Factory: Creating new SceneView instance.")
+                    try {
+                        io.github.sceneview.SceneView(ctx).also {
+                            sceneViewRef = it
+                            AppLogger.i("SceneViewDebug", "[Blackjack] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.e("SceneViewDebug", "[Blackjack] Exception inside AndroidView factory instantiation: ${e.message}", e)
+                        throw e
                     }
                 },
                 update = { view ->
+                    AppLogger.d("SceneViewDebug", "[Blackjack] AndroidView update handler triggered.")
                     try {
+                        var frameCount = 0
                         view.onFrame = { _ ->
+                            if (frameCount == 0 || frameCount % 120 == 0) {
+                                AppLogger.d("SceneViewDebug", "[Blackjack] onFrame ticker tick count = $frameCount. modelNodeRef loaded = ${modelNodeRef != null}")
+                            }
+                            frameCount++
                             modelNodeRef?.let { node ->
                                 node.rotation = io.github.sceneview.math.Rotation(
                                     x = node.rotation.x,
@@ -2830,7 +2881,9 @@ fun BlackjackBenchmarkViewport(
                                 )
                             }
                         }
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                        AppLogger.e("SceneViewDebug", "[Blackjack] Exception inside AndroidView update handler or onFrame handler: ${e.message}", e)
+                    }
                 }
             )
 

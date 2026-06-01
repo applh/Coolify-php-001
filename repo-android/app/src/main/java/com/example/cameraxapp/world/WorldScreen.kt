@@ -1,6 +1,7 @@
 package com.example.cameraxapp.world
 
 import android.content.Context
+import com.example.cameraxapp.AppLogger
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -565,9 +566,21 @@ fun Globe3DInteractiveBox(
     var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
 
     LaunchedEffect(glbModelUrl, sceneViewRef) {
-        val view = sceneViewRef ?: return@LaunchedEffect
-        // Clean out any existing children nodes to prevent overlapping or leak
-        view.childNodes.toMutableList().forEach { view.removeChildNode(it) }
+        val view = sceneViewRef ?: run {
+            AppLogger.w("SceneViewDebug", "[World] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
+            return@LaunchedEffect
+        }
+        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect triggered: glbModelUrl = $glbModelUrl")
+        
+        AppLogger.d("SceneViewDebug", "[World] Initiating node cleaning routine. Child count = ${view.childNodes.size}")
+        try {
+            view.childNodes.toMutableList().forEach { 
+                AppLogger.d("SceneViewDebug", "[World] Removing existing child node: $it")
+                view.removeChildNode(it) 
+            }
+        } catch (e: Exception) {
+            AppLogger.e("SceneViewDebug", "[World] Error during node cleaning: ${e.message}", e)
+        }
         modelNodeRef = null
         
         coroutineScope.launch(Dispatchers.IO) {
@@ -578,19 +591,42 @@ fun Globe3DInteractiveBox(
                     glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
                     else -> glbModelUrl
                 }
+                AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
+                
                 val model = view.modelLoader.createModel(resolvedPath)
+                if (model == null) {
+                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createModel with path '$resolvedPath' returned null! Confirm resource exists in main assets folder.")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[World] Background Loader: createModel successfully compiled asset structure.")
+                }
+                
+                AppLogger.d("SceneViewDebug", "[World] Background Loader: Starting ModelLoader.createInstance")
                 val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                if (modelInstance == null) {
+                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createInstance failed or model was null.")
+                } else {
+                    AppLogger.d("SceneViewDebug", "[World] Background Loader: createInstance successfully created 3D instance.")
+                }
+                
                 if (modelInstance != null) {
                     launch(Dispatchers.Main) {
-                        val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                            position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
-                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        try {
+                            AppLogger.d("SceneViewDebug", "[World] Main thread: Creating ModelNode.")
+                            val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
+                                position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
+                                rotation = io.github.sceneview.math.Rotation(y = 180f)
+                            }
+                            AppLogger.d("SceneViewDebug", "[World] Main thread: Calling view.addChildNode.")
+                            view.addChildNode(modelNode)
+                            modelNodeRef = modelNode
+                            AppLogger.i("SceneViewDebug", "[World] Success! ModelNode successfully integrated into SceneView hierarchy at position (0, 0, -2).")
+                        } catch (e2: Exception) {
+                            AppLogger.e("SceneViewDebug", "[World] Main thread error attaching ModelNode: ${e2.message}", e2)
                         }
-                        view.addChildNode(modelNode)
-                        modelNodeRef = modelNode
                     }
                 }
             } catch (e: Exception) {
+                AppLogger.e("SceneViewDebug", "[World] Background Loader crashed: ${e.message}", e)
                 e.printStackTrace()
             }
         }
@@ -608,13 +644,26 @@ fun Globe3DInteractiveBox(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).also {
-                        sceneViewRef = it
+                    AppLogger.d("SceneViewDebug", "[World] AndroidView Factory: Creating new SceneView instance.")
+                    try {
+                        io.github.sceneview.SceneView(ctx).also {
+                            sceneViewRef = it
+                            AppLogger.i("SceneViewDebug", "[World] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.e("SceneViewDebug", "[World] Exception inside AndroidView factory instantiation: ${e.message}", e)
+                        throw e
                     }
                 },
                 update = { view ->
+                    AppLogger.d("SceneViewDebug", "[World] AndroidView update handler triggered.")
                     try {
+                        var frameCount = 0
                         view.onFrame = { _ ->
+                            if (frameCount == 0 || frameCount % 120 == 0) {
+                                AppLogger.d("SceneViewDebug", "[World] onFrame ticker tick count = $frameCount. modelNodeRef loaded = ${modelNodeRef != null}")
+                            }
+                            frameCount++
                             if (autoRotate) {
                                 modelNodeRef?.let { node ->
                                     node.rotation = io.github.sceneview.math.Rotation(
@@ -625,7 +674,9 @@ fun Globe3DInteractiveBox(
                                 }
                             }
                         }
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                        AppLogger.e("SceneViewDebug", "[World] Exception inside AndroidView update handler or onFrame handler: ${e.message}", e)
+                    }
                 }
             )
 
