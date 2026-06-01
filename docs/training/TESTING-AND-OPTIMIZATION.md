@@ -35,6 +35,16 @@ Learn to build software that is fast, reliable, and verified.
 - **Lab 2: Load Testing (Simulated)**
     - **Task**: Use the `ab` (Apache Benchmark) tool if available, or a simple fetch loop in JS.
     - **Exercise**: Hit the `repo-php` index 100 times in a row and calculate the average response time. Optimize one slow component and re-test to see the delta.
+- **Lab 3: 3D Architecture Accessibility (AX) Index Benchmarking**
+    - **Reference**: `src/views/SiteBenchmarker.vue`
+    - **Goal**: Understand how 3D engines (hardware-accelerated OpenGL/Vulkan vs. browser DrawScope/SVG pixel rasterizers) trade off raw performance to satisfy accessibility and inclusive design constraints.
+    - **Exercise**: Run the custom 3D AX Benchmarking suite inside the updated Sovereign Benchmarker. Perform simulated D-Pad focus-navigation steps and observe tree-mapping readouts. Write a short essay explaining why standard Vulkan layers act as opaque blocks to assistive TalkBack crawlers, and how to create dynamic overlays to restore compliance to WCAG AA guidelines.
+    - **Complexity**: Advanced (Part 4)
+- **Lab 4: AI Agent Experience (AX) Engine Friendliness Audits**
+    - **Reference**: `src/views/SiteBenchmarker.vue`
+    - **Goal**: Investigate how design choices, schema parameters, and semantic DOM elements impact programmatic robotic automation and LLM tool navigation.
+    - **Exercise**: Step the Autopilot system under the updated AI Agent AX tab in the Sovereign Benchmarker. Identify why flat canvas render trees trigger failure loops during tool queries, and draft a JSON payload structure showing how globally exposed page state caches secure 100% agent execution success.
+    - **Complexity**: Advanced (Part 5)
 
 ## Complexity Levels
 - **Basic**: Manual Logs & Asset cleanup.

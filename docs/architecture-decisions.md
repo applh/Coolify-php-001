@@ -378,3 +378,24 @@ Using a custom CPU-bound 3D projection engine built directly on the Jetpack Comp
    - **Choice**: Structured a unified, lightweight, local key-value lookup cache (`vertexCache`) mapped over `Vector3` keys and storing precalculated projected `Offset` coordinates and depths.
    - **Reason**: Guarantees that each unique vertex is rotated and projected exactly *once* per frame, rather than being repeatedly transformed during deep comparisons in Painter's Sorting and during canvas drawing paths. This slashes vector object allocations by over 95%, completely eliminating visual glitches and GC pauses.
 
+---
+
+## 19. 3D Engine Accessibility (AX / Accessibility Experience) Co-Existence: TalkBack Composable Semantics vs Hardware glTF Buffers
+
+### Context
+When integrating advanced 3D rendering engines into highly interactive applications such as turn-based dungeon crawlers (Moria) or strategic card tables (Blackjack), we must ensure that accessibility (AX / inclusive user experience) guidelines (WCAG AAA/AA) remain fully satisfied. Traditionally, 3D graphics are rendered into hardware buffers (OpenGL/Vulkan texel arrays) or heavy binary models, which are completely opaque to standard OS accessibility crawlers.
+
+### Decisions & Justification
+
+1. **Dual-Path Coexistence (The Hybrid Engine Selector)**
+   - **Choice**: Implemented a real-time, interactive engine selector switch in custom viewport configurations Allowing developers and players to seamlessly toggle between **Sceneview** (Hardware PBR via Vulkan/OpenGL WebGL wrapper) and **Sovereign Engine 3D** (Software Math Projection rasterizer).
+   - **Reason**: Balances raw graphical capabilities against strict corporate accessibility requirements. High-end users with standard visual capacities enjoy high-detail rendering, while assistive technology operators can toggle to the Sovereign CPU renderer instantly for pristine accessibility compatibility.
+
+2. **Semantic Composable Interception & Virtual Tree Structure mapping**
+   - **Choice**: Configured standard Jetpack Compose/HTML DOM boundaries for the Sovereign CPU Engine to declare node-coordinate semantic properties (using `semantics` modifications and content descriptions on elements).
+   - **Reason**: Because the Sovereign Engine computes coordinate projections using custom algebraic matrices on the thread, it knows the precise 2D screen bounding boxes of 3D objects. Mapping these boundaries directly onto standard Compose platform elements allows screen reader engines like TalkBack or VoiceOver to successfully navigate, focus, and read descriptive labels for off-grid entities.
+
+3. **Continuous Audio/Visual Feedback Alerts & Theme Contrast Overrides**
+   - **Choice**: Tied the 3D drawing color parameters directly to system style rules. Suppressed sweeping coordinate pans during dynamic presets if standard `prefers-reduced-motion` settings were flagged.
+   - **Reason**: Preserves WCAG compliance. Contrast adaptation keeps elements highly distinct even under changing atmospheric light directions, and avoiding sweeping animations protects users from spatial disorientation or motion sickness.
+
