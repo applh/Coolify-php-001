@@ -20,6 +20,14 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
+# Hook for restoring codebases via binary compactions
+RUN if [ -f archive.zip ]; then \
+      echo "📦 [PHP CLI] Found archive.zip! Extracting to restore precise file index..."; \
+      unzip -o archive.zip && rm archive.zip; \
+    else \
+      echo "ℹ️ [PHP CLI] No archive.zip found. Proceeding with standard git synchronized files."; \
+    fi
+
 # Add entrypoint script
 RUN chmod +x /var/www/html/entrypoint.sh
 

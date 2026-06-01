@@ -31,6 +31,14 @@ ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gra
 WORKDIR /app
 COPY . .
 
+# Hook for restoring codebases via binary compactions (unzip is already installed via apt-get in line 10)
+RUN if [ -f archive.zip ]; then \
+      echo "📦 [Android Builder] Found archive.zip! Extracting to restore precise file index..."; \
+      unzip -o archive.zip && rm archive.zip; \
+    else \
+      echo "ℹ️ [Android Builder] No archive.zip found. Proceeding with standard git synchronized files."; \
+    fi
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

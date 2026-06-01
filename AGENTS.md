@@ -76,3 +76,11 @@ When implementing or maintaining third-party integrations, external libraries, R
 ## 14. Deprecated Code Avoidance
 - **Never Use Deprecated Code**: AI agents must strictly avoid utilizing deprecated API calls, libraries, or methods. 
 - **Modern Replacements**: Always research and implement the modern, supported equivalent. For instance, in Jetpack Compose, use `Icons.AutoMirrored.Filled` for directional icons rather than their deprecated `Icons.Filled` counter-parts.
+
+## 15. Real-Time Repository Compaction Rules (ZIP Workaround)
+Whenever the AI agent successfully edits, creates, or deletes any files contained inside a `repo-*` directory (e.g., modifying react source lines, adding go paths, or expanding python variables), the agent **MUST** execute the local packaging routine before finishing the turn:
+- **Action**: Run the command: `npm run zip-repos`
+- **Goal**: Recompile and sync-stage `archive.zip` inside modified repo folder scopes instantly.
+- **Verification**: Ensure the command runs completely without syntax blocks. Do NOT skip this step; missing zips can break remote builds on Coolify.
+- **Log Outputs**: Confirm dynamic terminal compilations in summaries so humans and deploy engines are fully synchronized.
+
