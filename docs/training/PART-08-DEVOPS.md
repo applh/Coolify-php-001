@@ -32,6 +32,12 @@ Automate everything: from containerization to full-scale cloud orchestration.
 - **Exercise**: Create a new version tag `v1.5.0` via the frontend interface and verify its presence in both the underlying SQLite `version_tags` table and the real Git workspace indexes. Extend the system to support comparing codebase diffs between two tags.
 - **Complexity**: Part 8 (Medium-High)
 
+### 4. Git-Sync Zip Compaction Workaround & Coolify Deploys (4h)
+- **Goal**: Learn to package and optimize nested codebases using zip binary files to guarantee file synchronization state transitions on high-frequency cloud sync limits.
+- **Reference**: `/zip-repos.ts`, `/package.json`, `docs/ai-agents/ai-studio-agent-archive-upload-plan.md`
+- **Exercise**: Execute the compiler command `npm run zip-repos` to compress all modular repo subdivisions into localized `archive.zip` streams. Extend the system, updating the `repo-react/Dockerfile` to automatically verify, unzip, and extract the bundle safely inside the Docker builder space during build.
+- **Complexity**: Part 8 (High)
+
 ## Recommended Reading
 - `docs/devops/deployment.md`
 - `docs/devops/coolify-node-scaling.md`

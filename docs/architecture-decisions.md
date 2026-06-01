@@ -399,3 +399,25 @@ When integrating advanced 3D rendering engines into highly interactive applicati
    - **Choice**: Tied the 3D drawing color parameters directly to system style rules. Suppressed sweeping coordinate pans during dynamic presets if standard `prefers-reduced-motion` settings were flagged.
    - **Reason**: Preserves WCAG compliance. Contrast adaptation keeps elements highly distinct even under changing atmospheric light directions, and avoiding sweeping animations protects users from spatial disorientation or motion sickness.
 
+---
+
+## 20. Git-Sync Compaction Workaround & Automated Multi-Stack ZIP Bundling
+
+### Context
+High-frequency code integration and deployment pipelines operating inside AI Studio's cloud-sandboxed environment can occasionally experience file integration gaps or omissions during folder-level synchronizing to GitHub. In a Docker Compose orchestrated environment (like Coolify), a deployment built with even a single missing configuration or source file will fail or cause runtime instabilities.
+
+### Decisions & Justification
+
+1. **ZIP Binaries for 100% Sync Fidelity**
+   - **Choice**: Compile the source files of each modular stack folder (`repo-*`) into a single cohesive, high-compression binary file: `archive.zip`.
+   - **Reason**: Unlike raw folder hierarchies with hundreds of small files, a single, binary ZIP file is atomic. The platform's automated Git synchronization captures and pushes zip archives with absolute reliability.
+
+2. **On-the-Fly Docker extraction layers**
+   - **Choice**: Introduce dynamic, non-blocking check-and-extract bash scripts directly inside the `Dockerfile` profiles of our services.
+   - **Reason**: De-couples the build sequence from the file synchronizer's quirks. If any individual files were omitted during folder sync, the container builder extracts the complete original file layout from `archive.zip` and cleans up the temporary zip file, preventing build failures.
+
+3. **Autonomous Agent Post-Edit Hooks**
+   - **Choice**: Configure target automation instructions inside root guidelines (`AGENTS.md` and `GEMINI.md`) directing LLM coders to automatically execute `npm run zip-repos` as a mandatory step when modifying any files inside directories starting with `repo-`.
+   - **Reason**: Automating the compilation step removes human error. Since agents compile the binaries on-the-fly, the repository's ZIP state remains perfectly synchronous with raw code transformations.
+
+
