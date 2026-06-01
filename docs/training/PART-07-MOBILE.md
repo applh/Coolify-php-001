@@ -667,5 +667,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 108. Dynamic Asset Download & Verification of Custom Rigged 3D Models in Sceneview (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/assets/models/robot_expressive.glb`, `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`
+- **Goal**: Understand the configuration of local assets mapping in Android applications and learn how to write a rapid verification routing within Jetpack Compose using rigged avatar assets. Master how to clean memory channels, bypass declarative parameters drifts using standard class constructors, and render custom humanoid skeletons in Filament viewports alone to validate global camera bounds, textures, and vertex transformations.
+- **Exercise**: Modify the `ModelNode` construction block for the custom robot model to apply alternative position offsets or scale scalars on user selection, ensuring the mesh fits safely within active device view boundaries.
+- **Complexity**: Part 4
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

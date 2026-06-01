@@ -610,6 +610,7 @@ fun Globe3DInteractiveBox(
                     glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "models/Earth.glb"
                     glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
                     glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
+                    glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "models/robot_expressive.glb"
                     else -> glbModelUrl
                 }
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
@@ -1116,6 +1117,17 @@ fun WorldControlPanel(
                             )
                         ) {
                             Text("Bottle", fontSize = 9.sp)
+                        }
+                        Button(
+                            onClick = { onGlbModelUrlChange("https://github.com/applh/kaimera/raw/refs/heads/main/app/src/main/assets/robot_expressive.glb") },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.height(28.dp).weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (glbModelUrl.contains("robot_expressive")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (glbModelUrl.contains("robot_expressive")) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        ) {
+                            Text("Robot", fontSize = 9.sp)
                         }
                     }
                 }
