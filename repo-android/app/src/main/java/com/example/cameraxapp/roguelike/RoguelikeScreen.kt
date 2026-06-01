@@ -1545,7 +1545,7 @@ fun MoriaBenchmarkViewport(
     viewModel: RoguelikeViewModel,
     modifier: Modifier = Modifier
 ) {
-    var useSceneview by remember { mutableStateOf(true) } // Sceneview as default 3D engine!
+    var useSceneview by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
     var yawAngle by remember { mutableStateOf(-0.65f) }
     var pitchAngle by remember { mutableStateOf(0.75f) }
     var zoomScale by remember { mutableStateOf(4.8f) }
@@ -1564,13 +1564,66 @@ fun MoriaBenchmarkViewport(
 
     // Keep cached maps for model nodes to prevent recreations
     val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
     var planetNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
     var playerNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
     val monsterNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
     val chestNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
     val stairNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
     
+    // Trackers to prevent redundant loading triggers in the update loop
+    val monsterLoadingTracker = remember { mutableStateListOf<Int>() }
+    val chestLoadingTracker = remember { mutableStateListOf<Int>() }
+    val stairLoadingTracker = remember { mutableStateListOf<Int>() }
+    
     var isLoadingModels by remember { mutableStateOf(true) }
+
+    LaunchedEffect(sceneViewRef) {
+        val view = sceneViewRef ?: return@LaunchedEffect
+        isLoadingModels = true
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Load Globe Model
+                val planetModel = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
+                val planetInstance = planetModel?.let { view.modelLoader.createInstance(it) }
+                if (planetInstance != null) {
+                    val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
+                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
+                        scale = io.github.sceneview.math.Scale(0.48f)
+                    }
+
+                    // 2. Load Player Model (CesiumMan)
+                    val pModel = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb")
+                    val pInstance = pModel?.let { view.modelLoader.createInstance(it) }
+
+                    launch(Dispatchers.Main) {
+                        view.addChildNode(planetNode)
+                        planetNodeRef = planetNode
+
+                        if (pInstance != null) {
+                            val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
+                                scale = io.github.sceneview.math.Scale(0.09f)
+                                playAnimation(0)
+                            }
+                            planetNode.addChildNode(pNode)
+                            playerNodeRef = pNode
+                        }
+                        isLoadingModels = false
+                    }
+                } else {
+                    launch(Dispatchers.Main) {
+                        isLoadingModels = false
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) {
+                    isLoadingModels = false
+                }
+            }
+        }
+    }
 
     // Smooth auto-orbit camera towards targeted monster when Locked On
     if (lockedMonsterId != null) {
@@ -1669,37 +1722,8 @@ fun MoriaBenchmarkViewport(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).apply {
-                        try {
-                            // 1. Load Globe Model
-                            val planetModel = modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
-                            val planetInstance = planetModel?.let { modelLoader.createInstance(it) }
-                            if (planetInstance != null) {
-                                val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
-                                    position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
-                                    scale = io.github.sceneview.math.Scale(0.48f)
-                                }
-                                addChildNode(planetNode)
-                                planetNodeRef = planetNode
-
-                                // 2. Load Player Model (CesiumMan - Skeletal animated runner!)
-                                val pModel = modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb")
-                                val pInstance = pModel?.let { modelLoader.createInstance(it) }
-                                if (pInstance != null) {
-                                    val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
-                                        scale = io.github.sceneview.math.Scale(0.09f)
-                                        playAnimation(0) // Plays the skeletal running cycle!
-                                    }
-                                    planetNode.addChildNode(pNode)
-                                    playerNodeRef = pNode
-                                }
-                            }
-                            
-                            isLoadingModels = false
-                        } catch (e: Exception) {
-                            isLoadingModels = false
-                            e.printStackTrace()
-                        }
+                    io.github.sceneview.SceneView(ctx).also {
+                        sceneViewRef = it
                     }
                 },
                 update = { view ->
@@ -1732,20 +1756,32 @@ fun MoriaBenchmarkViewport(
                             monsters.forEach { m ->
                                 val isRevealed = tiles.find { it.x == m.x }?.revealed ?: false
                                 if (isRevealed) {
-                                    val mNode = monsterNodes[m.id] ?: run {
-                                        val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Fox/glTF-Binary/Fox.glb")
-                                        val instance = model?.let { view.modelLoader.createInstance(it) }
-                                        if (instance != null) {
-                                            val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                                scale = io.github.sceneview.math.Scale(0.05f)
-                                                playAnimation(0) // Cute foxes bobbing!
-                                                planet.addChildNode(this)
+                                    val mNode = monsterNodes[m.id]
+                                    if (mNode == null) {
+                                        if (!monsterLoadingTracker.contains(m.id)) {
+                                            monsterLoadingTracker.add(m.id)
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                try {
+                                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Fox/glTF-Binary/Fox.glb")
+                                                    val instance = model?.let { view.modelLoader.createInstance(it) }
+                                                    if (instance != null) {
+                                                        launch(Dispatchers.Main) {
+                                                            val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                                                scale = io.github.sceneview.math.Scale(0.05f)
+                                                                playAnimation(0) // Cute foxes bobbing!
+                                                                planet.addChildNode(this)
+                                                            }
+                                                            monsterNodes[m.id] = node
+                                                        }
+                                                    }
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                } finally {
+                                                    monsterLoadingTracker.remove(m.id)
+                                                }
                                             }
-                                            monsterNodes[m.id] = node
-                                            node
-                                        } else null
-                                    }
-                                    if (mNode != null) {
+                                        }
+                                    } else {
                                         val nodePos = planetNodes[m.x]?.position ?: Vector3(0f, 0f, 0f)
                                         mNode.position = io.github.sceneview.math.Position(
                                             x = nodePos.x * 0.47f,
@@ -1765,19 +1801,31 @@ fun MoriaBenchmarkViewport(
                                 chestNodes.remove(id)
                             }
                             revealedChests.forEach { t ->
-                                val cNode = chestNodes[t.x] ?: run {
-                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF-Binary/Lantern.glb")
-                                    val instance = model?.let { view.modelLoader.createInstance(it) }
-                                    if (instance != null) {
-                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                            scale = io.github.sceneview.math.Scale(0.035f)
-                                            planet.addChildNode(this)
+                                val cNode = chestNodes[t.x]
+                                if (cNode == null) {
+                                    if (!chestLoadingTracker.contains(t.x)) {
+                                        chestLoadingTracker.add(t.x)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF-Binary/Lantern.glb")
+                                                val instance = model?.let { view.modelLoader.createInstance(it) }
+                                                if (instance != null) {
+                                                    launch(Dispatchers.Main) {
+                                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                                            scale = io.github.sceneview.math.Scale(0.035f)
+                                                            planet.addChildNode(this)
+                                                        }
+                                                        chestNodes[t.x] = node
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            } finally {
+                                                chestLoadingTracker.remove(t.x)
+                                            }
                                         }
-                                        chestNodes[t.x] = node
-                                        node
-                                    } else null
-                                }
-                                if (cNode != null) {
+                                    }
+                                } else {
                                     val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
                                     cNode.position = io.github.sceneview.math.Position(
                                         x = nodePos.x * 0.465f,
@@ -1796,19 +1844,31 @@ fun MoriaBenchmarkViewport(
                                 stairNodes.remove(id)
                             }
                             revealedStairs.forEach { t ->
-                                val sNode = stairNodes[t.x] ?: run {
-                                    val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
-                                    val instance = model?.let { view.modelLoader.createInstance(it) }
-                                    if (instance != null) {
-                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                            scale = io.github.sceneview.math.Scale(0.035f)
-                                            planet.addChildNode(this)
+                                val sNode = stairNodes[t.x]
+                                if (sNode == null) {
+                                    if (!stairLoadingTracker.contains(t.x)) {
+                                        stairLoadingTracker.add(t.x)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
+                                                val instance = model?.let { view.modelLoader.createInstance(it) }
+                                                if (instance != null) {
+                                                    launch(Dispatchers.Main) {
+                                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
+                                                            scale = io.github.sceneview.math.Scale(0.035f)
+                                                            planet.addChildNode(this)
+                                                        }
+                                                        stairNodes[t.x] = node
+                                                    }
+                                                }
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            } finally {
+                                                stairLoadingTracker.remove(t.x)
+                                            }
                                         }
-                                        stairNodes[t.x] = node
-                                        node
-                                    } else null
-                                }
-                                if (sNode != null) {
+                                    }
+                                } else {
                                     val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
                                     sNode.position = io.github.sceneview.math.Position(
                                         x = nodePos.x * 0.465f,

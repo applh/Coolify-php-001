@@ -68,7 +68,7 @@ class WorldViewModel(context: Context) : ViewModel() {
     val lightIntensity = MutableStateFlow(0.85f)
     val specularShininess = MutableStateFlow(0.35f)
     val wireframeMode = MutableStateFlow(false)
-    val useSceneview = MutableStateFlow(true)
+    val useSceneview = MutableStateFlow(false)
     val glbModelUrl = MutableStateFlow("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Earth/glTF-Binary/Earth.glb")
 
     // Network and Custom loading states
@@ -561,6 +561,34 @@ fun Globe3DInteractiveBox(
     val outlineBorderColor = MaterialTheme.colorScheme.outlineVariant
     val gridLineColor = MaterialTheme.colorScheme.onSurfaceVariant
     var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
+
+    LaunchedEffect(glbModelUrl, sceneViewRef) {
+        val view = sceneViewRef ?: return@LaunchedEffect
+        // Clean out any existing children nodes to prevent overlapping or leak
+        view.childNodes.toMutableList().forEach { view.removeChildNode(it) }
+        modelNodeRef = null
+        
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val model = view.modelLoader.createModel(glbModelUrl)
+                val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                if (modelInstance != null) {
+                    launch(Dispatchers.Main) {
+                        val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
+                            position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
+                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        }
+                        view.addChildNode(modelNode)
+                        modelNodeRef = modelNode
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     if (useSceneview) {
         Box(
@@ -574,19 +602,8 @@ fun Globe3DInteractiveBox(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).apply {
-                        try {
-                            val model = this.modelLoader.createModel(glbModelUrl)
-                            val modelInstance = model?.let { this.modelLoader.createInstance(it) }
-                            if (modelInstance != null) {
-                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                    position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
-                                    rotation = io.github.sceneview.math.Rotation(y = 180f)
-                                }
-                                addChildNode(modelNode)
-                                modelNodeRef = modelNode
-                            }
-                        } catch (e: Exception) {}
+                    io.github.sceneview.SceneView(ctx).also {
+                        sceneViewRef = it
                     }
                 },
                 update = { view ->

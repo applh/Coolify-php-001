@@ -2779,8 +2779,33 @@ fun BlackjackBenchmarkViewport(
     tableFeltStyleId: Int,
     modifier: Modifier = Modifier
 ) {
-    var useSceneview by remember { mutableStateOf(true) } // Sceneview as default 3D engine!
+    var useSceneview by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
     var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
+
+    LaunchedEffect(sceneViewRef) {
+        val view = sceneViewRef ?: return@LaunchedEffect
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                // Load a beautifully responsive card / table asset model in real-time
+                val model = view.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
+                val modelInstance = model?.let { view.modelLoader.createInstance(it) }
+                if (modelInstance != null) {
+                    launch(Dispatchers.Main) {
+                        val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
+                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
+                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        }
+                        view.addChildNode(modelNode)
+                        modelNodeRef = modelNode
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     Box(modifier = modifier) {
         if (useSceneview) {
@@ -2788,20 +2813,8 @@ fun BlackjackBenchmarkViewport(
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).apply {
-                        try {
-                            // Load a beautifully responsive card / table asset model in real-time
-                            val model = this.modelLoader.createModel("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb")
-                            val modelInstance = model?.let { this.modelLoader.createInstance(it) }
-                            if (modelInstance != null) {
-                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                    position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
-                                    rotation = io.github.sceneview.math.Rotation(y = 180f)
-                                }
-                                addChildNode(modelNode)
-                                modelNodeRef = modelNode
-                            }
-                        } catch (e: Exception) {}
+                    io.github.sceneview.SceneView(ctx).also {
+                        sceneViewRef = it
                     }
                 },
                 update = { view ->

@@ -654,6 +654,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Exercise**: Implement a custom indicator particle/ring in the Sceneview component that highlights the physical target tile location when a path selection is actively running, fading away once the character reaches the target.
 - **Complexity**: Part 5
 
+### 106. Thread-Safe Asynchronous 3D Model Loading & Asset Cache Tracking in Jetpack Compose (15h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/blackjack/BlackjackScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/roguelike/RoguelikeScreen.kt`
+- **Goal**: Master thread safety and asset fetch optimization when loading remote `.glb` files over HTTP/HTTPS under SceneView/Filament in Jetpack Compose. Understand the origin of `NetworkOnMainThreadException` inside Compose-managed layout rendering threads, learn how to separate initial main-thread View construction from asynchronous network tasks via `rememberCoroutineScope()`, `LaunchedEffect` and dedicated background dispatchers (`Dispatchers.IO`), and implement stateful loading tracking maps to block concurrent redundant downloads.
+- **Exercise**: Extend the asset loader in the Moria Roguelike viewport to cache downloaded GLB mesh packages into local device directories, enabling the interactive 3D sceneview layout to render fully offline-first.
+- **Complexity**: Part 4
+
 
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
