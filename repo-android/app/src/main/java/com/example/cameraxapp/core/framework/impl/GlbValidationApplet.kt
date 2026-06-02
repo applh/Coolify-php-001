@@ -338,43 +338,26 @@ class GlbValidationApplet : Applet {
         scaleState: Float,
         autoRotateState: Boolean,
         isLoaded: Boolean,
-        sceneViewRef: Any?,
-        onSceneViewReady: (Any) -> Unit,
+        sceneViewRef: io.github.sceneview.SceneView?,
+        onSceneViewReady: (io.github.sceneview.SceneView) -> Unit,
         onScaleChanged: (Float) -> Unit,
         onAutoRotateToggle: () -> Unit,
         onFrameUpdate: () -> Unit
     ) {
         val context = LocalContext.current
+        LaunchedEffect(Unit) {
+            while (true) {
+                onFrameUpdate()
+                kotlinx.coroutines.delay(16)
+            }
+        }
+
         Box(modifier = modifier.background(Color(0xFF121214))) {
-            io.github.sceneview.SceneView(
+            AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                childNodes = remember {
-                    listOf(
-                        io.github.sceneview.node.ModelNode(
-                            context = context,
-                            glbFileLocation = "models/robot_expressive.glb",
-                            autoAnimate = true,
-                            scaleToUnits = 1.0f,
-                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
-                        ).apply {
-                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.8f)
-                            rotation = io.github.sceneview.math.Rotation(y = 180f)
-                            playAnimation(0)
-                        }
-                    )
-                },
-                onFrame = { frame ->
-                    childNodes.forEach { node ->
-                        if (node is io.github.sceneview.node.ModelNode) {
-                            node.scale = io.github.sceneview.math.Scale(scaleState)
-                            if (autoRotateState) {
-                                node.rotation = io.github.sceneview.math.Rotation(
-                                    x = node.rotation.x,
-                                    y = (node.rotation.y + 0.8f) % 360f,
-                                    z = node.rotation.z
-                                )
-                            }
-                        }
+                factory = { ctx ->
+                    io.github.sceneview.SceneView(ctx).apply {
+                        onSceneViewReady(this)
                     }
                 }
             )

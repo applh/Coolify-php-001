@@ -1548,7 +1548,7 @@ fun MoriaBenchmarkViewport(
     viewModel: RoguelikeViewModel,
     modifier: Modifier = Modifier
 ) {
-    var useSceneview by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
+    var  by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
     var yawAngle by remember { mutableStateOf(-0.65f) }
     var pitchAngle by remember { mutableStateOf(0.75f) }
     var zoomScale by remember { mutableStateOf(4.8f) }
@@ -1673,168 +1673,12 @@ fun MoriaBenchmarkViewport(
                 }
             }
     ) {
-        if (useSceneview) {
+        if (false) {
             // Render Sceneview 3D Loader
-            io.github.sceneview.SceneView(
+            androidx.compose.ui.viewinterop.AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                childNodes = remember {
-                    val planet = io.github.sceneview.node.ModelNode(
-                        context = context, glbFileLocation = "models/Earth.glb"
-                    ).apply {
-                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
-                        scale = io.github.sceneview.math.Scale(0.48f)
-                    }
-                    val player = io.github.sceneview.node.ModelNode(
-                        context = context, glbFileLocation = "models/CesiumMan.glb"
-                    ).apply {
-                        scale = io.github.sceneview.math.Scale(0.09f)
-                        playAnimation(0)
-                        planet.addChildNode(this)
-                    }
-                    planetNodeRef = planet
-                    playerNodeRef = player
-                    listOf(planet)
-                },
-                onFrame = { _ ->
-                    try {
-                        val planet = planetNodeRef
-                        val playerNode = playerNodeRef
-
-                        if (planet != null) {
-                            // Sync globe rotation with camera angle
-                            val rotX = pitchAngle * (180f / PI.toFloat())
-                            val rotY = yawAngle * (180f / PI.toFloat())
-                            planet.rotation = io.github.sceneview.math.Rotation(x = rotX, y = rotY, z = 0f)
-
-                            // 1. Sync Player Position (derived from smooth Animatable vectors)
-                            val playerVec = Vector3(playerAnimX.value, playerAnimY.value, playerAnimZ.value).normalize()
-                            playerNode?.position = io.github.sceneview.math.Position(
-                                x = playerVec.x * 0.47f,
-                                y = playerVec.y * 0.47f,
-                                z = playerVec.z * 0.47f
-                            )
-
-                            // 2. Sync Monsters Nodes
-                            // Clean up obsolete monsters
-                            val currentIds = monsters.filter { m -> tiles.find { it.x == m.x }?.revealed == true }.map { m -> m.id }.toSet()
-                            val toRemove = monsterNodes.keys.filter { it !in currentIds }
-                            toRemove.forEach { id ->
-                                monsterNodes[id]?.let { planet.removeChildNode(it) }
-                                monsterNodes.remove(id)
-                            }
-                            // Spawn or update active monsters
-                            monsters.forEach { m ->
-                                val isRevealed = tiles.find { it.x == m.x }?.revealed ?: false
-                                if (isRevealed) {
-                                    val mNode = monsterNodes[m.id]
-                                    if (mNode == null) {
-                                        if (!monsterLoadingTracker.contains(m.id)) {
-                                            monsterLoadingTracker.add(m.id)
-                                            coroutineScope.launch(Dispatchers.Main) {
-                                                try {
-                                                    val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Fox.glb").apply {
-                                                        scale = io.github.sceneview.math.Scale(0.05f)
-                                                        playAnimation(0) // Cute foxes bobbing!
-                                                    }
-                                                    planet.addChildNode(node)
-                                                    monsterNodes[m.id] = node
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                } finally {
-                                                    monsterLoadingTracker.remove(m.id)
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        val nodePos = planetNodes[m.x]?.position ?: Vector3(0f, 0f, 0f)
-                                        mNode.position = io.github.sceneview.math.Position(
-                                            x = nodePos.x * 0.47f,
-                                            y = nodePos.y * 0.47f,
-                                            z = nodePos.z * 0.47f
-                                        )
-                                    }
-                                }
-                            }
-
-                            // 3. Sync Chest Prop Nodes
-                            val revealedChests = tiles.filter { it.revealed && it.tileType == "CHEST" }
-                            val currentChestIds = revealedChests.map { it.x }.toSet()
-                            val toRemoveChests = chestNodes.keys.filter { it !in currentChestIds }
-                            toRemoveChests.forEach { id ->
-                                chestNodes[id]?.let { planet.removeChildNode(it) }
-                                chestNodes.remove(id)
-                            }
-                            revealedChests.forEach { t ->
-                                val cNode = chestNodes[t.x]
-                                if (cNode == null) {
-                                    if (!chestLoadingTracker.contains(t.x)) {
-                                        chestLoadingTracker.add(t.x)
-                                        coroutineScope.launch(Dispatchers.Main) {
-                                            try {
-                                                val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Lantern.glb").apply {
-                                                    scale = io.github.sceneview.math.Scale(0.035f)
-                                                }
-                                                planet.addChildNode(node)
-                                                chestNodes[t.x] = node
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                            } finally {
-                                                chestLoadingTracker.remove(t.x)
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
-                                    cNode.position = io.github.sceneview.math.Position(
-                                        x = nodePos.x * 0.465f,
-                                        y = nodePos.y * 0.465f,
-                                        z = nodePos.z * 0.465f
-                                    )
-                                }
-                            }
-
-                            // 4. Sync Stairs Down Indicator Nodes
-                            val revealedStairs = tiles.filter { it.revealed && it.tileType == "STAIRS_DOWN" }
-                            val currentStairIds = revealedStairs.map { it.x }.toSet()
-                            val toRemoveStairs = stairNodes.keys.filter { it !in currentStairIds }
-                            toRemoveStairs.forEach { id ->
-                                stairNodes[id]?.let { planet.removeChildNode(it) }
-                                stairNodes.remove(id)
-                            }
-                            revealedStairs.forEach { t ->
-                                val sNode = stairNodes[t.x]
-                                if (sNode == null) {
-                                    if (!stairLoadingTracker.contains(t.x)) {
-                                        stairLoadingTracker.add(t.x)
-                                        coroutineScope.launch(Dispatchers.Main) {
-                                            try {
-                                                val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Duck.glb").apply {
-                                                    scale = io.github.sceneview.math.Scale(0.035f)
-                                                }
-                                                planet.addChildNode(node)
-                                                stairNodes[t.x] = node
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                            } finally {
-                                                stairLoadingTracker.remove(t.x)
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    val nodePos = planetNodes[t.x]?.position ?: Vector3(0f,0f,0f)
-                                    sNode.position = io.github.sceneview.math.Position(
-                                        x = nodePos.x * 0.465f,
-                                        y = nodePos.y * 0.465f,
-                                        z = nodePos.z * 0.465f
-                                    )
-                                    // Let stairs Down spinning node rotate in place!
-                                    sNode.rotation = io.github.sceneview.math.Rotation(y = sNode.rotation.y + 1.2f)
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                factory = { ctx ->
+                    io.github.sceneview.SceneView(ctx)
                 }
             )
 
@@ -1929,15 +1773,15 @@ fun MoriaBenchmarkViewport(
             Box(
                 modifier = Modifier
                     .background(
-                        if (useSceneview) Color(0xFF2E2E30) else Color.Transparent,
+                        if () Color(0xFF2E2E30) else Color.Transparent,
                         RoundedCornerShape(4.dp)
                     )
-                    .clickable { useSceneview = true }
+                    .clickable {  = true }
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = "Sceneview",
-                    color = if (useSceneview) Color.White else Color.Gray,
+                    color = if () Color.White else Color.Gray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1945,15 +1789,15 @@ fun MoriaBenchmarkViewport(
             Box(
                 modifier = Modifier
                     .background(
-                        if (!useSceneview) Color(0xFF2E2E30) else Color.Transparent,
+                        if (!) Color(0xFF2E2E30) else Color.Transparent,
                         RoundedCornerShape(4.dp)
                     )
-                    .clickable { useSceneview = false }
+                    .clickable {  = false }
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = "Sovereign Canvas",
-                    color = if (!useSceneview) Color.White else Color.Gray,
+                    color = if (!) Color.White else Color.Gray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )

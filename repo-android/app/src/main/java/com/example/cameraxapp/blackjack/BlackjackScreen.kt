@@ -2783,38 +2783,15 @@ fun BlackjackBenchmarkViewport(
     modifier: Modifier = Modifier
 ) {
     var useSceneview by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier) {
         if (useSceneview) {
             // Render Sceneview 3D Loader
-            io.github.sceneview.SceneView(
+            androidx.compose.ui.viewinterop.AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                childNodes = remember {
-                    listOf(
-                        io.github.sceneview.node.ModelNode(
-                            context = context,
-                            glbFileLocation = "models/Duck.glb",
-                            autoAnimate = true,
-                            scaleToUnits = 1.0f,
-                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
-                        ).apply {
-                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
-                            rotation = io.github.sceneview.math.Rotation(y = 180f)
-                            playAnimation(0)
-                        }
-                    )
-                },
-                onFrame = { frame ->
-                    childNodes.forEach { node ->
-                        if (node is io.github.sceneview.node.ModelNode) {
-                            node.rotation = io.github.sceneview.math.Rotation(
-                                x = node.rotation.x,
-                                y = node.rotation.y + 0.6f,
-                                z = node.rotation.z
-                            )
-                        }
-                    }
+                factory = { ctx ->
+                    io.github.sceneview.SceneView(ctx)
                 }
             )
 

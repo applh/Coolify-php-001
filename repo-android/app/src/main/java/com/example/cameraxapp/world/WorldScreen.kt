@@ -581,34 +581,10 @@ fun Globe3DInteractiveBox(
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            io.github.sceneview.SceneView(
+            androidx.compose.ui.viewinterop.AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                childNodes = remember(resolvedPath) {
-                    val mNode = io.github.sceneview.node.ModelNode(
-                        context = context,
-                        glbFileLocation = resolvedPath,
-                        autoAnimate = true,
-                        scaleToUnits = 1.0f,
-                        centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
-                    ).apply {
-                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
-                        rotation = io.github.sceneview.math.Rotation(y = 180f)
-                        playAnimation(0)
-                    }
-                    listOf(mNode)
-                },
-                onFrame = { frame ->
-                    if (autoRotate) {
-                        childNodes.forEach { node ->
-                            if (node is io.github.sceneview.node.ModelNode) {
-                                node.rotation = io.github.sceneview.math.Rotation(
-                                    x = node.rotation.x,
-                                    y = node.rotation.y + 0.8f,
-                                    z = node.rotation.z
-                                )
-                            }
-                        }
-                    }
+                factory = { ctx ->
+                    io.github.sceneview.SceneView(ctx)
                 }
             )
 
