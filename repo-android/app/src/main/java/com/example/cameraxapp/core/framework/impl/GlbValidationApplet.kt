@@ -124,7 +124,11 @@ class GlbValidationApplet : Applet {
                     AppLogger.d("GlbValidation", "Background Thread: Validating local GLB model: $assetPath")
                     
                     val bytes = context.assets.open(assetPath).readBytes()
-                    val buffer = java.nio.ByteBuffer.wrap(bytes)
+                    val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).apply {
+                        order(java.nio.ByteOrder.nativeOrder())
+                        put(bytes)
+                        flip()
+                    }
                     val model = loader.createModel(buffer)
                     val modelInstance = model?.let { loader.createInstance(it) }
                     
