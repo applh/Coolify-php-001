@@ -688,5 +688,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 111. Kotlin metadata compatibilities & KSP plugin matches (10h) 🍓 NEW
+- **Reference**: `repo-android/build.gradle`, `repo-android/app/build.gradle`, `docs/devops/android-version-compatibility.md`
+- **Goal**: Understand how Kotlin serialized module binary metadata versioning works. Learn how to diagnose compilation mismatches (e.g., library built on a newer master branch compiler yielding metadata 2.3.0 versus local expectation of 2.1.0) and dynamically realign the active compiler toolchain, Gradle plugin registries, and corresponding annotation processors cleanly.
+- **Exercise**: Upgrade or downgrade a mock repository division to match specific version matrices seamlessly, stop Gradle running daemons, purge transient caching metadata partitions selectively, and trigger a clean compile.
+- **Complexity**: Part 4
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
