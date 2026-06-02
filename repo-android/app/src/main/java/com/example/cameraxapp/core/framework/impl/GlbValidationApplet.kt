@@ -243,15 +243,18 @@ class GlbValidationApplet : Applet {
             }
         }
 
-        val modelNode = remember(model, scaleState, rotationY) {
+        val modelNode = remember(model, scaleState) {
             model?.let {
                 ModelNode(
                     modelInstance = it,
                     scaleToUnits = scaleState
-                ).apply {
-                    rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-                }
+                )
             }
+        }
+
+        // Apply dynamic rotation seamlessly after successful recomposition without recreating the native node
+        SideEffect {
+            modelNode?.rotation = Rotation(x = 0f, y = rotationY, z = 0f)
         }
 
         Box(modifier = modifier.background(Color(0xFF121214))) {
@@ -260,7 +263,7 @@ class GlbValidationApplet : Applet {
                 engine = engine,
                 modelLoader = modelLoader,
                 cameraManipulator = rememberCameraManipulator(),
-                childNodes = listOfNotNull(mainLightNode, modelNode)
+                nodes = listOfNotNull(mainLightNode, modelNode)
             )
 
             // Dynamic HUD Info Overlay
