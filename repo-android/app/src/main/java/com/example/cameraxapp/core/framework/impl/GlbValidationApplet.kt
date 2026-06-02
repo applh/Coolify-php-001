@@ -120,41 +120,12 @@ class GlbValidationApplet : Applet {
 
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    val resolvedPath = "file:///android_asset/models/robot_expressive.glb"
-                    AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $resolvedPath")
+                    val assetPath = "models/robot_expressive.glb"
+                    AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $assetPath")
                     
-                    try {
-                        AppLogger.d("GlbValidation", "Reflection: Diagnostics of loader class ${loader.javaClass.name}")
-                        loader.javaClass.declaredFields.forEach { field ->
-                            try {
-                                field.isAccessible = true
-                                val name = field.name
-                                val value = field.get(loader)
-                                AppLogger.d("GlbValidation", "Reflection: Field name='$name', type='${field.type.name}', value='${value?.toString() ?: "null"}'")
-                            } catch (fe: Exception) {
-                                AppLogger.d("GlbValidation", "Reflection: Failed to inspect field ${field.name}: ${fe.message}")
-                            }
-                        }
-                        var superclass: Class<*>? = loader.javaClass.superclass
-                        while (superclass != null && superclass != java.lang.Object::class.java) {
-                            AppLogger.d("GlbValidation", "Reflection: Diagnostics of superclass ${superclass.name}")
-                            superclass.declaredFields.forEach { field ->
-                                try {
-                                    field.isAccessible = true
-                                    val name = field.name
-                                    val value = field.get(loader)
-                                    AppLogger.d("GlbValidation", "Reflection: SuperField name='$name', type='${field.type.name}', value='${value?.toString() ?: "null"}'")
-                                } catch (fe: Exception) {
-                                    AppLogger.d("GlbValidation", "Reflection: Failed to inspect superfield ${field.name}: ${fe.message}")
-                                }
-                            }
-                            superclass = superclass.superclass
-                        }
-                    } catch (re: Exception) {
-                        AppLogger.e("GlbValidation", "Reflection main exception: ${re.message}", re)
-                    }
-
-                    val model = loader.createModel(resolvedPath)
+                    val bytes = context.assets.open(assetPath).readBytes()
+                    val buffer = java.nio.ByteBuffer.wrap(bytes)
+                    val model = loader.createModel(buffer)
                     AppLogger.d("GlbValidation", "Background Thread: Asset model loaded successfully. Creating index instance...")
                     
                     val modelInstance = loader.createInstance(model)

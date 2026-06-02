@@ -1626,7 +1626,7 @@ fun MoriaBenchmarkViewport(
             try {
                 // 1. Load Globe Model
                 AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/Earth.glb")
-                val planetModel = loader.createModel("file:///android_asset/models/Earth.glb")
+                val planetModel = loader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Earth.glb").readBytes()))
                 AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
 
                 val planetInstance = loader.createInstance(planetModel)
@@ -1644,7 +1644,7 @@ fun MoriaBenchmarkViewport(
 
                     // 2. Load Player Model (CesiumMan)
                     AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/CesiumMan.glb")
-                    val pModel = loader.createModel("file:///android_asset/models/CesiumMan.glb")
+                    val pModel = loader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/CesiumMan.glb").readBytes()))
                     AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
 
                     val pInstance = loader.createInstance(pModel)
@@ -1845,7 +1845,7 @@ fun MoriaBenchmarkViewport(
                                             monsterLoadingTracker.add(m.id)
                                             coroutineScope.launch(Dispatchers.IO) {
                                                 try {
-                                                    val model = view.modelLoader.createModel("file:///android_asset/models/Fox.glb")
+                                                    val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Fox.glb").readBytes()))
                                                     val instance = model?.let { view.modelLoader.createInstance(it) }
                                                     if (instance != null) {
                                                         launch(Dispatchers.Main) {
@@ -1890,7 +1890,7 @@ fun MoriaBenchmarkViewport(
                                         chestLoadingTracker.add(t.x)
                                         coroutineScope.launch(Dispatchers.IO) {
                                             try {
-                                                val model = view.modelLoader.createModel("file:///android_asset/models/Lantern.glb")
+                                                val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Lantern.glb").readBytes()))
                                                 val instance = model?.let { view.modelLoader.createInstance(it) }
                                                 if (instance != null) {
                                                     launch(Dispatchers.Main) {
@@ -1933,7 +1933,7 @@ fun MoriaBenchmarkViewport(
                                         stairLoadingTracker.add(t.x)
                                         coroutineScope.launch(Dispatchers.IO) {
                                             try {
-                                                val model = view.modelLoader.createModel("file:///android_asset/models/Duck.glb")
+                                                val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Duck.glb").readBytes()))
                                                 val instance = model?.let { view.modelLoader.createInstance(it) }
                                                 if (instance != null) {
                                                     launch(Dispatchers.Main) {
