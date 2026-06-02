@@ -117,7 +117,7 @@ class GlbValidationApplet : Applet {
             modelNodeRef = null
             loadingStatus = "Loading local robot GLB..."
 
-            coroutineScope.launch(Dispatchers.IO) {
+            launch(Dispatchers.IO) {
                 try {
                     val resolvedPath = "models/robot_expressive.glb"
                     AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $resolvedPath")
