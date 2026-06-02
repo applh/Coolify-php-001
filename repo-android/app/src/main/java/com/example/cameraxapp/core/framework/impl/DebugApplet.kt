@@ -31,6 +31,7 @@ import com.example.cameraxapp.AppLogger
 import com.example.cameraxapp.DebugLogEntry
 import com.example.cameraxapp.core.framework.Applet
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -53,6 +54,7 @@ class DebugApplet : Applet {
         var expandedLogId by remember { mutableStateOf<Int?>(null) }
         var showToast by remember { mutableStateOf<String?>(null) }
         val clipboardManager = LocalClipboard.current
+        val coroutineScope = rememberCoroutineScope()
 
         // Fetch logs initially and on refresh
         val refreshLogs = {
@@ -235,7 +237,9 @@ class DebugApplet : Applet {
                                     val exported = filteredLogs.joinToString("\n\n") { log ->
                                         "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
                                     }
-                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
+                                    coroutineScope.launch {
+                                        clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
+                                    }
                                     showToast = "Copied ${filteredLogs.size} logs matching filter!"
                                 }
                             },
@@ -257,7 +261,9 @@ class DebugApplet : Applet {
                                     val exported = logs.joinToString("\n\n") { log ->
                                         "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
                                     }
-                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
+                                    coroutineScope.launch {
+                                        clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
+                                    }
                                     showToast = "Copied all ${logs.size} logs to clipboard!"
                                 }
                             },
@@ -473,7 +479,9 @@ class DebugApplet : Applet {
                                     [${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}
                                     ${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}
                                 """.trimIndent()
-                                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", fullText)))
+                                coroutineScope.launch {
+                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", fullText)))
+                                }
                                 onShowToast("Copied full log details to clipboard!")
                             },
                             label = { Text("📋 Copy Full Log", fontSize = 11.sp) }
@@ -481,7 +489,9 @@ class DebugApplet : Applet {
 
                         AssistChip(
                             onClick = {
-                                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.message)))
+                                coroutineScope.launch {
+                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.message)))
+                                }
                                 onShowToast("Copied message to clipboard!")
                             },
                             label = { Text("💬 Copy Msg", fontSize = 11.sp) }
@@ -490,7 +500,9 @@ class DebugApplet : Applet {
                         if (!log.stackTrace.isNullOrBlank()) {
                             AssistChip(
                                 onClick = {
-                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.stackTrace)))
+                                    coroutineScope.launch {
+                                        clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.stackTrace)))
+                                    }
                                     onShowToast("Copied stack trace!")
                                 },
                                 label = { Text("🔥 Copy Trace", fontSize = 11.sp) }

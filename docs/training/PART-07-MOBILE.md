@@ -716,5 +716,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 115. Android Transformable Scale & Suspendable Clipboard Managers (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/DebugApplet.kt`
+- **Goal**: Master Jetpack Compose gestural scaling and suspendable clipboard interactions. Learn how to diagnose argument mismatches inside `rememberTransformableState` gestures, and understand why newer platform clipboard interfaces require launching asynchronous coroutines via `rememberCoroutineScope` to handle system clip copies safely.
+- **Exercise**: Extend the custom slide overlay to support coordinate offsets alongside scale configurations, launching concurrent state announcements safely upon successful clipboard synchronization.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

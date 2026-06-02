@@ -871,7 +871,9 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                     message = item,
                                     onImageTap = { msg -> activeLightboxMessage = msg },
                                     onCopyText = { txt ->
-                                        clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", txt)))
+                                        coroutineScope.launch {
+                                            clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", txt)))
+                                        }
                                     }
                                 )
                             }
@@ -1574,7 +1576,7 @@ fun LightboxOverlay(
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    val gesturalState = rememberTransformableState { zoomChange, offsetChange, _, _ ->
+    val gesturalState = rememberTransformableState { zoomChange, offsetChange, _ ->
         scale = (scale * zoomChange).coerceIn(1f, 5f)
         offset += offsetChange
     }
