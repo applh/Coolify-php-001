@@ -121,43 +121,26 @@ class GlbValidationApplet : Applet {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
                     val assetPath = "models/robot_expressive.glb"
-                    AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $assetPath")
+                    AppLogger.d("GlbValidation", "Background Thread: Validating local GLB model: $assetPath")
                     
-                    val bytes = context.assets.open(assetPath).readBytes()
-                    val buffer = java.nio.ByteBuffer.wrap(bytes)
-                    val model = loader.createModel(buffer)
-                    AppLogger.d("GlbValidation", "Background Thread: Asset model loaded successfully. Creating index instance...")
+                    val bytes = context.assets.open(assetPath)
+                    val glbData = com.example.cameraxapp.core.math3d.GLBLoader.parse(bytes)
                     
-                    val modelInstance = loader.createInstance(model)
-                    if (modelInstance == null) {
-                        launch(Dispatchers.Main) {
-                            loadingStatus = "Failure: Instance creation failed."
-                            AppLogger.e("GlbValidation", "SceneView failed to instantiate model instance of $assetPath")
-                        }
-                        return@launch
-                    }
-
                     launch(Dispatchers.Main) {
                         try {
-                            AppLogger.d("GlbValidation", "Main Thread: Instantiating ModelNode wrapper...")
-                            val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                position = io.github.sceneview.math.Position(0.0f, -0.5f, -1.8f)
-                                rotation = io.github.sceneview.math.Rotation(y = 180f)
-                                scale = io.github.sceneview.math.Scale(scaleState)
-                            }
-                            view.addChildNode(modelNode)
-                            modelNodeRef = modelNode
-                            loadingStatus = "Success: Robot GLB active!"
-                            AppLogger.i("GlbValidation", "ModelNode successfully bound to SceneView. Render Pipeline Active.")
+                            loadingStatus = "Success! JSON Found: ${glbData.json.length} bytes"
+                            AppLogger.i("GlbValidation", "Parsed GLB JSON Length: ${glbData.json.length}")
+                            AppLogger.i("GlbValidation", "JSON Preview: ${glbData.json.take(200)}...")
+                            modelNodeRef = null // No longer using SceneView due to corruption
                         } catch (e2: Exception) {
-                            AppLogger.e("GlbValidation", "Error adding ModelNode back on UI thread: ${e2.message}", e2)
-                            loadingStatus = "Mount Error: ${e2.message}"
+                            AppLogger.e("GlbValidation", "Main thread error: ${e2.message}", e2)
+                            loadingStatus = "Display Error: ${e2.message}"
                         }
                     }
                 } catch (e: Exception) {
-                    AppLogger.e("GlbValidation", "Background asset loader crashed: ${e.message}", e)
+                    AppLogger.e("GlbValidation", "GLB Parsing failed: ${e.message}", e)
                     launch(Dispatchers.Main) {
-                        loadingStatus = "Asset Load Error: ${e.message}"
+                        loadingStatus = "Validation Error: ${e.message}"
                     }
                 }
             }
