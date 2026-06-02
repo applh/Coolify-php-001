@@ -674,5 +674,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 109. Split-Panel Android 3D Visual Validation & Live System Logs Diagnostic Board (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Understand high-performance split-panel layout architecture in Jetpack Compose, adapting dynamically to device orientations. Learn how to run a native AndroidView SceneView surface side-by-side with a live-scrolling terminal log diagnostics panel. Master state-based scale and rotation controllers in Compose coupled to frame rendering updates, and learn to pool and filter log entries from custom SQLite storage.
+- **Exercise**: Implement a search and filtering utility inside the logs terminal panel to narrow down diagnostics. Add custom buttons to toggle on-screen rendering debug flags within the active `ModelNode`.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
