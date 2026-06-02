@@ -51,6 +51,7 @@ class GlbValidationApplet : Applet {
         onOpenRightDrawer: () -> Unit
     ) {
         val context = LocalContext.current
+        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         val coroutineScope = rememberCoroutineScope()
 
         // 3D parameters states
@@ -117,11 +118,42 @@ class GlbValidationApplet : Applet {
             modelNodeRef = null
             loadingStatus = "Loading local robot GLB..."
 
-            launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    val resolvedPath = "models/robot_expressive.glb"
+                    val resolvedPath = "file:///android_asset/models/robot_expressive.glb"
                     AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $resolvedPath")
                     
+                    try {
+                        AppLogger.d("GlbValidation", "Reflection: Diagnostics of loader class ${loader.javaClass.name}")
+                        loader.javaClass.declaredFields.forEach { field ->
+                            try {
+                                field.isAccessible = true
+                                val name = field.name
+                                val value = field.get(loader)
+                                AppLogger.d("GlbValidation", "Reflection: Field name='$name', type='${field.type.name}', value='${value?.toString() ?: "null"}'")
+                            } catch (fe: Exception) {
+                                AppLogger.d("GlbValidation", "Reflection: Failed to inspect field ${field.name}: ${fe.message}")
+                            }
+                        }
+                        var superclass: Class<*>? = loader.javaClass.superclass
+                        while (superclass != null && superclass != java.lang.Object::class.java) {
+                            AppLogger.d("GlbValidation", "Reflection: Diagnostics of superclass ${superclass.name}")
+                            superclass.declaredFields.forEach { field ->
+                                try {
+                                    field.isAccessible = true
+                                    val name = field.name
+                                    val value = field.get(loader)
+                                    AppLogger.d("GlbValidation", "Reflection: SuperField name='$name', type='${field.type.name}', value='${value?.toString() ?: "null"}'")
+                                } catch (fe: Exception) {
+                                    AppLogger.d("GlbValidation", "Reflection: Failed to inspect superfield ${field.name}: ${fe.message}")
+                                }
+                            }
+                            superclass = superclass.superclass
+                        }
+                    } catch (re: Exception) {
+                        AppLogger.e("GlbValidation", "Reflection main exception: ${re.message}", re)
+                    }
+
                     val model = loader.createModel(resolvedPath)
                     AppLogger.d("GlbValidation", "Background Thread: Asset model loaded successfully. Creating index instance...")
                     
@@ -339,6 +371,7 @@ class GlbValidationApplet : Applet {
         onAutoRotateToggle: () -> Unit,
         onFrameUpdate: () -> Unit
     ) {
+        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         Box(modifier = modifier.background(Color(0xFF121214))) {
             // Android view loading the physical Filament engine
             AndroidView(
@@ -346,6 +379,13 @@ class GlbValidationApplet : Applet {
                 factory = { ctx ->
                     AppLogger.d("GlbValidation", "Instantiating io.github.sceneview.SceneView factory...")
                     io.github.sceneview.SceneView(ctx).also {
+                        try {
+                            // In many versions of SceneView, we need to bind lifecycle
+                            // Just a guess if there's a setter:
+                            it.javaClass.methods.find { m -> m.name == "setLifecycleOwner" }?.invoke(it, lifecycleOwner)
+                        } catch (e: Exception) {
+                           AppLogger.d("GlbValidation", "No setLifecycleOwner method found")
+                        }
                         onSceneViewReady(it)
                     }
                 },

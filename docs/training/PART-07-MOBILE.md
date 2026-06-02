@@ -681,5 +681,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 110. Android Filament 3D Null Lifecycle & Reflection Troubleshooting (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Understand advanced View lifecycle binding issues when embedding traditional Android views like Filament's SceneView within Jetpack Compose elements (`AndroidView`). Learn how to safely attach Compose `LocalLifecycleOwner.current` down to bare Java-reflection setters, mitigating deep NullPointerExceptions when internal C++ cores or async loaders attempt to resolve coroutines scopes.
+- **Exercise**: Create a secondary UI testing suite simulating forced orientation changes and memory cleanup assertions to verify that `SceneView` respects standard `destroy()` calls and releases C++ model node buffers upon `Lifecycle.Event.ON_DESTROY`.
+- **Complexity**: Part 4
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
