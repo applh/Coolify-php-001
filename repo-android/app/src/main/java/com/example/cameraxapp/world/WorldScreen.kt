@@ -607,10 +607,10 @@ fun Globe3DInteractiveBox(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 val resolvedPath = when {
-                    glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "models/Earth.glb"
-                    glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
-                    glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
-                    glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "models/robot_expressive.glb"
+                    glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "file:///android_asset/models/Earth.glb"
+                    glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "file:///android_asset/models/DamagedHelmet.glb"
+                    glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "file:///android_asset/models/WaterBottle.glb"
+                    glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "file:///android_asset/models/robot_expressive.glb"
                     else -> glbModelUrl
                 }
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")

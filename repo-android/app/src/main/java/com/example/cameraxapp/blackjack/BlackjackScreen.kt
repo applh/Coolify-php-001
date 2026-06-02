@@ -2829,7 +2829,7 @@ fun BlackjackBenchmarkViewport(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Starting ModelLoader.createModel for models/Duck.glb")
-                val model = loader.createModel("models/Duck.glb")
+                val model = loader.createModel("file:///android_asset/models/Duck.glb")
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createModel successfully compiled 'models/Duck.glb'.")
                 
                 AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Calling createInstance")

@@ -120,7 +120,7 @@ class GlbValidationApplet : Applet {
 
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    val resolvedPath = "models/robot_expressive.glb"
+                    val resolvedPath = "file:///android_asset/models/robot_expressive.glb"
                     AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $resolvedPath")
                     
                     try {
