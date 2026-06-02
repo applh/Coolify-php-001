@@ -730,5 +730,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 117. Declarative SceneView Node Hierarchy Migration in Kotlin (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Master declaration of child nodes within the SceneView Android/Compose framework, transitioning from incorrect trailing content lambdas to declarative list-based `childNodes` parameter configuration.
+- **Exercise**: Refactor a SceneView composable block that incorrectly tries to declare inner nodes within a scope lambda to use a dynamically constructed `listOfNotNull(mainLightNode, modelNode)` passed as the `childNodes` argument.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

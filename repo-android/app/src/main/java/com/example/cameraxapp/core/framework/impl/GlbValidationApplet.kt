@@ -243,22 +243,24 @@ class GlbValidationApplet : Applet {
             }
         }
 
+        val modelNode = remember(model, scaleState, rotationY) {
+            model?.let {
+                ModelNode(
+                    modelInstance = it,
+                    scaleToUnits = scaleState,
+                    rotation = Rotation(x = 0f, y = rotationY, z = 0f)
+                )
+            }
+        }
+
         Box(modifier = modifier.background(Color(0xFF121214))) {
             SceneView(
                 modifier = Modifier.fillMaxSize(),
                 engine = engine,
                 modelLoader = modelLoader,
-                cameraManipulator = rememberCameraManipulator()
-            ) {
-                Node(factory = { mainLightNode })
-                model?.let {
-                    ModelNode(
-                        modelInstance = it,
-                        scaleToUnits = scaleState,
-                        rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-                    )
-                }
-            }
+                cameraManipulator = rememberCameraManipulator(),
+                childNodes = listOfNotNull(mainLightNode, modelNode)
+            )
 
             // Dynamic HUD Info Overlay
             Column(
