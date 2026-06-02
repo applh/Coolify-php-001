@@ -40,6 +40,28 @@ During the evolution of our 3D workspace (Moria, World Globe, Blackjack), severa
   2. The application consistently crashed in sandboxed/emulated preview environments (like AI Studio) due to missing hardware OpenGL ES / Vulkan context support.
   3. Lifecycles became detached from Jetpack Compose, causing memory leaks across screen rotations.
 
+### ❌ Attempt 4: Jetpack Compose SceneView `ModelLoader` with Direct `ByteBuffer`
+* **Approach**: Implementing the `io.github.sceneview:sceneview` wrapper inside Compose using an `AndroidView`, and attempting to load a GLB directly via `java.nio.ByteBuffer.allocateDirect(bytes.size)` into `view.modelLoader.createModel(buffer)`.
+* **Failure/Error**: 
+  1. **Lifecycle Race Conditions**: The `ModelLoader` instance relies on the underlying Filament engine being fully initialized. Attempting to extract `view.modelLoader` inside the Compose pipeline often resulted in a null context or threading violations across the UI/Background threads.
+  2. **Direct Buffer Requirement**: We initially used `ByteBuffer.wrap(bytes)`, which crashed natively because Filament demands memory-aligned, direct byte buffers (`allocateDirect()`) for C++ native mapping without JVM garbage collection interference.
+  3. **Build & Hardware Timeout Issues**: Even after correcting to direct buffers and managing endianness (`ByteOrder.nativeOrder()`), compiling and launching this required heavy synchronous native allocations. This timed out headless environments, and ultimately fell back into the same "missing hardware GLES/Vulkan support" pitfall within the AI Studio emulator sandbox as Attempt 3.
+
+### ❌ Attempt 5: LibGDX (`libgdx-gltf`) & Custom GDX Wrappers
+* **Approach**: Importing the heavy LibGDX monolithic framework alongside third-party parsing extensions like `libgdx-gltf` to handle the parsing and rendering of the GLB container.
+* **Failure/Error**: 
+  1. **Architecture Monopolization**: LibGDX is designed to take over the entire `Activity` lifecycle (`AndroidApplication`). Embedding its `GLSurfaceView` deeply inside a Jetpack Compose hierarchy (`AndroidView`) creates severe Z-ordering glitches, context loss upon screen rotation, and state synchronization friction.
+  2. **Dependency Bloat**: Pulling in the entire LibGDX core, its native Android backend (`gdx-backend-android`), and the GLTF extension drastically bloats the project size, adding heavy C++ `.so` dependencies merely to parse a single file format.
+  3. **Paradigm Mismatch**: Jetpack Compose is strictly declarative and state-driven, whereas LibGDX strictly operates on an imperative, polling `render()` thread loop. Bridging these paradigms for simple applet component interaction introduces error-prone concurrency logic.
+  4. **Emulation/CI Failure**: Similar to the Filament attempts, LibGDX's heavily optimized native OpenGL backend aggressively crashes in containerized/headless environments (like the AI Studio web emulator) that lack dedicated hardware acceleration profiles.
+
+### ❌ Attempt 6: Standalone parsing via `net.mgsx.gltf.loaders.glb.GLBLoader` (Without LibGDX)
+* **Approach**: Attempting to extract and use only the `libgdx-gltf` parsing logic (specifically `net.mgsx.gltf.loaders.glb.GLBLoader`) to read GLB files as an external library without pulling in the entire LibGDX rendering engine.
+* **Failure/Error**: 
+  1. **Tight API Coupling**: The `mgsx` extension does not output plain Java or Kotlin data structures. It is hard-coupled to LibGDX's core internal data types. The parsing methods expect and return objects like `com.badlogic.gdx.files.FileHandle`, `com.badlogic.gdx.graphics.Mesh`, `com.badlogic.gdx.utils.Array`, and `com.badlogic.gdx.graphics.Texture`.
+  2. **Transitive LibGDX Bloat**: Because of this tight coupling, adding the `libgdx-gltf` dependency transitively forces the inclusion of `gdx-core`. You cannot decouple the abstract parser from the engine's memory management and graphics utilities without rewriting the library from scratch.
+  3. **Resulting Fix**: This realization led directly back to writing our own standalone `GLBLoader.kt` logic (as detailed in Attempt 1), which aims to do exactly what `mgsx` does, but mapping to plain Kotlin data classes and native Android `Canvas`/`Bitmap` objects instead.
+
 ---
 
 ## 3. Proposed Alternatives & Future Strategies
@@ -63,7 +85,25 @@ If we must persist with a zero-dependency local engine (Sovereign 3D).
 
 ---
 
-## 4. Troubleshooting Guide
+## 5. The SceneView Disconnect: Why the Physical Xiaomi Tablet Tests Failed
+
+You might wonder why **SceneView** was heavily recommended in earlier architecture discussions, despite failing during the manual Coolify APK deployments to the physical Xiaomi tablet. 
+
+### Where the Recommendation Came From
+In the modern Android ecosystem (2021–present), **SceneView (`io.github.sceneview`)** is the industry standard for rendering 3D/AR in Jetpack Compose, built on top of Google's Filament engine. It is the de-facto solution for loading `.glb` files without writing raw OpenGL/Vulkan boilerplate. The recommendation to use it is sound for standard Android development.
+
+### Why it Failed on the Physical Device (The Real Root Causes)
+My previous assumption that failures were strictly due to a headless emulator sandbox was **incorrect**, as the CI/CD pipeline builds the APK via Coolify and tests it directly on real hardware. 
+
+The physical hardware failures stem directly from **how** we attempted to force SceneView to load the `.glb` models in our implementation (`Attempt 4`), rather than SceneView itself being broken or incompatible with the tablet:
+
+1. **Synchronous Main Thread Blocking**: Our code in `GlbValidationApplet.kt` attempted to parse the GLB using `context.assets.open(assetPath).readBytes()`. Depending on where this is called in the Compose hierarchy, synchronously reading a 10MB+ binary file on the main UI thread blocks the Android Choreographer. This causes the UI to freeze, triggers ANRs (Application Not Responding), and often causes the system daemon to kill the app before the 3D surface can even render.
+2. **Double Memory Allocation (OOM Risk)**: By calling `readBytes()`, we allocated the entire file into a standard Java heap `ByteArray`. Then, to satisfy native C++ requirements, we called `ByteBuffer.allocateDirect(bytes.size)` and copied the array. This creates a massive memory spike (2x the file size), fragmenting RAM severely. If the Xiaomi tablet lacks contiguous free memory at that exact moment, it throws a fatal `OutOfMemoryError` or a native SIGKILL.
+3. **Lifecycle Misalignment with Filament Engine**: We attempted to extract `view.modelLoader` and call `createModel(buffer)` sequentially. However, Filament's native C++ engine (and its underlying Vulkan/GLES contexts) initializes asynchronously. If `ModelLoader` functions are executed before the exact millisecond the native surface is fully bound to the Android view tree, the native code segfaults to a null context, silently crashing the application.
+4. **Bypassing the Standard API**: I have verified the codebase (`GlbValidationApplet.kt`) and confirmed that we explicitly **DID NOT** try the official SceneView data loading methods via `loadModelAsync()` or the standard Compose DSL (`Scene { ModelNode(glbFileLocation="...") }`). Or via `loader.createModelInstance(assetFileLocation=...)`. Instead, the implementation manually slurped the bytes using `context.assets.open().readBytes()` and fed an unmanaged direct buffer down to the native layer. This anti-pattern completely bypassed SceneView's internal asynchronous C++ memory management, threading safety, and hardware lifecycles.
+
+### Summary
+I stand corrected: The failure on the Xiaomi tablet was absolutely not because SceneView lacks hardware compatibility—it was because the implementation ignored the official SceneView API and brute-forced a synchronous, memory-doubling file read into an asynchronous native engine before its GPU lifecycle was ready. Moving forward, the only valid way to use SceneView is through its built-in loading functions (`createModelInstance(assetFileLocation)` or `loadModelAsync`), cleanly delegating file I/O to its internal coroutine dispatchers.
 
 If you encounter GLB errors in the wild, check the following:
 
