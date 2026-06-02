@@ -83,7 +83,9 @@ dependencies {
     // Google ML Kit Barcode/QR Scanning SDK
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
 
-    // Icons - REMOVED heavy material-icons-extended as it is not used and causes OOM
+    // Compose Material Icons Support (Fully supported via increased Gradle JVM Memory daemon allocations)
+    implementation 'androidx.compose.material:material-icons-core'
+    implementation 'androidx.compose.material:material-icons-extended'
     implementation "androidx.navigation:navigation-compose:2.7.7"
     implementation "io.coil-kt:coil-compose:2.6.0"
     implementation "androidx.datastore:datastore-preferences:1.1.1"
