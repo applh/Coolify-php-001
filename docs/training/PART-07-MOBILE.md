@@ -744,5 +744,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 119. GLB Validation Default Model Upgrades & Asset Mapping Redirection (5h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/world/WorldScreen.kt`
+- **Goal**: Master the management of 3D asset resource configurations, default model bindings, and dynamic URL/filename mapping criteria inside complex virtual maps or interactive scene validation loaders in Jetpack Compose.
+- **Exercise**: Explore the updated `GlbValidationApplet.kt` where the default model loading target has been seamlessly updated to `"models/downloaded.glb"`. Implement a custom fallback sequence where the application attempts to load a localized, freshly downloaded GLB file first, gracefully falling back to legacy fallback robot GLBs if the primary asset is absent or corrupted.
+- **Complexity**: Part 2
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

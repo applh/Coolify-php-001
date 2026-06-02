@@ -231,7 +231,7 @@ class GlbValidationApplet : Applet {
     ) {
         val engine = rememberEngine()
         val modelLoader = rememberModelLoader(engine)
-        val model = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
+        val model = rememberModelInstance(modelLoader, "models/downloaded.glb")
         val mainLightNode = rememberMainLightNode(engine)
         
         var rotationY by remember { mutableStateOf(0f) }
@@ -275,7 +275,7 @@ class GlbValidationApplet : Applet {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "TARGET: robot_expressive.glb (SceneView 4.17.0)",
+                    text = "TARGET: downloaded.glb (SceneView 4.17.0)",
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -291,7 +291,7 @@ class GlbValidationApplet : Applet {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (model != null) "Success! Model Loaded." else "Loading local robot GLB...",
+                        text = if (model != null) "Success! Model Loaded." else "Loading local downloaded GLB...",
                         color = Color.LightGray,
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace

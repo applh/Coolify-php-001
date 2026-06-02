@@ -569,6 +569,7 @@ fun Globe3DInteractiveBox(
                 glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
                 glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
                 glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "models/robot_expressive.glb"
+                glbModelUrl.contains("downloaded.glb") || glbModelUrl.contains("download.glb") || glbModelUrl.contains("downloaded") || glbModelUrl.contains("download") -> "models/downloaded.glb"
                 else -> glbModelUrl
             }
         }
