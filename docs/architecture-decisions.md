@@ -499,6 +499,10 @@ When deploying the `repo-android` folder as a dedicated container in Coolify, th
    - **Choice**: Render the onboarding install QR Code dynamically in the container front-end dashboard utilizing the lightweight, highly popular `qrious` library pulled from a CDN. The library is initialized with the current page's origin (`window.location.origin + '/download'`).
    - **Reason**: Eliminates any hardcoded server IP, domain configuration, or server-side canvas generation requirements. The installer QR works instantly on mobile devices, regardless of whether it is hosted on a local address or behind a complex public Coolify reverse proxy.
 
+4. **Dynamic Timestamping of Served APK Builds (`fraise-YYmmdd-His.apk`)**
+   - **Choice**: Implemented dynamic file modification stats queries (`fs.statSync` and `fs.promises.stat`) on the compiled APK on both the companion build server (`/repo-android/server.js`) and the main Node proxy (`/server.ts`).
+   - **Reason**: Translates the raw build timestamp into a clean, human-readable format, allowing developers to distinguish between sequential APK revisions instantly on download. The client-side download button updates dynamically to state the precise filename when an active compiled APK is ready, providing excellent user feedback.
+
 
 
 

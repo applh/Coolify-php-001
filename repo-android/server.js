@@ -10,6 +10,27 @@ const __dirname = path.dirname(__filename);
 const PORT = 3000;
 const APK_RELATIVE_PATH = path.join('app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
 
+// Helper to format the downloaded filename with timestamp
+function getFormattedFilename() {
+  const apkFullPath = path.join(process.cwd(), APK_RELATIVE_PATH);
+  try {
+    if (fs.existsSync(apkFullPath)) {
+      const stats = fs.statSync(apkFullPath);
+      const date = stats.mtime;
+      const YY = String(date.getFullYear()).slice(-2);
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const H = String(date.getHours()).padStart(2, '0');
+      const M = String(date.getMinutes()).padStart(2, '0');
+      const S = String(date.getSeconds()).padStart(2, '0');
+      return `fraise-${YY}${mm}${dd}-${H}${M}${S}.apk`;
+    }
+  } catch (err) {
+    // Ignore error and fall through to default fallback
+  }
+  return 'fraise-app.apk';
+}
+
 // In-Memory state
 let buildState = {
   status: 'idle', // 'idle' | 'building' | 'success' | 'failed'
@@ -75,7 +96,8 @@ function broadcastState() {
       startTime: buildState.startTime,
       endTime: buildState.endTime,
       error: buildState.error,
-      apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH))
+      apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH)),
+      filename: getFormattedFilename()
     }
   });
   logSubscribers.forEach(res => {
@@ -147,9 +169,10 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/download') {
     const apkFullPath = path.join(process.cwd(), APK_RELATIVE_PATH);
     if (fs.existsSync(apkFullPath)) {
+      const filename = getFormattedFilename();
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Disposition': 'attachment; filename="app-debug.apk"',
+        'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store, no-cache, must-revalidate, private'
       });
       const fileStream = fs.createReadStream(apkFullPath);
@@ -182,7 +205,8 @@ const server = http.createServer((req, res) => {
       startTime: buildState.startTime,
       endTime: buildState.endTime,
       error: buildState.error,
-      apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH))
+      apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH)),
+      filename: getFormattedFilename()
     }));
     return;
   }
@@ -205,7 +229,8 @@ const server = http.createServer((req, res) => {
         endTime: buildState.endTime,
         error: buildState.error,
         logs: buildState.logs,
-        apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH))
+        apkExists: fs.existsSync(path.join(process.cwd(), APK_RELATIVE_PATH)),
+        filename: getFormattedFilename()
       }
     })}\n\n`);
 
@@ -400,10 +425,11 @@ const server = http.createServer((req, res) => {
       }
     }
 
-    function updateInstaller(apkExists) {
+    function updateInstaller(apkExists, filename) {
       if (apkExists) {
         btnDownload.className = "w-full text-center bg-teal-600 hover:bg-teal-500 text-zinc-950 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-teal-500/10 cursor-pointer block";
         btnDownload.style.pointerEvents = "auto";
+        btnDownload.textContent = filename ? `Download ${filename}` : "Download app.apk";
         qrCanvas.style.opacity = "1";
         qrLockout.classList.add('hidden');
         
@@ -420,6 +446,7 @@ const server = http.createServer((req, res) => {
       } else {
         btnDownload.className = "w-full text-center bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold py-2.5 px-4 rounded-lg transition duration-200 pointer-events-none";
         btnDownload.style.pointerEvents = "none";
+        btnDownload.textContent = "Download app.apk";
         qrCanvas.style.opacity = "0.3";
         qrLockout.classList.remove('hidden');
       }
@@ -447,7 +474,7 @@ const server = http.createServer((req, res) => {
 
         if (type === 'init') {
           updateBadge(data.status);
-          updateInstaller(data.apkExists);
+          updateInstaller(data.apkExists, data.filename);
           startTimeEl.textContent = data.startTime ? new Date(data.startTime).toLocaleTimeString() : '-';
           endTimeEl.textContent = data.endTime ? new Date(data.endTime).toLocaleTimeString() : '-';
           
@@ -459,7 +486,7 @@ const server = http.createServer((req, res) => {
           }
         } else if (type === 'state') {
           updateBadge(data.status);
-          updateInstaller(data.apkExists);
+          updateInstaller(data.apkExists, data.filename);
           startTimeEl.textContent = data.startTime ? new Date(data.startTime).toLocaleTimeString() : '-';
           endTimeEl.textContent = data.endTime ? new Date(data.endTime).toLocaleTimeString() : '-';
         } else if (type === 'log') {

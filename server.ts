@@ -760,8 +760,17 @@ Layout::footer();
   app.get('/api/android/download', async (req, res) => {
     const apkPath = path.join(rootDir, 'repo-android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
     try {
-      await fs.access(apkPath);
-      res.download(apkPath, 'CameraXApp-debug.apk');
+      const stats = await fs.stat(apkPath);
+      const date = stats.mtime;
+      const YY = String(date.getFullYear()).slice(-2);
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const H = String(date.getHours()).padStart(2, '0');
+      const M = String(date.getMinutes()).padStart(2, '0');
+      const S = String(date.getSeconds()).padStart(2, '0');
+      const filename = `fraise-${YY}${mm}${dd}-${H}${M}${S}.apk`;
+      
+      res.download(apkPath, filename);
     } catch {
       res.status(404).json({ error: 'APK build not found. Please run build in repo-android.' });
     }
