@@ -38,6 +38,12 @@ Deep dive into the heart of the CMS: PHP MVC, Plugins, and Database Design.
 - **Exercise**: Rewrite `/repo-php/class/DB.php` to parse `DB_DRIVER` and dynamically build PDO connections for PostgreSQL or SQLite. Implement `DatabaseMigrator::initTables()` to automatically instantiate correct sequences, constraints, and timestamps for both engines. Create a local testing suite using a Docker Compose sandbox to verify integration with both drivers.
 - **Complexity**: Part 5
 
+### 5. Multi-Stack 3D GLB Byte-Level Validation (30h)
+**Reference**: `/server.ts` & `/src/views/GlbValidator.vue`
+- **Goal**: Master binary file format parsing at the byte level, identifying magic headers, and validating file sizes on disk against metadata declared within stream headers.
+- **Exercise**: Create an automated scan service that reads the first 12 bytes of uploaded GLB files, checks for the `"glTF"` ASCII string, and compares the declared LE uint32 file size at byte offset 8 with the physical stat size of the file on disk. Write a routing test that safely cleans truncated and corrupted files from multi-stack asset folders (like `/repo-android/app/src/main/assets/models/`).
+- **Complexity**: Part 5
+
 ## Recommended Reading
 - `docs/backend/php-mvc-architecture.md`
 - `docs/backend/php-cms-architecture.md`

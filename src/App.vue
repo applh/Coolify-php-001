@@ -1,14 +1,52 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
-import { Unlock, AlertCircle, Loader2 } from 'lucide-vue-next';
+import { 
+  Unlock, 
+  AlertCircle, 
+  Loader2,
+  LayoutDashboard as DashboardIcon,
+  Search as ExplorerIcon,
+  Clapperboard as MediaQueueIcon,
+  Users as TeamsIcon,
+  BarChart3 as ChartIcon,
+  RefreshCcw as SyncIcon,
+  Boxes as GlbIcon,
+  Library as TrainingIcon,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-vue-next';
 
 const isAuthenticated = ref(false);
 const passkey = ref('');
 const error = ref('');
 const isLoading = ref(false);
 const isChecking = ref(true);
+const isDrawerExpanded = ref(true);
+
+const route = useRoute();
+
+const toggleDrawer = () => {
+  isDrawerExpanded.value = !isDrawerExpanded.value;
+};
+
+const navItems = [
+  { name: 'Dashboard', path: '/', icon: DashboardIcon },
+  { name: 'Explorer', path: '/explorer', icon: ExplorerIcon },
+  { name: 'AI Media', path: '/ai-media', icon: MediaQueueIcon },
+  { name: 'Agent Teams', path: '/agent-teams', icon: TeamsIcon },
+  { name: 'Benchmarks', path: '/benchmark', icon: ChartIcon },
+  { name: 'Sync', path: '/sync', icon: SyncIcon },
+  { name: '3D GLB', path: '/glb-validator', icon: GlbIcon },
+  { name: 'Training', path: '/training', icon: TrainingIcon, highlight: true },
+];
+
+const isActive = (path: string) => {
+  if (path === '/') return route?.path === '/';
+  return route?.path?.startsWith(path);
+};
 
 const verifyPasskey = async (p: string) => {
   isLoading.value = true;
@@ -153,18 +191,103 @@ const handleLogin = () => {
     <template v-else>
       <AppHeader />
       
-      <main class="flex-grow">
-        <router-view v-slot="{ Component }">
-          <transition
-            name="page"
-            mode="out-in"
-          >
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </main>
+      <div class="flex flex-1 relative min-h-0 w-full">
+        <!-- Navigation Drawer (Left Side) - Responsive Sidebar -->
+        <aside 
+          class="bg-[#0D0D0D] border-r border-white/5 transition-all duration-300 flex flex-col z-30 shrink-0 select-none relative"
+          :class="isDrawerExpanded ? 'w-64' : 'w-16'"
+        >
+          <!-- Accent glow -->
+          <div class="absolute -bottom-12 -left-12 w-24 h-24 bg-red-500/5 blur-2xl rounded-full pointer-events-none" />
 
-      <AppFooter />
+          <!-- Drawer Navigation Items -->
+          <div class="flex-grow py-6 space-y-1 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
+            <router-link
+              v-for="item in navItems"
+              :key="item.path"
+              :to="item.path"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all relative group border"
+              :class="[
+                isActive(item.path) 
+                  ? 'bg-red-500/10 text-[#FF3B30] border-red-500/20 shadow-md shadow-red-950/10' 
+                  : 'text-white/40 hover:text-white hover:bg-white/5 border-transparent hover:border-white/5'
+              ]"
+              :title="!isDrawerExpanded ? item.name : undefined"
+            >
+              <component
+                :is="item.icon"
+                class="w-4 h-4 shrink-0 transition-transform duration-300 group-hover:scale-110"
+                :class="isActive(item.path) ? 'text-[#FF3B30]' : 'text-neutral-400 group-hover:text-white'"
+              />
+              <span 
+                v-if="isDrawerExpanded"
+                class="truncate transition-opacity duration-300 whitespace-nowrap"
+              >
+                {{ item.name }}
+              </span>
+              
+              <!-- Hover custom tooltip if collapsed -->
+              <span 
+                v-if="!isDrawerExpanded"
+                class="absolute left-14 scale-0 group-hover:scale-100 bg-[#161616] border border-white/10 text-white text-[10px] uppercase tracking-wider font-bold py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl pointer-events-none z-50 whitespace-nowrap"
+              >
+                {{ item.name }}
+              </span>
+            </router-link>
+          </div>
+
+          <!-- Drawer Collapse/Expand Toggle Footer -->
+          <div class="p-3 border-t border-white/5 flex justify-center">
+            <button
+              @click="toggleDrawer"
+              class="w-10 h-10 rounded-xl bg-[#161616] hover:bg-[#202020] border border-white/5 flex items-center justify-center text-white/50 hover:text-white transition-all shadow-inner cursor-pointer animate-none"
+              :title="isDrawerExpanded ? 'Collapse Menu' : 'Expand Menu'"
+            >
+              <component :is="isDrawerExpanded ? ChevronLeft : ChevronRight" class="w-4 h-4" />
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-grow flex flex-col relative min-w-0">
+          <main class="flex-grow min-w-0">
+            <router-view v-slot="{ Component }">
+              <transition
+                name="page"
+                mode="out-in"
+              >
+                <component :is="Component" />
+              </transition>
+            </router-view>
+          </main>
+
+          <AppFooter />
+        </div>
+
+        <!-- Vertical Floating Menu Bar (Right Side) -->
+        <div class="fixed right-6 bottom-24 z-50 flex flex-col items-center select-none pointer-events-none">
+          <div class="bg-[#111111]/80 backdrop-blur-md border border-white/10 p-2 rounded-2xl flex flex-col gap-2 shadow-2xl shadow-black pointer-events-auto">
+            <router-link
+              v-for="item in navItems"
+              :key="'floating-' + item.path"
+              :to="item.path"
+              class="w-10 h-10 rounded-xl flex items-center justify-center transition-all relative group border"
+              :class="[
+                isActive(item.path)
+                  ? 'bg-[#FF3B30] border-[#FF3B30] text-white shadow-lg shadow-red-900/30'
+                  : 'bg-[#181818] border-white/5 text-white/40 hover:text-white hover:border-white/10 hover:bg-[#242424]'
+              ]"
+            >
+              <component :is="item.icon" class="w-4 h-4" />
+              
+              <!-- Left tooltip on hover -->
+              <span class="absolute right-14 scale-0 group-hover:scale-100 bg-[#161616] border border-white/10 text-white text-[9px] uppercase tracking-widest font-black py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl pointer-events-none whitespace-nowrap z-50">
+                {{ item.name }}
+              </span>
+            </router-link>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>

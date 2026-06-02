@@ -1056,6 +1056,125 @@ Layout::footer();
     }
   });
 
+  interface GlbFileRecord {
+    name: string;
+    relPath: string;
+    actualSize: number;
+    modifiedAt: string;
+    magicMatches: boolean;
+    version: number;
+    declaredLength: number;
+    declaredSizeMatchesActual: boolean;
+    isValidGLB: boolean;
+    errorMessage: string;
+    headerHex: string;
+  }
+
+  // GLB Scanning and Byte-level Validation Endpoint
+  async function findGLBFilesRecursively(dir: string, baseDir: string): Promise<GlbFileRecord[]> {
+    const glbs: GlbFileRecord[] = [];
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist' || entry.name.startsWith('import-tmp')) {
+            continue;
+          }
+          const subGlbs = await findGLBFilesRecursively(fullPath, baseDir);
+          glbs.push(...subGlbs);
+        } else if (entry.name.toLowerCase().endsWith('.glb')) {
+          const stats = await fs.stat(fullPath);
+          const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+          
+          let magicMatches = false;
+          let version = 0;
+          let declaredLength = 0;
+          let declaredSizeMatchesActual = false;
+          let isValidGLB = false;
+          let errorMessage = '';
+          let headerHex = '';
+          
+          try {
+            const fd = await fs.open(fullPath, 'r');
+            const buffer = Buffer.alloc(12);
+            const { bytesRead } = await fd.read(buffer, 0, 12, 0);
+            await fd.close();
+            
+            if (bytesRead < 12) {
+              errorMessage = `Truncated file: read only ${bytesRead} bytes instead of 12-byte header.`;
+            } else {
+              headerHex = buffer.toString('hex', 0, 12);
+              const magicStr = buffer.toString('ascii', 0, 4);
+              magicMatches = (magicStr === 'glTF');
+              version = buffer.readUInt32LE(4);
+              declaredLength = buffer.readUInt32LE(8);
+              
+              if (!magicMatches) {
+                errorMessage = `Invalid magic header: Expected 'glTF', got '${magicStr.replace(/[^ -~]/g, '?')}' (Hex: ${buffer.toString('hex', 0, 4)})`;
+              } else if (version !== 2) {
+                errorMessage = `Unsupported GLB version: Expected 2, got ${version}`;
+              } else if (declaredLength !== stats.size) {
+                errorMessage = `Corrupted length: Declared size ${declaredLength} bytes but file size on disk is ${stats.size} bytes.`;
+              } else {
+                isValidGLB = true;
+              }
+              declaredSizeMatchesActual = (declaredLength === stats.size);
+            }
+          } catch (err: unknown) {
+            errorMessage = `Failed to read file headers: ${err instanceof Error ? err.message : String(err)}`;
+          }
+          
+          glbs.push({
+            name: entry.name,
+            relPath,
+            actualSize: stats.size,
+            modifiedAt: stats.mtime.toISOString(),
+            magicMatches,
+            version,
+            declaredLength,
+            declaredSizeMatchesActual,
+            isValidGLB,
+            errorMessage,
+            headerHex
+          });
+        }
+      }
+    } catch (err) {
+      console.error(`Error reading directory ${dir}:`, err);
+    }
+    return glbs;
+  }
+
+  app.get('/api/glb/list', async (req, res) => {
+    try {
+      const glbs = await findGLBFilesRecursively(rootDir, rootDir);
+      res.json({ success: true, glbs });
+    } catch (err: unknown) {
+      res.status(500).json({ error: 'Failed to scan GLB files: ' + (err instanceof Error ? err.message : String(err)) });
+    }
+  });
+
+  app.get('/api/glb/raw', async (req, res) => {
+    try {
+      const relPath = String(req.query.path || '');
+      if (!relPath || relPath.includes('..')) {
+        return res.status(403).json({ error: 'Access denied: Invalid path segment' });
+      }
+      
+      const fullPath = path.join(rootDir, relPath);
+      if (!fullPath.startsWith(rootDir)) {
+        return res.status(403).json({ error: 'Access denied: Out of workspace scope' });
+      }
+      
+      await fs.access(fullPath);
+      res.setHeader('Content-Type', 'model/gltf-binary');
+      res.sendFile(fullPath);
+    } catch (err: unknown) {
+      res.status(404).send('GLB file not found: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  });
+
   // Frontend routes
   console.log(`Starting frontend in ${isProd ? 'production' : 'development'} mode`);
   if (!isProd) {

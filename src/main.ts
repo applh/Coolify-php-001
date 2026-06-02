@@ -9,6 +9,7 @@ import SiteBenchmarker from './views/SiteBenchmarker.vue';
 import SyncState from './views/SyncState.vue';
 import TrainingCenter from './views/TrainingCenter.vue';
 import AgentTeams from './views/AgentTeams.vue';
+import GlbValidator from './views/GlbValidator.vue';
 import './style.css';
 
 // Global Fetch Override for Admin Protection
@@ -43,6 +44,7 @@ const router = createRouter({
     { path: '/benchmark', component: SiteBenchmarker },
     { path: '/sync', component: SyncState },
     { path: '/training', component: TrainingCenter },
+    { path: '/glb-validator', component: GlbValidator },
   ],
 });
 

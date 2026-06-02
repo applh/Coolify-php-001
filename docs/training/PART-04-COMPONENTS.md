@@ -35,5 +35,14 @@ Build reusable, accessible, and high-performance component libraries.
 - **Step 3**: Replace the raw inputs in `SiteExplorer.vue` with your new `BaseInput.vue`.
 **Complexity**: Part 2 (Design & Reactivity)
 
+### 4. Interactive 3D Model Render Validation (15h) 🍓 NEW
+**Goal**: Learn how standard client-side error parsing works in WebGL applications, how to validate binary data streams at the byte level, and integrate `<model-viewer>` component-driven overlays.
+**Reference**: `/server.ts`, `/index.html`, `/src/views/GlbValidator.vue`
+**Exercise**:
+- **Step 1**: Analyze the recursive file scanner in `server.ts` that checks the first 12 bytes of `.glb` files for file signatures (`glTF` magic hex and v2 version markers).
+- **Step 2**: Study how `<model-viewer>` is registered as an imported element in `index.html` and bound in `GlbValidator.vue` using active reactivity parameters (spin, zoom, poster states).
+- **Step 3**: Implement a quick search or metadata detail drawer on mobile states or add a color picker to change the background environment map of the 3D viewer dynamically.
+**Complexity**: Part 4 (Components & Integrations)
+
 ## Recommended Reading
 - `docs/frontend/admin-component-reference.md`

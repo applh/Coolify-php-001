@@ -9,7 +9,8 @@ import {
   LayoutDashboard as DashboardIcon,
   Clapperboard as MediaQueueIcon,
   Users as TeamsIcon,
-  LogOut as LogoutIcon
+  LogOut as LogoutIcon,
+  Boxes as GlbIcon
 } from 'lucide-vue-next';
 import BaseModal from './BaseModal.vue';
 import BaseButton from './BaseButton.vue';
@@ -33,6 +34,7 @@ const navItems = [
   { name: 'Agent Teams', path: '/agent-teams', icon: TeamsIcon },
   { name: 'Benchmarks', path: '/benchmark', icon: ChartIcon },
   { name: 'Sync', path: '/sync', icon: SyncIcon },
+  { name: '3D GLB', path: '/glb-validator', icon: GlbIcon },
   { name: 'Training', path: '/training', icon: TrainingIcon, highlight: true },
 ];
 
