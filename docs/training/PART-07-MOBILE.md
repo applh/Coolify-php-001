@@ -695,5 +695,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 112. Force Standard Library Alignment and Skip Kotlin Metadata Version Inspections (10h) 🍓 NEW
+- **Reference**: `repo-android/app/build.gradle`
+- **Goal**: Master the advanced application of Kotlin Gradle Plugin (KGP) compilation arguments and Gradle resolution strategies to resolve forward-compatibility metadata issues. Understand when and why to override transitive compiler version upgrades (like bypassing `2.3.0` metadata via `-Xskip-metadata-version-check`) and force localized stdlib version alignments (`2.1.20`) inside multi-stack workspaces.
+- **Exercise**: Create a custom configuration rule inside `build.gradle` that programmatically appends the skip-metadata compiler argument only if the target build variant uses external dependencies compiled with mismatched pre-release compiler channels.
+- **Complexity**: Part 4
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

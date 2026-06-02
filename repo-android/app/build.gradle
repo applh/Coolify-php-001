@@ -34,6 +34,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = '17'
+        freeCompilerArgs += ["-Xskip-metadata-version-check"]
     }
     buildFeatures {
         compose true
@@ -48,6 +49,9 @@ android {
         resolutionStrategy {
             force 'androidx.core:core-ktx:1.15.0'
             force 'androidx.core:core:1.15.0'
+            force 'org.jetbrains.kotlin:kotlin-stdlib:2.1.20'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20'
         }
     }
 }
@@ -111,4 +115,10 @@ dependencies {
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += ["-Xskip-metadata-version-check"]
+    }
 }
