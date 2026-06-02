@@ -123,15 +123,28 @@ class GlbValidationApplet : Applet {
                     val assetPath = "models/robot_expressive.glb"
                     AppLogger.d("GlbValidation", "Background Thread: Validating local GLB model: $assetPath")
                     
-                    val bytes = context.assets.open(assetPath)
-                    val glbData = com.example.cameraxapp.core.math3d.GLBLoader.parse(bytes)
+                    val bytes = context.assets.open(assetPath).readBytes()
+                    val buffer = java.nio.ByteBuffer.wrap(bytes)
+                    val model = loader.createModel(buffer)
+                    val modelInstance = model?.let { loader.createInstance(it) }
                     
                     launch(Dispatchers.Main) {
                         try {
-                            loadingStatus = "Success! JSON Found: ${glbData.json.length} bytes"
-                            AppLogger.i("GlbValidation", "Parsed GLB JSON Length: ${glbData.json.length}")
-                            AppLogger.i("GlbValidation", "JSON Preview: ${glbData.json.take(200)}...")
-                            modelNodeRef = null // No longer using SceneView due to corruption
+                            if (modelInstance != null) {
+                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
+                                    transform = io.github.sceneview.math.Transform(
+                                        position = io.github.sceneview.math.Position(x = 0f, y = -0.5f, z = -2.0f)
+                                    )
+                                    scale = io.github.sceneview.math.Scale(scaleState)
+                                }
+                                view.addChildNode(modelNode)
+                                modelNodeRef = modelNode
+                                loadingStatus = "Success! Model Loaded."
+                                AppLogger.i("GlbValidation", "Model successfully loaded and added to scene.")
+                            } else {
+                                loadingStatus = "Error: modelInstance is null"
+                                AppLogger.e("GlbValidation", "Error creating model instance")
+                            }
                         } catch (e2: Exception) {
                             AppLogger.e("GlbValidation", "Main thread error: ${e2.message}", e2)
                             loadingStatus = "Display Error: ${e2.message}"
@@ -212,11 +225,14 @@ class GlbValidationApplet : Applet {
                                 onAutoRotateToggle = { autoRotateState = !autoRotateState }
                             ) {
                                 modelNodeRef?.let { node ->
-                                    node.rotation = io.github.sceneview.math.Rotation(
-                                        x = node.rotation.x,
-                                        y = (node.rotation.y + 0.8f) % 360f,
-                                        z = node.rotation.z
-                                    )
+                                    node.scale = io.github.sceneview.math.Scale(scaleState)
+                                    if (autoRotateState) {
+                                        node.rotation = io.github.sceneview.math.Rotation(
+                                            x = node.rotation.x,
+                                            y = (node.rotation.y + 0.8f) % 360f,
+                                            z = node.rotation.z
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -270,11 +286,14 @@ class GlbValidationApplet : Applet {
                                 onAutoRotateToggle = { autoRotateState = !autoRotateState }
                             ) {
                                 modelNodeRef?.let { node ->
-                                    node.rotation = io.github.sceneview.math.Rotation(
-                                        x = node.rotation.x,
-                                        y = (node.rotation.y + 1.2f) % 360f,
-                                        z = node.rotation.z
-                                    )
+                                    node.scale = io.github.sceneview.math.Scale(scaleState)
+                                    if (autoRotateState) {
+                                        node.rotation = io.github.sceneview.math.Rotation(
+                                            x = node.rotation.x,
+                                            y = (node.rotation.y + 1.2f) % 360f,
+                                            z = node.rotation.z
+                                        )
+                                    }
                                 }
                             }
                         }
