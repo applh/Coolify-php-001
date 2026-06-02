@@ -132,7 +132,7 @@ class GlbValidationApplet : Applet {
                     if (modelInstance == null) {
                         launch(Dispatchers.Main) {
                             loadingStatus = "Failure: Instance creation failed."
-                            AppLogger.e("GlbValidation", "SceneView failed to instantiate model instance of $resolvedPath")
+                            AppLogger.e("GlbValidation", "SceneView failed to instantiate model instance of $assetPath")
                         }
                         return@launch
                     }
