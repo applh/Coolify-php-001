@@ -270,7 +270,7 @@ class GlbValidationApplet : Applet {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "TARGET: robot_expressive.glb (SceneView 4.16.10)",
+                    text = "TARGET: robot_expressive.glb (SceneView 4.17.0)",
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
