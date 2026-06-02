@@ -1675,11 +1675,8 @@ fun MoriaBenchmarkViewport(
     ) {
         if (useSceneviewEngine) {
             // Render Sceneview 3D Loader
-            androidx.compose.ui.viewinterop.AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx)
-                }
+            io.github.sceneview.SceneView(
+                modifier = Modifier.fillMaxSize()
             )
 
             if (isLoadingModels) {

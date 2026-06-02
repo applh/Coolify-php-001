@@ -623,9 +623,7 @@ fun HubScreen(
                     val itemModifier = if (dragging) {
                         Modifier
                     } else {
-                        @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-                        @Suppress("DEPRECATION")
-                        Modifier.animateItemPlacement()
+                        Modifier.animateItem()
                     }
 
                     CircularAppletCard(

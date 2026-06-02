@@ -250,14 +250,9 @@ class GlbValidationApplet : Applet {
                 model?.let {
                     ModelNode(
                         modelInstance = it,
-                        scaleToUnits = scaleState
-                    ).apply {
-                        if (autoRotateState) {
-                            rotation = Rotation(x = rotation.x, y = rotationY, z = rotation.z)
-                        } else {
-                            rotation = Rotation(x = rotation.x, y = rotationY, z = rotation.z)
-                        }
-                    }
+                        scaleToUnits = scaleState,
+                        rotation = Rotation(x = 0f, y = rotationY, z = 0f)
+                    )
                 }
             }
 

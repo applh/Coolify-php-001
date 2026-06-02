@@ -2788,11 +2788,8 @@ fun BlackjackBenchmarkViewport(
     Box(modifier = modifier) {
         if (useSceneview) {
             // Render Sceneview 3D Loader
-            androidx.compose.ui.viewinterop.AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx)
-                }
+            io.github.sceneview.SceneView(
+                modifier = Modifier.fillMaxSize()
             )
 
             // Dynamic HUD Performance indicator

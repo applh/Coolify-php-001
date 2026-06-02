@@ -581,11 +581,8 @@ fun Globe3DInteractiveBox(
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.ui.viewinterop.AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx)
-                }
+            io.github.sceneview.SceneView(
+                modifier = Modifier.fillMaxSize()
             )
 
             // Render HUD overlay indication that Sceneview Active
