@@ -338,37 +338,43 @@ class GlbValidationApplet : Applet {
         scaleState: Float,
         autoRotateState: Boolean,
         isLoaded: Boolean,
-        sceneViewRef: io.github.sceneview.SceneView?,
-        onSceneViewReady: (io.github.sceneview.SceneView) -> Unit,
+        sceneViewRef: Any?,
+        onSceneViewReady: (Any) -> Unit,
         onScaleChanged: (Float) -> Unit,
         onAutoRotateToggle: () -> Unit,
         onFrameUpdate: () -> Unit
     ) {
-        val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        val context = LocalContext.current
         Box(modifier = modifier.background(Color(0xFF121214))) {
-            // Android view loading the physical Filament engine
-            AndroidView(
+            io.github.sceneview.SceneView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    AppLogger.d("GlbValidation", "Instantiating io.github.sceneview.SceneView factory...")
-                    io.github.sceneview.SceneView(ctx).also {
-                        try {
-                            // In many versions of SceneView, we need to bind lifecycle
-                            // Just a guess if there's a setter:
-                            it.javaClass.methods.find { m -> m.name == "setLifecycleOwner" }?.invoke(it, lifecycleOwner)
-                        } catch (e: Exception) {
-                           AppLogger.d("GlbValidation", "No setLifecycleOwner method found")
+                childNodes = remember {
+                    listOf(
+                        io.github.sceneview.node.ModelNode(
+                            context = context,
+                            glbFileLocation = "models/robot_expressive.glb",
+                            autoAnimate = true,
+                            scaleToUnits = 1.0f,
+                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
+                        ).apply {
+                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.8f)
+                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                            playAnimation(0)
                         }
-                        onSceneViewReady(it)
-                    }
+                    )
                 },
-                update = { view ->
-                    try {
-                        view.onFrame = { _ ->
-                            onFrameUpdate()
+                onFrame = { frame ->
+                    childNodes.forEach { node ->
+                        if (node is io.github.sceneview.node.ModelNode) {
+                            node.scale = io.github.sceneview.math.Scale(scaleState)
+                            if (autoRotateState) {
+                                node.rotation = io.github.sceneview.math.Rotation(
+                                    x = node.rotation.x,
+                                    y = (node.rotation.y + 0.8f) % 360f,
+                                    z = node.rotation.z
+                                )
+                            }
                         }
-                    } catch (e: Exception) {
-                        AppLogger.e("GlbValidation", "Exception in SceneView frame callback: ${e.message}")
                     }
                 }
             )

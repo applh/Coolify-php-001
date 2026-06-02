@@ -2783,123 +2783,37 @@ fun BlackjackBenchmarkViewport(
     modifier: Modifier = Modifier
 ) {
     var useSceneview by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
-    var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
-
-    LaunchedEffect(sceneViewRef) {
-        val view = sceneViewRef ?: run {
-            AppLogger.w("SceneViewDebug", "[Blackjack] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
-            return@LaunchedEffect
-        }
-        
-        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: Waiting for view.isAttachedToWindow...")
-        while (!view.isAttachedToWindow) {
-            delay(100)
-        }
-        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
-        delay(300)
-
-        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
-        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
-        try {
-            modelLoaderRefTemp = view.modelLoader
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[Blackjack] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
-        }
-
-        val loader = modelLoaderRefTemp ?: run {
-            AppLogger.e("SceneViewDebug", "[Blackjack] Critical: modelLoader is null, aborting.")
-            return@LaunchedEffect
-        }
-
-        AppLogger.d("SceneViewDebug", "[Blackjack] LaunchedEffect: Initiating 'models/Duck.glb' model node loading.")
-        
-        AppLogger.d("SceneViewDebug", "[Blackjack] Cleaning existing children nodes. Present count: ${view.childNodes.size}")
-        try {
-            view.childNodes.toMutableList().forEach { 
-                AppLogger.d("SceneViewDebug", "[Blackjack] Removing node: $it")
-                view.removeChildNode(it) 
-            }
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[Blackjack] Error during node cleaning: ${e.message}", e)
-        }
-        modelNodeRef = null
-
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Starting ModelLoader.createModel for models/Duck.glb")
-                val model = loader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Duck.glb").readBytes()))
-                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createModel successfully compiled 'models/Duck.glb'.")
-                
-                AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: Calling createInstance")
-                val modelInstance = loader.createInstance(model)
-                if (modelInstance == null) {
-                    AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader failure: createInstance failed.")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[Blackjack] Background Loader: createInstance successfully created 3D model instance.")
-                }
-                
-                if (modelInstance != null) {
-                    launch(Dispatchers.Main) {
-                        try {
-                            AppLogger.d("SceneViewDebug", "[Blackjack] Main thread: Creating ModelNode.")
-                            val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
-                                rotation = io.github.sceneview.math.Rotation(y = 180f)
-                            }
-                            AppLogger.d("SceneViewDebug", "[Blackjack] Main thread: Calling view.addChildNode.")
-                            view.addChildNode(modelNode)
-                            modelNodeRef = modelNode
-                            AppLogger.i("SceneViewDebug", "[Blackjack] Success! 'models/Duck.glb' attached to Blackjack SceneView hierarchy at position (0, -0.4, -1.5).")
-                        } catch (e2: Exception) {
-                            AppLogger.e("SceneViewDebug", "[Blackjack] Main thread error attaching ModelNode: ${e2.message}", e2)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("SceneViewDebug", "[Blackjack] Background Loader thread exception: ${e.message}", e)
-                e.printStackTrace()
-            }
-        }
-    }
+    val context = LocalContext.current
 
     Box(modifier = modifier) {
         if (useSceneview) {
             // Render Sceneview 3D Loader
-            AndroidView(
+            io.github.sceneview.SceneView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    AppLogger.d("SceneViewDebug", "[Blackjack] AndroidView Factory: Creating new SceneView instance.")
-                    try {
-                        io.github.sceneview.SceneView(ctx).also {
-                            sceneViewRef = it
-                            AppLogger.i("SceneViewDebug", "[Blackjack] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
+                childNodes = remember {
+                    listOf(
+                        io.github.sceneview.node.ModelNode(
+                            context = context,
+                            glbFileLocation = "models/Duck.glb",
+                            autoAnimate = true,
+                            scaleToUnits = 1.0f,
+                            centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
+                        ).apply {
+                            position = io.github.sceneview.math.Position(0.0f, -0.4f, -1.5f)
+                            rotation = io.github.sceneview.math.Rotation(y = 180f)
+                            playAnimation(0)
                         }
-                    } catch (e: Exception) {
-                        AppLogger.e("SceneViewDebug", "[Blackjack] Exception inside AndroidView factory instantiation: ${e.message}", e)
-                        throw e
-                    }
+                    )
                 },
-                update = { view ->
-                    AppLogger.d("SceneViewDebug", "[Blackjack] AndroidView update handler triggered.")
-                    try {
-                        var frameCount = 0
-                        view.onFrame = { _ ->
-                            if (frameCount == 0 || frameCount % 120 == 0) {
-                                AppLogger.d("SceneViewDebug", "[Blackjack] onFrame ticker tick count = $frameCount. modelNodeRef loaded = ${modelNodeRef != null}")
-                            }
-                            frameCount++
-                            modelNodeRef?.let { node ->
-                                node.rotation = io.github.sceneview.math.Rotation(
-                                    x = node.rotation.x,
-                                    y = node.rotation.y + 0.6f,
-                                    z = node.rotation.z
-                                )
-                            }
+                onFrame = { frame ->
+                    childNodes.forEach { node ->
+                        if (node is io.github.sceneview.node.ModelNode) {
+                            node.rotation = io.github.sceneview.math.Rotation(
+                                x = node.rotation.x,
+                                y = node.rotation.y + 0.6f,
+                                z = node.rotation.z
+                            )
                         }
-                    } catch (e: Exception) {
-                        AppLogger.e("SceneViewDebug", "[Blackjack] Exception inside AndroidView update handler or onFrame handler: ${e.message}", e)
                     }
                 }
             )

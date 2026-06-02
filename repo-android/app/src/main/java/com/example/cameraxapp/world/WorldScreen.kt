@@ -561,101 +561,18 @@ fun Globe3DInteractiveBox(
     val context = LocalContext.current
     val outlineBorderColor = MaterialTheme.colorScheme.outlineVariant
     val gridLineColor = MaterialTheme.colorScheme.onSurfaceVariant
-    var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
-
-    LaunchedEffect(glbModelUrl, sceneViewRef) {
-        val view = sceneViewRef ?: run {
-            AppLogger.w("SceneViewDebug", "[World] LaunchedEffect: SceneViewRef is null. Still waiting for view initialization.")
-            return@LaunchedEffect
-        }
-        
-        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect: Waiting for view.isAttachedToWindow...")
-        while (!view.isAttachedToWindow) {
-            delay(100)
-        }
-        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
-        delay(300)
-
-        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
-        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
-        try {
-            modelLoaderRefTemp = view.modelLoader
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[World] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
-        }
-
-        val loader = modelLoaderRefTemp ?: run {
-            AppLogger.e("SceneViewDebug", "[World] Critical: modelLoader is null, aborting.")
-            return@LaunchedEffect
-        }
-
-        AppLogger.d("SceneViewDebug", "[World] LaunchedEffect triggered: glbModelUrl = $glbModelUrl")
-        
-        AppLogger.d("SceneViewDebug", "[World] Initiating node cleaning routine. Child count = ${view.childNodes.size}")
-        try {
-            view.childNodes.toMutableList().forEach { 
-                AppLogger.d("SceneViewDebug", "[World] Removing existing child node: $it")
-                view.removeChildNode(it) 
-            }
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[World] Error during node cleaning: ${e.message}", e)
-        }
-        modelNodeRef = null
-        
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                val resolvedPath = when {
-                    glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "models/Earth.glb"
-                    glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
-                    glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
-                    glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "models/robot_expressive.glb"
-                    else -> glbModelUrl
-                }
-                AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
-                
-                val model = if (resolvedPath.startsWith("models/")) {
-                    val bytes = view.context.assets.open(resolvedPath).readBytes()
-                    loader.createModel(java.nio.ByteBuffer.wrap(bytes))
-                } else {
-                    loader.createModel(resolvedPath)
-                }
-                AppLogger.d("SceneViewDebug", "[World] Background Loader: createModel successfully compiled asset structure.")
-                
-                AppLogger.d("SceneViewDebug", "[World] Background Loader: Starting ModelLoader.createInstance")
-                val modelInstance = loader.createInstance(model)
-                if (modelInstance == null) {
-                    AppLogger.e("SceneViewDebug", "[World] Background Loader failure: createInstance failed.")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[World] Background Loader: createInstance successfully created 3D instance.")
-                }
-                
-                if (modelInstance != null) {
-                    launch(Dispatchers.Main) {
-                        try {
-                            AppLogger.d("SceneViewDebug", "[World] Main thread: Creating ModelNode.")
-                            val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
-                                rotation = io.github.sceneview.math.Rotation(y = 180f)
-                            }
-                            AppLogger.d("SceneViewDebug", "[World] Main thread: Calling view.addChildNode.")
-                            view.addChildNode(modelNode)
-                            modelNodeRef = modelNode
-                            AppLogger.i("SceneViewDebug", "[World] Success! ModelNode successfully integrated into SceneView hierarchy at position (0, 0, -2).")
-                        } catch (e2: Exception) {
-                            AppLogger.e("SceneViewDebug", "[World] Main thread error attaching ModelNode: ${e2.message}", e2)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("SceneViewDebug", "[World] Background Loader crashed: ${e.message}", e)
-                e.printStackTrace()
-            }
-        }
-    }
 
     if (useSceneview) {
+        val resolvedPath = remember(glbModelUrl) {
+            when {
+                glbModelUrl.contains("Earth/glTF-Binary/Earth.glb") || glbModelUrl.contains("Earth.glb") -> "models/Earth.glb"
+                glbModelUrl.contains("DamagedHelmet/glTF-Binary/DamagedHelmet.glb") || glbModelUrl.contains("DamagedHelmet.glb") -> "models/DamagedHelmet.glb"
+                glbModelUrl.contains("WaterBottle/glTF-Binary/WaterBottle.glb") || glbModelUrl.contains("WaterBottle.glb") -> "models/WaterBottle.glb"
+                glbModelUrl.contains("robot_expressive.glb") || glbModelUrl.contains("robot_expressive") -> "models/robot_expressive.glb"
+                else -> glbModelUrl
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -664,41 +581,33 @@ fun Globe3DInteractiveBox(
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            AndroidView(
+            io.github.sceneview.SceneView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    AppLogger.d("SceneViewDebug", "[World] AndroidView Factory: Creating new SceneView instance.")
-                    try {
-                        io.github.sceneview.SceneView(ctx).also {
-                            sceneViewRef = it
-                            AppLogger.i("SceneViewDebug", "[World] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.e("SceneViewDebug", "[World] Exception inside AndroidView factory instantiation: ${e.message}", e)
-                        throw e
+                childNodes = remember(resolvedPath) {
+                    val mNode = io.github.sceneview.node.ModelNode(
+                        context = context,
+                        glbFileLocation = resolvedPath,
+                        autoAnimate = true,
+                        scaleToUnits = 1.0f,
+                        centerOrigin = io.github.sceneview.math.Position(0.0f, 0.0f, 0.0f)
+                    ).apply {
+                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -2.0f)
+                        rotation = io.github.sceneview.math.Rotation(y = 180f)
+                        playAnimation(0)
                     }
+                    listOf(mNode)
                 },
-                update = { view ->
-                    AppLogger.d("SceneViewDebug", "[World] AndroidView update handler triggered.")
-                    try {
-                        var frameCount = 0
-                        view.onFrame = { _ ->
-                            if (frameCount == 0 || frameCount % 120 == 0) {
-                                AppLogger.d("SceneViewDebug", "[World] onFrame ticker tick count = $frameCount. modelNodeRef loaded = ${modelNodeRef != null}")
-                            }
-                            frameCount++
-                            if (autoRotate) {
-                                modelNodeRef?.let { node ->
-                                    node.rotation = io.github.sceneview.math.Rotation(
-                                        x = node.rotation.x,
-                                        y = node.rotation.y + 0.8f,
-                                        z = node.rotation.z
-                                    )
-                                }
+                onFrame = { frame ->
+                    if (autoRotate) {
+                        childNodes.forEach { node ->
+                            if (node is io.github.sceneview.node.ModelNode) {
+                                node.rotation = io.github.sceneview.math.Rotation(
+                                    x = node.rotation.x,
+                                    y = node.rotation.y + 0.8f,
+                                    z = node.rotation.z
+                                )
                             }
                         }
-                    } catch (e: Exception) {
-                        AppLogger.e("SceneViewDebug", "[World] Exception inside AndroidView update handler or onFrame handler: ${e.message}", e)
                     }
                 }
             )

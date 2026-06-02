@@ -1568,7 +1568,6 @@ fun MoriaBenchmarkViewport(
     // Keep cached maps for model nodes to prevent recreations
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
     var planetNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
     var playerNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
     val monsterNodes = remember { mutableStateMapOf<Int, io.github.sceneview.node.ModelNode>() }
@@ -1580,117 +1579,7 @@ fun MoriaBenchmarkViewport(
     val chestLoadingTracker = remember { mutableStateListOf<Int>() }
     val stairLoadingTracker = remember { mutableStateListOf<Int>() }
     
-    var isLoadingModels by remember { mutableStateOf(true) }
-
-    LaunchedEffect(sceneViewRef) {
-        val view = sceneViewRef ?: run {
-            AppLogger.w("SceneViewDebug", "[Roguelike] LaunchedEffect: sceneViewRef is null. Still waiting on View.")
-            return@LaunchedEffect
-        }
-        
-        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: Waiting for view.isAttachedToWindow...")
-        while (!view.isAttachedToWindow) {
-            delay(100)
-        }
-        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: View is attached. Waiting a short delay for Filament Engine to settle.")
-        delay(300)
-
-        // Retrieve properties on UI Thread (Main) to avoid Thread Safety / null lazy loader issues
-        var modelLoaderRefTemp: io.github.sceneview.loaders.ModelLoader? = null
-        try {
-            modelLoaderRefTemp = view.modelLoader
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[Roguelike] Critical: Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
-        }
-
-        val loader = modelLoaderRefTemp ?: run {
-            AppLogger.e("SceneViewDebug", "[Roguelike] Critical: modelLoader is null, aborting.")
-            isLoadingModels = false
-            return@LaunchedEffect
-        }
-
-        AppLogger.d("SceneViewDebug", "[Roguelike] LaunchedEffect: Initiating assets load task.")
-        isLoadingModels = true
-        
-        AppLogger.d("SceneViewDebug", "[Roguelike] Cleaning existing child nodes from SceneView. childNodes count: ${view.childNodes.size}")
-        try {
-            view.childNodes.toMutableList().forEach { 
-                AppLogger.d("SceneViewDebug", "[Roguelike] Removing node: $it")
-                view.removeChildNode(it) 
-            }
-        } catch (e: Exception) {
-            AppLogger.e("SceneViewDebug", "[Roguelike] Error during node cleaning: ${e.message}", e)
-        }
-
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                // 1. Load Globe Model
-                AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/Earth.glb")
-                val planetModel = loader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Earth.glb").readBytes()))
-                AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/Earth.glb'.")
-
-                val planetInstance = loader.createInstance(planetModel)
-                if (planetInstance == null) {
-                    AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: planetInstance is null.")
-                } else {
-                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: planetInstance successfully created.")
-                }
-
-                if (planetInstance != null) {
-                    val planetNode = io.github.sceneview.node.ModelNode(modelInstance = planetInstance).apply {
-                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
-                        scale = io.github.sceneview.math.Scale(0.48f)
-                    }
-
-                    // 2. Load Player Model (CesiumMan)
-                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: Calling createModel for models/CesiumMan.glb")
-                    val pModel = loader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/CesiumMan.glb").readBytes()))
-                    AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: createModel successfully loaded 'models/CesiumMan.glb'.")
-
-                    val pInstance = loader.createInstance(pModel)
-                    if (pInstance == null) {
-                        AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader failure: player modelInstance is null.")
-                    } else {
-                        AppLogger.d("SceneViewDebug", "[Roguelike] Background Loader: player modelInstance successfully created.")
-                    }
-
-                    launch(Dispatchers.Main) {
-                        try {
-                            AppLogger.d("SceneViewDebug", "[Roguelike] Main thread: Adding planetNode to scene.")
-                            view.addChildNode(planetNode)
-                            planetNodeRef = planetNode
-
-                            if (pInstance != null) {
-                                AppLogger.d("SceneViewDebug", "[Roguelike] Main thread: Creating and adding pNode to planetNode.")
-                                val pNode = io.github.sceneview.node.ModelNode(modelInstance = pInstance).apply {
-                                    scale = io.github.sceneview.math.Scale(0.09f)
-                                    playAnimation(0)
-                                }
-                                planetNode.addChildNode(pNode)
-                                playerNodeRef = pNode
-                            }
-                            isLoadingModels = false
-                            AppLogger.i("SceneViewDebug", "[Roguelike] Success! Planet and Player nodes integrated into SceneView hierarchy properly.")
-                        } catch (mainEx: Exception) {
-                            AppLogger.e("SceneViewDebug", "[Roguelike] Main thread crash on node attachment: ${mainEx.message}", mainEx)
-                            isLoadingModels = false
-                        }
-                    }
-                } else {
-                    AppLogger.w("SceneViewDebug", "[Roguelike] planetInstance was null, skipping UI registration.")
-                    launch(Dispatchers.Main) {
-                        isLoadingModels = false
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("SceneViewDebug", "[Roguelike] Background Loader crashed: ${e.message}", e)
-                e.printStackTrace()
-                launch(Dispatchers.Main) {
-                    isLoadingModels = false
-                }
-            }
-        }
-    }
+    var isLoadingModels by remember { mutableStateOf(false) }
 
     // Smooth auto-orbit camera towards targeted monster when Locked On
     if (lockedMonsterId != null) {
@@ -1786,32 +1675,30 @@ fun MoriaBenchmarkViewport(
     ) {
         if (useSceneview) {
             // Render Sceneview 3D Loader
-            AndroidView(
+            io.github.sceneview.SceneView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    AppLogger.d("SceneViewDebug", "[Roguelike] AndroidView Factory: Creating new SceneView instance.")
-                    try {
-                        io.github.sceneview.SceneView(ctx).also {
-                            sceneViewRef = it
-                            AppLogger.i("SceneViewDebug", "[Roguelike] AndroidView Factory: SceneView instantiated successfully. Ref stored.")
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.e("SceneViewDebug", "[Roguelike] Exception inside AndroidView factory instantiation: ${e.message}", e)
-                        throw e
+                childNodes = remember {
+                    val planet = io.github.sceneview.node.ModelNode(
+                        context = context, glbFileLocation = "models/Earth.glb"
+                    ).apply {
+                        position = io.github.sceneview.math.Position(0.0f, 0.0f, -1.8f)
+                        scale = io.github.sceneview.math.Scale(0.48f)
                     }
+                    val player = io.github.sceneview.node.ModelNode(
+                        context = context, glbFileLocation = "models/CesiumMan.glb"
+                    ).apply {
+                        scale = io.github.sceneview.math.Scale(0.09f)
+                        playAnimation(0)
+                        planet.addChildNode(this)
+                    }
+                    planetNodeRef = planet
+                    playerNodeRef = player
+                    listOf(planet)
                 },
-                update = { view ->
+                onFrame = { _ ->
                     try {
                         val planet = planetNodeRef
                         val playerNode = playerNodeRef
-                        
-                        var frameCount = 0
-                        view.onFrame = { _ ->
-                            if (frameCount == 0 || frameCount % 120 == 0) {
-                                AppLogger.d("SceneViewDebug", "[Roguelike] onFrame ticker tick count = $frameCount. planetNodeRef active = ${planet != null}")
-                            }
-                            frameCount++
-                        }
 
                         if (planet != null) {
                             // Sync globe rotation with camera angle
@@ -1843,20 +1730,14 @@ fun MoriaBenchmarkViewport(
                                     if (mNode == null) {
                                         if (!monsterLoadingTracker.contains(m.id)) {
                                             monsterLoadingTracker.add(m.id)
-                                            coroutineScope.launch(Dispatchers.IO) {
+                                            coroutineScope.launch(Dispatchers.Main) {
                                                 try {
-                                                    val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Fox.glb").readBytes()))
-                                                    val instance = model?.let { view.modelLoader.createInstance(it) }
-                                                    if (instance != null) {
-                                                        launch(Dispatchers.Main) {
-                                                            val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                                                scale = io.github.sceneview.math.Scale(0.05f)
-                                                                playAnimation(0) // Cute foxes bobbing!
-                                                                planet.addChildNode(this)
-                                                            }
-                                                            monsterNodes[m.id] = node
-                                                        }
+                                                    val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Fox.glb").apply {
+                                                        scale = io.github.sceneview.math.Scale(0.05f)
+                                                        playAnimation(0) // Cute foxes bobbing!
                                                     }
+                                                    planet.addChildNode(node)
+                                                    monsterNodes[m.id] = node
                                                 } catch (e: Exception) {
                                                     e.printStackTrace()
                                                 } finally {
@@ -1888,19 +1769,13 @@ fun MoriaBenchmarkViewport(
                                 if (cNode == null) {
                                     if (!chestLoadingTracker.contains(t.x)) {
                                         chestLoadingTracker.add(t.x)
-                                        coroutineScope.launch(Dispatchers.IO) {
+                                        coroutineScope.launch(Dispatchers.Main) {
                                             try {
-                                                val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Lantern.glb").readBytes()))
-                                                val instance = model?.let { view.modelLoader.createInstance(it) }
-                                                if (instance != null) {
-                                                    launch(Dispatchers.Main) {
-                                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                                            scale = io.github.sceneview.math.Scale(0.035f)
-                                                            planet.addChildNode(this)
-                                                        }
-                                                        chestNodes[t.x] = node
-                                                    }
+                                                val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Lantern.glb").apply {
+                                                    scale = io.github.sceneview.math.Scale(0.035f)
                                                 }
+                                                planet.addChildNode(node)
+                                                chestNodes[t.x] = node
                                             } catch (e: Exception) {
                                                 e.printStackTrace()
                                             } finally {
@@ -1931,19 +1806,13 @@ fun MoriaBenchmarkViewport(
                                 if (sNode == null) {
                                     if (!stairLoadingTracker.contains(t.x)) {
                                         stairLoadingTracker.add(t.x)
-                                        coroutineScope.launch(Dispatchers.IO) {
+                                        coroutineScope.launch(Dispatchers.Main) {
                                             try {
-                                                val model = view.modelLoader.createModel(java.nio.ByteBuffer.wrap(view.context.assets.open("models/Duck.glb").readBytes()))
-                                                val instance = model?.let { view.modelLoader.createInstance(it) }
-                                                if (instance != null) {
-                                                    launch(Dispatchers.Main) {
-                                                        val node = io.github.sceneview.node.ModelNode(modelInstance = instance).apply {
-                                                            scale = io.github.sceneview.math.Scale(0.035f)
-                                                            planet.addChildNode(this)
-                                                        }
-                                                        stairNodes[t.x] = node
-                                                    }
+                                                val node = io.github.sceneview.node.ModelNode(context = context, glbFileLocation = "models/Duck.glb").apply {
+                                                    scale = io.github.sceneview.math.Scale(0.035f)
                                                 }
+                                                planet.addChildNode(node)
+                                                stairNodes[t.x] = node
                                             } catch (e: Exception) {
                                                 e.printStackTrace()
                                             } finally {
