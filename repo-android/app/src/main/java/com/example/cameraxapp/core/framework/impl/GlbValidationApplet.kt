@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.cameraxapp.AppLogger
 import com.example.cameraxapp.DebugLogEntry
@@ -36,6 +35,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import io.github.sceneview.SceneView
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberModelInstance
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.math.Rotation
 
 class GlbValidationApplet : Applet {
     override val id: String = "glb_validation"
@@ -57,12 +63,6 @@ class GlbValidationApplet : Applet {
         // 3D parameters states
         var scaleState by remember { mutableStateOf(0.7f) }
         var autoRotateState by remember { mutableStateOf(true) }
-        var reloadTrigger by remember { mutableStateOf(0) }
-
-        // Sceneview handles
-        var sceneViewRef by remember { mutableStateOf<io.github.sceneview.SceneView?>(null) }
-        var modelNodeRef by remember { mutableStateOf<io.github.sceneview.node.ModelNode?>(null) }
-        var loadingStatus by remember { mutableStateOf("Initializing...") }
 
         // Live Logs states
         var logs by remember { mutableStateOf<List<DebugLogEntry>>(emptyList()) }
@@ -74,85 +74,6 @@ class GlbValidationApplet : Applet {
             while (true) {
                 logs = AppLogger.getLogs()
                 delay(1200)
-            }
-        }
-
-        // SceneView loading lifecycle
-        LaunchedEffect(sceneViewRef, reloadTrigger) {
-            val view = sceneViewRef ?: run {
-                AppLogger.w("GlbValidation", "SceneViewRef is null. Waiting for view initialization.")
-                loadingStatus = "Waiting for SurfaceView..."
-                return@LaunchedEffect
-            }
-
-            loadingStatus = "Preparing 3D Context..."
-            AppLogger.d("GlbValidation", "SceneView LaunchedEffect: Checking isAttachedToWindow")
-            while (!view.isAttachedToWindow) {
-                delay(100)
-            }
-            AppLogger.d("GlbValidation", "SceneView is attached. Preparing Filament ModelLoader...")
-            delay(200)
-
-            var modelLoader: io.github.sceneview.loaders.ModelLoader? = null
-            try {
-                modelLoader = view.modelLoader
-            } catch (e: Exception) {
-                AppLogger.e("GlbValidation", "Failed to retrieve view.modelLoader on UI Thread: ${e.message}", e)
-                loadingStatus = "Loader error: ${e.message}"
-            }
-
-            val loader = modelLoader ?: run {
-                AppLogger.e("GlbValidation", "modelLoader is null, cannot proceed.")
-                return@LaunchedEffect
-            }
-
-            // Clear old child nodes
-            AppLogger.d("GlbValidation", "Cleaning active child nodes in SceneView hierarchy...")
-            try {
-                view.childNodes.toMutableList().forEach { 
-                    view.removeChildNode(it) 
-                }
-            } catch (e: Exception) {
-                AppLogger.e("GlbValidation", "Error clearing existing nodes: ${e.message}")
-            }
-            modelNodeRef = null
-            loadingStatus = "Loading local robot GLB..."
-
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    val assetPath = "models/robot_expressive.glb"
-                    AppLogger.d("GlbValidation", "Background Thread: Validating local GLB model: $assetPath")
-                    
-                    val modelInstance = loader.createModelInstance(assetFileLocation = assetPath)
-                    
-                    launch(Dispatchers.Main) {
-                        try {
-                            if (modelInstance != null) {
-                                val modelNode = io.github.sceneview.node.ModelNode(modelInstance = modelInstance).apply {
-                                    transform = io.github.sceneview.math.Transform(
-                                        position = io.github.sceneview.math.Position(x = 0f, y = -0.5f, z = -2.0f)
-                                    )
-                                    scale = io.github.sceneview.math.Scale(scaleState)
-                                }
-                                view.addChildNode(modelNode)
-                                modelNodeRef = modelNode
-                                loadingStatus = "Success! Model Loaded."
-                                AppLogger.i("GlbValidation", "Model successfully loaded and added to scene.")
-                            } else {
-                                loadingStatus = "Error: modelInstance is null"
-                                AppLogger.e("GlbValidation", "Error creating model instance")
-                            }
-                        } catch (e2: Exception) {
-                            AppLogger.e("GlbValidation", "Main thread error: ${e2.message}", e2)
-                            loadingStatus = "Display Error: ${e2.message}"
-                        }
-                    }
-                } catch (e: Exception) {
-                    AppLogger.e("GlbValidation", "GLB Parsing failed: ${e.message}", e)
-                    launch(Dispatchers.Main) {
-                        loadingStatus = "Validation Error: ${e.message}"
-                    }
-                }
             }
         }
 
@@ -185,8 +106,8 @@ class GlbValidationApplet : Applet {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { reloadTrigger++ }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Reload 3D Scene")
+                        IconButton(onClick = { AppLogger.clear() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Clear Logs")
                         }
                         IconButton(onClick = onOpenRightDrawer) {
                             Icon(Icons.Default.Settings, contentDescription = "Quick Tools")
@@ -212,26 +133,11 @@ class GlbValidationApplet : Applet {
                         ) {
                             ThreeDViewPanel(
                                 modifier = Modifier.fillMaxSize(),
-                                loadingStatus = loadingStatus,
                                 scaleState = scaleState,
                                 autoRotateState = autoRotateState,
-                                isLoaded = modelNodeRef != null,
-                                sceneViewRef = sceneViewRef,
-                                onSceneViewReady = { sceneViewRef = it },
                                 onScaleChanged = { scaleState = it },
                                 onAutoRotateToggle = { autoRotateState = !autoRotateState }
-                            ) {
-                                modelNodeRef?.let { node ->
-                                    node.scale = io.github.sceneview.math.Scale(scaleState)
-                                    if (autoRotateState) {
-                                        node.rotation = io.github.sceneview.math.Rotation(
-                                            x = node.rotation.x,
-                                            y = (node.rotation.y + 0.8f) % 360f,
-                                            z = node.rotation.z
-                                        )
-                                    }
-                                }
-                            }
+                            )
                         }
 
                         // Divider Line
@@ -273,26 +179,11 @@ class GlbValidationApplet : Applet {
                         ) {
                             ThreeDViewPanel(
                                 modifier = Modifier.fillMaxSize(),
-                                loadingStatus = loadingStatus,
                                 scaleState = scaleState,
                                 autoRotateState = autoRotateState,
-                                isLoaded = modelNodeRef != null,
-                                sceneViewRef = sceneViewRef,
-                                onSceneViewReady = { sceneViewRef = it },
                                 onScaleChanged = { scaleState = it },
                                 onAutoRotateToggle = { autoRotateState = !autoRotateState }
-                            ) {
-                                modelNodeRef?.let { node ->
-                                    node.scale = io.github.sceneview.math.Scale(scaleState)
-                                    if (autoRotateState) {
-                                        node.rotation = io.github.sceneview.math.Rotation(
-                                            x = node.rotation.x,
-                                            y = (node.rotation.y + 1.2f) % 360f,
-                                            z = node.rotation.z
-                                        )
-                                    }
-                                }
-                            }
+                            )
                         }
 
                         // Divider Line
@@ -331,33 +222,44 @@ class GlbValidationApplet : Applet {
     @Composable
     private fun ThreeDViewPanel(
         modifier: Modifier,
-        loadingStatus: String,
         scaleState: Float,
         autoRotateState: Boolean,
-        isLoaded: Boolean,
-        sceneViewRef: io.github.sceneview.SceneView?,
-        onSceneViewReady: (io.github.sceneview.SceneView) -> Unit,
         onScaleChanged: (Float) -> Unit,
-        onAutoRotateToggle: () -> Unit,
-        onFrameUpdate: () -> Unit
+        onAutoRotateToggle: () -> Unit
     ) {
-        val context = LocalContext.current
-        LaunchedEffect(Unit) {
-            while (true) {
-                onFrameUpdate()
-                kotlinx.coroutines.delay(16)
+        val engine = rememberEngine()
+        val modelLoader = rememberModelLoader(engine)
+        val model = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
+        
+        var rotationY by remember { mutableStateOf(0f) }
+        
+        LaunchedEffect(autoRotateState) {
+            while (autoRotateState) {
+                rotationY = (rotationY + 1.0f) % 360f
+                delay(16)
             }
         }
 
         Box(modifier = modifier.background(Color(0xFF121214))) {
-            AndroidView(
+            SceneView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    io.github.sceneview.SceneView(ctx).apply {
-                        onSceneViewReady(this)
+                engine = engine,
+                modelLoader = modelLoader,
+                cameraManipulator = rememberCameraManipulator()
+            ) {
+                model?.let {
+                    ModelNode(
+                        modelInstance = it,
+                        scaleToUnits = scaleState
+                    ).apply {
+                        if (autoRotateState) {
+                            rotation = Rotation(x = rotation.x, y = rotationY, z = rotation.z)
+                        } else {
+                            rotation = Rotation(x = rotation.x, y = rotationY, z = rotation.z)
+                        }
                     }
                 }
-            )
+            }
 
             // Dynamic HUD Info Overlay
             Column(
@@ -368,7 +270,7 @@ class GlbValidationApplet : Applet {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "TARGET: robot_expressive.glb",
+                    text = "TARGET: robot_expressive.glb (SceneView 4.17.0)",
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -380,11 +282,11 @@ class GlbValidationApplet : Applet {
                         modifier = Modifier
                             .size(6.dp)
                             .clip(RoundedCornerShape(3.dp))
-                            .background(if (isLoaded) Color.Green else Color.Yellow)
+                            .background(if (model != null) Color.Green else Color.Yellow)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = loadingStatus,
+                        text = if (model != null) "Success! Model Loaded." else "Loading local robot GLB...",
                         color = Color.LightGray,
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace

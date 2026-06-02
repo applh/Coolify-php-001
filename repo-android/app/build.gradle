@@ -48,7 +48,7 @@ android {
 
 dependencies {
     // Sceneview Jetpack Compose and 3D Asset Loader Dependencies
-    def sceneview_version = "1.2.3"
+    def sceneview_version = "4.17.0"
     implementation "io.github.sceneview:arsceneview:$sceneview_version"
     implementation "io.github.sceneview:sceneview:$sceneview_version"
 
