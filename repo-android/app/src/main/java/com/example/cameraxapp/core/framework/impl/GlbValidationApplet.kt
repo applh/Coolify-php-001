@@ -37,10 +37,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 import io.github.sceneview.SceneView
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.Node
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberMainLightNode
 import io.github.sceneview.math.Rotation
 
 class GlbValidationApplet : Applet {
@@ -230,6 +232,9 @@ class GlbValidationApplet : Applet {
         val engine = rememberEngine()
         val modelLoader = rememberModelLoader(engine)
         val model = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
+        val mainLightNode = rememberMainLightNode(engine) {
+            intensity(100_000.0f)
+        }
         
         var rotationY by remember { mutableStateOf(0f) }
         
@@ -247,6 +252,7 @@ class GlbValidationApplet : Applet {
                 modelLoader = modelLoader,
                 cameraManipulator = rememberCameraManipulator()
             ) {
+                Node(node = mainLightNode)
                 model?.let {
                     ModelNode(
                         modelInstance = it,

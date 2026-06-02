@@ -709,5 +709,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 114. Android SceneView 3D PBR Model Lighting & Filament Environment Illumination (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Master standard lighting mechanics for Physically-Based Rendering (PBR) 3D model loaders in Google Filament and SceneView libraries. Understand why PBR materials compute to complete black without explicit, persistent direct or environmental/indirect light sources in the rendering pipeline, and learn how to instantiate and attach directional lights (`LightNode`) using `rememberMainLightNode` and declaratively overlay them inside Jetpack Compose's `SceneView {...}` content slots.
+- **Exercise**: Modify the `intensity` parameters and light vector directions inside the custom initialization block of `rememberMainLightNode` to see how dynamic shadowing patterns and specular Highlights respond on the expressive robot model surface.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
