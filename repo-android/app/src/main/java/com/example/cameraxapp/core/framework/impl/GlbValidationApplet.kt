@@ -123,12 +123,6 @@ class GlbValidationApplet : Applet {
                     val resolvedPath = "models/robot_expressive.glb"
                     AppLogger.d("GlbValidation", "Background Thread: Loading Asset Model path: $resolvedPath")
                     
-                    val bytes = context.assets.open(resolvedPath).use { it.readBytes() }
-                    val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).apply {
-                        put(bytes)
-                        rewind()
-                    }
-                    
                     try {
                         AppLogger.d("GlbValidation", "Reflection: Diagnostics of loader class ${loader.javaClass.name}")
                         loader.javaClass.declaredFields.forEach { field ->
@@ -160,7 +154,7 @@ class GlbValidationApplet : Applet {
                         AppLogger.e("GlbValidation", "Reflection main exception: ${re.message}", re)
                     }
 
-                    val model = loader.createModel(buffer)
+                    val model = loader.createModel(resolvedPath)
                     AppLogger.d("GlbValidation", "Background Thread: Asset model loaded successfully. Creating index instance...")
                     
                     val modelInstance = loader.createInstance(model)

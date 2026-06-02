@@ -615,12 +615,7 @@ fun Globe3DInteractiveBox(
                 }
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Resolved path = $resolvedPath. Starting ModelLoader.createModel")
                 
-                val bytes = context.assets.open(resolvedPath).use { it.readBytes() }
-                val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size).apply {
-                    put(bytes)
-                    rewind()
-                }
-                val model = loader.createModel(buffer)
+                val model = loader.createModel(resolvedPath)
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: createModel successfully compiled asset structure.")
                 
                 AppLogger.d("SceneViewDebug", "[World] Background Loader: Starting ModelLoader.createInstance")
