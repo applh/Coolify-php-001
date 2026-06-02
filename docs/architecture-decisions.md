@@ -447,5 +447,33 @@ Profiling and code inspection identified the root cause:
    - **Choice**: Concurrently deployed this asynchronous wait and main-thread property caching architecture across all three 3D-integrated sub-applets (`RoguelikeScreen.kt`, `WorldScreen.kt`, and `BlackjackScreen.kt`).
    - **Reason**: Establishes absolute architectural consistency across the multi-app hub, ensuring all 3D viewports exhibit rock-solid reliability during startup, multitasking, or rotation sequences under any device platform constraints.
 
+---
+
+## 22. Unified Android SDK API and Jetpack Compose Deprecation Cleanup (API 35 Enforcement)
+
+### Context
+With the update of compile/target SDK versions to Android 15 (API 35) and corresponding modern Kotlin/Compose libraries version alignments:
+1. Legacy Android and Compose APIs became highly deprecated, generating heavy compiler warnings and potential runtime deprecation failures.
+2. Specifically, `LocalClipboardManager` was phased out in favor of the more robust `LocalClipboard`, `LocalLifecycleOwner` moved to official `androidx.lifecycle.compose` runtimes, `TabRow` was replaced by modern `PrimaryTabRow` and `SecondaryTabRow` variants, `ContextCompat.getExternalFilesDirs` was deprecated in favor of native direct context access, and setting system status bar colors natively via `statusBarColor` was deprecated in API 35 due to forced edge-to-edge layouts.
+3. Minor Kotlin compiler warnings (such as redundant checks on always-true conditions and unnecessary `else` cases on exhaustive `when` expressions) also cluttered compiler logs.
+
+### Decisions & Justification
+
+1. **Modernized Clipboard Management (`LocalClipboard`)**
+   - **Choice**: Replaced `LocalClipboardManager` with `LocalClipboard.current` and transformed classical text copying setters into `setClipEntry(ClipEntry(ClipData.newPlainText("text", txt)))`.
+   - **Reason**: Fully resolves deprecation warnings in `AITeamScreen.kt` and `DebugApplet.kt` while adopting the new, performance-optimized, and secure standard for clipboard data sharing.
+
+2. **Scoped Directory Resolution (`context.getExternalFilesDirs`)**
+   - **Choice**: Exchanged `ContextCompat.getExternalFilesDirs(context, ...)` for direct contextual helper invocations like `context.getExternalFilesDirs(...)` throughout `CameraScreen.kt`, `SettingsScreen.kt`, `StorageUtils.kt`, and `ExplorerScreen.kt`.
+   - **Reason**: Accessing files directories via core package wrapper classes is deprecated since Kotlin handles Java object nullability natively and safe access is directly provided by the standard `Context` object itself.
+
+3. **Segmented Tabs (`SecondaryTabRow`)**
+   - **Choice**: Modernized `TabRow` elements inside `BrowserScreen.kt`, `AgendaScreen.kt`, and `DBScreen.kt` using `SecondaryTabRow` components under `@OptIn(ExperimentalMaterial3Api::class)`.
+   - **Reason**: Provides clean, modern Material Design 3 tab outlines that align with the new visual standards while satisfying Material 3 libraries constraints.
+
+4. **Lifecycle and Platform Warning Suppression**
+   - **Choice**: Moved `LocalLifecycleOwner` to `androidx.lifecycle.compose.LocalLifecycleOwner` in `CameraScreen.kt` and `GlbValidationApplet.kt`. Additionally, annotated older device status-color settings in `Theme.kt` with `@Suppress("DEPRECATION")`.
+   - **Reason**: Binds Jetpack Compose to modern runtime lifecycle containers securely, and preserves status bar color tuning for pre-Android 15 devices while keeping build output logs clean.
+
 
 

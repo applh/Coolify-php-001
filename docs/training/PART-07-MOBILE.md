@@ -702,5 +702,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 4
 
 
+### 113. Android Jetpack Compose Modern API Migration and Deprecation Cleaning (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/AITeamScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/browser/BrowserScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/DBScreen.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/DebugApplet.kt`
+- **Goal**: Master system-wide modernization and deprecation cleanup of Android/Compose APIs. Learn how to replace legacy clipboard APIs (`LocalClipboardManager` to `LocalClipboard` with `setClipEntry` and `ClipEntry`), relocate platform lifecycle owners (`LocalLifecycleOwner` to standard `androidx.lifecycle.compose`), swap legacy Tab structures with custom tab behaviors (`TabRow` with `SecondaryTabRow`), cleanly handle deprecated multi-directory context helpers (`ContextCompat.getExternalFilesDirs` to `context.getExternalFilesDirs`), and eliminate redundant exhaustive conditional handlers or suppress legacy API compatibility issues (`@Suppress("DEPRECATION")`).
+- **Exercise**: Create a custom integration testing sandbox that validates text copy-paste functionality using the standard new `LocalClipboard` suspendable engine, verifying that plain text payloads can be mapped safely under the robust `ClipEntry` constructor.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

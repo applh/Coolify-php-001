@@ -61,8 +61,8 @@ object StorageUtils {
 
         // Destination 2: SD Card
         if (storageLocation == 2) {
-            val dirs = ContextCompat.getExternalFilesDirs(context, null)
-            val sdDir = if (dirs.size > 1) dirs[1] else null
+            val dirs = context.getExternalFilesDirs(null)
+            val sdDir = if (dirs != null && dirs.size > 1) dirs[1] else null
             if (sdDir != null) {
                 val appDir = File(sdDir, folderName)
                 if (!appDir.exists()) {

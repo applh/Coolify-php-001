@@ -1358,10 +1358,11 @@ fun SidebarTableSelector(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkspaceTabRow(selectedTabIdx: Int, onTabSelected: (Int) -> Unit) {
     val tabTitles = listOf("Table Records", "Schema structure", "Ad-hoc Terminal SQL", "Diagnostics Check")
-    TabRow(selectedTabIndex = selectedTabIdx) {
+    SecondaryTabRow(selectedTabIndex = selectedTabIdx) {
         tabTitles.forEachIndexed { index, title ->
             Tab(
                 selected = selectedTabIdx == index,

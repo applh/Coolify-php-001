@@ -45,7 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -1315,8 +1315,8 @@ private fun startVideoRecording(
         val dir = when (storageLocation) {
             1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)!!
             2 -> {
-                val dirs = ContextCompat.getExternalFilesDirs(context, null)
-                if (dirs.size > 1) dirs[1] else context.filesDir
+                val dirs = context.getExternalFilesDirs(null)
+                if (dirs != null && dirs.size > 1) dirs[1] else context.filesDir
             }
             else -> context.filesDir
         }
@@ -1460,8 +1460,8 @@ private fun saveBitmapToDisk(
         val dir = when (storageLocation) {
             1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
             2 -> {
-                val dirs = ContextCompat.getExternalFilesDirs(context, null)
-                if (dirs.size > 1) dirs[1] else context.filesDir
+                val dirs = context.getExternalFilesDirs(null)
+                if (dirs != null && dirs.size > 1) dirs[1] else context.filesDir
             }
             else -> context.filesDir
         }
@@ -1523,8 +1523,8 @@ private fun takePhoto(
             val dir = when (storageLocation) {
                 1 -> context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)!!
                 2 -> {
-                    val dirs = ContextCompat.getExternalFilesDirs(context, null)
-                    if (dirs.size > 1) dirs[1] else context.filesDir
+                    val dirs = context.getExternalFilesDirs(null)
+                    if (dirs != null && dirs.size > 1) dirs[1] else context.filesDir
                 }
                 else -> context.filesDir
             }

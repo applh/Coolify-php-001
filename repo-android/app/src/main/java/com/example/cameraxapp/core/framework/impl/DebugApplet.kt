@@ -24,8 +24,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.ClipEntry
+import android.content.ClipData
 import com.example.cameraxapp.AppLogger
 import com.example.cameraxapp.DebugLogEntry
 import com.example.cameraxapp.core.framework.Applet
@@ -51,7 +52,7 @@ class DebugApplet : Applet {
         var selectedLevel by remember { mutableStateOf("ALL") }
         var expandedLogId by remember { mutableStateOf<Int?>(null) }
         var showToast by remember { mutableStateOf<String?>(null) }
-        val clipboardManager = LocalClipboardManager.current
+        val clipboardManager = LocalClipboard.current
 
         // Fetch logs initially and on refresh
         val refreshLogs = {
@@ -234,7 +235,7 @@ class DebugApplet : Applet {
                                     val exported = filteredLogs.joinToString("\n\n") { log ->
                                         "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
                                     }
-                                    clipboardManager.setText(AnnotatedString(exported))
+                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
                                     showToast = "Copied ${filteredLogs.size} logs matching filter!"
                                 }
                             },
@@ -256,7 +257,7 @@ class DebugApplet : Applet {
                                     val exported = logs.joinToString("\n\n") { log ->
                                         "[${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}"
                                     }
-                                    clipboardManager.setText(AnnotatedString(exported))
+                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", exported)))
                                     showToast = "Copied all ${logs.size} logs to clipboard!"
                                 }
                             },
@@ -346,7 +347,7 @@ class DebugApplet : Applet {
     ) {
         val sdf = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
         val timeStr = sdf.format(Date(log.timestamp))
-        val clipboardManager = LocalClipboardManager.current
+        val clipboardManager = LocalClipboard.current
 
         val levelColor = when (log.level.uppercase()) {
             "ERROR" -> Color(0xFFEF5350)
@@ -472,7 +473,7 @@ class DebugApplet : Applet {
                                     [${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date(log.timestamp))}] [${log.level.uppercase()}] ${log.tag}: ${log.message}
                                     ${if (!log.stackTrace.isNullOrBlank()) "\nStack Trace:\n${log.stackTrace}" else ""}
                                 """.trimIndent()
-                                clipboardManager.setText(AnnotatedString(fullText))
+                                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", fullText)))
                                 onShowToast("Copied full log details to clipboard!")
                             },
                             label = { Text("📋 Copy Full Log", fontSize = 11.sp) }
@@ -480,7 +481,7 @@ class DebugApplet : Applet {
 
                         AssistChip(
                             onClick = {
-                                clipboardManager.setText(AnnotatedString(log.message))
+                                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.message)))
                                 onShowToast("Copied message to clipboard!")
                             },
                             label = { Text("💬 Copy Msg", fontSize = 11.sp) }
@@ -489,7 +490,7 @@ class DebugApplet : Applet {
                         if (!log.stackTrace.isNullOrBlank()) {
                             AssistChip(
                                 onClick = {
-                                    clipboardManager.setText(AnnotatedString(log.stackTrace))
+                                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", log.stackTrace)))
                                     onShowToast("Copied stack trace!")
                                 },
                                 label = { Text("🔥 Copy Trace", fontSize = 11.sp) }

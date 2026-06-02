@@ -123,7 +123,7 @@ function startBuild() {
         '--console=plain'
     ], { 
         cwd: '/app',
-        env: { ...process.env, GRADLE_OPTS: process.env.GRADLE_OPTS || "-Dorg.gradle.jvmargs=\"-Xmx1024m -XX:MaxMetaspaceSize=256m\"" }
+        env: { ...process.env, GRADLE_OPTS: process.env.GRADLE_OPTS || "-Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=384m\"" }
     });
 
     buildProcess.stdout.on('data', (data) => {

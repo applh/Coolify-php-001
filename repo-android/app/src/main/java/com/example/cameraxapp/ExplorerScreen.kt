@@ -107,8 +107,8 @@ fun ExplorerScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
         val dir = when (storageLocation) {
             1 -> context.getExternalFilesDir(null) ?: context.filesDir
             2 -> {
-                val dirs = androidx.core.content.ContextCompat.getExternalFilesDirs(context, null)
-                if (dirs.size > 1) dirs[1] else context.filesDir
+                val dirs = context.getExternalFilesDirs(null)
+                if (dirs != null && dirs.size > 1) dirs[1] else context.filesDir
             }
             else -> context.filesDir
         }

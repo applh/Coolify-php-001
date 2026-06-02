@@ -32,8 +32,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.ClipEntry
+import android.content.ClipData
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -792,7 +793,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
     // Pinch-to-zoom zoomable Lightbox overlays
     var activeLightboxMessage by remember { mutableStateOf<ChatMessage?>(null) }
 
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val listState = rememberLazyListState()
 
     // Scroll automatically to newest bubble
@@ -870,7 +871,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                                     message = item,
                                     onImageTap = { msg -> activeLightboxMessage = msg },
                                     onCopyText = { txt ->
-                                        clipboardManager.setText(AnnotatedString(txt))
+                                        clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("text", txt)))
                                     }
                                 )
                             }
@@ -1099,7 +1100,7 @@ fun AITeamScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
         if (showAiTeamSettingsDialog) {
             var tempGalleryName by remember { mutableStateOf(publicGalleryNameSaved) }
             var selectedStorage by remember { mutableStateOf(storageLocationSaved) }
-            val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
+            val hasSdCard = (context.getExternalFilesDirs(null)?.size ?: 0) > 1
 
             AlertDialog(
                 onDismissRequest = { showAiTeamSettingsDialog = false },
@@ -1573,7 +1574,7 @@ fun LightboxOverlay(
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    val gesturalState = rememberTransformableState { zoomChange, offsetChange, _ ->
+    val gesturalState = rememberTransformableState { zoomChange, offsetChange, _, _ ->
         scale = (scale * zoomChange).coerceIn(1f, 5f)
         offset += offsetChange
     }

@@ -464,7 +464,7 @@ fun AgendaScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDrawer
                 .fillMaxSize()
         ) {
             // Workspace Tab Row
-            TabRow(selectedTabIndex = activeTabIdx) {
+            SecondaryTabRow(selectedTabIndex = activeTabIdx) {
                 Tab(
                     selected = activeTabIdx == 0,
                     onClick = { activeTabIdx = 0 },
@@ -1544,7 +1544,6 @@ fun LeafletMapViewPane(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
-                databaseEnabled = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
                 userAgentString = "FraiseAgendaApp/1.0 (Android; com.example.cameraxapp)"
@@ -1946,7 +1945,6 @@ fun LeafletComposeMap(
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
-                databaseEnabled = true
                 useWideViewPort = true
                 loadWithOverviewMode = true
                 userAgentString = "FraiseAgendaApp/1.0 (Android; com.example.cameraxapp)"

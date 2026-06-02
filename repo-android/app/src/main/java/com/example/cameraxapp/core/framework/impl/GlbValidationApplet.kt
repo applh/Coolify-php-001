@@ -57,7 +57,7 @@ class GlbValidationApplet : Applet {
         onOpenRightDrawer: () -> Unit
     ) {
         val context = LocalContext.current
-        val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         val coroutineScope = rememberCoroutineScope()
 
         // 3D parameters states

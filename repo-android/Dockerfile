@@ -26,7 +26,7 @@ RUN wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -P /tmp
     unzip -q -d /opt/gradle /tmp/gradle-8.7-bin.zip && \
     rm /tmp/gradle-8.7-bin.zip
 ENV PATH $PATH:/opt/gradle/gradle-8.7/bin
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx1024m -XX:MaxMetaspaceSize=256m\""
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=384m\""
 
 WORKDIR /app
 COPY . .

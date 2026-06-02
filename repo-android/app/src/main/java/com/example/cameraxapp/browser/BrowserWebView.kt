@@ -41,7 +41,6 @@ fun BrowserWebView(
                     displayZoomControls = false
                     useWideViewPort = true
                     loadWithOverviewMode = true
-                    databaseEnabled = true
                 }
                 
                 webChromeClient = object : WebChromeClient() {

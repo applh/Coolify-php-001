@@ -81,7 +81,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenDrawer: () -> Unit, onOpenRightDraw
     var launcherExpanded by remember { mutableStateOf(false) }
     var keyboardSectionExpanded by remember { mutableStateOf(false) }
 
-    val hasSdCard = ContextCompat.getExternalFilesDirs(context, null).size > 1
+    val hasSdCard = (context.getExternalFilesDirs(null)?.size ?: 0) > 1
 
     // Hardware camera settings collected once at top level to avoid state loss on collapse/expand
     var cameraCount by remember { mutableStateOf(0) }

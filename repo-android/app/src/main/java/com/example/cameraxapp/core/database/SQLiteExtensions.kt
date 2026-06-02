@@ -19,7 +19,7 @@ suspend inline fun <T> SQLiteDatabase.safeQuery(
     var cursor: Cursor? = null
     try {
         cursor = rawQuery(sql, selectionArgs)
-        if (cursor != null && cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
                 list.add(transform(cursor))
             } while (cursor.moveToNext())

@@ -142,7 +142,7 @@ fun BrowserScreen(
                         }
 
                         // Navigation Tabs for Utility menus
-                        TabRow(
+                        SecondaryTabRow(
                             selectedTabIndex = when (activeSideTab) {
                                 "Bookmarks" -> 0
                                 "History" -> 1
