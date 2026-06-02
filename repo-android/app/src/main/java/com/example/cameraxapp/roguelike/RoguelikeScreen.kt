@@ -1548,7 +1548,7 @@ fun MoriaBenchmarkViewport(
     viewModel: RoguelikeViewModel,
     modifier: Modifier = Modifier
 ) {
-    var  by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
+    var useSceneviewEngine by remember { mutableStateOf(false) } // CPU fallback engine as default to guarantee instant visibility!
     var yawAngle by remember { mutableStateOf(-0.65f) }
     var pitchAngle by remember { mutableStateOf(0.75f) }
     var zoomScale by remember { mutableStateOf(4.8f) }
@@ -1673,7 +1673,7 @@ fun MoriaBenchmarkViewport(
                 }
             }
     ) {
-        if (false) {
+        if (useSceneviewEngine) {
             // Render Sceneview 3D Loader
             androidx.compose.ui.viewinterop.AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -1773,15 +1773,15 @@ fun MoriaBenchmarkViewport(
             Box(
                 modifier = Modifier
                     .background(
-                        if () Color(0xFF2E2E30) else Color.Transparent,
+                        if (useSceneviewEngine) Color(0xFF2E2E30) else Color.Transparent,
                         RoundedCornerShape(4.dp)
                     )
-                    .clickable {  = true }
+                    .clickable { useSceneviewEngine = true }
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = "Sceneview",
-                    color = if () Color.White else Color.Gray,
+                    color = if (useSceneviewEngine) Color.White else Color.Gray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1789,15 +1789,15 @@ fun MoriaBenchmarkViewport(
             Box(
                 modifier = Modifier
                     .background(
-                        if (!) Color(0xFF2E2E30) else Color.Transparent,
+                        if (!useSceneviewEngine) Color(0xFF2E2E30) else Color.Transparent,
                         RoundedCornerShape(4.dp)
                     )
-                    .clickable {  = false }
+                    .clickable { useSceneviewEngine = false }
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = "Sovereign Canvas",
-                    color = if (!) Color.White else Color.Gray,
+                    color = if (!useSceneviewEngine) Color.White else Color.Gray,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
