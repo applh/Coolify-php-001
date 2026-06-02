@@ -51,7 +51,7 @@ class GlbValidationApplet : Applet {
         onOpenRightDrawer: () -> Unit
     ) {
         val context = LocalContext.current
-        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
         val coroutineScope = rememberCoroutineScope()
 
         // 3D parameters states
@@ -371,7 +371,7 @@ class GlbValidationApplet : Applet {
         onAutoRotateToggle: () -> Unit,
         onFrameUpdate: () -> Unit
     ) {
-        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
         Box(modifier = modifier.background(Color(0xFF121214))) {
             // Android view loading the physical Filament engine
             AndroidView(
