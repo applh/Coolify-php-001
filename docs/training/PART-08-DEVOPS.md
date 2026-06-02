@@ -38,6 +38,12 @@ Automate everything: from containerization to full-scale cloud orchestration.
 - **Exercise**: Execute the compiler command `npm run zip-repos` to compress all modular repo subdivisions into localized `archive.zip` streams. Extend the system, updating the `repo-react/Dockerfile` to automatically verify, unzip, and extract the bundle safely inside the Docker builder space during build.
 - **Complexity**: Part 8 (High)
 
+### 5. Custom Zero-Dependency Android Compile Build Server (12h)
+- **Goal**: Understand how to implement a fully standalone, zero-dependency Node.js orchestration container to host and build Android Kotlin applications on memory-capped VPS environments via Coolify.
+- **Reference**: `/repo-android/server.js`, `/repo-android/Dockerfile`, `/repo-android/package.json`
+- **Exercise**: Launch the `repo-android` container on port 3000, trigger a compilation build, and examine the line-by-line stream outputs received via Server-Sent Events (SSE). Extend the `server.js` script to parse intermediate warning percentages from the Gradle output and visually render them as yellow telemetry lines.
+- **Complexity**: Part 8 (High)
+
 ## Recommended Reading
 - `docs/devops/deployment.md`
 - `docs/devops/coolify-node-scaling.md`

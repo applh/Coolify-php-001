@@ -475,5 +475,30 @@ With the update of compile/target SDK versions to Android 15 (API 35) and corres
    - **Choice**: Moved `LocalLifecycleOwner` to `androidx.lifecycle.compose.LocalLifecycleOwner` in `CameraScreen.kt` and `GlbValidationApplet.kt`. Additionally, annotated older device status-color settings in `Theme.kt` with `@Suppress("DEPRECATION")`.
    - **Reason**: Binds Jetpack Compose to modern runtime lifecycle containers securely, and preserves status bar color tuning for pre-Android 15 devices while keeping build output logs clean.
 
+---
+
+## 23. Customized Zero-Dependency Android Build and Diagnostics Server inside Docker Compose
+
+### Context
+When deploying the `repo-android` folder as a dedicated container in Coolify, the system must trigger Gradle builds to compile the final companion APK file and serve it directly to users via dynamic QR codes. However, running standard complex toolchains or heavy application servers inside a container can lead to several integration issues:
+1. **Memory Caps**: Android compilation via Gradle requires substantial heap allocations (at least 3GB configured via `-Xmx3072m`); adding heavy server layers or many dependencies on top can easily trigger critical Out-Of-Memory (OOM) killer cycles on standard lightweight VPS instances.
+2. **Background Daemons**: Classical Gradle builds run background Kotlin and Gradle JVM daemons, which persist indefinitely after compilation terminates. In isolated containers, these orphaned threads lock memory resources, causing downstream restarts or slow container operations.
+3. **Missing Modules**: Installing external NPM modules (like `express`) within standard container environments requires secondary setup steps (`npm install`), bloating the image size and delaying startup.
+
+### Decisions & Justifications
+
+1. **Pure Zero-Dependency Native Node.js Server (`server.js`)**
+   - **Choice**: Implemented a standalone, lightweight Node build server using only core built-in packages like `http`, `child_process`, `fs`, `path`, and `url`.
+   - **Reason**: By eliminating any external runtime packages, the container initializes instantly on Coolify without needing an `npm install` phase, ensuring maximum deployment stability and minimizing image size footprint.
+
+2. **Zero-Daemon Execution Loop (`--no-daemon`) with Active Log Broadcasts**
+   - **Choice**: Configured all compilation spawn instructions with explicit `--no-daemon` and `--max-workers=1` controls. We capture the subprocess's `stdout` and `stderr` streams line-by-line, buffering the text in memory and piping it instantly to frontend clients using Server-Sent Events (SSE).
+   - **Reason**: Disabling the daemon prevents the container from spawning and leaking idle background JVM processes, staying compliant with hosting resource boundaries. Line-by-line stream piping via SSE provides a highly responsive, real-time "terminal view" in the developer browser without the pooling overhead of REST APIs.
+
+3. **Dynamic Client-Side QR Generation (`qrious` / CDNs)**
+   - **Choice**: Render the onboarding install QR Code dynamically in the container front-end dashboard utilizing the lightweight, highly popular `qrious` library pulled from a CDN. The library is initialized with the current page's origin (`window.location.origin + '/download'`).
+   - **Reason**: Eliminates any hardcoded server IP, domain configuration, or server-side canvas generation requirements. The installer QR works instantly on mobile devices, regardless of whether it is hosted on a local address or behind a complex public Coolify reverse proxy.
+
+
 
 
