@@ -247,9 +247,10 @@ class GlbValidationApplet : Applet {
             model?.let {
                 ModelNode(
                     modelInstance = it,
-                    scaleToUnits = scaleState,
+                    scaleToUnits = scaleState
+                ).apply {
                     rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-                )
+                }
             }
         }
 
@@ -259,7 +260,7 @@ class GlbValidationApplet : Applet {
                 engine = engine,
                 modelLoader = modelLoader,
                 cameraManipulator = rememberCameraManipulator(),
-                childNodes = listOfNotNull(mainLightNode, modelNode)
+                nodes = listOfNotNull(mainLightNode, modelNode)
             )
 
             // Dynamic HUD Info Overlay

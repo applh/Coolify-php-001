@@ -737,5 +737,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 118. Legacy SceneView Version Alignment & Property Setter Workarounds (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Understand how to bridge differences between modern 3D design configurations and legacy, pinned dependency versions (such as Sceneview 1.2.x). Learn how to set 3D spatial properties like `rotation`, `position`, or `scale` post-construction via mutating properties rather than constructor signatures, and how to verify correct composable parameter names (e.g. `nodes` instead of newer `childNodes` keywords) based on compile outputs.
+- **Exercise**: Refactor the remaining SceneView layouts to consistently set custom positioning, auto-animation triggers, and light properties as instance-mutating properties instead of constructor arguments.
+- **Complexity**: Part 4
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)
