@@ -354,6 +354,7 @@ class DebugApplet : Applet {
         val sdf = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
         val timeStr = sdf.format(Date(log.timestamp))
         val clipboardManager = LocalClipboard.current
+        val coroutineScope = rememberCoroutineScope()
 
         val levelColor = when (log.level.uppercase()) {
             "ERROR" -> Color(0xFFEF5350)

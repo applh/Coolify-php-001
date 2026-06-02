@@ -723,5 +723,12 @@ Bridge the gap between web and mobile with Android and Flutter.
 - **Complexity**: Part 3
 
 
+### 116. SceneView Composable Node Factory Interop & Component-Level Scope Hoisting (10h) 🍓 NEW
+- **Reference**: `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/DebugApplet.kt`, `repo-android/app/src/main/java/com/example/cameraxapp/core/framework/impl/GlbValidationApplet.kt`
+- **Goal**: Understand how to identify and debug parameter mismatches and local variable reference scoping issues in Jetpack Compose when integrating complex 3D renderer libraries (like SceneView) or breaking down monolithic screens into smaller modular sub-composables.
+- **Exercise**: Correct an unresolved reference error by scoping `CoroutineScope` using `rememberCoroutineScope()` locally in helper helper composables, and use `Node(factory = { ... })` instead of supplying non-existent `node` properties to resolve SceneView constructor errors.
+- **Complexity**: Part 3
+
+
 ## Recommended Reading
 - [Flutter Docs](https://docs.flutter.dev/)

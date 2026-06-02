@@ -250,7 +250,7 @@ class GlbValidationApplet : Applet {
                 modelLoader = modelLoader,
                 cameraManipulator = rememberCameraManipulator()
             ) {
-                Node(node = mainLightNode)
+                Node(factory = { mainLightNode })
                 model?.let {
                     ModelNode(
                         modelInstance = it,
