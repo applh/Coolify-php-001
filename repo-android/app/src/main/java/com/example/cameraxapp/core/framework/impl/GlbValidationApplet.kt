@@ -36,8 +36,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import io.github.sceneview.SceneView
-import io.github.sceneview.node.ModelNode
-import io.github.sceneview.node.Node
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberModelInstance
@@ -243,28 +241,22 @@ class GlbValidationApplet : Applet {
             }
         }
 
-        val modelNode = remember(model, scaleState) {
-            model?.let {
-                ModelNode(
-                    modelInstance = it,
-                    scaleToUnits = scaleState
-                )
-            }
-        }
-
-        // Apply dynamic rotation seamlessly after successful recomposition without recreating the native node
-        SideEffect {
-            modelNode?.rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-        }
-
         Box(modifier = modifier.background(Color(0xFF121214))) {
             SceneView(
                 modifier = Modifier.fillMaxSize(),
                 engine = engine,
                 modelLoader = modelLoader,
-                cameraManipulator = rememberCameraManipulator(),
-                childNodes = listOfNotNull(mainLightNode, modelNode)
-            )
+                mainLightNode = mainLightNode,
+                cameraManipulator = rememberCameraManipulator()
+            ) {
+                if (model != null) {
+                    ModelNode(
+                        modelInstance = model,
+                        scaleToUnits = scaleState,
+                        rotation = Rotation(x = 0f, y = rotationY, z = 0f)
+                    )
+                }
+            }
 
             // Dynamic HUD Info Overlay
             Column(
