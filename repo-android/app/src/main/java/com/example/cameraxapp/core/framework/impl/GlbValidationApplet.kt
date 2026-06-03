@@ -301,7 +301,6 @@ class GlbValidationApplet : Applet {
                 }
                 
                 CubeNode(
-                    engine = engine,
                     size = io.github.sceneview.math.Position(0.5f, 0.5f, 0.5f),
                     center = io.github.sceneview.math.Position(0f, 0f, 0f),
                     position = io.github.sceneview.math.Position(x = -1.0f, y = 0f, z = 0f),
