@@ -545,4 +545,6 @@ server.listen(PORT, () => {
   console.log(`🚀 Companion Android Build Server listening on Port ${PORT}`);
   // Run pro-active permission check at startup
   ensureGradlewExecutable();
+  // Automatically trigger a build at server launch
+  triggerBuild();
 });
