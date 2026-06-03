@@ -235,8 +235,7 @@ class GlbValidationApplet : Applet {
         val modelLoader = rememberModelLoader(engine)
         val environmentLoader = rememberEnvironmentLoader(engine)
         val environment = rememberEnvironment(
-            environmentLoader = environmentLoader,
-            fileLocation = "https://sceneview.github.io/assets/environments/studio_small_09_2k.hdr"
+            environmentLoader = environmentLoader
         )
         val model = rememberModelInstance(modelLoader, "models/download.glb")
         val fallbackModel = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
@@ -285,31 +284,29 @@ class GlbValidationApplet : Applet {
                     ModelNode(
                         modelInstance = model,
                         scaleToUnits = scaleState,
-                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f)
-                    ).also {
-                        it.rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-                    }
+                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f),
+                        position = io.github.sceneview.math.Position(0f, 0f, 0f),
+                        rotation = Rotation(x = 0f, y = rotationY, z = 0f)
+                    )
                 }
                 
                 if (fallbackModel != null) {
                     ModelNode(
                         modelInstance = fallbackModel,
                         scaleToUnits = scaleState * 0.5f,
-                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f)
-                    ).also {
-                        it.position = io.github.sceneview.math.Position(x = 1.0f, y = 0f, z = 0f)
-                        it.rotation = Rotation(x = 0f, y = rotationY * -1f, z = 0f)
-                    }
+                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f),
+                        position = io.github.sceneview.math.Position(x = 1.0f, y = 0f, z = 0f),
+                        rotation = Rotation(x = 0f, y = rotationY * -1f, z = 0f)
+                    )
                 }
                 
                 CubeNode(
                     engine = engine,
                     size = io.github.sceneview.math.Position(0.5f, 0.5f, 0.5f),
-                    center = io.github.sceneview.math.Position(0f, 0f, 0f)
-                ).also {
-                    it.position = io.github.sceneview.math.Position(x = -1.0f, y = 0f, z = 0f)
-                    it.rotation = Rotation(x = rotationY, y = rotationY, z = rotationY)
-                }
+                    center = io.github.sceneview.math.Position(0f, 0f, 0f),
+                    position = io.github.sceneview.math.Position(x = -1.0f, y = 0f, z = 0f),
+                    rotation = Rotation(x = rotationY, y = rotationY, z = rotationY)
+                )
             }
 
             // Dynamic HUD Info Overlay
