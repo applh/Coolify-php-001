@@ -41,6 +41,8 @@ import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberCameraManipulator
 import io.github.sceneview.rememberMainLightNode
+import io.github.sceneview.rememberEnvironmentLoader
+import io.github.sceneview.rememberEnvironment
 import io.github.sceneview.math.Rotation
 
 class GlbValidationApplet : Applet {
@@ -229,8 +231,12 @@ class GlbValidationApplet : Applet {
     ) {
         val engine = rememberEngine()
         val modelLoader = rememberModelLoader(engine)
-        val model = rememberModelInstance(modelLoader, "models/downloaded.glb")
-        val mainLightNode = rememberMainLightNode(engine)
+        val environmentLoader = rememberEnvironmentLoader(engine)
+        val environment = rememberEnvironment(environmentLoader)
+        val model = rememberModelInstance(modelLoader, "models/download.glb")
+        val mainLightNode = rememberMainLightNode(engine).apply {
+            intensity = 100000.0f
+        }
         
         var rotationY by remember { mutableStateOf(0f) }
         
@@ -246,6 +252,8 @@ class GlbValidationApplet : Applet {
                 modifier = Modifier.fillMaxSize(),
                 engine = engine,
                 modelLoader = modelLoader,
+                environmentLoader = environmentLoader,
+                environment = environment,
                 mainLightNode = mainLightNode,
                 cameraManipulator = rememberCameraManipulator()
             ) {
@@ -267,7 +275,7 @@ class GlbValidationApplet : Applet {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "TARGET: downloaded.glb (SceneView 4.17.0)",
+                    text = "TARGET: download.glb (SceneView 4.17.0)",
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -283,7 +291,7 @@ class GlbValidationApplet : Applet {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (model != null) "Success! Model Loaded." else "Loading local downloaded GLB...",
+                        text = if (model != null) "Success! Model Loaded." else "Loading local download GLB...",
                         color = Color.LightGray,
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace
