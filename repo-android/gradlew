@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# 🍓 FRAISE Android Gradle Direct Delegate Wrapper
+# Since Gradle 8.7 is pre-installed at /opt/gradle/gradle-8.7/bin/gradle in the
+# companion builder and added to the PATH, this script delegates directly to
+# the environment-configured gradle binary.
+
+if command -v gradle >/dev/null 2>&1; then
+  exec gradle "$@"
+else
+  echo "❌ Error: 'gradle' command is not available in PATH inside the current environment." >&2
+  echo "Please verify Gradle is installed and configured." >&2
+  exit 127
+fi
