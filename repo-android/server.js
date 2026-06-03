@@ -429,7 +429,7 @@ const server = http.createServer((req, res) => {
       if (apkExists) {
         btnDownload.className = "w-full text-center bg-teal-600 hover:bg-teal-500 text-zinc-950 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-lg shadow-teal-500/10 cursor-pointer block";
         btnDownload.style.pointerEvents = "auto";
-        btnDownload.textContent = filename ? `Download ${filename}` : "Download app.apk";
+        btnDownload.textContent = filename ? \`Download \${filename}\` : "Download app.apk";
         qrCanvas.style.opacity = "1";
         qrLockout.classList.add('hidden');
         
