@@ -237,8 +237,8 @@ class GlbValidationApplet : Applet {
         val environment = rememberEnvironment(
             environmentLoader = environmentLoader
         )
-        val model = rememberModelInstance(modelLoader, "models/download.glb")
-        val fallbackModel = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
+        val model = rememberModelInstance(modelLoader, "file:///android_asset/models/download.glb")
+        val fallbackModel = rememberModelInstance(modelLoader, "file:///android_asset/models/robot_expressive.glb")
         val mainLightNode = rememberMainLightNode(engine).apply {
             intensity = 100000.0f
         }
@@ -317,7 +317,7 @@ class GlbValidationApplet : Applet {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "TARGET: download.glb (SceneView 4.17.0)",
+                    text = "TARGET: download.glb (SceneView 4.15.0)",
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
