@@ -43,6 +43,8 @@ import io.github.sceneview.rememberCameraManipulator
 import io.github.sceneview.rememberMainLightNode
 import io.github.sceneview.rememberEnvironmentLoader
 import io.github.sceneview.rememberEnvironment
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.node.CubeNode
 import io.github.sceneview.math.Rotation
 
 class GlbValidationApplet : Applet {
@@ -232,10 +234,32 @@ class GlbValidationApplet : Applet {
         val engine = rememberEngine()
         val modelLoader = rememberModelLoader(engine)
         val environmentLoader = rememberEnvironmentLoader(engine)
-        val environment = rememberEnvironment(environmentLoader)
+        val environment = rememberEnvironment(
+            environmentLoader = environmentLoader,
+            fileLocation = "https://sceneview.github.io/assets/environments/studio_small_09_2k.hdr"
+        )
         val model = rememberModelInstance(modelLoader, "models/download.glb")
+        val fallbackModel = rememberModelInstance(modelLoader, "models/robot_expressive.glb")
         val mainLightNode = rememberMainLightNode(engine).apply {
             intensity = 100000.0f
+        }
+        
+        LaunchedEffect(model) {
+            if (model != null) {
+                AppLogger.i("GLB", "Model initialized: $model")
+            } else {
+                AppLogger.d("GLB", "Model is loading or null")
+            }
+        }
+        
+        LaunchedEffect(fallbackModel) {
+            if (fallbackModel != null) {
+                AppLogger.i("GLB", "Fallback Robot Model initialized: $fallbackModel")
+            }
+        }
+        
+        LaunchedEffect(Unit) {
+            AppLogger.d("SCENEVIEW", "Initializing SceneView Engine")
         }
         
         var rotationY by remember { mutableStateOf(0f) }
@@ -261,8 +285,30 @@ class GlbValidationApplet : Applet {
                     ModelNode(
                         modelInstance = model,
                         scaleToUnits = scaleState,
-                        rotation = Rotation(x = 0f, y = rotationY, z = 0f)
-                    )
+                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f)
+                    ).also {
+                        it.rotation = Rotation(x = 0f, y = rotationY, z = 0f)
+                    }
+                }
+                
+                if (fallbackModel != null) {
+                    ModelNode(
+                        modelInstance = fallbackModel,
+                        scaleToUnits = scaleState * 0.5f,
+                        centerOrigin = io.github.sceneview.math.Position(0f, 0f, 0f)
+                    ).also {
+                        it.position = io.github.sceneview.math.Position(x = 1.0f, y = 0f, z = 0f)
+                        it.rotation = Rotation(x = 0f, y = rotationY * -1f, z = 0f)
+                    }
+                }
+                
+                CubeNode(
+                    engine = engine,
+                    size = io.github.sceneview.math.Position(0.5f, 0.5f, 0.5f),
+                    center = io.github.sceneview.math.Position(0f, 0f, 0f)
+                ).also {
+                    it.position = io.github.sceneview.math.Position(x = -1.0f, y = 0f, z = 0f)
+                    it.rotation = Rotation(x = rotationY, y = rotationY, z = rotationY)
                 }
             }
 
@@ -292,6 +338,38 @@ class GlbValidationApplet : Applet {
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (model != null) "Success! Model Loaded." else "Loading local download GLB...",
+                        color = Color.LightGray,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(Color.Cyan)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "CubeNode Added to Scene.",
+                        color = Color.LightGray,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (fallbackModel != null) Color.Green else Color.Red)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (fallbackModel != null) "Fallback Loaded." else "Fallback Missing.",
                         color = Color.LightGray,
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace
