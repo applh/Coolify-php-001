@@ -397,7 +397,7 @@ const server = http.createServer((req, res) => {
                             .replace(/^\\[System\\]/, '<span class="text-zinc-500 font-semibold">$0</span>')
                             .replace(/^\\[ERROR\\]/, '<span class="text-red-500 font-semibold">$0</span>');
 
-      lineDiv.innerHTML = \`<span class="text-zinc-700 select-none mr-2">$ {new Date().toLocaleTimeString()}</span>\${cleanLine}\`;
+      lineDiv.innerHTML = cleanLine;
       term.appendChild(lineDiv);
 
       if (chkAutoScroll.checked) {
