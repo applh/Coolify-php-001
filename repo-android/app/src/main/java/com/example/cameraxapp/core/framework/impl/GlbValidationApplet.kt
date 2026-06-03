@@ -263,7 +263,7 @@ class GlbValidationApplet : Applet {
                 engine = engine,
                 modelLoader = modelLoader,
                 cameraManipulator = rememberCameraManipulator(),
-                nodes = listOfNotNull(mainLightNode, modelNode)
+                childNodes = listOfNotNull(mainLightNode, modelNode)
             )
 
             // Dynamic HUD Info Overlay
