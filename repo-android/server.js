@@ -347,6 +347,8 @@ const server = http.createServer((req, res) => {
           <span class="text-xs text-zinc-500 font-mono ml-2">gradlew console stream</span>
         </div>
         <div class="flex items-center gap-3">
+          <button id="btnCopy" class="text-xs text-zinc-500 hover:text-zinc-300 font-mono transition">COPY</button>
+          <span class="h-4 w-px bg-zinc-800"></span>
           <button id="btnClear" class="text-xs text-zinc-500 hover:text-zinc-300 font-mono transition">CLEAR</button>
           <span class="h-4 w-px bg-zinc-800"></span>
           <label class="flex items-center gap-1.5 cursor-pointer selection:bg-transparent">
@@ -375,6 +377,7 @@ const server = http.createServer((req, res) => {
     const badge = document.getElementById('badge');
     const btnBuild = document.getElementById('btnBuild');
     const btnDownload = document.getElementById('btnDownload');
+    const btnCopy = document.getElementById('btnCopy');
     const btnClear = document.getElementById('btnClear');
     const chkAutoScroll = document.getElementById('chkAutoScroll');
     const startTimeEl = document.getElementById('startTime');
@@ -512,6 +515,21 @@ const server = http.createServer((req, res) => {
 
     btnClear.addEventListener('click', () => {
       term.innerHTML = '<div class="text-zinc-600 font-mono">[Terminal] Standard output screen cleared.</div>';
+    });
+
+    btnCopy.addEventListener('click', () => {
+      const logs = term.innerText || term.textContent;
+      navigator.clipboard.writeText(logs).then(() => {
+        const originalText = btnCopy.textContent;
+        btnCopy.textContent = 'COPIED!';
+        btnCopy.classList.add('text-teal-400');
+        setTimeout(() => {
+          btnCopy.textContent = originalText;
+          btnCopy.classList.remove('text-teal-400');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
     });
 
     // Start lifecycle
